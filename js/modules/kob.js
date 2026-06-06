@@ -1296,3 +1296,40 @@ ARCHETYPES?.length||0
 });
 
 })();
+(async () => {
+  try {
+    const ARCHETYPES = await fetch(
+      "https://www.infodose.com.br/js/modules/archetypes.json"
+    ).then(r => r.json());
+
+    const select = document.getElementById("startArch");
+    const userName = localStorage.getItem("di_userName") || "User";
+
+    if (select && Array.isArray(ARCHETYPES) && ARCHETYPES.length) {
+      select.innerHTML = "";
+
+      const userOpt = document.createElement("option");
+      userOpt.value = userName.toLowerCase();
+      userOpt.textContent = `${userName} (Usuário/Núcleo)`;
+      select.appendChild(userOpt);
+
+      ARCHETYPES.forEach(a => {
+        const opt = document.createElement("option");
+        opt.value = a.id || a.name || "";
+        opt.textContent = a.name || a.id || "Archetype";
+        select.appendChild(opt);
+      });
+
+      window.ARCHETYPES = ARCHETYPES;
+      window.ARCHETYPE_IDS = ARCHETYPES.map(a => a.id);
+      window.ARCHETYPE_NAMES = ARCHETYPES.map(a => a.name);
+      window.ARCHETYPE_MAP = Object.fromEntries(
+        ARCHETYPES.map(a => [a.id, a])
+      );
+    }
+
+    console.log("[78K] Archetypes JSON carregado");
+  } catch (err) {
+    console.error("[78K] Falha ao carregar archetypes.json", err);
+  }
+})();
