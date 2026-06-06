@@ -1206,10 +1206,10 @@ this,
 idx
 );
 
-const arche=
-
-ARCHETYPES[idx];
-
+const arche =
+  window.ARCHETYPES?.[idx] ||
+  window.KOBLLUX?.getArchetypes?.()?.[idx] ||
+  null;
 window.KOBLLUX.send(
 
 "ARCHETYPE_CHANGE",
