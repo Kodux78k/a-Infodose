@@ -23,7 +23,14 @@
      ----------------------------- */
   const bar = $('#symbolBar') || document.querySelector('symbol-bar') ;
   const toggleBtn = $('#toggleBtn') || document.querySelector('main-toggle');
-  const frame = $('#content-frame') || $('#frame') || $('#navFrame') || document.querySelector('iframe');
+const frame =
+  $('#content-frame') ||
+  $('#appFrame') ||
+  $('#frame') ||
+  $('#navFrame') ||
+  document.querySelector('content') ||
+  document.querySelector('iframe');
+  
   const root = $('#root') || document.body;
   const hudStatus = $('#hudStatus');
   const outline = $('#kob-tts-outline') || (() => {
@@ -35,7 +42,12 @@
     
     /* document.body.appendChild(el); */
     
-    document.querySelector('.content').appendChild(el);
+    /*document.querySelector('.content').appendChild(el);*/
+const contentHost =
+  document.querySelector('.content') ||
+  document.body;
+
+contentHost.appendChild(el);
 
     return el;
   })();
@@ -1002,13 +1014,17 @@ const NS="KOBLLUX_BRIDGE";
    FRAME PRINCIPAL
 ========================= */
 
-const getFrame=()=>{
-
-return document.getElementById("motorFrame")
-||document.getElementById("content-frame")
-||document.getElementById("frame")
-||document.querySelector("iframe");
-
+const getFrame = () => {
+  return (
+    document.getElementById("motorFrame") ||
+    document.getElementById("content-frame") ||
+    document.getElementById("appFrame") ||
+    document.getElementById("frame") ||
+    document.getElementById("navFrame") ||
+    document.querySelector("[data-frame]") ||
+    document.querySelector("content") ||
+    document.querySelector("iframe")
+  );
 };
 
 /* =========================
