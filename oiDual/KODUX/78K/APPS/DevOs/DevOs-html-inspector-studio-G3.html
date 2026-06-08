@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>KODUX ∆7 // DevOS Inspector v3</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#05070a">
+
+  <!-- ========================================== -->
+  <!-- CDNs & DEPENDÊNCIAS                        -->
+  <!-- ========================================== -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- CodeMirror -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-ocean.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
+
+  <!-- Cytoscape.js (Grafo mais leve e rápido) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
+
+  <!-- localForage (IndexedDB wrapper) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+
+  <style>
+    /* ========================================== */
+    /* CSS CORE MOBILE-FIRST                      */
+    /* ========================================== */
+    :root {
+      --bg-dark: #05070a;
+      --bg-panel: #0d1117;
+      --bg-card: #161b22;
+      --neon-cyan: #00ffff;
+      --neon-magenta: #ff00ff;
+      --neon-yellow: #fbbf24;
+      --text-main: #c9d1d9;
+      --text-muted: #8b949e;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --nav-height: 60px;
+      --header-height: 56px;
+      --card-p: 12px;
+      --font-size-base: 14px;
+    }
+
+    body[data-mode="compact"] { --card-p: 8px; --font-size-base: 12px; }
+
+    body {
+      background-color: var(--bg-dark); color: var(--text-main);
+      font-family: 'Inter', system-ui, sans-serif; margin: 0; padding: 0;
+      min-height: 100dvh; overflow: hidden; display: flex; flex-direction: column;
+      font-size: var(--font-size-base); -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Utilitários Gerais */
+    .glass { background: rgba(13, 17, 23, 0.85); backdrop-filter: blur(12px); }
+    .glass-top { border-bottom: 1px solid #30363d; }
+    .glass-bottom { border-top: 1px solid #30363d; }
+    
+    .view-panel { display: none; flex: 1; width: 100%; height: 100%; overflow-y: auto; position: relative; }
+    .view-panel.active { display: flex; flex-direction: column; }
+
+    /* Componentes */
+    .btn-cyber { background: transparent; border: 1px solid #30363d; color: var(--text-main); border-radius: 8px; transition: all 0.2s ease; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-cyber:active { transform: scale(0.96); }
+    .btn-cyber.primary { border-color: var(--neon-cyan); color: var(--neon-cyan); }
+    .btn-cyber.primary:active { background: rgba(0,255,255,0.1); }
+    .btn-cyber.danger { border-color: var(--neon-magenta); color: var(--neon-magenta); }
+    .btn-cyber.warning { border-color: var(--neon-yellow); color: var(--neon-yellow); }
+
+    /* CodeMirror */
+    .CodeMirror { height: 100% !important; font-family: 'JetBrains Mono', monospace; font-size: var(--font-size-base); background: var(--bg-dark) !important; }
+    
+    /* Bottom Navigation */
+    #mobileNav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: calc(var(--nav-height) + var(--safe-bottom)); padding-bottom: var(--safe-bottom);
+      z-index: 100; display: flex; justify-content: space-around; align-items: center;
+    }
+    .nav-item {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: var(--text-muted); font-size: 10px; font-weight: 600; text-transform: uppercase;
+      height: 100%; cursor: pointer; transition: color 0.2s;
+    }
+    .nav-item i { margin-bottom: 4px; transition: transform 0.2s; }
+    .nav-item.active { color: var(--neon-cyan); }
+    .nav-item.active.runtime { color: var(--neon-magenta); }
+    .nav-item.active i { transform: translateY(-2px); }
+
+    /* Drawer */
+    #drawer {
+      position: fixed; top: 0; left: -100%; width: 300px; bottom: 0;
+      background: var(--bg-panel); border-right: 1px solid #30363d;
+      z-index: 1000; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex; flex-direction: column; padding-top: var(--safe-top);
+    }
+    #drawer.open { left: 0; }
+    #drawer-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px);
+      z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    #drawer-overlay.open { opacity: 1; pointer-events: auto; }
+
+    /* Accordions & Cards */
+    .accordion-header {
+      background: #161b22; padding: 12px; font-weight: 600; font-size: 13px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-top: 1px solid #30363d; border-bottom: 1px solid #30363d; position: sticky; top: 0; z-index: 10; cursor: pointer;
+    }
+    .card-resource {
+      background: var(--bg-card); border: 1px solid #30363d; border-radius: 12px;
+      padding: var(--card-p); margin: 8px 12px; display: flex; flex-direction: column; gap: 8px;
+    }
+
+    /* Runtime Overlay (DevOS Bridge) */
+    #runtime-overlay {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: rgba(13, 17, 23, 0.95); border-top: 1px solid var(--neon-magenta);
+      backdrop-filter: blur(10px); z-index: 50; display: flex; flex-direction: column;
+      max-height: 40%; transform: translateY(100%); transition: transform 0.3s;
+    }
+    #runtime-overlay.open { transform: translateY(0); }
+
+    #preview-wrapper { width: 100%; height: 100%; background: #fff; transition: all 0.3s; margin: 0 auto; }
+    #sandbox-frame { width: 100%; height: 100%; border: none; }
+
+    .pulse-dot { width: 8px; height: 8px; background: var(--neon-magenta); border-radius: 50%; box-shadow: 0 0 10px var(--neon-magenta); animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.2); } 100% { opacity: 1; transform: scale(1); } }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================== -->
+  <!-- HEADER MOBILE                              -->
+  <!-- ========================================== -->
+  <header class="glass glass-top w-full flex items-center justify-between px-4 z-50 shrink-0" style="padding-top: calc(var(--safe-top) + 8px); padding-bottom: 8px; height: calc(var(--header-height) + var(--safe-top));">
+    <div class="flex items-center gap-3">
+      <button onclick="App.toggleDrawer()" class="p-1 -ml-1 text-gray-400 hover:text-white">
+        <i data-lucide="menu" class="w-6 h-6"></i>
+      </button>
+      <div class="font-bold tracking-widest uppercase text-[10px] sm:text-xs flex items-center gap-2">
+        <i data-lucide="cpu" class="w-4 h-4 text-cyan-400"></i>
+        <span>DEVOS <span class="text-cyan-400">BRIDGE v3</span></span>
+      </div>
+    </div>
+    <div class="flex gap-2">
+        <button onclick="App.createSnapshot()" class="btn-cyber primary px-2 py-1 text-[10px]" title="Salvar Snapshot"><i data-lucide="camera" class="w-3 h-3"></i></button>
+        <div class="text-[10px] font-mono text-gray-400 bg-gray-800/50 px-2 py-1 rounded border border-gray-700 flex items-center" id="top-size">0KB</div>
+    </div>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- MENU DRAWER (INDEXED DB & REFACTOR)        -->
+  <!-- ========================================== -->
+  <div id="drawer-overlay" onclick="App.toggleDrawer()"></div>
+  <aside id="drawer">
+    <div class="p-4 border-b border-[#30363d] flex justify-between items-center">
+      <h2 class="font-bold text-cyan-400 text-sm">MENU SISTEMA</h2>
+      <button onclick="App.toggleDrawer()"><i data-lucide="x" class="w-5 h-5"></i></button>
+    </div>
+    
+    <div class="p-4 flex-1 overflow-y-auto space-y-6">
+      <!-- Actions -->
+      <div class="flex flex-col gap-2">
+        <button class="btn-cyber flex items-center justify-start p-3 w-full text-xs" onclick="document.getElementById('file-upload').click(); App.toggleDrawer();">
+          <i data-lucide="upload" class="w-4 h-4 text-gray-400"></i> Importar HTML
+        </button>
+        <input type="file" id="file-upload" class="hidden" accept=".html,.txt">
+
+        <button class="btn-cyber warning flex items-center justify-start p-3 w-full text-xs" onclick="Engine.refactorHTML(); App.toggleDrawer();">
+          <i data-lucide="wrench" class="w-4 h-4"></i> Refatoração Automática
+        </button>
+
+        <button class="btn-cyber danger flex items-center justify-start p-3 w-full text-xs" onclick="Engine.quickClean(); App.toggleDrawer();">
+          <i data-lucide="zap" class="w-4 h-4"></i> Limpar CDNs Duplicadas
+        </button>
+
+        <button class="btn-cyber primary flex items-center justify-start p-3 w-full text-xs" onclick="App.exportFile(); App.toggleDrawer();">
+          <i data-lucide="download" class="w-4 h-4"></i> Exportar HTML Final
+        </button>
+      </div>
+
+      <!-- Snapshots (IndexedDB) -->
+      <div>
+        <h3 class="text-[10px] text-gray-500 uppercase tracking-widest mb-3 flex justify-between items-center">
+            Snapshots Locais
+            <span id="snap-count" class="bg-gray-800 px-1.5 rounded">0</span>
+        </h3>
+        <div id="snapshot-list" class="flex flex-col gap-2 max-h-40 overflow-y-auto custom-scrollbar">
+            <!-- Renderizado via JS -->
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ========================================== -->
+  <!-- MAIN WORKSPACE                             -->
+  <!-- ========================================== -->
+  <main id="workspace" class="flex-1 relative pb-[calc(var(--nav-height)+var(--safe-bottom))] bg-[#0d1117]">
+    
+    <!-- VIEW 1: EDITOR -->
+    <section id="view-editor" class="view-panel active">
+      <div class="flex-1 relative">
+        <textarea id="code-editor"></textarea>
+      </div>
+      <div class="absolute bottom-4 right-4 flex gap-2">
+        <button onclick="UI.searchEditor()" class="w-10 h-10 rounded-full bg-gray-800 border border-gray-600 flex items-center justify-center text-white shadow-lg"><i data-lucide="search" class="w-4 h-4"></i></button>
+        <button onclick="App.updatePreview(); UI.showToast('Preview Atualizado');" class="w-12 h-12 rounded-full bg-cyan-600 border border-cyan-400 flex items-center justify-center text-white shadow-[0_4px_15px_rgba(0,255,255,0.4)]"><i data-lucide="play" class="w-5 h-5 ml-1"></i></button>
+      </div>
+    </section>
+
+    <!-- VIEW 2: INSPECTOR ESTÁTICO -->
+    <section id="view-inspector" class="view-panel">
+      
+      <!-- Dual App Scanner -->
+      <div class="p-4 bg-gray-900 border-b border-gray-800">
+          <h3 class="text-xs font-bold text-cyan-400 mb-2"><i data-lucide="radar" class="w-3 h-3 inline"></i> DUAL APP SCANNER</h3>
+          <div id="dual-modules-static" class="flex flex-wrap gap-2 text-[10px]">
+              <span class="text-gray-500">Escaneando código fonte...</span>
+          </div>
+      </div>
+
+      <div class="p-3 grid grid-cols-2 gap-2 text-[10px]">
+          <button onclick="Engine.toggleGroup('css', false)" class="btn-cyber py-1 border-gray-700">Desligar CSS</button>
+          <button onclick="Engine.toggleGroup('js', false)" class="btn-cyber py-1 border-gray-700">Desligar JS</button>
+      </div>
+
+      <div class="accordion-header" onclick="UI.toggleAccordion('acc-external')">
+        <div class="flex items-center gap-2 text-cyan-400"><i data-lucide="globe" class="w-4 h-4"></i> CDNs & Assets Externos</div>
+        <i data-lucide="chevron-down" id="icon-acc-external" class="w-4 h-4 transition-transform"></i>
+      </div>
+      <div id="acc-external" class="flex flex-col pb-2"></div>
+
+      <div class="accordion-header" onclick="UI.toggleAccordion('acc-internal')">
+        <div class="flex items-center gap-2 text-yellow-400"><i data-lucide="code-2" class="w-4 h-4"></i> Inline Scripts & Styles</div>
+        <i data-lucide="chevron-down" id="icon-acc-internal" class="w-4 h-4 transition-transform"></i>
+      </div>
+      <div id="acc-internal" class="flex flex-col pb-2"></div>
+    </section>
+
+    <!-- VIEW 3: RUNTIME / DEVOS BRIDGE -->
+    <section id="view-runtime" class="view-panel bg-black">
+      <div class="p-2 border-b border-[#30363d] bg-[#161b22] flex gap-2 justify-between items-center sticky top-0 z-10">
+        <select id="device-select" onchange="UI.changeDevice()" class="bg-[#0d1117] border border-[#30363d] text-white text-[10px] rounded p-1 flex-1 max-w-[120px]">
+          <option value="100%">Resp (Full)</option>
+          <option value="375px">iPhone SE</option>
+          <option value="393px">iPhone 15</option>
+          <option value="768px">iPad</option>
+        </select>
+        
+        <div class="flex gap-2">
+            <button id="btn-surgery" onclick="Runtime.toggleSurgery()" class="btn-cyber px-2 py-1 text-[10px] border-magenta-500 text-magenta-400">
+                <i data-lucide="crosshair" class="w-3 h-3"></i> Cirurgia
+            </button>
+            <button onclick="UI.toggleRuntimePanel()" class="btn-cyber px-2 py-1 text-[10px]">
+                <i data-lucide="terminal-square" class="w-3 h-3"></i> Logs
+            </button>
+            <button onclick="App.updatePreview()" class="btn-cyber px-2 py-1 text-[10px]">
+                <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+            </button>
+        </div>
+      </div>
+      
+      <div class="flex-1 overflow-auto flex justify-center items-start bg-zinc-900 relative">
+        <div id="preview-wrapper">
+          <!-- O sandbox agora permite allow-same-origin para postMessage funcionar entre parent e iframe -->
+          <iframe id="sandbox-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+        </div>
+      </div>
+
+      <!-- DevOS Live Overlay -->
+      <div id="runtime-overlay">
+          <div class="flex justify-between items-center p-2 border-b border-gray-800 bg-black">
+              <div class="flex items-center gap-2 text-[10px] font-mono text-magenta-400">
+                  <div class="pulse-dot"></div> DEVOS LIVE LINK
+              </div>
+              <button onclick="UI.toggleRuntimePanel()" class="text-gray-500"><i data-lucide="chevron-down" class="w-4 h-4"></i></button>
+          </div>
+          <div class="p-2 flex-1 overflow-y-auto font-mono text-[9px] space-y-1" id="live-logs">
+              <div class="text-gray-500">Aguardando telemetria do Iframe...</div>
+          </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: GRAPH (CYTOSCAPE) -->
+    <section id="view-graph" class="view-panel bg-[#0d1117]">
+      <div id="cy-container" class="w-full h-full absolute inset-0"></div>
+      <div class="absolute bottom-4 left-4 text-[9px] font-mono bg-black/80 p-2 rounded border border-white/10 shadow-lg">
+        <div class="text-cyan-400">■ HTML DOM</div>
+        <div class="text-yellow-400">■ JavaScript</div>
+        <div class="text-magenta-400">■ CSS</div>
+        <div class="text-green-400">▲ DevOS Module</div>
+      </div>
+      <button onclick="UI.initLazyGraph(true)" class="absolute top-4 right-4 btn-cyber px-2 py-1 text-[10px] bg-black/50"><i data-lucide="refresh-cw" class="w-3 h-3"></i> Att</button>
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- BOTTOM NAVIGATION                          -->
+  <!-- ========================================== -->
+  <nav id="mobileNav" class="glass glass-bottom">
+    <div class="nav-item active" onclick="App.switchTab('editor', this)">
+      <i data-lucide="code" class="w-5 h-5"></i><span>Editor</span>
+    </div>
+    <div class="nav-item" onclick="App.switchTab('inspector', this)">
+      <i data-lucide="list-tree" class="w-5 h-5"></i><span>Inspector</span>
+    </div>
+    <div class="nav-item" onclick="App.switchTab('runtime', this)">
+      <i data-lucide="cpu" class="w-5 h-5"></i><span>Runtime</span>
+    </div>
+    <div class="nav-item" onclick="App.switchTab('graph', this)">
+      <i data-lucide="network" class="w-5 h-5"></i><span>Grafo</span>
+    </div>
+  </nav>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-cyan-900/90 text-cyan-50 border border-cyan-400 px-4 py-2 rounded-full text-xs font-bold transition-opacity duration-300 opacity-0 pointer-events-none z-[9999]"></div>
+
+  <!-- ========================================== -->
+  <!-- SCRIPTS E LÓGICA DO SISTEMA V3             -->
+  <!-- ========================================== -->
+  <script>
+    lucide.createIcons();
+
+    // ==========================================
+    // 1. STATE & LOCAL DATABASE
+    // ==========================================
+    const State = {
+      rawHTML: '',
+      dom: null,
+      resources: [],
+      liveModules: [],
+      stats: { size: 0, cdns: 0, dupes: 0 },
+      editor: null,
+      cy: null,
+      surgeryMode: false,
+      isMobile: window.innerWidth < 768
+    };
+
+    localforage.config({ name: 'KoduxInspectorDB', storeName: 'snapshots' });
+
+    // ==========================================
+    // 2. DEVOS BRIDGE INJECTOR (A Mágica)
+    // ==========================================
+    const BridgeScript = `
+    <script id="kodux-devos-bridge">
+      (function() {
+        window.__DEVOS_BRIDGE = true;
+        const post = (msg) => window.parent.postMessage(msg, '*');
+        
+        // 1. Live Logs Intercept
+        const _err = console.error;
+        console.error = function(...args) {
+          post({ type: 'LOG', level: 'error', data: args.join(' ') });
+          _err.apply(console, args);
+        };
+        const _warn = console.warn;
+        console.warn = function(...args) {
+          post({ type: 'LOG', level: 'warn', data: args.join(' ') });
+          _warn.apply(console, args);
+        };
+
+        // 2. Surgery Mode Intercept
+        document.addEventListener('click', (e) => {
+          if(window.__SURGERY_MODE) {
+            e.preventDefault(); e.stopPropagation();
+            post({ type: 'SURGERY', tag: e.target.tagName, id: e.target.id, className: e.target.className });
+          }
+        }, true);
+
+        // 3. Module Scanner (Dual App)
+        window.addEventListener('load', () => {
+          const knownModules = ['CallAI', 'DualBook', 'SplitTest', 'KRA', 'Archetypes', 'Player', 'ThemeEngine'];
+          const found = knownModules.filter(m => typeof window[m] !== 'undefined');
+          post({ type: 'MODULES', modules: found });
+          post({ type: 'LOG', level: 'sys', data: 'DevOS Bridge Injetado e Ativo.' });
+        });
+      })();
+    <\/script>
+    `;
+
+    // ==========================================
+    // 3. RUNTIME CONTROLLER
+    // ==========================================
+    const Runtime = {
+        init() {
+            window.addEventListener('message', (e) => {
+                const msg = e.data;
+                if(!msg || !msg.type) return;
+
+                if(msg.type === 'LOG') {
+                    this.appendLog(msg.level, msg.data);
+                }
+                else if(msg.type === 'MODULES') {
+                    State.liveModules = msg.modules;
+                    this.appendLog('sys', `Módulos Runtime: ${msg.modules.join(', ') || 'Nenhum'}`);
+                    UI.initLazyGraph(true); // Update graph with live modules
+                }
+                else if(msg.type === 'SURGERY') {
+                    this.appendLog('warn', `🔍 CIRURGIA: <${msg.tag.toLowerCase()} id="${msg.id}" class="${msg.className}">`);
+                    UI.showToast('Elemento capturado! Verifique os Logs.');
+                    // Aqui poderia focar no editor
+                }
+            });
+        },
+
+        appendLog(level, text) {
+            const container = document.getElementById('live-logs');
+            const colors = { error: 'text-red-400', warn: 'text-yellow-400', sys: 'text-cyan-400', default: 'text-gray-300' };
+            const time = new Date().toLocaleTimeString();
+            const color = colors[level] || colors.default;
+            container.insertAdjacentHTML('afterbegin', `<div class="${color}">[${time}] ${text}</div>`);
+        },
+
+        toggleSurgery() {
+            State.surgeryMode = !State.surgeryMode;
+            const btn = document.getElementById('btn-surgery');
+            btn.classList.toggle('bg-magenta-900/50', State.surgeryMode);
+            btn.classList.toggle('text-white', State.surgeryMode);
+            
+            const frame = document.getElementById('sandbox-frame');
+            if(frame.contentWindow) {
+                frame.contentWindow.__SURGERY_MODE = State.surgeryMode;
+                this.appendLog('sys', `Modo Cirurgia ${State.surgeryMode ? 'ATIVADO' : 'DESATIVADO'}`);
+            }
+        }
+    };
+
+    // ==========================================
+    // 4. ENGINE DE ANÁLISE ESTÁTICA & REFATORAÇÃO
+    // ==========================================
+    const Engine = {
+        parseHTML() {
+            const parser = new DOMParser();
+            State.dom = parser.parseFromString(State.rawHTML, 'text/html');
+            State.resources = [];
+            State.stats.size = new Blob([State.rawHTML]).size;
+            State.stats.cdns = 0; State.stats.dupes = 0;
+
+            const urlSet = new Set();
+            
+            // CSS Links
+            State.dom.querySelectorAll('link[rel="stylesheet"]').forEach((el, i) => {
+                const href = el.getAttribute('href') || '';
+                const isDupe = urlSet.has(href);
+                if(isDupe) State.stats.dupes++; urlSet.add(href);
+                State.resources.push({ id: `L_${i}`, type: 'style', url: href, inline: false, node: el, active: true, isDupe });
+                State.stats.cdns++;
+            });
+
+            // Inline CSS
+            State.dom.querySelectorAll('style').forEach((el, i) => {
+                State.resources.push({ id: `SI_${i}`, type: 'style', url: '', inline: true, node: el, active: true, isDupe: false });
+            });
+
+            // JS Scripts
+            State.dom.querySelectorAll('script').forEach((el, i) => {
+                // Ignore bridge
+                if(el.id === 'kodux-devos-bridge') return;
+
+                const src = el.getAttribute('src');
+                if (src) {
+                    const isDupe = urlSet.has(src);
+                    if(isDupe) State.stats.dupes++; urlSet.add(src);
+                    State.resources.push({ id: `JS_${i}`, type: 'script', url: src, inline: false, node: el, active: true, isDupe });
+                    State.stats.cdns++;
+                } else {
+                    State.resources.push({ id: `JSI_${i}`, type: 'script', url: '', inline: true, node: el, active: true, isDupe: false });
+                }
+            });
+
+            this.scanStaticModules();
+            UI.updateStats();
+            UI.renderInspector();
+            if(State.cy) UI.initLazyGraph(true);
+        },
+
+        scanStaticModules() {
+            // Analisa texto estático buscando padrões do Dual App
+            const code = State.rawHTML;
+            const dualModules = ['KDevPanel', 'dual-engine', 'CallAI', 'ThemeEngine'];
+            const found = dualModules.filter(m => code.includes(m));
+            
+            const cont = document.getElementById('dual-modules-static');
+            if(found.length > 0) {
+                cont.innerHTML = found.map(m => `<span class="bg-cyan-900/50 text-cyan-300 border border-cyan-800 px-2 py-0.5 rounded uppercase tracking-wider">${m}</span>`).join('');
+            } else {
+                cont.innerHTML = '<span class="text-gray-500">Nenhum módulo Dual App detectado estaticamente.</span>';
+            }
+        },
+
+        toggleResource(id) {
+            const res = State.resources.find(r => r.id === id);
+            if(res) {
+                res.active = !res.active;
+                UI.renderInspector();
+                UI.showToast(`Recurso ${res.active?'ON':'OFF'}. Atualize o Preview.`);
+            }
+        },
+
+        toggleGroup(type, state) {
+            State.resources.forEach(r => { if(r.type === type || (type==='js' && r.type==='script')) r.active = state; });
+            UI.renderInspector();
+            UI.showToast(`Grupo ${type} alterado. Atualize o Preview.`);
+        },
+
+        quickClean() {
+            if(!State.dom) return;
+            let rem = 0;
+            const cleanDom = State.dom.cloneNode(true);
+            const seen = new Set();
+
+            ['link[rel="stylesheet"]', 'script[src]'].forEach(sel => {
+                cleanDom.querySelectorAll(sel).forEach(el => {
+                    const attr = sel.includes('link') ? el.getAttribute('href') : el.getAttribute('src');
+                    if(attr) { if(seen.has(attr)) { el.remove(); rem++; } else seen.add(attr); }
+                });
+            });
+
+            if(rem > 0) {
+                State.editor.setValue('<!DOCTYPE html>\n' + cleanDom.documentElement.outerHTML);
+                UI.showToast(`🔥 ${rem} duplicatas removidas!`);
+            } else {
+                UI.showToast('✨ Código limpo.');
+            }
+        },
+
+        refactorHTML() {
+            if(!State.dom) return;
+            const cleanDom = State.dom.cloneNode(true);
+            const head = cleanDom.querySelector('head');
+            const body = cleanDom.querySelector('body');
+            
+            // Move todas as styles para o head (organização)
+            cleanDom.querySelectorAll('style').forEach(el => {
+                head.appendChild(el);
+            });
+
+            // Formatação super básica do source
+            const newHtml = '<!DOCTYPE html>\n' + cleanDom.documentElement.outerHTML.replace(/\n\s*\n/g, '\n');
+            State.editor.setValue(newHtml);
+            UI.showToast('🚀 Refatoração concluída! (Styles no head, quebras duplas removidas)');
+        }
+    };
+
+    // ==========================================
+    // 5. UI CONTROLLER
+    // ==========================================
+    const UI = {
+        initEditor() {
+            State.editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+                mode: 'htmlmixed', theme: 'material-ocean',
+                lineNumbers: !State.isMobile, lineWrapping: true,
+                viewportMargin: State.isMobile ? 20 : Infinity,
+                matchBrackets: true, autoCloseTags: true
+            });
+
+            State.editor.on('change', () => {
+                clearTimeout(State.updateTimeout);
+                State.updateTimeout = setTimeout(() => {
+                    State.rawHTML = State.editor.getValue();
+                    Engine.parseHTML();
+                }, 800);
+            });
+        },
+
+        showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.style.opacity = '1';
+            setTimeout(() => t.style.opacity = '0', 3000);
+        },
+
+        updateStats() {
+            const kb = (State.stats.size / 1024).toFixed(1);
+            document.getElementById('top-size').innerText = `${kb} KB`;
+        },
+
+        toggleAccordion(id) {
+            const el = document.getElementById(id);
+            const icon = document.getElementById('icon-' + id);
+            if(el.style.display === 'none') { el.style.display = 'flex'; icon.style.transform = 'rotate(0deg)'; } 
+            else { el.style.display = 'none'; icon.style.transform = 'rotate(-90deg)'; }
+        },
+
+        toggleRuntimePanel() {
+            document.getElementById('runtime-overlay').classList.toggle('open');
+        },
+
+        searchEditor() {
+            State.editor.execCommand('find'); // Requer addon search (omitido aqui p/ tamanho, invoca prompt padrao no CM puro)
+            UI.showToast("Dica: No teclado, use Cmd/Ctrl+F no editor.");
+        },
+
+        renderInspector() {
+            const ext = document.getElementById('acc-external');
+            const int = document.getElementById('acc-internal');
+            ext.innerHTML = ''; int.innerHTML = '';
+
+            State.resources.forEach(res => {
+                const isJS = res.type === 'script';
+                const col = isJS ? 'text-yellow-400' : 'text-magenta-400';
+                let name = res.inline ? `[Inline] ${isJS?'Script':'Style'}` : res.url.split('/').pop() || res.url;
+                if(name.length > 40) name = name.substring(0,40)+'...';
+
+                const btn = res.active ? 'border-cyan-500 text-cyan-400' : 'border-gray-600 text-gray-500';
+                const dupe = res.isDupe ? `<span class="bg-red-900 text-red-300 px-1 text-[9px] rounded">DUPE</span>` : '';
+
+                const html = `
+                <div class="card-resource" style="border-color:${res.active?'#30363d':'#ef444450'}; opacity:${res.active?1:0.5}">
+                    <div class="flex justify-between items-center text-xs truncate font-mono">${name} ${dupe}</div>
+                    <div class="flex justify-between items-center mt-1">
+                        <span class="text-[9px] uppercase ${col}">● ${isJS?'JS':'CSS'}</span>
+                        <button onclick="Engine.toggleResource('${res.id}')" class="btn-cyber px-3 py-1 text-[9px] ${btn}">${res.active?'ON':'OFF'}</button>
+                    </div>
+                </div>`;
+                if(res.inline) int.insertAdjacentHTML('beforeend', html);
+                else ext.insertAdjacentHTML('beforeend', html);
+            });
+        },
+
+        changeDevice() {
+            const v = document.getElementById('device-select').value;
+            const w = document.getElementById('preview-wrapper');
+            w.style.width = v;
+            w.style.height = (v === '100%') ? '100%' : '800px';
+        },
+
+        // Cytoscape (Mais leve q Vis)
+        initLazyGraph(force = false) {
+            if(State.cy && !force) return;
+            
+            const elements = [{ data: { id: 'html', label: 'HTML DOM', type: 'root' } }];
+            
+            State.resources.forEach(r => {
+                if(!r.active) return;
+                elements.push({ data: { id: r.id, label: r.inline?`Inline ${r.type}`:r.url.split('/').pop().substring(0,12), type: r.type } });
+                elements.push({ data: { id: `e_${r.id}`, source: 'html', target: r.id } });
+            });
+
+            // DevOS Live Modules
+            State.liveModules.forEach(m => {
+                elements.push({ data: { id: `mod_${m}`, label: m, type: 'module' } });
+                elements.push({ data: { id: `e_mod_${m}`, source: 'html', target: `mod_${m}` } });
+            });
+
+            if(State.cy) State.cy.destroy();
+
+            State.cy = cytoscape({
+                container: document.getElementById('cy-container'),
+                elements: elements,
+                style: [
+                    { selector: 'node', style: { 'label': 'data(label)', 'color':'#fff', 'font-size': '10px', 'text-valign': 'center', 'text-halign': 'right', 'background-color': '#333' } },
+                    { selector: 'node[type="root"]', style: { 'background-color': '#00ffff', 'width': 30, 'height': 30 } },
+                    { selector: 'node[type="script"]', style: { 'background-color': '#fbbf24', 'shape': 'rectangle' } },
+                    { selector: 'node[type="style"]', style: { 'background-color': '#ff00ff', 'shape': 'ellipse' } },
+                    { selector: 'node[type="module"]', style: { 'background-color': '#4ade80', 'shape': 'triangle' } },
+                    { selector: 'edge', style: { 'width': 1, 'line-color': '#30363d', 'target-arrow-color': '#30363d', 'target-arrow-shape': 'triangle', 'curve-style': 'bezier' } }
+                ],
+                layout: { name: 'concentric', minNodeSpacing: 50 }
+            });
+        }
+    };
+
+    // ==========================================
+    // 6. MAIN APP CONTROLLER (DB, Tabs, Flow)
+    // ==========================================
+    const App = {
+        async init() {
+            UI.initEditor();
+            Runtime.init();
+
+            document.getElementById('file-upload').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if(!file) return;
+                const r = new FileReader();
+                r.onload = (ev) => { State.editor.setValue(ev.target.result); UI.showToast('HTML Carregado!'); this.createSnapshot('Upload Inicial'); };
+                r.readAsText(file);
+            });
+
+            // Tenta carregar ultimo estado
+            const lastState = await localforage.getItem('autosave');
+            if(lastState) State.editor.setValue(lastState);
+            else {
+                // Base
+                State.editor.setValue(`<!DOCTYPE html>\n<html>\n<head>\n<script src="https://cdn.tailwindcss.com"><\/script>\n</head>\n<body class="bg-black text-white p-4">\n<div id="app"><h1>DevOS v3 Ready</h1></div>\n<script>\n window.CallAI = () => console.log('AI Module');\n console.warn('Iniciando...');\n<\/script>\n</body>\n</html>`);
+            }
+
+            this.updateSnapshotsList();
+            setTimeout(() => this.updatePreview(), 500);
+
+            // Auto-save periódico
+            setInterval(() => { if(State.rawHTML) localforage.setItem('autosave', State.rawHTML); }, 5000);
+        },
+
+        switchTab(viewName, navEl) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active', 'runtime'));
+            navEl.classList.add('active');
+            if(viewName === 'runtime') navEl.classList.add('runtime');
+
+            document.querySelectorAll('.view-panel').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${viewName}`).classList.add('active');
+
+            if(viewName === 'graph') setTimeout(() => UI.initLazyGraph(), 100);
+        },
+
+        toggleDrawer() {
+            document.getElementById('drawer').classList.toggle('open');
+            document.getElementById('drawer-overlay').classList.toggle('open');
+        },
+
+        updatePreview() {
+            if (!State.dom) Engine.parseHTML();
+            
+            // Limpa Logs e Módulos antigos
+            document.getElementById('live-logs').innerHTML = '';
+            State.liveModules = [];
+            
+            const modDom = State.dom.cloneNode(true);
+            
+            // 1. Aplica Toggles de Recursos
+            State.resources.forEach(res => {
+                if(res.node) res.node.setAttribute('data-k-id', res.id);
+            });
+            State.resources.forEach(res => {
+                if (!res.active) {
+                    const el = modDom.querySelector(`[data-k-id="${res.id}"]`);
+                    if (el) {
+                        const cmt = modDom.createComment(` OFF DEVOS: ${el.outerHTML} `);
+                        el.parentNode.replaceChild(cmt, el);
+                    }
+                }
+            });
+            modDom.querySelectorAll('[data-k-id]').forEach(el => el.removeAttribute('data-k-id'));
+
+            // 2. INJETA O DEVOS BRIDGE LOGO APÓS O <HEAD>
+            const head = modDom.querySelector('head');
+            if(head) {
+                // Injeta como primeiro elemento do head para garantir interceptação
+                head.insertAdjacentHTML('afterbegin', BridgeScript);
+            }
+
+            const htmlStr = '<!DOCTYPE html>\n' + modDom.documentElement.outerHTML;
+            document.getElementById('sandbox-frame').srcdoc = htmlStr;
+        },
+
+        exportFile() {
+            const blob = new Blob([State.editor.getValue()], { type: "text/html" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url; a.download = "devos-export.html";
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            UI.showToast('HTML Exportado!');
+        },
+
+        // --- Snapshot System (IndexedDB) ---
+        async createSnapshot(name = null) {
+            if(!State.rawHTML) return;
+            const snapName = name || `Snap ${new Date().toLocaleTimeString()}`;
+            const id = Date.now().toString();
+            await localforage.setItem(`snap_${id}`, { id, name: snapName, html: State.rawHTML, date: Date.now() });
+            UI.showToast('Snapshot salvo no Cofre DB!');
+            this.updateSnapshotsList();
+        },
+
+        async loadSnapshot(id) {
+            const snap = await localforage.getItem(`snap_${id}`);
+            if(snap) {
+                State.editor.setValue(snap.html);
+                UI.showToast(`Restaurado: ${snap.name}`);
+                App.toggleDrawer();
+            }
+        },
+
+        async deleteSnapshot(id) {
+            await localforage.removeItem(`snap_${id}`);
+            this.updateSnapshotsList();
+        },
+
+        async updateSnapshotsList() {
+            const keys = await localforage.keys();
+            const snaps = keys.filter(k => k.startsWith('snap_'));
+            document.getElementById('snap-count').innerText = snaps.length;
+            
+            const cont = document.getElementById('snapshot-list');
+            cont.innerHTML = '';
+            
+            for(let key of snaps) {
+                const s = await localforage.getItem(key);
+                if(s) {
+                    cont.insertAdjacentHTML('beforeend', `
+                    <div class="flex justify-between items-center bg-gray-800/50 p-2 rounded text-[10px] font-mono border border-gray-700">
+                        <div class="truncate flex-1 cursor-pointer hover:text-cyan-400" onclick="App.loadSnapshot('${s.id}')">📸 ${s.name}</div>
+                        <button onclick="App.deleteSnapshot('${s.id}')" class="text-red-400 hover:text-red-300 ml-2"><i data-lucide="trash" class="w-3 h-3"></i></button>
+                    </div>`);
+                }
+            }
+            lucide.createIcons();
+        }
+    };
+
+    window.onload = () => App.init();
+  </script>
+</body>
+</html>
+
+

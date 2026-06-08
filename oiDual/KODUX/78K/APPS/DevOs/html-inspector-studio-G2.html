@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>KODUX ∆7 // Mobile Studio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#05070a">
+
+  <!-- ========================================== -->
+  <!-- CDNs & DEPENDÊNCIAS                        -->
+  <!-- ========================================== -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- CodeMirror -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-ocean.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
+
+  <!-- Vis Network (Grafo) -->
+  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+  <style>
+    /* ========================================== */
+    /* CSS CORE MOBILE-FIRST                      */
+    /* ========================================== */
+    :root {
+      --bg-dark: #05070a;
+      --bg-panel: #0d1117;
+      --bg-card: #161b22;
+      --neon-cyan: #00ffff;
+      --neon-magenta: #ff00ff;
+      --text-main: #c9d1d9;
+      --text-muted: #8b949e;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --nav-height: 60px;
+      --header-height: 56px;
+      
+      /* Modo Compacto Variáveis */
+      --card-p: 12px;
+      --font-size-base: 14px;
+    }
+
+    body[data-mode="compact"] {
+      --card-p: 8px;
+      --font-size-base: 12px;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100dvh; /* Adaptativo para Safari */
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      font-size: var(--font-size-base);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Utilitários Gerais */
+    .glass { background: rgba(13, 17, 23, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid #30363d; }
+    .glass-top { border-bottom: 1px solid #30363d; }
+    .glass-bottom { border-top: 1px solid #30363d; }
+    
+    .view-panel {
+      display: none;
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: relative;
+    }
+    .view-panel.active { display: flex; flex-direction: column; }
+
+    /* Estilos de Componentes */
+    .btn-cyber {
+      background: transparent; border: 1px solid #30363d; color: var(--text-main);
+      border-radius: 8px; transition: all 0.2s ease;
+    }
+    .btn-cyber:active { transform: scale(0.96); }
+    .btn-cyber.primary { border-color: var(--neon-cyan); color: var(--neon-cyan); }
+    .btn-cyber.primary:active { background: rgba(0,255,255,0.1); }
+    .btn-cyber.danger { border-color: var(--neon-magenta); color: var(--neon-magenta); }
+
+    /* CodeMirror Mobile Overrides */
+    .CodeMirror { 
+      height: 100% !important; 
+      font-family: 'JetBrains Mono', monospace; 
+      font-size: var(--font-size-base); 
+      background: var(--bg-dark) !important; 
+    }
+    
+    /* Bottom Navigation */
+    #mobileNav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: calc(var(--nav-height) + var(--safe-bottom));
+      padding-bottom: var(--safe-bottom);
+      z-index: 100;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+    }
+    .nav-item {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: var(--text-muted); font-size: 10px; font-weight: 600; text-transform: uppercase;
+      height: 100%; cursor: pointer; transition: color 0.2s;
+    }
+    .nav-item i { margin-bottom: 4px; transition: transform 0.2s; }
+    .nav-item.active { color: var(--neon-cyan); }
+    .nav-item.active i { transform: translateY(-2px); }
+
+    /* Drawer Sidebar */
+    #drawer {
+      position: fixed; top: 0; left: -100%; width: 280px; bottom: 0;
+      background: var(--bg-panel); border-right: 1px solid #30363d;
+      z-index: 1000; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex; flex-direction: column;
+      padding-top: var(--safe-top);
+    }
+    #drawer.open { left: 0; }
+    #drawer-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px);
+      z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    #drawer-overlay.open { opacity: 1; pointer-events: auto; }
+
+    /* Inspector Cards & Accordions */
+    .accordion-header {
+      background: #161b22; padding: 12px; font-weight: 600; font-size: 13px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-top: 1px solid #30363d; border-bottom: 1px solid #30363d;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .card-resource {
+      background: var(--bg-card); border: 1px solid #30363d; border-radius: 12px;
+      padding: var(--card-p); margin: 8px 12px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .card-row { display: flex; justify-content: space-between; align-items: center; }
+    
+    /* Device Preview Wrapper */
+    #preview-wrapper {
+      margin: 0 auto; transition: width 0.3s, height 0.3s;
+      background: #fff; position: relative;
+      border: 1px solid #30363d; border-radius: 4px; overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    #preview-wrapper iframe { width: 100%; height: 100%; border: none; }
+
+    /* FAB */
+    .fab {
+      position: fixed; bottom: calc(var(--nav-height) + var(--safe-bottom) + 16px); right: 16px;
+      width: 48px; height: 48px; border-radius: 24px; background: var(--neon-cyan);
+      color: #000; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 255, 255, 0.4); z-index: 90;
+      cursor: pointer; transition: transform 0.2s;
+    }
+    .fab:active { transform: scale(0.9); }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================== -->
+  <!-- HEADER MOBILE                              -->
+  <!-- ========================================== -->
+  <header class="glass glass-top w-full flex items-center justify-between px-4 z-50 shrink-0" style="padding-top: calc(var(--safe-top) + 8px); padding-bottom: 8px; height: calc(var(--header-height) + var(--safe-top));">
+    <div class="flex items-center gap-3">
+      <button onclick="App.toggleDrawer()" class="p-1 -ml-1 text-gray-400 hover:text-white">
+        <i data-lucide="menu" class="w-6 h-6"></i>
+      </button>
+      <div class="font-bold tracking-widest uppercase text-sm flex items-center gap-2">
+        <i data-lucide="cpu" class="w-4 h-4 text-cyan-400"></i>
+        <span>KODUX <span class="text-cyan-400">∆7</span></span>
+      </div>
+    </div>
+    <div class="text-xs font-mono text-gray-500 bg-gray-800/50 px-2 py-1 rounded border border-gray-700">
+      <span id="top-size">0KB</span>
+    </div>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- MENU DRAWER (DEV OS)                       -->
+  <!-- ========================================== -->
+  <div id="drawer-overlay" onclick="App.toggleDrawer()"></div>
+  <aside id="drawer">
+    <div class="p-4 border-b border-[#30363d] flex justify-between items-center">
+      <h2 class="font-bold text-cyan-400">MENU DEVOS</h2>
+      <button onclick="App.toggleDrawer()"><i data-lucide="x" class="w-5 h-5"></i></button>
+    </div>
+    
+    <div class="p-4 flex-1 overflow-y-auto">
+      <!-- Stats -->
+      <div class="mb-6 grid grid-cols-2 gap-2 text-xs font-mono">
+        <div class="bg-gray-800/50 p-2 rounded border border-gray-700">
+          <div class="text-gray-500 mb-1">CDNs/Links</div>
+          <div class="text-lg text-white" id="dr-stats-cdns">0</div>
+        </div>
+        <div class="bg-gray-800/50 p-2 rounded border border-gray-700">
+          <div class="text-gray-500 mb-1">Duplicados</div>
+          <div class="text-lg text-red-400" id="dr-stats-dupes">0</div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex flex-col gap-3">
+        <button class="btn-cyber flex items-center justify-start gap-3 p-3 w-full" onclick="document.getElementById('file-upload').click(); App.toggleDrawer();">
+          <i data-lucide="upload" class="w-4 h-4 text-gray-400"></i> Importar HTML
+        </button>
+        <input type="file" id="file-upload" class="hidden" accept=".html,.txt">
+
+        <button class="btn-cyber danger flex items-center justify-start gap-3 p-3 w-full" onclick="App.quickClean(); App.toggleDrawer();">
+          <i data-lucide="zap" class="w-4 h-4"></i> Limpeza Rápida
+        </button>
+
+        <button class="btn-cyber flex items-center justify-start gap-3 p-3 w-full" onclick="App.exportFile(); App.toggleDrawer();">
+          <i data-lucide="download" class="w-4 h-4 text-gray-400"></i> Exportar Final
+        </button>
+      </div>
+
+      <!-- Settings -->
+      <div class="mt-8 border-t border-[#30363d] pt-4">
+        <h3 class="text-[10px] text-gray-500 uppercase tracking-widest mb-3">Configurações</h3>
+        <label class="flex items-center justify-between text-sm">
+          <span>Modo Compacto</span>
+          <input type="checkbox" id="toggle-compact" onchange="App.toggleCompactMode()" class="rounded bg-gray-800 border-gray-700 text-cyan-400 focus:ring-cyan-400">
+        </label>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ========================================== -->
+  <!-- MAIN WORKSPACE                             -->
+  <!-- ========================================== -->
+  <main id="workspace" class="flex-1 relative pb-[calc(var(--nav-height)+var(--safe-bottom))] bg-[#0d1117]">
+    
+    <!-- VIEW 1: EDITOR -->
+    <section id="view-editor" class="view-panel active">
+      <div class="flex-1 relative">
+        <textarea id="code-editor"></textarea>
+      </div>
+      <!-- FAB inside Editor -->
+      <div class="fab" onclick="App.updatePreview(); UI.showToast('Preview Atualizado');" title="Sincronizar Preview">
+        <i data-lucide="play" class="w-5 h-5 ml-1"></i>
+      </div>
+    </section>
+
+    <!-- VIEW 2: INSPECTOR (Cards & Accordions) -->
+    <section id="view-inspector" class="view-panel">
+      <!-- Accordion: Externos -->
+      <div class="accordion-header" onclick="UI.toggleAccordion('acc-external')">
+        <div class="flex items-center gap-2 text-cyan-400"><i data-lucide="globe" class="w-4 h-4"></i> Links & CDNs Externas</div>
+        <i data-lucide="chevron-down" id="icon-acc-external" class="w-4 h-4 transition-transform"></i>
+      </div>
+      <div id="acc-external" class="flex flex-col pb-2"></div>
+
+      <!-- Accordion: Internos -->
+      <div class="accordion-header" onclick="UI.toggleAccordion('acc-internal')">
+        <div class="flex items-center gap-2 text-yellow-400"><i data-lucide="code-2" class="w-4 h-4"></i> Scripts & Styles Inline</div>
+        <i data-lucide="chevron-down" id="icon-acc-internal" class="w-4 h-4 transition-transform"></i>
+      </div>
+      <div id="acc-internal" class="flex flex-col pb-2"></div>
+    </section>
+
+    <!-- VIEW 3: PREVIEW (Mobile Real) -->
+    <section id="view-preview" class="view-panel bg-[#05070a]">
+      <div class="p-2 border-b border-[#30363d] bg-[#161b22] flex gap-2 justify-between items-center sticky top-0 z-10">
+        <select id="device-select" onchange="UI.changeDevice()" class="bg-[#0d1117] border border-[#30363d] text-white text-xs rounded p-1.5 flex-1 max-w-[150px]">
+          <option value="100%">Responsivo (Full)</option>
+          <option value="375px">iPhone SE</option>
+          <option value="390px">iPhone 13</option>
+          <option value="393px">iPhone 15 Pro</option>
+          <option value="412px">Android (S21)</option>
+          <option value="768px">iPad</option>
+        </select>
+        <button onclick="App.updatePreview()" class="btn-cyber px-3 py-1.5 text-xs flex items-center gap-1">
+          <i data-lucide="refresh-cw" class="w-3 h-3"></i> Atualizar
+        </button>
+      </div>
+      <div class="flex-1 overflow-auto p-4 flex justify-center items-start">
+        <div id="preview-wrapper" style="width: 100%; height: 100%;">
+          <iframe id="sandbox-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: GRAPH (Fullscreen Modal Style) -->
+    <section id="view-graph" class="view-panel bg-[#0d1117]">
+      <div id="graph-container" class="w-full h-full absolute inset-0"></div>
+      <div class="absolute bottom-4 left-4 text-[10px] bg-black/60 backdrop-blur p-2 rounded text-gray-300 pointer-events-none border border-white/10 shadow-lg">
+        <span class="text-cyan-400">●</span> DOM &nbsp; <span class="text-yellow-400">●</span> JS &nbsp; <span class="text-magenta-400">●</span> CSS
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- BOTTOM NAVIGATION                          -->
+  <!-- ========================================== -->
+  <nav id="mobileNav" class="glass glass-bottom">
+    <div class="nav-item active" onclick="App.switchTab('editor', this)">
+      <i data-lucide="code" class="w-5 h-5"></i>
+      <span>Editor</span>
+    </div>
+    <div class="nav-item" onclick="App.switchTab('inspector', this)">
+      <i data-lucide="list-tree" class="w-5 h-5"></i>
+      <span>Inspector</span>
+    </div>
+    <div class="nav-item" onclick="App.switchTab('preview', this)">
+      <i data-lucide="smartphone" class="w-5 h-5"></i>
+      <span>Preview</span>
+    </div>
+    <div class="nav-item" onclick="App.switchTab('graph', this)">
+      <i data-lucide="network" class="w-5 h-5"></i>
+      <span>Grafo</span>
+    </div>
+  </nav>
+
+  <!-- Toast Notifier -->
+  <div id="toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-cyan-900/90 text-cyan-50 border border-cyan-400 px-4 py-2 rounded-full text-xs font-bold transition-opacity duration-300 opacity-0 pointer-events-none z-[9999] shadow-[0_0_15px_rgba(0,255,255,0.3)]"></div>
+
+  <!-- ========================================== -->
+  <!-- SCRIPTS E LÓGICA DO SISTEMA PWA            -->
+  <!-- ========================================== -->
+  <script>
+    // Inicia ícones
+    lucide.createIcons();
+
+    // Estado Central
+    const State = {
+      rawHTML: '',
+      dom: null,
+      resources: [],
+      stats: { size: 0, cdns: 0, dupes: 0 },
+      editor: null,
+      graphNetwork: null,
+      updateTimeout: null,
+      isMobile: window.innerWidth < 768
+    };
+
+    // UI Controller
+    const UI = {
+      initEditor() {
+        // Opções dinâmicas para mobile vs desktop
+        const editorOptions = {
+          mode: 'htmlmixed',
+          theme: 'material-ocean',
+          lineNumbers: !State.isMobile, // Oculta numeração no mobile para poupar RAM e espaço
+          lineWrapping: true,
+          viewportMargin: State.isMobile ? 20 : Infinity, // Menos DOM no mobile
+          matchBrackets: true,
+          autoCloseTags: true,
+        };
+
+        State.editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), editorOptions);
+
+        State.editor.on('change', () => {
+          clearTimeout(State.updateTimeout);
+          State.updateTimeout = setTimeout(() => {
+            State.rawHTML = State.editor.getValue();
+            App.parseHTML(); // Atualiza painéis internamente
+          }, 1000); // Debounce maior no mobile
+        });
+      },
+
+      showToast(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.style.opacity = '1';
+        setTimeout(() => t.style.opacity = '0', 2500);
+      },
+
+      updateStats() {
+        const sizeKB = (State.stats.size / 1024).toFixed(1);
+        document.getElementById('top-size').innerText = `${sizeKB} KB`;
+        document.getElementById('dr-stats-cdns').innerText = State.stats.cdns;
+        document.getElementById('dr-stats-dupes').innerText = State.stats.dupes;
+      },
+
+      toggleAccordion(id) {
+        const el = document.getElementById(id);
+        const icon = document.getElementById('icon-' + id);
+        if(el.style.display === 'none') {
+          el.style.display = 'flex';
+          icon.style.transform = 'rotate(0deg)';
+        } else {
+          el.style.display = 'none';
+          icon.style.transform = 'rotate(-90deg)';
+        }
+      },
+
+      renderInspectorCards() {
+        const accExt = document.getElementById('acc-external');
+        const accInt = document.getElementById('acc-internal');
+        accExt.innerHTML = ''; accInt.innerHTML = '';
+
+        State.resources.forEach(res => {
+          const isJS = res.type === 'script';
+          const typeColor = isJS ? 'text-yellow-400' : 'text-magenta-400';
+          const typeLabel = isJS ? 'JS' : 'CSS';
+          
+          let name = res.inline ? `[Inline Block] ${isJS ? 'Script' : 'Style'}` : res.url.split('/').pop() || res.url;
+          if (name.length > 50) name = name.substring(0, 50) + '...';
+
+          const btnClass = res.active ? 'border-cyan-500 text-cyan-400' : 'border-gray-600 text-gray-500';
+          const btnText = res.active ? 'ON' : 'OFF';
+          
+          const dupeTag = res.isDuplicate ? `<span class="bg-red-900/50 text-red-300 px-1.5 py-0.5 rounded text-[9px] border border-red-500/30">DUPLICADO</span>` : '';
+
+          const html = `
+            <div class="card-resource" style="border-color: ${res.active ? '#30363d' : '#ef444450'}; opacity: ${res.active ? '1' : '0.6'};">
+              <div class="card-row">
+                <div class="font-mono text-sm font-semibold truncate flex-1 pr-2 text-white" title="${res.url || 'Inline'}">${name}</div>
+                ${dupeTag}
+              </div>
+              <div class="card-row">
+                <div class="text-[10px] text-gray-500 font-bold uppercase tracking-wider flex items-center gap-1">
+                  <span class="${typeColor}">●</span> ${typeLabel} ${res.inline ? 'INLINE' : 'CDN'}
+                </div>
+                <div class="flex gap-2">
+                  <button onclick="App.toggleResource('${res.id}')" class="btn-cyber text-[10px] font-bold px-4 py-1.5 ${btnClass}">
+                    ${btnText}
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+          
+          if(res.inline) accInt.insertAdjacentHTML('beforeend', html);
+          else accExt.insertAdjacentHTML('beforeend', html);
+        });
+
+        if(accExt.innerHTML === '') accExt.innerHTML = '<div class="p-4 text-center text-xs text-gray-500">Nenhum recurso externo.</div>';
+        if(accInt.innerHTML === '') accInt.innerHTML = '<div class="p-4 text-center text-xs text-gray-500">Nenhum recurso inline.</div>';
+      },
+
+      changeDevice() {
+        const val = document.getElementById('device-select').value;
+        const wrap = document.getElementById('preview-wrapper');
+        wrap.style.width = val;
+        // Ajusta a altura proporcionalmente (aprox 19.5:9 para iPhones, 4:3 iPad)
+        if(val === '100%') { wrap.style.height = '100%'; }
+        else if(val === '768px') { wrap.style.height = '1024px'; } // iPad
+        else { wrap.style.height = '800px'; } // Smartphone médio
+      },
+
+      initLazyGraph() {
+        if(State.graphNetwork) return; // já iniciado
+
+        const container = document.getElementById('graph-container');
+        const nodes = new vis.DataSet([{ id: 'root', label: 'HTML DOM', shape: 'hexagon', color: '#00ffff', font:{color:'#000'} }]);
+        const edges = new vis.DataSet([]);
+
+        State.resources.forEach(res => {
+          const color = res.type === 'script' ? '#fbbf24' : '#e879f9';
+          nodes.add({
+            id: res.id,
+            label: res.inline ? `Inline ${res.type}` : (res.url.split('/').pop().substring(0,12)+'..'),
+            shape: 'box',
+            color: { background: color, border: res.active ? color : '#ef4444' },
+            font: { color: '#000', size: 10 }
+          });
+          edges.add({ from: 'root', to: res.id, color: res.active ? '#30363d' : '#ef4444', dashes: !res.active });
+        });
+
+        State.graphNetwork = new vis.Network(container, {nodes, edges}, {
+          physics: { stabilization: false, barnesHut: { springLength: 80 } },
+          nodes: { borderWidth: 2, shadow: true },
+          edges: { smooth: true, arrows: { to: { enabled: true, scaleFactor: 0.5 } } }
+        });
+      },
+
+      updateGraphState() {
+        if(!State.graphNetwork) return;
+        State.resources.forEach(res => {
+          const color = res.type === 'script' ? '#fbbf24' : '#e879f9';
+          State.graphNetwork.body.data.nodes.update({ id: res.id, color: { border: res.active ? color : '#ef4444' } });
+          State.graphNetwork.body.data.edges.update({ id: res.id, color: res.active ? '#30363d' : '#ef4444', dashes: !res.active }); // Simplificado
+        });
+      }
+    };
+
+    // App Core Lógica
+    const App = {
+      init() {
+        UI.initEditor();
+        this.setupEvents();
+        
+        // Template Base
+        const startHtml = `<!DOCTYPE html>\n<html lang="pt-BR">\n<head>\n  <meta charset="utf-8">\n  <title>KODUX App</title>\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <script src="https://cdn.tailwindcss.com"><\/script>\n  <!-- Duplicado propositalmente -->\n  <script src="https://cdn.tailwindcss.com"><\/script>\n  <style>\n    body { background: #0a0a0a; color: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; }\n    .box { border: 1px solid #00ffff; padding: 2rem; border-radius: 12px; text-align: center; }\n  </style>\n</head>\n<body>\n  <div class="box">\n    <h1 class="text-2xl font-bold text-cyan-400">DevOS Ready</h1>\n    <p class="text-sm text-gray-400 mt-2">Mobile PWA Architecture</p>\n  </div>\n</body>\n</html>`;
+        
+        State.editor.setValue(startHtml);
+        // Atualização inicial forçada
+        setTimeout(() => this.updatePreview(), 500);
+      },
+
+      setupEvents() {
+        document.getElementById('file-upload').addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if(!file) return;
+          const r = new FileReader();
+          r.onload = (ev) => { State.editor.setValue(ev.target.result); UI.showToast('HTML Carregado!'); };
+          r.readAsText(file);
+        });
+      },
+
+      switchTab(viewName, navEl) {
+        // Atualiza UI da Nav
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        navEl.classList.add('active');
+
+        // Alterna Painéis Fullscreen
+        document.querySelectorAll('.view-panel').forEach(el => el.classList.remove('active'));
+        document.getElementById(`view-${viewName}`).classList.add('active');
+
+        // Lógica Lazy Load do Grafo
+        if(viewName === 'graph') {
+          setTimeout(() => UI.initLazyGraph(), 100); // Aguarda render renderizar o box
+        }
+      },
+
+      toggleDrawer() {
+        const d = document.getElementById('drawer');
+        const o = document.getElementById('drawer-overlay');
+        d.classList.toggle('open');
+        o.classList.toggle('open');
+      },
+
+      toggleCompactMode() {
+        const check = document.getElementById('toggle-compact').checked;
+        if(check) document.body.setAttribute('data-mode', 'compact');
+        else document.body.removeAttribute('data-mode');
+      },
+
+      parseHTML() {
+        const parser = new DOMParser();
+        State.dom = parser.parseFromString(State.rawHTML, 'text/html');
+
+        State.resources = [];
+        State.stats.size = new Blob([State.rawHTML]).size;
+        State.stats.cdns = 0;
+        State.stats.dupes = 0;
+
+        const urlSet = new Set();
+
+        // Extrai CSS External
+        State.dom.querySelectorAll('link[rel="stylesheet"]').forEach((el, i) => {
+          const href = el.getAttribute('href');
+          const isDupe = urlSet.has(href);
+          if(isDupe) State.stats.dupes++;
+          urlSet.add(href);
+
+          State.resources.push({ id: `res_L_${i}`, type: 'style', url: href, inline: false, node: el, active: true, isDuplicate: isDupe });
+          State.stats.cdns++;
+        });
+
+        // Extrai Inline CSS
+        State.dom.querySelectorAll('style').forEach((el, i) => {
+          State.resources.push({ id: `res_SI_${i}`, type: 'style', url: '', inline: true, node: el, active: true, isDuplicate: false });
+        });
+
+        // Extrai JS
+        State.dom.querySelectorAll('script').forEach((el, i) => {
+          const src = el.getAttribute('src');
+          if (src) {
+            const isDupe = urlSet.has(src);
+            if(isDupe) State.stats.dupes++;
+            urlSet.add(src);
+            State.resources.push({ id: `res_JS_${i}`, type: 'script', url: src, inline: false, node: el, active: true, isDuplicate: isDupe });
+            State.stats.cdns++;
+          } else {
+            State.resources.push({ id: `res_JSI_${i}`, type: 'script', url: '', inline: true, node: el, active: true, isDuplicate: false });
+          }
+        });
+
+        UI.updateStats();
+        UI.renderInspectorCards();
+        if(State.graphNetwork) {
+          State.graphNetwork.destroy();
+          State.graphNetwork = null; 
+          // Força recriação na proxima vez que a aba abrir
+        }
+      },
+
+      toggleResource(id) {
+        const res = State.resources.find(r => r.id === id);
+        if (res) {
+          res.active = !res.active;
+          UI.renderInspectorCards(); // re-render state
+          UI.updateGraphState(); // update vis
+          // Não atualiza o iframe automaticamente para economizar bateria/RAM no mobile.
+          // O usuário clica no FAB do Preview para atualizar.
+          UI.showToast('Recurso alterado. Atualize o Preview.');
+        }
+      },
+
+      updatePreview() {
+        if (!State.dom) this.parseHTML();
+        
+        // Clona e aplica comentarios virtuais baseados no state
+        const finalDom = State.dom.cloneNode(true);
+        
+        // Marca
+        State.resources.forEach(res => { if(res.node) res.node.setAttribute('data-k-id', res.id); });
+        const modDom = State.dom.cloneNode(true); // reclona c/ marcas
+        
+        State.resources.forEach(res => {
+          if (!res.active) {
+            const el = modDom.querySelector(`[data-k-id="${res.id}"]`);
+            if (el) {
+              const cmt = modDom.createComment(` OFF BY KODUX: ${el.outerHTML} `);
+              el.parentNode.replaceChild(cmt, el);
+            }
+          } else {
+             const el = modDom.querySelector(`[data-k-id="${res.id}"]`);
+             if(el) el.removeAttribute('data-k-id');
+          }
+        });
+        
+        // Limpa source
+        State.resources.forEach(res => { if(res.node) res.node.removeAttribute('data-k-id'); });
+
+        const htmlStr = '<!DOCTYPE html>\n' + modDom.documentElement.outerHTML;
+        document.getElementById('sandbox-frame').srcdoc = htmlStr;
+      },
+
+      quickClean() {
+        if (!State.dom) return;
+        const cleanDom = State.dom.cloneNode(true);
+        const seenUrls = new Set();
+        let rem = 0;
+
+        const processNode = (sel, attr) => {
+          cleanDom.querySelectorAll(sel).forEach(el => {
+            const url = el.getAttribute(attr);
+            if (url) {
+              if (seenUrls.has(url)) { el.remove(); rem++; } 
+              else { seenUrls.add(url); }
+            }
+          });
+        };
+
+        processNode('link[rel="stylesheet"]', 'href');
+        processNode('script', 'src');
+
+        if (rem > 0) {
+          State.editor.setValue('<!DOCTYPE html>\n' + cleanDom.documentElement.outerHTML);
+          UI.showToast(`🔥 ${rem} dependências duplicadas removidas!`);
+        } else {
+          UI.showToast('✨ Código já está limpo.');
+        }
+      },
+
+      exportFile() {
+        const content = State.editor.getValue();
+        const blob = new Blob([content], { type: "text/html;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = "kodux-mobile-export.html";
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a); URL.revokeObjectURL(url);
+        UI.showToast('Arquivo exportado!');
+      }
+    };
+
+    // Start
+    window.onload = () => App.init();
+
+  </script>
+</body>
+</html>
+
+

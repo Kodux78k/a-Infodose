@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>KODUX ∆7 // HTML Inspector Studio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#05070a">
+
+  <!-- ========================================== -->
+  <!-- CDNs & DEPENDÊNCIAS                        -->
+  <!-- ========================================== -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- CodeMirror para Edição de Código -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-ocean.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
+
+  <!-- Vis Network para o Grafo de Dependências -->
+  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+  <!-- JSZip para Exportação -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <!-- Split.js para painéis redimensionáveis -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.5/split.min.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #05070a;
+      --bg-panel: #0d1117;
+      --neon-cyan: #00ffff;
+      --neon-magenta: #ff00ff;
+      --text-muted: #8b949e;
+    }
+    
+    body {
+      background-color: var(--bg-dark);
+      color: #c9d1d9;
+      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    /* Scrollbars Customizadas */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-dark); }
+    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--neon-cyan); }
+
+    /* CodeMirror Override */
+    .CodeMirror { height: 100% !important; font-family: 'JetBrains Mono', monospace; font-size: 13px; background: var(--bg-panel) !important; }
+    
+    /* Split.js Gutters */
+    .gutter {
+      background-color: #161b22;
+      background-repeat: no-repeat;
+      background-position: 50%;
+      cursor: col-resize;
+      transition: background 0.2s;
+    }
+    .gutter:hover { background-color: var(--neon-cyan); }
+    .gutter.gutter-horizontal { background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg=='); }
+
+    /* Custom UI Elements */
+    .glass-header {
+      background: rgba(13, 17, 23, 0.8);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #30363d;
+    }
+    .btn-cyber {
+      background: transparent;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      transition: all 0.2s;
+    }
+    .btn-cyber:hover {
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+    }
+    .btn-cyber.active {
+      background: rgba(0, 255, 255, 0.1);
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+    }
+    .btn-magenta {
+      border-color: var(--neon-magenta);
+      color: var(--neon-magenta);
+    }
+    .btn-magenta:hover {
+      background: rgba(255, 0, 255, 0.1);
+      box-shadow: 0 0 10px rgba(255, 0, 255, 0.2);
+    }
+
+    .stat-box {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 8px;
+    }
+
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+    }
+    .dot-on { background-color: #00ff00; box-shadow: 0 0 8px #00ff00; }
+    .dot-off { background-color: #ff0044; box-shadow: 0 0 8px #ff0044; }
+
+    .nav-tab {
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+    .nav-tab.active {
+      border-bottom-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+    }
+
+    #graph-container {
+      width: 100%;
+      height: 100%;
+      background: #0d1117;
+    }
+
+    /* Ocultar elementos desativados visualmente */
+    .hidden-panel { display: none !important; }
+  </style>
+</head>
+<body class="flex flex-col">
+
+  <!-- HEADER NAV -->
+  <header class="glass-header h-14 flex items-center justify-between px-4 shrink-0 z-50">
+    <div class="flex items-center gap-3">
+      <i data-lucide="cpu" class="text-cyan-400"></i>
+      <h1 class="font-bold tracking-wider uppercase text-sm"><span class="text-cyan-400">KODUX ∆7</span> // Inspector Studio</h1>
+    </div>
+    
+    <div class="flex items-center gap-4 text-xs font-mono" id="header-stats">
+      <div class="stat-box px-3 py-1 flex gap-2"><span class="text-gray-500">TAMANHO:</span> <span id="stat-size" class="text-cyan-300">0 KB</span></div>
+      <div class="stat-box px-3 py-1 flex gap-2"><span class="text-gray-500">CDNs:</span> <span id="stat-cdns" class="text-magenta-400">0</span></div>
+      <div class="stat-box px-3 py-1 flex gap-2"><span class="text-gray-500">DUPLICAÇÕES:</span> <span id="stat-dupes" class="text-red-400">0</span></div>
+    </div>
+
+    <div class="flex items-center gap-2 text-xs">
+      <button class="btn-cyber px-3 py-1.5 rounded flex items-center gap-2" onclick="document.getElementById('file-upload').click()">
+        <i data-lucide="upload" class="w-3 h-3"></i> UPLOAD
+      </button>
+      <input type="file" id="file-upload" class="hidden" accept=".html,.txt">
+      
+      <button class="btn-cyber btn-magenta px-3 py-1.5 rounded flex items-center gap-2" onclick="App.quickClean()">
+        <i data-lucide="zap" class="w-3 h-3"></i> LIMPEZA RÁPIDA
+      </button>
+      
+      <button class="btn-cyber px-3 py-1.5 rounded flex items-center gap-2" onclick="App.exportFile()">
+        <i data-lucide="download" class="w-3 h-3"></i> EXPORTAR HTML
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <main id="workspace" class="flex flex-1 overflow-hidden">
+    
+    <!-- PANEL 1: EDITOR -->
+    <section id="panel-editor" class="flex flex-col h-full bg-[#0d1117] border-r border-[#30363d]">
+      <div class="h-8 bg-[#161b22] border-b border-[#30363d] flex items-center px-3 gap-2 text-xs font-mono shrink-0">
+        <i data-lucide="code" class="w-3 h-3 text-cyan-400"></i> CÓDIGO FONTE
+      </div>
+      <div class="flex-1 relative">
+        <textarea id="code-editor"></textarea>
+      </div>
+    </section>
+
+    <!-- PANEL 2: INSPECTOR & GRAPH -->
+    <section id="panel-inspector" class="flex flex-col h-full bg-[#0d1117] border-r border-[#30363d] overflow-hidden">
+      <!-- Tabs -->
+      <div class="h-8 bg-[#161b22] border-b border-[#30363d] flex items-center px-2 shrink-0 text-xs font-mono overflow-x-auto select-none">
+        <div class="nav-tab active px-3 py-1.5" onclick="UI.switchTab('tab-cdns')">CDNs & SCRIPTS</div>
+        <div class="nav-tab px-3 py-1.5" onclick="UI.switchTab('tab-bootloader')">BOOTLOADER ANALYZER</div>
+        <div class="nav-tab px-3 py-1.5" onclick="UI.switchTab('tab-graph')">GRAFO DE DEPENDÊNCIAS</div>
+      </div>
+      
+      <!-- Tab Content: CDNs -->
+      <div id="tab-cdns" class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+        <div class="mb-4 text-xs text-gray-400">Desligue (OFF) para comentar automaticamente o script/link no documento.</div>
+        <div id="cdn-list" class="flex flex-col gap-2">
+          <!-- Renderizado via JS -->
+          <div class="text-sm text-gray-500 text-center py-10">Carregue um HTML para analisar.</div>
+        </div>
+      </div>
+
+      <!-- Tab Content: Bootloader -->
+      <div id="tab-bootloader" class="flex-1 overflow-y-auto p-4 custom-scrollbar hidden-panel">
+        <div class="mb-4 text-xs text-gray-400">Rastreamento estático de seletores (#ids e .classes) dentro dos scripts embutidos.</div>
+        <div id="bootloader-list" class="flex flex-col gap-4"></div>
+      </div>
+
+      <!-- Tab Content: Graph -->
+      <div id="tab-graph" class="flex-1 hidden-panel relative">
+        <div id="graph-container"></div>
+        <div class="absolute bottom-2 left-2 text-[10px] bg-black/50 p-2 rounded text-gray-300 pointer-events-none">
+          <span class="text-cyan-400">●</span> HTML &nbsp; <span class="text-yellow-400">●</span> JS &nbsp; <span class="text-magenta-400">●</span> CSS
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL 3: SANDBOX PREVIEW -->
+    <section id="panel-preview" class="flex flex-col h-full bg-white relative">
+      <div class="h-8 bg-[#161b22] border-b border-[#30363d] flex items-center justify-between px-3 shrink-0 text-xs font-mono text-gray-300">
+        <div class="flex items-center gap-2">
+          <i data-lucide="layout" class="w-3 h-3 text-cyan-400"></i> SANDBOX PREVIEW
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="hover:text-cyan-400" onclick="App.updatePreview()" title="Atualizar Preview">
+            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+          </button>
+        </div>
+      </div>
+      <iframe id="sandbox-frame" class="flex-1 w-full h-full border-none bg-white"></iframe>
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- LÓGICA DO SISTEMA                          -->
+  <!-- ========================================== -->
+  <script>
+    // Inicialização dos Ícones Lucide
+    lucide.createIcons();
+
+    // Estado da Aplicação
+    const State = {
+      rawHTML: '',
+      dom: null,
+      resources: [], // { id, type, url, inline, content, node, active, isDuplicate }
+      elements: { ids: new Set(), classes: new Set() },
+      stats: { size: 0, cdns: 0, dupes: 0 },
+      editor: null,
+      graphNetwork: null,
+      updateTimeout: null
+    };
+
+    // Módulos UI
+    const UI = {
+      initSplitters() {
+        Split(['#panel-editor', '#panel-inspector', '#panel-preview'], {
+          sizes: [30, 35, 35],
+          minSize: [200, 300, 200],
+          gutterSize: 6,
+          cursor: 'col-resize'
+        });
+      },
+
+      initEditor() {
+        State.editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+          mode: 'htmlmixed',
+          theme: 'material-ocean',
+          lineNumbers: true,
+          matchBrackets: true,
+          autoCloseTags: true,
+          lineWrapping: true
+        });
+
+        // Evento de digitação com Debounce
+        State.editor.on('change', () => {
+          clearTimeout(State.updateTimeout);
+          State.updateTimeout = setTimeout(() => {
+            State.rawHTML = State.editor.getValue();
+            App.parseHTML();
+          }, 800);
+        });
+      },
+
+      switchTab(tabId) {
+        document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('#panel-inspector > div[id^="tab-"]').forEach(el => el.classList.add('hidden-panel'));
+        
+        event.currentTarget.classList.add('active');
+        document.getElementById(tabId).classList.remove('hidden-panel');
+
+        if (tabId === 'tab-graph' && State.graphNetwork) {
+          State.graphNetwork.fit(); // Ajusta o zoom do grafo
+        }
+      },
+
+      updateStats() {
+        document.getElementById('stat-size').innerText = (State.stats.size / 1024).toFixed(1) + ' KB';
+        document.getElementById('stat-cdns').innerText = State.stats.cdns;
+        document.getElementById('stat-dupes').innerText = State.stats.dupes;
+      },
+
+      renderCDNList() {
+        const container = document.getElementById('cdn-list');
+        container.innerHTML = '';
+
+        if (State.resources.length === 0) {
+          container.innerHTML = '<div class="text-sm text-gray-500 text-center py-10">Nenhum recurso encontrado.</div>';
+          return;
+        }
+
+        State.resources.forEach(res => {
+          const isJS = res.type === 'script';
+          const iconColor = isJS ? 'text-yellow-400' : 'text-magenta-400';
+          const icon = isJS ? 'file-code' : 'palette';
+          
+          let name = res.inline ? `(Inline ${isJS ? 'JS' : 'CSS'})` : res.url.split('/').pop() || res.url;
+          if (name.length > 40) name = name.substring(0, 40) + '...';
+
+          const dupeBadge = res.isDuplicate ? `<span class="bg-red-500/20 text-red-400 px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-red-500/30">Duplicado</span>` : '';
+
+          const html = `
+            <div class="stat-box p-3 flex items-center justify-between group transition-colors hover:bg-white/5">
+              <div class="flex items-center gap-3 overflow-hidden">
+                <i data-lucide="${icon}" class="w-4 h-4 ${iconColor} shrink-0"></i>
+                <div class="flex flex-col overflow-hidden">
+                  <span class="text-sm font-mono truncate text-gray-200" title="${res.url || 'Inline Script'}">${name}</span>
+                  <div class="flex items-center gap-2 mt-1">
+                    <span class="text-[10px] text-gray-500 uppercase tracking-wider">${isJS ? 'JavaScript' : 'Stylesheet'}</span>
+                    ${dupeBadge}
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <button onclick="App.toggleResource('${res.id}')" class="btn-cyber text-[10px] px-2 py-1 rounded w-12 text-center transition-all ${res.active ? 'border-green-500 text-green-400 hover:bg-green-500/10' : 'border-red-500 text-red-400 hover:bg-red-500/10'}">
+                  ${res.active ? 'ON' : 'OFF'}
+                </button>
+              </div>
+            </div>
+          `;
+          container.insertAdjacentHTML('beforeend', html);
+        });
+        lucide.createIcons();
+      },
+
+      renderBootloader() {
+        const container = document.getElementById('bootloader-list');
+        container.innerHTML = '';
+
+        const inlineScripts = State.resources.filter(r => r.type === 'script' && r.inline);
+        
+        if (inlineScripts.length === 0) {
+          container.innerHTML = '<div class="text-sm text-gray-500 text-center py-10">Nenhum script inline para analisar.</div>';
+          return;
+        }
+
+        inlineScripts.forEach((script, idx) => {
+          // Varredura estática de ocorrências
+          let foundIds = [];
+          let foundClasses = [];
+          
+          State.elements.ids.forEach(id => {
+            if (script.content.includes(`"${id}"`) || script.content.includes(`'${id}'`) || script.content.includes(`#${id}`)) {
+              foundIds.push(id);
+            }
+          });
+          State.elements.classes.forEach(cls => {
+            if (script.content.includes(`"${cls}"`) || script.content.includes(`'${cls}'`) || script.content.includes(`.${cls}`)) {
+              foundClasses.push(cls);
+            }
+          });
+
+          const totalFound = foundIds.length + foundClasses.length;
+
+          const html = `
+            <div class="stat-box p-3">
+              <div class="flex items-center justify-between mb-2">
+                <div class="text-xs font-bold text-yellow-400 font-mono"><i data-lucide="cpu" class="w-3 h-3 inline"></i> Script Inline #${idx + 1}</div>
+                <div class="text-[10px] text-gray-500">${totalFound} Refs Encontradas</div>
+              </div>
+              <div class="text-xs text-gray-400 font-mono mt-2">
+                <div class="mb-1"><strong class="text-cyan-400">IDs Utilizados:</strong> ${foundIds.length > 0 ? foundIds.map(i => `<span class="bg-cyan-900/40 px-1 rounded border border-cyan-800">#${i}</span>`).join(' ') : 'Nenhum'}</div>
+                <div><strong class="text-magenta-400">Classes Utilizadas:</strong> ${foundClasses.length > 0 ? foundClasses.map(c => `<span class="bg-magenta-900/40 px-1 rounded border border-magenta-800">.${c}</span>`).join(' ') : 'Nenhuma'}</div>
+              </div>
+            </div>
+          `;
+          container.insertAdjacentHTML('beforeend', html);
+        });
+        lucide.createIcons();
+      },
+
+      renderGraph() {
+        const container = document.getElementById('graph-container');
+        
+        const nodes = new vis.DataSet([
+          { id: 'root', label: 'HTML DOM', shape: 'hexagon', color: '#00ffff', font: { color: '#000' } }
+        ]);
+        const edges = new vis.DataSet([]);
+
+        State.resources.forEach(res => {
+          const color = res.type === 'script' ? '#fbbf24' : '#e879f9'; // yellow : fuchsia
+          const label = res.inline ? `Inline ${res.type === 'script' ? 'JS' : 'CSS'}` : (res.url.split('/').pop().substring(0, 15) + '...');
+          
+          nodes.add({
+            id: res.id,
+            label: label,
+            shape: 'box',
+            color: { background: color, border: res.active ? color : '#ef4444' }, // Red if off
+            font: { color: '#000' }
+          });
+
+          // Conecta ao ROOT
+          edges.add({
+            from: 'root',
+            to: res.id,
+            color: res.active ? '#30363d' : '#ef4444',
+            dashes: !res.active
+          });
+        });
+
+        const data = { nodes, edges };
+        const options = {
+          physics: { stabilization: false, barnesHut: { springLength: 100 } },
+          nodes: { borderWidth: 2, shadow: true },
+          edges: { smooth: true, arrows: { to: { enabled: true, scaleFactor: 0.5 } } }
+        };
+
+        if (State.graphNetwork) {
+          State.graphNetwork.destroy();
+        }
+        State.graphNetwork = new vis.Network(container, data, options);
+      }
+    };
+
+    // Módulos Core do App
+    const App = {
+      init() {
+        UI.initSplitters();
+        UI.initEditor();
+        this.setupEventListeners();
+        
+        // Boilerplate Inicial
+        const initialHTML = `<!DOCTYPE html>\n<html lang="pt-BR">\n<head>\n  <meta charset="utf-8">\n  <title>Teste KODUX</title>\n  <script src="https://cdn.tailwindcss.com"><\/script>\n  <!-- Duplicada propositalmente -->\n  <script src="https://cdn.tailwindcss.com"><\/script>\n  <style>\n    body { background: #111; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; }\n    .teste-class { border: 1px solid cyan; padding: 20px; }\n  </style>\n</head>\n<body>\n  <div id="main-box" class="teste-class">\n    <h1>Olá DevOS!</h1>\n  </div>\n  <script>\n    console.log("Iniciando App");\n    const box = document.getElementById('main-box');\n    box.style.boxShadow = '0 0 20px cyan';\n  <\/script>\n</body>\n</html>`;
+        
+        State.editor.setValue(initialHTML);
+      },
+
+      setupEventListeners() {
+        document.getElementById('file-upload').addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            State.editor.setValue(ev.target.result);
+          };
+          reader.readAsText(file);
+        });
+      },
+
+      parseHTML() {
+        // Criar DOM Virtual
+        const parser = new DOMParser();
+        State.dom = parser.parseFromString(State.rawHTML, 'text/html');
+
+        // Resetar Estado
+        State.resources = [];
+        State.elements.ids.clear();
+        State.elements.classes.clear();
+        State.stats.size = new Blob([State.rawHTML]).size;
+        State.stats.cdns = 0;
+        State.stats.dupes = 0;
+
+        const urlSet = new Set(); // Para checar duplicadas
+
+        // Extrair Links CSS
+        State.dom.querySelectorAll('link[rel="stylesheet"]').forEach((el, idx) => {
+          const href = el.getAttribute('href');
+          const isDupe = urlSet.has(href);
+          if(isDupe) State.stats.dupes++;
+          urlSet.add(href);
+
+          State.resources.push({
+            id: `res_link_${idx}`,
+            type: 'style',
+            url: href,
+            inline: false,
+            content: '',
+            node: el, // ref
+            active: true,
+            isDuplicate: isDupe
+          });
+          State.stats.cdns++;
+        });
+
+        // Extrair Styles Inline
+        State.dom.querySelectorAll('style').forEach((el, idx) => {
+          State.resources.push({
+            id: `res_style_${idx}`,
+            type: 'style',
+            url: '',
+            inline: true,
+            content: el.innerHTML,
+            node: el,
+            active: true,
+            isDuplicate: false
+          });
+        });
+
+        // Extrair Scripts Externos e Inlines
+        State.dom.querySelectorAll('script').forEach((el, idx) => {
+          const src = el.getAttribute('src');
+          if (src) {
+            const isDupe = urlSet.has(src);
+            if(isDupe) State.stats.dupes++;
+            urlSet.add(src);
+
+            State.resources.push({
+              id: `res_script_${idx}`,
+              type: 'script',
+              url: src,
+              inline: false,
+              content: '',
+              node: el,
+              active: true,
+              isDuplicate: isDupe
+            });
+            State.stats.cdns++;
+          } else {
+            State.resources.push({
+              id: `res_script_in_${idx}`,
+              type: 'script',
+              url: '',
+              inline: true,
+              content: el.innerHTML,
+              node: el,
+              active: true,
+              isDuplicate: false
+            });
+          }
+        });
+
+        // Extrair Elementos (IDs e Classes) do HTML para o Bootloader Analyzer
+        State.dom.querySelectorAll('*').forEach(el => {
+          if (el.id) State.elements.ids.add(el.id);
+          if (el.className && typeof el.className === 'string') {
+            el.className.split(/\s+/).forEach(cls => {
+              if (cls) State.elements.classes.add(cls);
+            });
+          }
+        });
+
+        // Atualizar Views
+        UI.updateStats();
+        UI.renderCDNList();
+        UI.renderBootloader();
+        UI.renderGraph();
+        this.updatePreview();
+      },
+
+      toggleResource(id) {
+        const res = State.resources.find(r => r.id === id);
+        if (res) {
+          res.active = !res.active;
+          UI.renderCDNList(); // Re-renderiza botões
+          UI.renderGraph();   // Atualiza cores no grafo
+          this.updatePreview(); // Atualiza Iframe
+        }
+      },
+
+      updatePreview() {
+        if (!State.dom) return;
+
+        // Criamos um Clone do DOM para modificar (comentar itens desativados)
+        const cloneDom = State.dom.cloneNode(true);
+        
+        // Função auxiliar para achar o nó equivalente no clone
+        const findNodeInClone = (originalNode) => {
+            // Um truque é marcar o original com um data-id temporário, 
+            // clonar, achar pelo data-id no clone, e depois limpar.
+            // Para simplificar, faremos isso via index da tag.
+            // Mas a forma mais segura:
+            return cloneDom; // mock
+        };
+
+        // Vamos reconstruir o HTML string iterando e substituindo no source (abordagem mais robusta para manter formatação)
+        // Como o DOMParser limpa muita coisa, vamos usar o outerHTML do Clone.
+        
+        // Marcar originais
+        State.resources.forEach(res => {
+          res.node.setAttribute('data-kdx-id', res.id);
+        });
+
+        // Reclonar com marcadores
+        const finalDom = State.dom.cloneNode(true);
+
+        State.resources.forEach(res => {
+          if (!res.active) {
+            const target = finalDom.querySelector(`[data-kdx-id="${res.id}"]`);
+            if (target) {
+              // Transforma em comentário HTML
+              const comment = finalDom.createComment(` DISABLED BY KODUX: ${target.outerHTML} `);
+              target.parentNode.replaceChild(comment, target);
+            }
+          } else {
+             // Limpar marcador
+             const target = finalDom.querySelector(`[data-kdx-id="${res.id}"]`);
+             if(target) target.removeAttribute('data-kdx-id');
+          }
+        });
+
+        // Limpar marcadores dos originais
+        State.resources.forEach(res => {
+          res.node.removeAttribute('data-kdx-id');
+        });
+
+        const finalHTML = '<!DOCTYPE html>\n' + finalDom.documentElement.outerHTML;
+        
+        const iframe = document.getElementById('sandbox-frame');
+        iframe.srcdoc = finalHTML;
+      },
+
+      quickClean() {
+        if (!State.dom) return;
+        
+        // Criar um novo DOM para limpar
+        const cleanDom = State.dom.cloneNode(true);
+        const seenUrls = new Set();
+        let removedCount = 0;
+
+        const processNode = (selector, urlAttr) => {
+          cleanDom.querySelectorAll(selector).forEach(el => {
+            const url = el.getAttribute(urlAttr);
+            if (url) {
+              if (seenUrls.has(url)) {
+                el.remove();
+                removedCount++;
+              } else {
+                seenUrls.add(url);
+              }
+            }
+          });
+        };
+
+        processNode('link[rel="stylesheet"]', 'href');
+        processNode('script', 'src');
+
+        if (removedCount > 0) {
+          const newHTML = '<!DOCTYPE html>\n' + cleanDom.documentElement.outerHTML;
+          State.editor.setValue(newHTML);
+          alert(`⚡ Limpeza Rápida: ${removedCount} dependências duplicadas removidas!`);
+        } else {
+          alert('✨ O código já está limpo. Nenhuma duplicação externa encontrada.');
+        }
+      },
+
+      exportFile() {
+        const content = State.editor.getValue();
+        const blob = new Blob([content], { type: "text/html;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "kodux-export-limpo.html";
+        document.body.appendChild(a);
+        a.click();
+        
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    };
+
+    // Iniciar
+    window.onload = () => App.init();
+
+  </script>
+</body>
+</html>
+

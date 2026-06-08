@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KODUX · HTML Inspector Studio ∆7</title>
+
+<!-- CDNs ESSENCIAIS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.6/split.min.js"></script>
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/acorn/8.11.3/acorn.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+<style>
+:root{
+  --bg:#000;--panel:#0a0a0a;--border:#22D3EE;--accent:#F97316;--text:#22D3EE;
+  --ok:#22C55E;--warn:#FACC15;--off:#ef4444;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:monospace}
+body{background:var(--bg);color:var(--text);overflow:hidden}
+header{height:50px;background:var(--panel);border-bottom:2px solid var(--border);display:flex;align-items:center;padding:0 15px;gap:10px}
+header h1{font-size:14px;text-shadow:0 0 10px var(--accent)}
+header button{background:var(--panel);color:var(--text);border:1px solid var(--border);padding:6px 12px;cursor:pointer;font-size:12px}
+header button:hover{background:var(--border);color:#000}
+.split{display:flex;height:calc(100vh - 50px)}
+.panel{background:var(--panel);border-right:1px solid var(--border);overflow:auto}
+#left{width:25%}
+#center{width:50%}
+#right{width:25%}
+.gutter{background:var(--border);cursor:col-resize;width:4px}
+.section{border-bottom:1px solid #222;padding:10px}
+.section h3{font-size:12px;color:var(--accent);margin-bottom:8px}
+.upload-area{border:2px dashed var(--border);padding:20px;text-align:center;cursor:pointer}
+textarea{width:100%;height:120px;background:#000;color:var(--text);border:1px solid #333;padding:8px;font-size:11px}
+.cdn-item{display:flex;justify-content:space-between;align-items:center;padding:6px;border:1px solid #222;margin:4px 0;font-size:11px}
+.cdn-item button{padding:4px 8px;border:none;cursor:pointer;font-size:10px}
+.btn-on{background:var(--ok)}.btn-off{background:var(--off)}.btn-warn{background:var(--warn);color:#000}
+#previewFrame{width:100%;height:100%;border:none;background:#fff}
+#graph{width:100%;height:300px;border:1px solid #333}
+.tree-node{padding:4px 8px;font-size:11px;cursor:pointer;border-left:2px solid transparent}
+.tree-node:hover{background:#111;border-left:2px solid var(--accent)}
+.stats{font-size:11px;line-height:1.6;color:#aaa}
+#editorContainer{height:100%}
+.gutter:hover{background:var(--accent)}
+</style>
+</head>
+<body>
+<header>
+  <h1>⌘ KODUX · HTML INSPECTOR STUDIO ∆7 ◐⟡◐</h1>
+  <button onclick="document.getElementById('fileInput').click()">📁 Upload</button>
+  <input type="file" id="fileInput" accept=".html,.zip" style="display:none">
+  <button onclick="quickClean()">🧹 Limpeza Rápida</button>
+  <button onclick="toggleAuto()">AUTO [ON]</button>
+  <button onclick="updatePreview()">▶ UPDATE</button>
+  <button onclick="exportHTML()">💾 Export HTML</button>
+</header>
+
+<div class="split">
+  <!-- LEFT: TREE + CDN -->
+  <div id="left" class="panel">
+    <div class="section">
+      <h3>📤 UPLOAD / COLAR HTML</h3>
+      <div class="upload-area" onclick="document.getElementById('fileInput').click()">Clique ou arraste HTML aqui</div>
+      <textarea id="htmlInput" placeholder="Cole HTML aqui..."></textarea>
+    </div>
+
+    <div class="section">
+      <h3>🌳 TREE VIEW</h3>
+      <div id="treeView"></div>
+    </div>
+
+    <div class="section">
+      <h3>📦 CDN INSPECTOR</h3>
+      <div id="cdnList"></div>
+    </div>
+  </div>
+
+  <!-- CENTER: PREVIEW -->
+  <div id="center" class="panel">
+    <div class="section">
+      <h3>🖼️ SANDBOX PREVIEW</h3>
+      <iframe id="previewFrame" sandbox="allow-scripts"></iframe>
+    </div>
+    <div class="section">
+      <h3>🕸️ DEPENDENCY GRAPH</h3>
+      <div id="graph"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: EDITOR + STATS -->
+  <div id="right" class="panel">
+    <div class="section">
+      <h3>✏️ MONACO EDITOR</h3>
+      <div id="editorContainer"></div>
+    </div>
+
+    <div class="section">
+      <h3>📊 ESTATÍSTICAS</h3>
+      <div class="stats" id="stats"></div>
+    </div>
+
+    <div class="section">
+      <h3>💾 PRESETS</h3>
+      <button onclick="savePreset()">Salvar Preset</button>
+      <button onclick="loadPreset()">Carregar Preset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentHTML = '', editor, network, autoUpdate = true, parsedData = {};
+
+// Split panels
+Split(['#left', '#center', '#right'], {sizes:[25,50,25], gutterSize:4});
+
+// Monaco Editor
+require.config({paths:{'vs':'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs'}});
+require(['vs/editor.main'], function(){
+  editor = monaco.editor.create(document.getElementById('editorContainer'), {
+    value: '// Selecione um script/CSS pra editar',
+    language: 'html',
+    theme: 'vs-dark',
+    fontSize: 12
+  });
+});
+
+// Upload + Parse
+document.getElementById('fileInput').onchange = e => {
+  const file = e.target.files[0];
+  if(file.name.endsWith('.zip')) return alert('ZIP: descompacte e cole HTML');
+  const reader = new FileReader();
+  reader.onload = () => {
+    currentHTML = reader.result;
+    document.getElementById('htmlInput').value = currentHTML;
+    parseHTML();
+  };
+  reader.readAsText(file);
+};
+
+document.getElementById('htmlInput').oninput = () => {
+  currentHTML = document.getElementById('htmlInput').value;
+  if(autoUpdate) parseHTML();
+};
+
+function parseHTML(){
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(currentHTML, 'text/html');
+
+  // Extrair dados
+  parsedData = {
+    css: [...doc.querySelectorAll('link[rel="stylesheet"]')].map(l=>l.href),
+    js: [...doc.querySelectorAll('script[src]')].map(s=>s.src),
+    inlineCss: [...doc.querySelectorAll('style')].map(s=>s.textContent),
+    inlineJs: [...doc.querySelectorAll('script:not([src])')].map(s=>s.textContent),
+    ids: [...doc.querySelectorAll('[id]')].map(el=>el.id),
+    classes: [...doc.querySelectorAll('[class]')].map(el=>el.className)
+  };
+
+  updateTree(doc);
+  updateCDNList();
+  updatePreview();
+  updateStats();
+  updateGraph();
+}
+
+function updateTree(doc){
+  const tree = document.getElementById('treeView');
+  tree.innerHTML = '';
+  const walk = (node, depth=0) => {
+    if(node.nodeType===1){
+      const div = document.createElement('div');
+      div.className = 'tree-node';
+      div.style.paddingLeft = depth*10+'px';
+      div.textContent = node.tagName.toLowerCase() + (node.id?`#${node.id}`:'') + (node.className?`.${node.className.split(' ')[0]}`:'');
+      div.onclick = () => highlightElement(node);
+      tree.appendChild(div);
+    }
+    [...node.childNodes].forEach(n=>walk(n, depth+1));
+  };
+  walk(doc.body);
+}
+
+function updateCDNList(){
+  const list = document.getElementById('cdnList');
+  list.innerHTML = '';
+
+  const allCDNs = [...parsedData.css,...parsedData.js];
+  const cdnMap = {};
+
+  allCDNs.forEach(url=>{
+    const name = url.split('/').pop().split('?')[0];
+    cdnMap[name] = cdnMap[name] || {url, count:0, used:[]};
+    cdnMap[name].count++;
+  });
+
+  // Detectar uso em divs
+  parsedData.ids.forEach(id=>{
+    if(currentHTML.includes(id)) {
+      Object.values(cdnMap).forEach(c=>c.used.push('#'+id));
+    }
+  });
+
+  Object.entries(cdnMap).forEach(([name, data])=>{
+    const div = document.createElement('div');
+    div.className = 'cdn-item';
+    const status = data.count>1? '⚠ Duplicado' : data.used.length? '✓ Usado' : '✖ Não usado';
+    const btnClass = data.count>1? 'btn-warn' : data.used.length? 'btn-on' : 'btn-off';
+    div.innerHTML = `
+      <div>
+        <b>${name}</b><br>
+        <small>${status} ${data.used.length? '| '+data.used.slice(0,2).join(', '):''}</small>
+      </div>
+      <button class="${btnClass}" onclick="toggleCDN('${data.url}', this)">OFF</button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function toggleCDN(url, btn){
+  const regex = new RegExp(`<link[^>]*href=["']${url}["'][^>]*>|<script[^>]*src=["']${url}["'][^>]*>.*?</script>`, 'g');
+  if(btn.textContent==='OFF'){
+    currentHTML = currentHTML.replace(regex, m=>`<!-- ${m} -->`);
+    btn.textContent = 'ON';
+    btn.className = 'btn-off';
+  } else {
+    currentHTML = currentHTML.replace(`<!-- <link`, '<link').replace(`</script> -->`, '</script>');
+    btn.textContent = 'OFF';
+    btn.className = 'btn-on';
+  }
+  document.getElementById('htmlInput').value = currentHTML;
+  if(autoUpdate) updatePreview();
+}
+
+function updatePreview(){
+  document.getElementById('previewFrame').srcdoc = currentHTML;
+}
+
+function updateGraph(){
+  const nodes = new vis.DataSet([
+    {id:1,label:'HTML'},
+    {id:2,label:'HEAD'},
+    {id:3,label:'BODY'},
+    {id:4,label:'CSS'},
+    {id:5,label:'JS'},
+   ...parsedData.ids.slice(0,10).map((id,i)=>({id:10+i,label:'#'+id}))
+  ]);
+
+  const edges = new vis.DataSet([
+    {from:1,to:2},{from:1,to:3},{from:2,to:4},{from:2,to:5},
+   ...parsedData.ids.slice(0,10).map((id,i)=>({from:3,to:10+i}))
+  ]);
+
+  network = new vis.Network(document.getElementById('graph'), {nodes,edges}, {
+    nodes:{shape:'box',color:{background:'#0a0a0a',border:'#22D3EE'}},
+    edges:{color:'#22D3EE'}
+  });
+}
+
+function updateStats(){
+  document.getElementById('stats').innerHTML = `
+    HTML: ${currentHTML.length.toLocaleString()} chars<br>
+    CSS Externos: ${parsedData.css.length}<br>
+    JS Externos: ${parsedData.js.length}<br>
+    IDs: ${parsedData.ids.length}<br>
+    Classes: ${parsedData.classes.length}<br>
+    Duplicações: ${Object.values(parsedData).flat().filter((v,i,a)=>a.indexOf(v)!==i).length}
+  `;
+}
+
+function quickClean(){
+  // Remove duplicados simples
+  currentHTML = currentHTML.replace(/(<link[^>]*>).*?\1/g,'$1');
+  document.getElementById('htmlInput').value = currentHTML;
+  parseHTML();
+  alert('Limpeza Rápida: duplicados removidos');
+}
+
+function toggleAuto(){
+  autoUpdate =!autoUpdate;
+  event.target.textContent = `AUTO [${autoUpdate?'ON':'OFF'}]`;
+}
+
+function exportHTML(){
+  const blob = new Blob([currentHTML], {type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'arquivo-limpo.html';
+  a.click();
+}
+
+function highlightElement(el){
+  // TODO: destacar no preview
+  console.log('Highlight:', el.tagName, el.id);
+}
+
+function savePreset(){
+  localStorage.setItem('kodux_preset', JSON.stringify({css:parsedData.css, js:parsedData.js}));
+  alert('Preset salvo!');
+}
+
+function loadPreset(){
+  const p = JSON.parse(localStorage.getItem('kodux_preset')||'{}');
+  alert('Preset carregado: '+p.css?.length+' CSS, '+p.js?.length+' JS');
+}
+</script>
+</body>
+</html>
