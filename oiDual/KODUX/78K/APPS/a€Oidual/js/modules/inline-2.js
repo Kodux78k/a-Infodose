@@ -1,5 +1,4 @@
-
-    const API_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
+ const API_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
     const TEMPERATURE = 0.2;
 
     let training = localStorage.getItem('di_trainingText') || '';
