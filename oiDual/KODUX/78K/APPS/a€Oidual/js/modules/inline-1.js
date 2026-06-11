@@ -1,5 +1,4 @@
-
-    lucide.createIcons();
+  lucide.createIcons();
 
     const els = {
       card: document.getElementById('mainCard'),
