@@ -1,4 +1,3 @@
-
 (() => {
   'use strict';
   if (window.__UNIFIED_TEXT_LIST_BEAUTY__) return;
