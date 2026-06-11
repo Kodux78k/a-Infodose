@@ -1,5 +1,4 @@
-
-  class MyFrameLoader extends HTMLElement {
+ class MyFrameLoader extends HTMLElement {
     constructor(){
       super();
       this.attachShadow({mode:'open'});
