@@ -1,4 +1,3 @@
-
 (function(){
   const frame = document.getElementById('frame');
   const uploadInput = document.getElementById('uploadHTML');
