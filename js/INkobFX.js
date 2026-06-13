@@ -1,9 +1,7 @@
 // Bibliotecas
-import "https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js";
-import "https://unpkg.com/lucide@latest";
 
 // KOB-DH0
-import "https://kodux78k.github.io/oiDual--Y-/M0D/kob-DH0/js/kobdh0-main.js";
+
 import "https://kodux78k.github.io/oiDual--Y-/M0D/kob-DH0/js/0x03_expandir_V_D7.js";
 import "https://kodux78k.github.io/oiDual--Y-/M0D/kob-DH0/js/0x07_selar_B_D3.js";
 import "https://kodux78k.github.io/oiDual--Y-/M0D/kob-DH0/js/kob-mstr.js";
@@ -27,3 +25,5 @@ import "https://kodux78k.github.io/oiDual--Y-/js/kodbrain-66.js";
 import "https://kodux78k.github.io/oiDual--Y-/js/kobllux-fusion.js";
 import "https://kodux78k.github.io/oiDual--Y-/js/di-icon-btn.js";
 import "https://kodux78k.github.io/oiDual--Y-/js/NAGATANAZARE.js";
+
+import "https://www.infodose.com.br/js/main.js";
