@@ -1027,10 +1027,10 @@ const frame =
      State & Storage
      ----------------------------- */
   let state = {
-    archIdx: 0,
+    archIdx: null,
     isSpeaking: false,
     blocks: [],
-    currentBlockIdx: 0,
+    currentBlockIdx: null,
     isCollapsed: localStorage.getItem('kob_collapsed') === 'true'
   };
 
