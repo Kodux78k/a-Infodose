@@ -407,10 +407,10 @@ const frame =
   window.ARCHETYPES = ARCHETYPES;
 
     let state = {
-    archIdx: null,
+    archIdx: 0,
     isSpeaking: false,
     blocks: [],
-    currentBlockIdx: null,
+    currentBlockIdx: 0,
     isCollapsed: localStorage.getItem('kob_collapsed') === 'true'
   };
 
