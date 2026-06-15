@@ -62,19 +62,20 @@ const frame =
 /* PATCH 1 — expõe ARCHETYPES globalmente logo após a declaração */
   window.ARCHETYPES = ARCHETYPES;
 
-  /* -----------------------------
-     State & Storage
-     ----------------------------- */
-  const state = await (
-  await fetch("https://www.infodose.com.br/oiDual/KODUX/78K/DATA/json/state.json")
-).json();
+    let state = {
+    archIdx: 0,
+    isSpeaking: false,
+    blocks: [],
+    currentBlockIdx: 0,
+    isCollapsed: localStorage.getItem('kob_collapsed') === 'true'
+  };
 
-const KOB_NS = 'kob_tts::v1::';
+  const KOB_NS = 'kob_tts::v1::';
   const PST = k => KOB_NS + k;
-  const StorageSafe = await (
-  await fetch("https://www.infodose.com.br/oiDual/KODUX/78K/DATA/storagesafe.json")
-).json();
-
+  const StorageSafe = {
+    get(k,d=null){ try{ const v = localStorage.getItem(PST(k)); return v==null? d : JSON.parse(v); }catch{return d} },
+    set(k,v){ try{ localStorage.setItem(PST(k), JSON.stringify(v)); }catch{} }
+  };
 /* -----------------------------
      Speech API (fallback)
      ----------------------------- */
