@@ -1021,7 +1021,7 @@ const frame =
 ];
 
   /* PATCH 1 — expõe ARCHETYPES globalmente logo após a declaração */
-  window.ARCHETYPES = ARCHETYPES;
+  /* window.ARCHETYPES = ARCHETYPES; */
 
   /* -----------------------------
      State & Storage
