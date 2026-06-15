@@ -473,26 +473,26 @@ const IOS_VOICE_MAP = {
   // ── PORTUGUÊS (Brasil) ─────────────────────────────────────────
   'pt-BR': [
     { name: 'Luciana',  quality: 'standard', note: 'Feminino, principal pt-BR' },
-    { name: 'Joana',    quality: 'enhanced', note: 'Feminino, calmo' },
+    { name: 'Joana',    quality: 'standard', note: 'Feminino, calmo' },
   ],
 
   // ── INGLÊS (EUA) ───────────────────────────────────────────────
   'en-US': [
     { name: 'Samantha', quality: 'standard', note: 'Feminino, padrão' },
     { name: 'Daniel',   quality: 'standard', note: 'Masculino, neutro — atenção: Daniel é en-GB por padrão, mas funciona' },
-    { name: 'Reed',     quality: 'enhanced', note: 'Masculino, narrativo' },
-    { name: 'Rocko',    quality: 'enhanced', note: 'Masculino, grave/intenso' },
-    { name: 'Sandy',    quality: 'enhanced', note: 'Feminino, vibrante' },
-    { name: 'Flo',      quality: 'enhanced', note: 'Feminino, alegre — também en-US' },
-    { name: 'Shelley',  quality: 'enhanced', note: 'Feminino, expressivo' },
-    { name: 'Eddy',     quality: 'enhanced', note: 'Masculino, dinâmico' },
-    { name: 'Grandma',  quality: 'enhanced', note: 'Feminino sênior, grave-médio' },
-    { name: 'Grandpa',  quality: 'enhanced', note: 'Masculino sênior, grave' },
-    { name: 'Jester',   quality: 'enhanced', note: 'Masculino, brincalhão/humorístico' },
-    { name: 'Superstar',quality: 'enhanced', note: 'Feminino, carismático' },
-    { name: 'Wobble',   quality: 'enhanced', note: 'Masculino, peculiar/cômico' },
-    { name: 'Noelle',   quality: 'enhanced', note: 'Feminino, suave' },
-    { name: 'Joelle',   quality: 'enhanced', note: 'Feminino, claro' },
+    { name: 'Reed',     quality: 'standard', note: 'Masculino, narrativo' },
+    { name: 'Rocko',    quality: 'standard', note: 'Masculino, grave/intenso' },
+    { name: 'Sandy',    quality: 'standard', note: 'Feminino, vibrante' },
+    { name: 'Flo',      quality: 'standard', note: 'Feminino, alegre — também en-US' },
+    { name: 'Shelley',  quality: 'standard', note: 'Feminino, expressivo' },
+    { name: 'Eddy',     quality: 'standard', note: 'Masculino, dinâmico' },
+    { name: 'Grandma',  quality: 'standard', note: 'Feminino sênior, grave-médio' },
+    { name: 'Grandpa',  quality: 'standard', note: 'Masculino sênior, grave' },
+    { name: 'Jester',   quality: 'standard', note: 'Masculino, brincalhão/humorístico' },
+    { name: 'Superstar',quality: 'standard', note: 'Feminino, carismático' },
+    { name: 'Wobble',   quality: 'standard', note: 'Masculino, peculiar/cômico' },
+    { name: 'Noelle',   quality: 'standard', note: 'Feminino, suave' },
+    { name: 'Joelle',   quality: 'standard', note: 'Feminino, claro' },
     { name: 'Karen',    quality: 'standard', note: 'Feminino, neutro' },
     { name: 'Moira',    quality: 'standard', note: 'Feminino, irlandês suave' },
     { name: 'Tessa',    quality: 'standard', note: 'Feminino, sul-africano' },
@@ -501,21 +501,21 @@ const IOS_VOICE_MAP = {
   // ── INGLÊS (Reino Unido) ───────────────────────────────────────
   'en-GB': [
     { name: 'Daniel',   quality: 'standard', note: 'Masculino britânico, principal' },
-    { name: 'Kate',     quality: 'enhanced', note: 'Feminino britânico' },
-    { name: 'Martha',   quality: 'enhanced', note: 'Feminino britânico, maduro' },
-    { name: 'Oliver',   quality: 'enhanced', note: 'Masculino britânico jovem' },
+    { name: 'Kate',     quality: 'standard', note: 'Feminino britânico' },
+    { name: 'Martha',   quality: 'standard', note: 'Feminino britânico, maduro' },
+    { name: 'Oliver',   quality: 'standard', note: 'Masculino britânico jovem' },
   ],
 
   // ── INGLÊS (Índia) ────────────────────────────────────────────
   'en-IN': [
-    { name: 'Rishi',    quality: 'enhanced', note: 'Masculino indiano, técnico' },
+    { name: 'Rishi',    quality: 'standard', note: 'Masculino indiano, técnico' },
     { name: 'Lekha',    quality: 'standard', note: 'Feminino indiano' },
   ],
 
   // ── ESPANHOL (México) ─────────────────────────────────────────
   'es-MX': [
     { name: 'Paulina',  quality: 'standard', note: 'Feminino mexicano, expressivo' },
-    { name: 'Juan',     quality: 'enhanced', note: 'Masculino mexicano' },
+    { name: 'Juan',     quality: 'standard', note: 'Masculino mexicano' },
     { name: 'Angelica', quality: 'enhanced', note: 'Feminino mexicano, caloroso' },
   ],
 
@@ -529,22 +529,22 @@ const IOS_VOICE_MAP = {
   'fr-FR': [
     { name: 'Amelie',   quality: 'standard', note: 'Feminino, canadense-francês, mas funciona fr-FR' },
     { name: 'Thomas',   quality: 'standard', note: 'Masculino francês' },
-    { name: 'Flo',      quality: 'enhanced', note: 'Feminino fr-FR ou en-US' },
-    { name: 'Jacques',  quality: 'enhanced', note: 'Masculino francês, peculiar' },
+    { name: 'Flo',      quality: 'standard', note: 'Feminino fr-FR ou en-US' },
+    { name: 'Jacques',  quality: 'standard', note: 'Masculino francês, peculiar' },
     { name: 'Amelie',   quality: 'standard', note: 'Feminino fr-CA, amplamente compatível' },
   ],
 
   // ── ITALIANO ──────────────────────────────────────────────────
   'it-IT': [
     { name: 'Alice',    quality: 'standard', note: 'Feminino italiano, principal' },
-    { name: 'Luca',     quality: 'enhanced', note: 'Masculino italiano' },
+    { name: 'Luca',     quality: 'standard', note: 'Masculino italiano' },
     { name: 'Federica', quality: 'enhanced', note: 'Feminino italiano, caloroso' },
   ],
 
   // ── RUSSO ─────────────────────────────────────────────────────
   'ru-RU': [
     { name: 'Milena',   quality: 'standard', note: 'Feminino russo, principal' },
-    { name: 'Yuri',     quality: 'enhanced', note: 'Masculino russo' },
+    { name: 'Yuri',     quality: 'standard', note: 'Masculino russo' },
   ],
 
   // ── FINLANDÊS ─────────────────────────────────────────────────
@@ -642,7 +642,7 @@ const IOS_VOICE_MAP = {
   // ── POLACO ────────────────────────────────────────────────────
   'pl-PL': [
     { name: 'Zosia',    quality: 'standard', note: 'Feminino polaco, principal' },
-    { name: 'Krzysztof',quality: 'enhanced', note: 'Masculino polaco' },
+    { name: 'Krzysztof',quality: 'standard', note: 'Masculino polaco' },
   ],
 
   // ── TURCO ─────────────────────────────────────────────────────
@@ -653,7 +653,7 @@ const IOS_VOICE_MAP = {
   // ── HÚNGARO ───────────────────────────────────────────────────
   'hu-HU': [
     { name: 'Mariska',  quality: 'standard', note: 'Feminino húngaro, principal' },
-    { name: 'Tünde',    quality: 'enhanced', note: 'Feminino húngaro, expressivo' },
+    { name: 'Tünde',    quality: 'standard', note: 'Feminino húngaro, expressivo' },
   ],
 
   // ── INDONÉSIO ─────────────────────────────────────────────────
