@@ -56,7 +56,7 @@ const frame =
      ARCHETYPES · Unified Voice + Theme Registry
      ───────────────────────────────────────────── */
   const ARCHETYPES = await (
-  await fetch("./json/archetypes.json")
+  await fetch("https://www.infodose.com.br/oiDual/KODUX/78K/DATA/json/archetypes.json")
 ).json();
 
 /* PATCH 1 — expõe ARCHETYPES globalmente logo após a declaração */
@@ -66,13 +66,13 @@ const frame =
      State & Storage
      ----------------------------- */
   const state = await (
-  await fetch("./json/state.json")
+  await fetch("https://www.infodose.com.br/oiDual/KODUX/78K/DATA/json/state.json")
 ).json();
 
 const KOB_NS = 'kob_tts::v1::';
   const PST = k => KOB_NS + k;
   const StorageSafe = await (
-  await fetch("./json/storagesafe.json")
+  await fetch("https://www.infodose.com.br/oiDual/KODUX/78K/DATA/storagesafe.json")
 ).json();
 
 /* -----------------------------
