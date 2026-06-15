@@ -1633,7 +1633,7 @@ body, .nebula, details.acc, .btn, #fab, .kob-tts-dock, .kob-tts-panel.is-dock {
 (async () => {
   try {
     const ARCHETYPES_JSON = await fetch(
-      "https://www.infodose.com.br/js/modules/archetypes.json"
+      "https://www.infodose.com.br/oiDual/KODUX/78K/DATA/json/archetypes.json"
     ).then(r => r.json());
 
     const select = document.getElementById("startArch");
