@@ -1,0 +1,7 @@
+{
+  "archIdx": 0,
+  "isSpeaking": false,
+  "blocks": [],
+  "currentBlockIdx": 0,
+  "isCollapsed": false
+}
