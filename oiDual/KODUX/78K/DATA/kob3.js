@@ -55,9 +55,10 @@ const frame =
   /* ─────────────────────────────────────────────
      ARCHETYPES · Unified Voice + Theme Registry
      ───────────────────────────────────────────── */
-  const ARCHETYPES = await (
+  /*const ARCHETYPES = await (
   await fetch("https://www.infodose.com.br/oiDual/KODUX/78K/DATA/json/archetypes.json")
-).json();
+).json();*/
+  
 
 /* PATCH 1 — expõe ARCHETYPES globalmente logo após a declaração */
   window.ARCHETYPES = ARCHETYPES;
