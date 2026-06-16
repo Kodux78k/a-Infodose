@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- PWA Manifest & Apple Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <title>KODUX OS</title>
+
+    <!-- PWA Manifest (Data URI) -->
+    <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22KODUX%20OS%22%2C%22short_name%22%3A%22KODUX%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23000000%22%2C%22theme_color%22%3A%22%23000000%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20fill%3D'%23000'%2F%3E%3Ctext%20x%3D'50'%20y%3D'55'%20font-size%3D'40'%20fill%3D'%23fff'%20text-anchor%3D'middle'%20dominant-baseline%3D'middle'%3EK%3C%2Ftext%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* Custom Animations & System Styles */
+        :root {
+            --safe-top: env(safe-area-inset-top, 20px);
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
+        }
+        
+        body {
+            background-color: #000;
+            color: #fff;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        /* Glassmorphism utils */
+        .glass {
+            background: rgba(30, 30, 30, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .glass-panel {
+            background: rgba(40, 40, 40, 0.7);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* App Transitions */
+        .app-view {
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease;
+            transform: scale(0.95) translateY(20px);
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .app-view.active {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Iframe renderer specific */
+        iframe {
+            background: #fff; /* Browsers usually expect white background */
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Boot Screen */
+        #boot-screen {
+            transition: opacity 0.8s ease-out;
+        }
+
+        /* Hide scrollbars */
+        ::-webkit-scrollbar { display: none; }
+        
+        .safe-pt { padding-top: var(--safe-top); }
+        .safe-pb { padding-bottom: var(--safe-bottom); }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col relative">
+
+    <!-- BOOT SCREEN -->
+    <div id="boot-screen" class="absolute inset-0 z-50 bg-black flex flex-col items-center justify-center">
+
+        <h1 class="text-2xl font-bold tracking-widest text-white">METALUX • OS v3</h1>
+        <div class="mt-8 w-48 h-1 bg-gray-800 rounded-full overflow-hidden">
+            <div id="boot-progress" class="h-full bg-white w-0 transition-all duration-300"></div>
+        </div>
+    </div>
+
+
+    <!-- STATUS BAR (Fake iOS status bar) 
+
+    <div class="w-full absolute top-0 z-40 flex justify-between items-center px-6 text-xs font-medium text-white mix-blend-difference pointer-events-none safe-pt h-12">
+        <div id="sys-time">00:00</div>
+        <div class="flex gap-2 items-center">
+            <i class="fa-solid fa-signal"></i>
+            <i class="fa-solid fa-wifi"></i>
+            <i class="fa-solid fa-battery-full"></i>
+        </div>
+    </div> -->
+
+    <!-- HOME SCREEN -->
+    <div id="home-screen" class="absolute inset-0 z-10 flex flex-col pt-20 pb-24 px-6 bg-gradient-to-b from-gray-900 to-black overflow-y-auto">
+        <h2 class="text-3xl font-bold mb-8 mt-4 px-2">oiDual</h2>
+        
+        <div class="grid grid-cols-4 gap-y-8 gap-x-4" id="app-grid">
+            <!-- Apps injected by JS -->
+        </div>
+    </div>
+
+    <!-- TAB ENGINE & BROWSER (App View) -->
+    <div id="app-browser" class="app-view absolute inset-0 z-20 bg-black flex flex-col">
+        <!-- Browser Header/Address Bar -->
+
+
+  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/M0D/iFSw/css/iFSw-fix.css">
+ <script src="https://kodux78k.github.io/oiDual--Y-/M0D/FSWIN/js/modules/iFSw-fix.js"></script>
+
+  <div class="glass safe-pt px-4 pb-2 pt-3 flex items-center gap-3">
+            <button onclick="OS.UI.goHome()" class="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 active:bg-white/20">
+                <i class="fa-solid fa-chevron-left text-sm"></i>
+            </button>
+            <form onsubmit="OS.Browser.navigate(event)" class="flex-1 flex items-center bg-white/10 rounded-xl px-3 py-2 border border-white/5">
+                <i class="fa-solid fa-lock text-gray-400 text-xs mr-2"></i>
+                <input type="text" id="address-bar" class="bg-transparent border-none outline-none w-full text-sm text-white placeholder-gray-500" placeholder="Pesquisar ou URL">
+                <button type="button" onclick="OS.Browser.reload()" class="ml-2 text-gray-400 active:text-white">
+                    <i class="fa-solid fa-rotate-right text-xs"></i>
+                </button>
+            </form>
+            <button onclick="OS.TabEngine.showTabSwitcher()" class="w-8 h-8 flex items-center justify-center rounded-lg border border-white/20 text-xs font-bold active:bg-white/10">
+                <span id="tab-count">1</span>
+            </button>
+        </div>
+
+        <!-- Iframe Renderer Area -->
+        <div class="flex-1 relative bg-[#1a1a1a]" id="iframe-container">
+            <!-- Iframes are injected here -->
+            <div id="browser-empty-state" class="session-windo absolute inset-0 flex flex-col items-center justify-center p-8 text-center text-gray-400">
+                <i class="fa-solid fa-globe text-4xl mb-4 text-gray-600"></i>
+                <p class="text-sm">Muitos sites bloqueiam iframes por segurança (X-Frame-Options).</p>
+                <div class="mt-6 flex flex-wrap gap-2 justify-center">
+                    <button onclick="OS.Browser.loadUrl('https://pt.wikipedia.org')" class="px-4 py-2 bg-white/10 rounded-full text-xs text-white">Wikipedia</button>
+                    <button onclick="OS.Browser.loadUrl('https://example.com')" class="px-4 py-2 bg-white/10 rounded-full text-xs text-white">Example.com</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB SWITCHER (UI) -->
+    <div id="tab-switcher" class="app-view absolute inset-0 z-30 bg-black/90 backdrop-blur-xl flex flex-col pt-16 pb-24 px-4 overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">Abas Abertas</h2>
+            <button onclick="OS.TabEngine.newTab()" class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-900/50">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+        </div>
+        <div id="tabs-grid" class="grid grid-cols-2 gap-4">
+            <!-- Tabs injected here -->
+        </div>
+        <div class="mt-auto pt-8 flex justify-center">
+            <button onclick="OS.TabEngine.hideTabSwitcher()" class="px-8 py-3 glass-panel rounded-full text-sm font-semibold">Concluído</button>
+        </div>
+    </div>
+
+    <!-- NATIVE APP: NOTES -->
+    <div id="app-notes" class="app-view absolute inset-0 z-20 bg-[#1e1e1e] flex flex-col">
+        <div class="glass safe-pt px-4 pb-3 pt-12 flex items-center justify-between">
+            <button onclick="OS.UI.goHome()" class="text-blue-400 flex items-center gap-1 text-sm font-medium">
+                <i class="fa-solid fa-chevron-left"></i> OS
+            </button>
+            <span class="font-semibold text-sm">Notas</span>
+            <button onclick="OS.Apps.Notes.save()" class="text-blue-400 text-sm font-medium">Salvar</button>
+        </div>
+        <textarea id="notes-content" class="flex-1 w-full bg-transparent p-6 text-lg outline-none resize-none text-gray-200 placeholder-gray-600 leading-relaxed" placeholder="Comece a digitar..."></textarea>
+    </div>
+
+    <!-- NATIVE APP: PLUGINS -->
+    <div id="app-plugins" class="app-view absolute inset-0 z-20 bg-black flex flex-col">
+        <div class="glass safe-pt px-4 pb-3 pt-12 flex items-center justify-between">
+            <button onclick="OS.UI.goHome()" class="text-blue-400 flex items-center gap-1 text-sm font-medium">
+                <i class="fa-solid fa-chevron-left"></i> Voltar
+            </button>
+            <span class="font-semibold text-sm">Plugins JS</span>
+            <button onclick="OS.Plugins.promptInstall()" class="w-8 h-8 flex items-center justify-center rounded-full bg-white/10">
+                <i class="fa-solid fa-plus text-xs"></i>
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4" id="plugins-list">
+            <!-- Plugins list -->
+        </div>
+    </div>
+
+    <!-- BOTTOM DOCK -->
+    <div class="absolute bottom-0 w-full z-40 safe-pb px-4 pb-4 pt-2 pointer-events-none">
+        <div class="glass mx-auto max-w-sm rounded-3xl h-16 flex items-center justify-around px-2 pointer-events-auto shadow-2xl">
+            <button onclick="OS.UI.goHome()" class="w-12 h-12 rounded-2xl flex items-center justify-center text-gray-400 hover:text-white active:bg-white/10 transition-colors">
+                <i class="fa-solid fa-house text-xl"></i>
+            </button>
+            <button onclick="OS.UI.openApp('browser')" class="w-12 h-12 rounded-2xl flex items-center justify-center text-gray-400 hover:text-white active:bg-white/10 transition-colors">
+                <i class="fa-solid fa-compass text-2xl"></i>
+            </button>
+            <button onclick="OS.UI.openApp('notes')" class="w-12 h-12 rounded-2xl flex items-center justify-center text-gray-400 hover:text-white active:bg-white/10 transition-colors">
+                <i class="fa-solid fa-note-sticky text-xl"></i>
+            </button>
+            <button onclick="OS.UI.openApp('plugins')" class="w-12 h-12 rounded-2xl flex items-center justify-center text-gray-400 hover:text-white active:bg-white/10 transition-colors">
+                <i class="fa-solid fa-puzzle-piece text-xl"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- POPUP LAYER -->
+    <div id="popup-layer" class="absolute inset-0 z-[100] bg-black/60 backdrop-blur-sm hidden flex-col items-center justify-center p-6 opacity-0 transition-opacity duration-300">
+        <div id="popup-box" class="glass-panel w-full max-w-sm rounded-3xl p-6 shadow-2xl transform scale-95 transition-transform duration-300 flex flex-col gap-4">
+            <h3 id="popup-title" class="text-xl font-bold text-center">Título</h3>
+            <div id="popup-body" class="text-sm text-gray-300 text-center">Conteúdo</div>
+            <div id="popup-actions" class="flex gap-3 mt-2">
+                <!-- Actions injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * KODUX OS Core
+         */
+        const OS = {
+            state: {
+                activeApp: 'home',
+                booted: false
+            },
+
+            // 1. Storage Layer
+            Storage: {
+                prefix: 'kodux_',
+                save(key, data) {
+                    try {
+                        localStorage.setItem(this.prefix + key, JSON.stringify(data));
+                    } catch (e) { console.error("Storage Error", e); }
+                },
+                load(key, defaultVal = null) {
+                    try {
+                        const item = localStorage.getItem(this.prefix + key);
+                        return item ? JSON.parse(item) : defaultVal;
+                    } catch (e) {
+                        return defaultVal;
+                    }
+                },
+                remove(key) {
+                    localStorage.removeItem(this.prefix + key);
+                }
+            },
+
+            // 2. Popup System
+            Popup: {
+                show(title, htmlContent, buttons = []) {
+                    const layer = document.getElementById('popup-layer');
+                    const box = document.getElementById('popup-box');
+                    const titleEl = document.getElementById('popup-title');
+                    const bodyEl = document.getElementById('popup-body');
+                    const actionsEl = document.getElementById('popup-actions');
+
+                    titleEl.innerText = title;
+                    bodyEl.innerHTML = htmlContent;
+                    actionsEl.innerHTML = '';
+
+                    if (buttons.length === 0) {
+                        buttons = [{ text: 'OK', type: 'primary', onClick: () => OS.Popup.hide() }];
+                    }
+
+                    buttons.forEach(btn => {
+                        const b = document.createElement('button');
+                        b.innerText = btn.text;
+                        b.className = `flex-1 py-3 rounded-xl font-semibold text-sm transition-colors ${
+                            btn.type === 'primary' ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-white/10 text-white hover:bg-white/20'
+                        }`;
+                        b.onclick = () => {
+                            if (btn.onClick) btn.onClick();
+                            OS.Popup.hide();
+                        };
+                        actionsEl.appendChild(b);
+                    });
+
+                    layer.classList.remove('hidden');
+                    // Small delay to allow CSS transition
+                    requestAnimationFrame(() => {
+                        layer.classList.remove('opacity-0');
+                        box.classList.remove('scale-95');
+                    });
+                },
+                hide() {
+                    const layer = document.getElementById('popup-layer');
+                    const box = document.getElementById('popup-box');
+                    layer.classList.add('opacity-0');
+                    box.classList.add('scale-95');
+                    setTimeout(() => layer.classList.add('hidden'), 300);
+                },
+                prompt(title, placeholder, callback) {
+                    const inputHtml = `<input type="text" id="popup-input" class="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white outline-none focus:border-blue-500 mt-2" placeholder="${placeholder}">`;
+                    this.show(title, inputHtml, [
+                        { text: 'Cancelar', type: 'secondary' },
+                        { text: 'Confirmar', type: 'primary', onClick: () => {
+                            const val = document.getElementById('popup-input').value;
+                            callback(val);
+                        }}
+                    ]);
+                    setTimeout(() => document.getElementById('popup-input').focus(), 100);
+                }
+            },
+
+            // 3. Tab Engine & Iframe Renderer
+            TabEngine: {
+                tabs: [],
+                activeTabId: null,
+
+                init() {
+                    this.tabs = OS.Storage.load('tabs', []);
+                    if (this.tabs.length === 0) {
+                        this.createTab(); // Creates empty tab
+                    } else {
+                        // Restore state without active frames yet
+                        this.activeTabId = this.tabs[0].id;
+                        this.renderActiveTab();
+                    }
+                    this.updateUI();
+                },
+
+                createTab(url = '') {
+                    const id = 'tab_' + Date.now();
+                    this.tabs.push({ id, url, title: 'Nova Aba' });
+                    this.activeTabId = id;
+                    this.saveState();
+                    this.renderActiveTab();
+                    this.updateUI();
+                    OS.UI.openApp('browser');
+                },
+
+                closeTab(id) {
+                    this.tabs = this.tabs.filter(t => t.id !== id);
+                    const iframe = document.getElementById(`iframe_${id}`);
+                    if (iframe) iframe.remove();
+
+                    if (this.tabs.length === 0) {
+                        this.createTab();
+                    } else if (this.activeTabId === id) {
+                        this.activeTabId = this.tabs[this.tabs.length - 1].id;
+                        this.renderActiveTab();
+                    }
+                    this.saveState();
+                    this.renderSwitcherGrid();
+                    this.updateUI();
+                },
+
+                switchTab(id) {
+                    this.activeTabId = id;
+                    this.renderActiveTab();
+                    this.hideTabSwitcher();
+                    this.updateUI();
+                },
+
+                saveState() {
+                    OS.Storage.save('tabs', this.tabs);
+                },
+
+                renderActiveTab() {
+                    const container = document.getElementById('iframe-container');
+                    const emptyState = document.getElementById('browser-empty-state');
+                    const addressBar = document.getElementById('address-bar');
+                    
+                    // Hide all iframes
+                    container.querySelectorAll('iframe').forEach(ifr => ifr.style.display = 'none');
+                    
+                    const activeTab = this.tabs.find(t => t.id === this.activeTabId);
+                    if (!activeTab) return;
+
+                    addressBar.value = activeTab.url;
+
+                    if (!activeTab.url) {
+                        emptyState.style.display = 'flex';
+                    } else {
+                        emptyState.style.display = 'none';
+                        let iframe = document.getElementById(`iframe_${activeTab.id}`);
+                        if (!iframe) {
+                            iframe = document.createElement('iframe');
+                            iframe.id = `iframe_${activeTab.id}`;
+                            // Add sandbox to prevent frame busting, but allow scripts
+                            iframe.sandbox = "allow-scripts allow-same-origin allow-forms allow-popups";
+                            iframe.src = activeTab.url;
+                            
+                            // Listen to load to try grabbing title (CORS will block most)
+                            iframe.onload = () => {
+                                try {
+                                    activeTab.title = iframe.contentDocument.title || activeTab.url;
+                                } catch(e) {
+                                    // CORS blocked reading title
+                                    activeTab.title = activeTab.url.replace(/^https?:\/\//, '').split('/')[0];
+                                }
+                                this.saveState();
+                            };
+                            
+                            container.appendChild(iframe);
+                        }
+                        iframe.style.display = 'block';
+                    }
+                },
+
+                updateActiveTabUrl(url) {
+                    const tab = this.tabs.find(t => t.id === this.activeTabId);
+                    if (tab) {
+                        tab.url = url;
+                        tab.title = url; // temp title
+                        this.saveState();
+                        
+                        // Remove old iframe to force reload
+                        const oldIframe = document.getElementById(`iframe_${tab.id}`);
+                        if(oldIframe) oldIframe.remove();
+                        
+                        this.renderActiveTab();
+                    }
+                },
+
+                updateUI() {
+                    document.getElementById('tab-count').innerText = this.tabs.length;
+                },
+
+                // UI for Tab Switcher
+                showTabSwitcher() {
+                    this.renderSwitcherGrid();
+                    document.getElementById('tab-switcher').classList.add('active');
+                },
+                hideTabSwitcher() {
+                    document.getElementById('tab-switcher').classList.remove('active');
+                },
+                renderSwitcherGrid() {
+                    const grid = document.getElementById('tabs-grid');
+                    grid.innerHTML = '';
+                    this.tabs.forEach(tab => {
+                        const isActive = tab.id === this.activeTabId;
+                        const el = document.createElement('div');
+                        el.className = `glass-panel rounded-2xl p-4 flex flex-col h-40 relative group ${isActive ? 'ring-2 ring-blue-500' : ''}`;
+                        el.innerHTML = `
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold truncate pr-6 text-gray-300">${tab.title || 'Nova Aba'}</span>
+                                <button onclick="event.stopPropagation(); OS.TabEngine.closeTab('${tab.id}')" class="absolute top-3 right-3 w-6 h-6 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center active:bg-red-500/40">
+                                    <i class="fa-solid fa-xmark text-xs"></i>
+                                </button>
+                            </div>
+                            <div class="flex-1 bg-white/5 rounded-xl flex items-center justify-center overflow-hidden cursor-pointer" onclick="OS.TabEngine.switchTab('${tab.id}')">
+                                ${tab.url ? `<i class="fa-solid fa-globe text-3xl text-gray-600"></i>` : `<i class="fa-solid fa-plus text-3xl text-gray-600"></i>`}
+                            </div>
+                        `;
+                        grid.appendChild(el);
+                    });
+                },
+                newTab() {
+                    this.createTab();
+                    this.hideTabSwitcher();
+                }
+            },
+
+            // Browser Helper
+            Browser: {
+                navigate(e) {
+                    e.preventDefault();
+                    let url = document.getElementById('address-bar').value.trim();
+                    if (!url) return;
+                    
+                    // Simple URL detection
+                    if (!/^https?:\/\//i.test(url)) {
+                        if (url.includes('.') && !url.includes(' ')) {
+                            url = 'https://' + url;
+                        } else {
+                            // Search fallback (DuckDuckGo blocks iframes, using Bing as example)
+                            url = 'https://www.bing.com/search?q=' + encodeURIComponent(url);
+                        }
+                    }
+                    OS.TabEngine.updateActiveTabUrl(url);
+                },
+                reload() {
+                    const tab = OS.TabEngine.tabs.find(t => t.id === OS.TabEngine.activeTabId);
+                    if(tab && tab.url) {
+                        const iframe = document.getElementById(`iframe_${tab.id}`);
+                        if(iframe) iframe.src = iframe.src; // Trigger reload
+                    }
+                },
+                loadUrl(url) {
+                    document.getElementById('address-bar').value = url;
+                    OS.TabEngine.updateActiveTabUrl(url);
+                }
+            },
+
+            // 4. Plugin Loader (JS Extensions)
+            Plugins: {
+                list: [],
+                init() {
+                    this.list = OS.Storage.load('plugins', []);
+                    this.renderList();
+                    this.executeAll();
+                },
+                promptInstall() {
+                    const html = `
+                        <p class="mb-2 text-xs text-left">Cole o código JavaScript do plugin:</p>
+                        <textarea id="plugin-code" class="w-full h-32 bg-black/50 border border-white/10 rounded-lg p-2 text-white font-mono text-xs outline-none focus:border-blue-500" placeholder="OS.Popup.show('Hello', 'Plugin rodando!');"></textarea>
+                        <input type="text" id="plugin-name" class="w-full mt-2 bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-white text-sm outline-none" placeholder="Nome do Plugin">
+                    `;
+                    OS.Popup.show("Novo Plugin", html, [
+                        { text: 'Cancelar', type: 'secondary' },
+                        { text: 'Instalar', type: 'primary', onClick: () => {
+                            const code = document.getElementById('plugin-code').value;
+                            const name = document.getElementById('plugin-name').value || 'Plugin ' + (this.list.length + 1);
+                            if(code) {
+                                this.list.push({ id: Date.now(), name, code, active: true });
+                                OS.Storage.save('plugins', this.list);
+                                this.renderList();
+                                this.execute(code); // Run immediately
+                                OS.Popup.show("Sucesso", "Plugin instalado e executado.");
+                            }
+                        }}
+                    ]);
+                },
+                remove(id) {
+                    this.list = this.list.filter(p => p.id !== id);
+                    OS.Storage.save('plugins', this.list);
+                    this.renderList();
+                },
+                renderList() {
+                    const container = document.getElementById('plugins-list');
+                    if (this.list.length === 0) {
+                        container.innerHTML = `<div class="text-center text-gray-500 mt-10"><i class="fa-solid fa-puzzle-piece text-4xl mb-3"></i><p>Nenhum plugin instalado.</p></div>`;
+                        return;
+                    }
+                    container.innerHTML = this.list.map(p => `
+                        <div class="glass-panel p-4 rounded-2xl mb-3 flex justify-between items-center">
+                            <div>
+                                <h4 class="font-bold text-sm">${p.name}</h4>
+                                <p class="text-xs text-green-400">Ativo</p>
+                            </div>
+                            <button onclick="OS.Plugins.remove(${p.id})" class="w-8 h-8 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        </div>
+                    `).join('');
+                },
+                execute(code) {
+                    try {
+                        // Wrap in a function to isolate scope and provide OS API
+                        const fn = new Function('OS', code);
+                        fn(OS); // Pass global OS object so plugin can use OS.Popup, etc.
+                    } catch (e) {
+                        console.error("Plugin Execution Error:", e);
+                        OS.Popup.show("Erro no Plugin", `<p class="text-red-400 text-xs">${e.message}</p>`);
+                    }
+                },
+                executeAll() {
+                    this.list.filter(p => p.active).forEach(p => this.execute(p.code));
+                }
+            },
+
+            // Built-in Apps Data
+            Apps: {
+                registry: [
+                    { id: 'browser', name: 'Navegador', icon: 'fa-compass', color: 'bg-blue-500' },
+                    { id: 'notes', name: 'Notas', icon: 'fa-note-sticky', color: 'bg-yellow-500' },
+                    { id: 'plugins', name: 'Plugins', icon: 'fa-puzzle-piece', color: 'bg-purple-500' },
+                    { id: 'settings', name: 'Ajustes', icon: 'fa-gear', color: 'bg-gray-500', action: () => OS.Popup.show('Sistema', 'KODUX OS v1.0<br>Memória: OK<br>Armazenamento Local: Ativo') }
+                ],
+                
+                Notes: {
+                    init() {
+                        const content = OS.Storage.load('notes_data', '');
+                        document.getElementById('notes-content').value = content;
+                    },
+                    save() {
+                        const content = document.getElementById('notes-content').value;
+                        OS.Storage.save('notes_data', content);
+                        OS.Popup.show("Notas", "Anotações salvas com sucesso!");
+                    }
+                }
+            },
+
+            // UI & OS Management
+            UI: {
+                updateClock() {
+                    const now = new Date();
+                    const el = document.getElementById('sys-time');
+                    if(el) el.innerText = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                },
+                buildHome() {
+                    const grid = document.getElementById('app-grid');
+                    grid.innerHTML = OS.Apps.registry.map(app => `
+                        <div class="flex flex-col items-center gap-2 cursor-pointer group" onclick="${app.action ? `(${app.action.toString()})()` : `OS.UI.openApp('${app.id}')`}">
+                            <div class="w-16 h-16 rounded-2xl ${app.color} shadow-lg flex items-center justify-center transform transition-transform group-active:scale-90">
+                                <i class="fa-solid ${app.icon} text-3xl text-white"></i>
+                            </div>
+                            <span class="text-xs font-medium text-gray-200">${app.name}</span>
+                        </div>
+                    `).join('');
+                },
+                openApp(appId) {
+                    // Hide all apps
+                    document.querySelectorAll('.app-view').forEach(el => el.classList.remove('active'));
+                    OS.TabEngine.hideTabSwitcher();
+
+                    if(appId === 'home') {
+                        OS.state.activeApp = 'home';
+                        return;
+                    }
+
+                    const appEl = document.getElementById(`app-${appId}`);
+                    if (appEl) {
+                        appEl.classList.add('active');
+                        OS.state.activeApp = appId;
+                    }
+                },
+                goHome() {
+                    this.openApp('home');
+                }
+            },
+
+            boot() {
+                // Boot sequence animation
+                const progressBar = document.getElementById('boot-progress');
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 20;
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(interval);
+                        setTimeout(() => this.finishBoot(), 500);
+                    }
+                    progressBar.style.width = `${progress}%`;
+                }, 150);
+            },
+
+            finishBoot() {
+                document.getElementById('boot-screen').style.opacity = '0';
+                setTimeout(() => document.getElementById('boot-screen').remove(), 800);
+                
+                // Init Subsystems
+                this.UI.buildHome();
+                this.TabEngine.init();
+                this.Apps.Notes.init();
+                this.Plugins.init();
+
+                // Clock loop
+                this.UI.updateClock();
+                setInterval(() => this.UI.updateClock(), 10000);
+
+                this.state.booted = true;
+                console.log("KODUX OS Initialized.");
+            }
+        };
+
+        // Start OS on load
+        window.addEventListener('load', () => {
+            OS.boot();
+        });
+
+    </script>
+</body>
+</html>
+
