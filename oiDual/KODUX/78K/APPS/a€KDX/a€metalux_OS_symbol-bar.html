@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#000000">
+  <title>KODUX OS</title>
+
+  <!-- PWA Manifest (seu, inalterado) -->
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22KODUX%20OS%22%2C%22short_name%22%3A%22KODUX%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23000000%22%2C%22theme_color%22%3A%22%23000000%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20fill%3D'%23000'%2F%3E%3Ctext%20x%3D'50'%20y%3D'55'%20font-size%3D'40'%20fill%3D'%23fff'%20text-anchor%3D'middle'%20dominant-baseline%3D'middle'%3EK%3C%2Ftext%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+
+  <style>
+    /* ===================================================
+       KODUX OS v3 — MASTERMIND PROTOCOL (FUNDIDO)
+       Tokens, Reset, Base, Layout, Components & Kob-Glass
+       =================================================== */
+    :root {
+      /* CORE TOKENS */
+      --bg: #050811;
+      --panel: rgba(5,8,17,.96);
+      --ink: #e4ecff;
+      --muted: #9aa4c8;
+      --text: var(--ink);
+      --radius-card: 18px;
+      --radius-pill: 999px;
+      --shadow-soft: 0 18px 40px rgba(0,0,0,.65);
+      --fast: .15s;
+      --med: .6s;
+      --slow: 1.4s;
+      --safe-top: env(safe-area-inset-top, 20px);
+      --safe-bottom: env(safe-area-inset-bottom, 20px);
+
+      /* KOB-VOICE (Sangue do Sistema) */
+      --kob-voice-primary: #00f5ff;
+      --kob-voice-secondary: #ff4bff;
+      --kob-voice-accent: #ffffff;
+      --kob-voice-bg-soft: rgba(0,245,255,.12);
+      --kob-voice-glow: 0 0 18px rgba(0,245,255,.60);
+      --accent: var(--kob-voice-primary);
+      --accent-soft: rgba(0,245,255,.18);
+      --accent-pink: var(--kob-voice-secondary);
+      --accent-cold: var(--kob-voice-primary);
+      --accent-warm: #ffb45b;
+      --danger: #ff4b6b;
+      
+      /* ORB TOKENS */
+      --orb-primary:   var(--kob-voice-primary);
+      --orb-secondary: var(--kob-voice-secondary);
+      --orb-accent:    var(--kob-voice-accent);
+      --orb-speed:     8s;
+    }
+
+    /* RESET / BASE */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    body {
+      font-family: "Montserrat", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 20% 20%, var(--kob-voice-primary), var(--bg) 60%, #000 100%);
+      color: var(--text);
+      -webkit-user-select: none; user-select: none;
+      position: relative;
+    }
+    body::before {
+      content: ""; position: fixed; inset: 0;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(0,255,255,.16) 0, transparent 50%),
+        radial-gradient(circle at 90% 100%, rgba(255,0,255,.12) 0, transparent 60%);
+      opacity: .7; pointer-events: none; mix-blend-mode: screen; z-index: -1;
+    }
+    ::-webkit-scrollbar { display: none; }
+    * { scrollbar-width: none; }
+
+    /* ===================================================
+       COMPONENTES PRIMITIVOS FUNDIDOS
+       =================================================== */
+    .glass, .glass-panel {
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,.09);
+    }
+    .glass { background: rgba(5,8,17,.72); }
+    .glass-panel { background: rgba(10,14,40,.75); }
+
+    /* APP VIEWS */
+    .app-view {
+      position: absolute; inset: 0; z-index: 20;
+      transition: transform .3s cubic-bezier(.25,.8,.25,1), opacity .3s ease;
+      transform: scale(.95) translateY(20px); opacity: 0; pointer-events: none;
+    }
+    .app-view.active {
+      transform: scale(1) translateY(0); opacity: 1; pointer-events: auto;
+    }
+
+    /* ===================================================
+       O RESSONADOR: SÍMBOLO ÚNICO (SYMBOL BUTTON)
+       =================================================== */
+    .symbol-button {
+      width: 48px; height: 48px; border-radius: 50px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.05);
+      color: var(--muted);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0;
+      transition: all .12s ease;
+      -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+      -webkit-user-select: none; user-select: none;
+      font-family: "Montserrat", system-ui, sans-serif;
+      font-size: 1.25rem; /* Para símbolos de texto */
+    }
+    .symbol-button svg { /* Para SVGs inline */
+      width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2;
+    }
+    .symbol-button:hover, .symbol-button:active {
+      background: rgba(255,255,255,.12);
+      border-color: var(--kob-voice-secondary);
+      color: var(--text);
+    }
+    .symbol-button:active { transform: scale(.9); color: var(--kob-voice-primary); }
+
+    /* Botão do Orb Principal (Sempre visível, respira) */
+    #btn-arch {
+      width: 44px; height: 44px;
+      border: 2px solid rgba(255,255,255,.2);
+      background: rgba(0,0,0,.3);
+      backdrop-filter: blur(5px);
+      padding: 6px; /* Espaço para o orb interno */
+    }
+    #main-orb {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ===================================================
+       ORB COMPONENT (FUNDIDO)
+       =================================================== */
+    .orb {
+      width: 56px; height: 56px; border-radius: 50%;
+      display: grid; place-items: center;
+    }
+    .orb-core {
+      width: 100%; height: 100%; border-radius: 50%;
+      background:
+        radial-gradient(circle at 30% 30%, var(--orb-accent), transparent 60%),
+        radial-gradient(circle at 70% 70%, var(--orb-primary), var(--orb-secondary));
+      box-shadow: 0 0 18px var(--orb-primary), 0 0 36px rgba(120,227,255,.4);
+      animation: orbSpin var(--orb-speed) linear infinite;
+    }
+    @keyframes orbSpin { to { transform: rotate(360deg); } }
+
+    /* ===================================================
+       BOTTOM DOCK (SYMBOL BAR)
+       =================================================== */
+    #bottom-dock {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 40;
+      padding: .5rem 1rem calc(var(--safe-bottom) + 1rem); pointer-events: none;
+    }
+    .dock-inner {
+      margin: 0 auto; max-width: 26rem;
+      height: auto; min-height: 4rem;
+      border-radius: 50px;
+      display: flex; align-items: center; justify-content: space-around; gap: 12px;
+      padding: 8px 16px; pointer-events: auto;
+      box-shadow: 0 8px 32px rgba(0,0,0,.6);
+      background: rgba(0,0,0,.2);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: none;
+    }
+    /* Removida duplicação de estilo do dock-sym, agora usamos diretamente .symbol-button */
+
+    /* ===================================================
+       HOME SCREEN & APP GRID
+       =================================================== */
+    #home-screen {
+      position: absolute; inset: 0; z-index: 0;
+      display: flex; flex-direction: column;
+      padding: calc(var(--safe-top) + 56px) 24px 96px;
+      background: linear-gradient(180deg, #111827 0%, #000 100%);
+      overflow-y: auto;
+    }
+    #app-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem 1rem;
+    }
+    .app-icon-cell {
+      display: flex; flex-direction: column; align-items: center; gap: .5rem; cursor: pointer;
+    }
+    .app-icon-cell .app-icon-btn {
+      width: 56px; height: 56px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,.4);
+      transition: transform .15s ease, box-shadow .15s ease;
+      border: 1px solid rgba(255,255,255,.1); cursor: pointer;
+    }
+    .app-icon-cell .app-icon-btn:active { transform: scale(.9); }
+    .app-icon-cell .app-icon-btn .orb { width: 100%; height: 100%; }
+    .app-icon-cell span { font-size: .72rem; font-weight: 500; color: var(--muted); }
+
+    /* ===================================================
+       BROWSER, NOTES, PLUGINS (Mantidos concisos)
+       =================================================== */
+    #app-browser { background: #000; flex-direction: column; }
+    #app-notes { background: #1e1e1e; flex-direction: column; }
+    #app-plugins { background: #000; flex-direction: column; }
+    /* ... (estilos de formulário, tab switcher, popup permanecem idênticos ao seu original para não alongar, mas TODOS os botões internos que não são submit deveriam ser .symbol-button) */
+
+    /* ===================================================
+       ANIMAÇÕES GLOBAIS
+       =================================================== */
+    @keyframes kdx-rise {
+      0% { transform: translateY(18px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    .kdx-rise {
+      animation: kdx-rise 1s ease-out .03s forwards;
+      opacity: 0; transform: translateY(18px);
+    }
+    
+    /* ... (outras animações e responsive mantidos) ... */
+  </style>
+</head>
+<body>
+
+<div id="root">
+
+  <!-- BOOT SCREEN (inalterado) -->
+  <div id="boot-screen">...</div>
+
+  <!-- HOME SCREEN -->
+  <div id="home-screen">
+    <h2></h2>
+    <div id="app-grid"></div>
+  </div>
+
+  <!-- APP BROWSER -->
+  <div id="app-browser" class="app-view">
+    <div class="browser-header glass safe-pt">
+      <button class="symbol-button" onclick="OS.UI.goHome()" title="Home">
+        <!-- Ícone SVG Inline para "Voltar" -->
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <!-- Barra de endereço... -->
+      <button class="symbol-button" onclick="OS.TabEngine.showTabSwitcher()" title="Abas">
+        <span id="tab-count">1</span>
+      </button>
+    </div>
+    <!-- Iframe container... -->
+  </div>
+
+  <!-- BOTTOM DOCK (A BARRA DE SÍMBOLOS FUNDIDA) -->
+  <div id="bottom-dock">
+    <div class="dock-inner">
+
+      <!-- Home -->
+      <button class="symbol-button" onclick="OS.UI.goHome()" title="Home">
+        <svg viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z"/></svg>
+      </button>
+
+      <!-- Browser -->
+      <button class="symbol-button" onclick="OS.UI.openApp('browser')" title="Navegador">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10M12 2a15.3 15.3 0 00-4 10 15.3 15.3 0 004 10"/></svg>
+      </button>
+
+      <!-- Notes -->
+      <button class="symbol-button" onclick="OS.UI.openApp('notes')" title="Notas">
+        <svg viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      </button>
+
+      <!-- Plugins -->
+      <button class="symbol-button" onclick="OS.UI.openApp('plugins')" title="Plugins">
+        <svg viewBox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+      </button>
+
+      <!-- Menu / Ajustes -->
+      <button class="symbol-button" onclick="OS.UI.openSettings()" title="Ajustes">
+        <svg viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+
+      <!-- O ORB CENTRAL (Sempre visível, respira) -->
+      <button class="symbol-button" id="btn-arch" title="Trocar Arquétipo de Voz">
+        <div class="orb" id="main-orb">
+          <div class="orb-core"></div>
+        </div>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- SETTINGS PANEL, POPUP LAYER... (mantidos) -->
+
+</div>
+
+<script>
+  // ===================================================
+  // KODUX OS Core — Módulo de Exemplo (Seu JS completo vai aqui)
+  // ===================================================
+  const OS = { /* ... seu código JS completo ... */ };
+  window.addEventListener('load', () => OS.boot());
+</script>
+
+</body>
+</html>
