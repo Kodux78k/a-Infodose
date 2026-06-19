@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="pt-BR"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -16,8 +15,1262 @@
   <!-- External stylesheets (iFSw patch chain) -->
 
 
-  
-<link rel="stylesheet" href="./css/main.css"></head>
+  <style>
+    /* ===================================================
+       KxaT ROOT TOKENS  —  exact copy from KxaT.css
+       =================================================== */
+    :root {
+      --grad-a: #00f5ff;
+      --grad-b: #ff4bff;
+      --bg: #050811;
+      --panel: rgba(5,8,17,.96);
+      --ink: #e4ecff;
+      --muted: #9aa4c8;
+
+      --kob-voice-primary: #00f5ff;
+      --kob-voice-secondary: #ff4bff;
+      --kob-voice-accent: #ffffff;
+      --kob-voice-bg-soft: rgba(0,245,255,.12);
+      --kob-voice-glow: 0 0 18px rgba(0,245,255,.60);
+
+      --text: var(--ink);
+      --accent: var(--kob-voice-primary);
+      --accent-soft: rgba(0,245,255,.18);
+      --accent-pink: var(--kob-voice-secondary);
+      --accent-cold: var(--kob-voice-primary);
+      --accent-warm: #ffb45b;
+      --danger: #ff4b6b;
+
+      --radius-card: 18px;
+      --radius-pill: 999px;
+      --shadow-soft: 0 18px 40px rgba(0,0,0,.65);
+      --fast: .25s;
+      --med: .6s;
+      --slow: 1.4s;
+
+      /* safe-area insets */
+      --safe-top: env(safe-area-inset-top, 20px);
+      --safe-bottom: env(safe-area-inset-bottom, 20px);
+    }
+
+    /* ===================================================
+       RESET / BASE
+       =================================================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+
+    body {
+      font-family: "Montserrat", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at 20% 20%, var(--grad-a), var(--bg) 60%, #000 100%);
+      color: var(--text);
+      -webkit-user-select: none;
+      user-select: none;
+      position: relative;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(0,255,255,.16) 0, transparent 50%),
+        radial-gradient(circle at 90% 100%, rgba(255,0,255,.12) 0, transparent 60%);
+      opacity: .7;
+      pointer-events: none;
+      mix-blend-mode: screen;
+      z-index: 0;
+    }
+
+    /* Hide all scrollbars */
+    ::-webkit-scrollbar { display: none; }
+    * { scrollbar-width: none; }
+
+    /* ===================================================
+       LAYOUT PRIMITIVES  (replaces Tailwind utilities)
+       =================================================== */
+
+    /* Absolute full-cover layer */
+    .layer {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Safe area helpers */
+    .safe-pt { padding-top: calc(var(--safe-top) + 36px); }
+    .safe-pb { padding-bottom: var(--safe-bottom); }
+
+    /* Glass surface — replaces .glass */
+    .glass {
+      background: rgba(5,8,17,.72);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255,255,255,.09);
+    }
+
+    /* Glass panel card — replaces .glass-panel */
+    .glass-panel {
+      background: rgba(10,14,40,.75);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid rgba(255,255,255,.09);
+    }
+
+    /* ===================================================
+       APP TRANSITION  (replaces .app-view + .active)
+       =================================================== */
+    .app-view {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      transition: transform .3s cubic-bezier(.25,.8,.25,1), opacity .3s ease;
+      transform: scale(.95) translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .app-view.active {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* ===================================================
+       BOOT SCREEN
+       =================================================== */
+    #boot-screen {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity .8s ease-out;
+    }
+    #boot-screen h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: .25em;
+      color: #fff;
+      text-transform: uppercase;
+    }
+    .boot-bar-wrap {
+      margin-top: 2rem;
+      width: 12rem;
+      height: 4px;
+      background: rgba(255,255,255,.12);
+      border-radius: var(--radius-pill);
+      overflow: hidden;
+    }
+    #boot-progress {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--kob-voice-primary), var(--kob-voice-secondary));
+      border-radius: var(--radius-pill);
+      transition: width .3s ease;
+    }
+
+    /* ===================================================
+       HOME SCREEN
+       =================================================== */
+    #home-screen {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      display: flex;
+      flex-direction: column;
+      padding: calc(var(--safe-top) + 56px) 24px 96px;
+      background: linear-gradient(180deg, #111827 0%, #000 100%);
+      overflow-y: auto;
+    }
+    #home-screen h2 {
+      font-size: 1.9rem;
+      font-weight: 700;
+      margin-bottom: 2rem;
+      margin-top: .25rem;
+      padding: 0 8px;
+      color: var(--text);
+    }
+    #app-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2rem 1rem;
+    }
+
+    /* App icon cell (built by JS) */
+    .app-icon-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .5rem;
+      cursor: pointer;
+    }
+    .app-icon-cell .app-icon-btn {
+      width: 4rem;
+      height: 4rem;
+      border-radius: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,.4);
+      transition: transform .15s ease;
+      border: none;
+      cursor: pointer;
+    }
+    .app-icon-cell .app-icon-btn:active { transform: scale(.9); }
+    .app-icon-cell .app-icon-btn i { font-size: 1.75rem; color: #fff; }
+    .app-icon-cell span {
+      font-size: .72rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    /* App icon color classes */
+    .icon-blue  { background: #3b82f6; }
+    .icon-yellow{ background: #eab308; }
+    .icon-purple{ background: #a855f7; }
+    .icon-gray  { background: #6b7280; }
+
+    /* ===================================================
+       BROWSER / APP-BROWSER
+       =================================================== */
+    #app-browser {
+      background: #000;
+      flex-direction: column;
+    }
+    #app-browser .browser-header {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: 0 1rem .5rem;
+    }
+    #app-browser .browser-header.glass { /* extends .glass */ }
+
+    .browser-back-btn {
+      width: 2rem;
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255,255,255,.1);
+      color: var(--text);
+      cursor: pointer;
+      transition: background var(--fast);
+    }
+    .browser-back-btn:active { background: rgba(255,255,255,.2); }
+
+    .address-form {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: rgba(255,255,255,.1);
+      border-radius: .75rem;
+      padding: .5rem .75rem;
+      border: 1px solid rgba(255,255,255,.05);
+      gap: .5rem;
+    }
+    .address-form i { color: var(--muted); font-size: .75rem; }
+    #address-bar {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: .875rem;
+      font-family: inherit;
+    }
+    #address-bar::placeholder { color: rgba(255,255,255,.35); }
+    .address-reload-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color var(--fast);
+      font-size: .75rem;
+    }
+    .address-reload-btn:active { color: var(--text); }
+
+    .tab-count-btn {
+      width: 2rem;
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: .5rem;
+      border: 1px solid rgba(255,255,255,.2);
+      background: transparent;
+      color: var(--text);
+      font-size: .75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background var(--fast);
+      font-family: inherit;
+    }
+    .tab-count-btn:active { background: rgba(255,255,255,.1); }
+
+    /* iframe container */
+    #iframe-container {
+      flex: 1;
+      position: relative;
+      background: #1a1a1a;
+    }
+    #iframe-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #fff;
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Browser empty state */
+    #browser-empty-state {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+      color: var(--muted);
+    }
+    #browser-empty-state i { font-size: 2.5rem; margin-bottom: 1rem; color: #4b5563; }
+    #browser-empty-state p { font-size: .875rem; }
+    .empty-links {
+      margin-top: 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      justify-content: center;
+    }
+    .empty-link-btn {
+      padding: .5rem 1rem;
+      background: rgba(255,255,255,.1);
+      border: none;
+      border-radius: var(--radius-pill);
+      font-size: .75rem;
+      color: var(--text);
+      cursor: pointer;
+      font-family: inherit;
+      transition: background var(--fast);
+    }
+    .empty-link-btn:hover { background: rgba(255,255,255,.18); }
+
+    /* ===================================================
+       TAB SWITCHER
+       =================================================== */
+    #tab-switcher {
+      z-index: 30;
+      background: rgba(0,0,0,.9);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      display: flex;
+      flex-direction: column;
+      padding: 4rem 1rem 6rem;
+      overflow-y: auto;
+    }
+    .tabs-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .tabs-header h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    .new-tab-btn {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      background: #2563eb;
+      border: none;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(37,99,235,.4);
+      font-size: 1rem;
+      transition: transform var(--fast);
+    }
+    .new-tab-btn:active { transform: scale(.9); }
+    #tabs-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    .tab-card {
+      border-radius: 1rem;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      height: 10rem;
+      position: relative;
+    }
+    .tab-card.is-active { box-shadow: 0 0 0 2px #3b82f6; }
+    .tab-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: .5rem;
+    }
+    .tab-card-title {
+      font-size: .75rem;
+      font-weight: 700;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 75%;
+    }
+    .tab-close-btn {
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 50%;
+      background: rgba(239,68,68,.2);
+      color: #f87171;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: .75rem;
+      flex-shrink: 0;
+      transition: background var(--fast);
+    }
+    .tab-close-btn:active { background: rgba(239,68,68,.4); }
+    .tab-card-preview {
+      flex: 1;
+      background: rgba(255,255,255,.05);
+      border-radius: .75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .tab-card-preview i { font-size: 1.75rem; color: #4b5563; }
+    .tabs-done-wrap {
+      margin-top: auto;
+      padding-top: 2rem;
+      display: flex;
+      justify-content: center;
+    }
+    .tabs-done-btn {
+      padding: .75rem 2rem;
+      border-radius: var(--radius-pill);
+      border: none;
+      font-size: .875rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--text);
+    }
+
+    /* ===================================================
+       NOTES APP
+       =================================================== */
+    #app-notes {
+      background: #1e1e1e;
+      flex-direction: column;
+    }
+    .notes-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1rem .75rem;
+    }
+    .notes-back-btn {
+      display: flex;
+      align-items: center;
+      gap: .25rem;
+      background: transparent;
+      border: none;
+      color: var(--accent);
+      font-size: .875rem;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .notes-title-label { font-size: .875rem; font-weight: 600; color: var(--text); }
+    .notes-save-btn {
+      background: transparent;
+      border: none;
+      color: var(--accent);
+      font-size: .875rem;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    #notes-content {
+      flex: 1;
+      width: 100%;
+      background: transparent;
+      border: none;
+      padding: 1.5rem;
+      font-size: 1.1rem;
+      outline: none;
+      resize: none;
+      color: #d1d5db;
+      line-height: 1.65;
+      font-family: inherit;
+    }
+    #notes-content::placeholder { color: #4b5563; }
+
+    /* ===================================================
+       PLUGINS APP
+       =================================================== */
+    #app-plugins {
+      background: #000;
+      flex-direction: column;
+    }
+    .plugins-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1rem .75rem;
+    }
+    .plugins-back-btn {
+      display: flex;
+      align-items: center;
+      gap: .25rem;
+      background: transparent;
+      border: none;
+      color: var(--accent);
+      font-size: .875rem;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .plugins-title-label { font-size: .875rem; font-weight: 600; color: var(--text); }
+    .plugins-add-btn {
+      width: 2rem;
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(255,255,255,.1);
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      font-size: .75rem;
+      transition: background var(--fast);
+    }
+    .plugins-add-btn:hover { background: rgba(255,255,255,.2); }
+    #plugins-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+    .plugin-card {
+      padding: 1rem;
+      border-radius: 1rem;
+      margin-bottom: .75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .plugin-card h4 { font-size: .875rem; font-weight: 700; }
+    .plugin-card p  { font-size: .75rem; color: #34d399; }
+    .plugin-remove-btn {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      background: rgba(239,68,68,.2);
+      color: #f87171;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: .75rem;
+    }
+
+    /* ===================================================
+       BOTTOM DOCK
+       =================================================== */
+    #bottom-dock {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 0;
+      padding: .5rem 1rem calc(var(--safe-bottom) + 1rem);
+      pointer-events: none;
+    }
+    .dock-inner {
+      margin: 0 auto;
+      max-width: 26rem;
+      height: 4rem;
+      border-radius: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 .5rem;
+      pointer-events: auto;
+      box-shadow: 0 8px 32px rgba(0,0,0,.6);
+    }
+    .dock-btn {
+      width: 3rem;
+      height: 3rem;
+      border-radius: .75rem;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: color var(--fast), background var(--fast);
+      font-size: 1.25rem;
+    }
+    .dock-btn:hover  { color: var(--text); }
+    .dock-btn:active { background: rgba(255,255,255,.1); color: var(--text); }
+
+    /* ===================================================
+       POPUP LAYER
+       =================================================== */
+    #popup-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 100;
+      background: rgba(0,0,0,.6);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      opacity: 0;
+      transition: opacity .3s ease;
+    }
+    #popup-layer.visible { display: flex; }
+    #popup-layer.opaque  { opacity: 1; }
+
+    #popup-box {
+      width: 100%;
+      max-width: 24rem;
+      border-radius: 1.5rem;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      transform: scale(.95);
+      transition: transform .3s ease;
+    }
+    #popup-box.popped { transform: scale(1); }
+
+    #popup-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      text-align: center;
+    }
+    #popup-body {
+      font-size: .875rem;
+      color: var(--muted);
+      text-align: center;
+    }
+    #popup-actions {
+      display: flex;
+      gap: .75rem;
+      margin-top: .5rem;
+    }
+    .popup-btn {
+      flex: 1;
+      padding: .75rem;
+      border-radius: .75rem;
+      font-size: .875rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+      transition: background var(--fast), color var(--fast);
+    }
+    .popup-btn.primary {
+      background: #2563eb;
+      color: #fff;
+    }
+    .popup-btn.primary:hover { background: #3b82f6; }
+    .popup-btn.secondary {
+      background: rgba(255,255,255,.1);
+      color: var(--text);
+    }
+    .popup-btn.secondary:hover { background: rgba(255,255,255,.2); }
+
+    /* Popup textarea / input */
+    #popup-body textarea,
+    #popup-body input[type="text"] {
+      width: 100%;
+      background: rgba(0,0,0,.5);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: .75rem;
+      padding: .75rem;
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .75rem;
+      outline: none;
+      resize: vertical;
+      transition: border-color var(--fast);
+      margin-top: .5rem;
+    }
+    #popup-body textarea:focus,
+    #popup-body input[type="text"]:focus {
+      border-color: var(--accent);
+    }
+    #popup-body textarea::placeholder,
+    #popup-body input[type="text"]::placeholder { color: rgba(255,255,255,.35); }
+
+    /* ===================================================
+       FORM ELEMENTS  (from KxaT.css patch)
+       =================================================== */
+    input[type="checkbox"] {
+      appearance: none;
+      width: 18px; height: 18px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,.25);
+      background: rgba(8,10,25,.65);
+      cursor: pointer;
+      transition: .22s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,.6);
+    }
+    input[type="checkbox"]:hover { border-color: var(--accent-cold); }
+    input[type="checkbox"]:checked {
+      background: radial-gradient(circle at 30% 20%, #fff, var(--accent-warm));
+      box-shadow: 0 0 10px var(--accent-warm), 0 0 22px rgba(255,180,91,.65);
+      border-color: rgba(255,180,91,.85);
+    }
+
+    .switch { position: relative; width: 42px; height: 22px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .switch-slider {
+      position: absolute; cursor: pointer; inset: 0;
+      background: rgba(8,10,25,.85);
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(255,255,255,.18);
+      transition: .25s ease;
+    }
+    .switch-slider::before {
+      content: "";
+      position: absolute;
+      width: 18px; height: 18px;
+      left: 2px; top: 2px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 20%, #fff, var(--accent-cold));
+      box-shadow: 0 0 12px rgba(93,242,255,.75);
+      transition: .25s ease;
+    }
+    .switch input:checked + .switch-slider {
+      background: radial-gradient(circle at 0 0, rgba(255,180,91,.22), transparent 55%),
+                  rgba(10,14,40,.85);
+      border-color: rgba(255,180,91,.8);
+    }
+    .switch input:checked + .switch-slider::before {
+      transform: translateX(20px);
+      background: radial-gradient(circle at 30% 20%, #fff, var(--accent-warm));
+      box-shadow: 0 0 12px rgba(255,180,91,.75);
+    }
+
+    input[type="radio"] {
+      appearance: none;
+      width: 18px; height: 18px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(255,255,255,.25);
+      background: rgba(8,10,25,.65);
+      cursor: pointer;
+      transition: .2s ease;
+    }
+    input[type="radio"]:checked {
+      background: radial-gradient(circle, var(--accent-cold) 0%, var(--accent-warm) 55%);
+      border-color: rgba(255,180,91,.9);
+      box-shadow: 0 0 14px rgba(255,180,91,.75);
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%; height: 4px;
+      background: linear-gradient(90deg, var(--accent-cold), var(--accent-warm));
+      border-radius: var(--radius-pill);
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 20%, #fff, var(--accent-warm));
+      box-shadow: 0 0 14px rgba(255,180,91,.9);
+      border: 2px solid rgba(10,14,41,.9);
+      cursor: pointer;
+      transition: .2s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.07); }
+
+    /* ===================================================
+       ANIMATIONS
+       =================================================== */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes orbFloat {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50%       { transform: translateY(-8px) scale(1.03); }
+    }
+    @keyframes voicePulse {
+      0%   { box-shadow: 0 0 8px rgba(0,255,255,.3); }
+      50%  { box-shadow: 0 0 24px rgba(0,255,255,.8); }
+      100% { box-shadow: 0 0 8px rgba(0,255,255,.3); }
+    }
+    @keyframes kdx-embrace {
+      0%   { transform: scale(.86) rotate(0deg);  opacity: 0; filter: blur(6px); }
+      50%  { transform: scale(1.06) rotate(-1deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg);    opacity: 1; filter: blur(0); }
+    }
+    @keyframes kdx-rise {
+      0%   { transform: translateY(18px); opacity: 0; }
+      100% { transform: translateY(0);    opacity: 1; }
+    }
+
+    .kdx-rise {
+      animation: kdx-rise 1s ease-out .03s forwards;
+      opacity: 0;
+      transform: translateY(18px);
+    }
+
+    /* ===================================================
+       RESPONSIVE
+       =================================================== */
+    @media (min-width: 768px) {
+      #home-screen,
+      #app-browser,
+      #app-notes,
+      #app-plugins,
+      #tab-switcher {
+        max-width: 520px;
+        left: 50%;
+        transform: translateX(-50%);
+        right: auto;
+        width: 100%;
+      }
+      #app-browser.app-view.active,
+      #app-notes.app-view.active,
+      #app-plugins.app-view.active,
+      #tab-switcher.app-view.active {
+        transform: translateX(-50%) scale(1) translateY(0);
+      }
+    }
+
+  /* ===================================================
+       APP IN-WINDOW STYLES (Browser, Notes, Plugins)
+       =================================================== */
+    .app-content {
+      display: flex;
+      flex-direction: column;
+      height: calc(100% - 40px);
+      width: 100%;
+      background: #000;
+      position: relative;
+    }
+
+    .browser-header {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: .5rem 1rem;
+      background: rgba(5,8,17,.9);
+    }
+    .browser-back-btn, .tab-count-btn {
+      width: 2rem; height: 2rem;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; border: none; background: rgba(255,255,255,.1);
+      color: var(--text); cursor: pointer;
+    }
+    .tab-count-btn { border-radius: .5rem; font-weight: 700; font-size: .75rem; }
+    
+    .address-form {
+      flex: 1; display: flex; align-items: center; gap: .5rem;
+      background: rgba(255,255,255,.1); border-radius: .75rem; padding: .5rem .75rem;
+    }
+    .address-form i { color: var(--muted); font-size: .75rem; }
+    #address-bar {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: var(--text); font-size: .875rem; font-family: inherit;
+    }
+    
+    #iframe-container { flex: 1; position: relative; background: #1a1a1a; }
+    #iframe-container iframe { width: 100%; height: 100%; border: none; background: #fff; position: absolute; inset: 0; }
+    
+    .empty-state {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 2rem; text-align: center; color: var(--muted);
+    }
+
+    /* Tabs Switcher */
+    #tab-switcher {
+      position: absolute; inset: 0; z-index: 30; background: rgba(0,0,0,.9);
+      backdrop-filter: blur(24px); display: flex; flex-direction: column; padding: 1rem; overflow-y: auto;
+    }
+    .tabs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .new-tab-btn { width: 2.5rem; height: 2.5rem; border-radius: 50%; background: #2563eb; color: #fff; border: none; cursor: pointer; }
+    #tabs-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    .tab-card { border-radius: 1rem; padding: 1rem; display: flex; flex-direction: column; height: 10rem; }
+    .tab-card.is-active { box-shadow: 0 0 0 2px #3b82f6; }
+    .tab-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; }
+    .tab-close-btn { width: 1.5rem; height: 1.5rem; border-radius: 50%; background: rgba(239,68,68,.2); color: #f87171; border: none; cursor: pointer; }
+    .tab-card-preview { flex: 1; background: rgba(255,255,255,.05); border-radius: .75rem; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+    /* Notes App */
+    .notes-header, .plugins-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .75rem 1rem; background: rgba(5,8,17,.9);
+    }
+    .notes-save-btn, .plugins-add-btn { background: transparent; border: none; color: var(--accent); font-weight: 500; cursor: pointer; }
+    #notes-content { flex: 1; width: 100%; background: #1e1e1e; border: none; padding: 1.5rem; font-size: 1.1rem; color: #d1d5db; resize: none; outline: none; }
+
+    /* Plugins App */
+    #plugins-list { flex: 1; overflow-y: auto; padding: 1rem; background: #000; }
+    .plugin-card { padding: 1rem; border-radius: 1rem; margin-bottom: .75rem; display: flex; justify-content: space-between; align-items: center; }
+    .plugin-remove-btn { width: 2rem; height: 2rem; border-radius: 50%; background: rgba(239,68,68,.2); color: #f87171; border: none; cursor: pointer; }
+
+    /* ===================================================
+       WINDOW MANAGER STYLES
+       =================================================== */
+    .session-window {
+      position: absolute; z-index: 10;
+      border: 1px solid rgba(255,255,255,.1); border-radius: 12px;
+      overflow: hidden; display: flex; flex-direction: column;
+      background: rgba(10,14,40,.9); backdrop-filter: blur(25px);
+      box-shadow: var(--shadow-soft);
+      width: 90%; max-width: 500px; height: 75%;
+      left: 0%; top: 0%;
+    }
+    .win-hdr {
+      height: 40px; background: rgba(255,255,255,.05);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 12px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,.05);
+    }
+    .win-title { font-size: .875rem; font-weight: 600; color: #fff; }
+    .win-controls button {
+      background: transparent; border: none; color: #fff; opacity: .7;
+      margin-left: 8px; cursor: pointer; transition: opacity .2s;
+    }
+    .win-controls button:hover { opacity: 1; }
+    
+    .session-window.maximized { width: 100% !important; height: calc(100% - 60px) !important; left: 0 !important; top: 60px !important; border-radius: 0; }
+    
+    /* 78px Intermediate Minimized State */
+    .session-window.minimized-78 {
+
+    }
+    .session-window.minimized-78 .app-content { display: flex; }
+    .session-window.minimized { display: flex !important; }
+
+    /* ===================================================
+       POPUP LAYER
+       =================================================== */
+    #popup-layer {
+      position: absolute; inset: 0; z-index: 999999;
+      background: rgba(0,0,0,.6); backdrop-filter: blur(6px); display: none;
+      flex-direction: column; align-items: center; justify-content: center;
+      padding: 1.5rem; opacity: 0; transition: opacity .3s ease;
+    }
+    #popup-layer.visible { display: flex; }
+    #popup-layer.opaque  { opacity: 1; }
+    #popup-box {
+      width: 100%; max-width: 24rem; border-radius: 1.5rem; padding: 1.5rem;
+      display: flex; flex-direction: column; gap: 1rem; transform: scale(.95); transition: transform .3s ease;
+    }
+    #popup-box.popped { transform: scale(1); }
+    #popup-title { font-size: 1.25rem; font-weight: 700; text-align: center; }
+    #popup-body { font-size: .875rem; color: var(--muted); text-align: center; }
+    #popup-body input {
+      width: 100%; background: rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.1);
+      border-radius: .75rem; padding: .75rem; color: var(--text); margin-top: .5rem; outline: none;
+    }
+    #popup-body textarea {
+      width: 100%; background: rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.1);
+      border-radius: .75rem; padding: .75rem; color: var(--text); margin-top: .5rem; outline: none; resize: vertical; height: 100px;
+    }
+    #popup-actions { display: flex; gap: .75rem; margin-top: .5rem; }
+    .popup-btn { flex: 1; padding: .75rem; border-radius: .75rem; border: none; cursor: pointer; font-weight: 600; }
+    .popup-btn.primary { background: #2563eb; color: #fff; }
+    .popup-btn.secondary { background: rgba(255,255,255,.1); color: var(--text); }
+  </style>
+<style>
+        :root {
+          --z-base: 0;
+          --z-content: 100;
+          --z-widget: 500;
+          --z-overlay: 1000;
+          --z-system: 5000;
+        }
+      </style><style>
+/* =====================================================
+   KODUX OS — TEMA CLARO (OVERRIDE)
+   ===================================================== */
+:root {
+  --grad-a: #0099cc;
+  --grad-b: #cc33cc;
+  --bg: #f4f6fc;
+  --panel: rgba(255,255,255,0.92);
+  --ink: #1a1a2e;
+  --muted: #5a5f7a;
+
+  --kob-voice-primary: #0088cc;
+  --kob-voice-secondary: #b300b3;
+  --kob-voice-accent: #1e1e2f;
+  --kob-voice-bg-soft: rgba(0,136,204,0.08);
+  --kob-voice-glow: 0 0 18px rgba(0,136,204,0.4);
+
+  --text: var(--ink);
+  --accent: var(--kob-voice-primary);
+  --accent-soft: rgba(0,136,204,0.12);
+  --accent-pink: var(--kob-voice-secondary);
+  --accent-cold: var(--kob-voice-primary);
+  --accent-warm: #cc8800;
+  --danger: #cc2244;
+
+  --shadow-soft: 0 18px 40px rgba(0,0,0,0.12);
+}
+
+body {
+  background:transparent;
+  color: var(--text); overflow-y:auto;
+}
+
+body::before {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(0,150,255,0.12) 0, transparent 50%),
+    radial-gradient(circle at 90% 100%, rgba(200,0,200,0.08) 0, transparent 60%);
+  opacity: 0.0;
+}
+
+/* Glass surfaces mais claras */
+.glass {
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+
+.glass-panel {
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+/* Home screen */
+#home-screen {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f3fa 100%);
+}
+
+#home-screen h2 {
+  color: #111827;
+}
+
+.app-icon-cell span {
+  color: #4b5563;
+}
+
+/* Browser header */
+#app-browser .browser-header.glass {
+  background: rgba(255,255,255,0.75);
+}
+
+.address-form {
+  background: rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+.address-form i {
+  color: #6b7280;
+}
+
+#address-bar {
+  color: #111827;
+}
+
+#address-bar::placeholder {
+  color: #9ca3af;
+}
+
+.browser-back-btn {
+  background: rgba(0,0,0,0.05);
+  color: #1f2937;
+}
+
+.tab-count-btn {
+  border: 1px solid rgba(0,0,0,0.15);
+  color: #1f2937;
+}
+
+/* Iframe container */
+#iframe-container {
+  background: #ffffff;
+}
+
+#browser-empty-state {
+  color: #6b7280;
+}
+
+.empty-link-btn {
+  background: rgba(0,0,0,0.05);
+  color: #1f2937;
+}
+
+.empty-link-btn:hover {
+  background: rgba(0,0,0,0.1);
+}
+
+/* Tab Switcher */
+#tab-switcher {
+  background: rgba(255,255,255,0.92);
+}
+
+.tab-card-title {
+  color: #4b5563;
+}
+
+.tab-card-preview {
+  background: rgba(0,0,0,0.03);
+}
+
+.tab-card-preview i {
+  color: #6b7280;
+}
+
+.tabs-done-btn.glass-panel {
+  background: rgba(255,255,255,0.8);
+  color: #1f2937;
+}
+
+/* Notes app */
+#app-notes {
+  background: #ffffff;
+}
+
+#notes-content {
+  color: #1f2937;
+}
+
+#notes-content::placeholder {
+  color: #9ca3af;
+}
+
+/* Plugins */
+#app-plugins {
+  background: #ffffff;
+}
+
+.plugin-card h4 {
+  color: #111827;
+}
+
+.plugin-card p {
+  color: #059669;
+}
+
+.plugin-remove-btn {
+  background: rgba(220,38,38,0.1);
+  color: #dc2626;
+}
+
+/* Bottom Dock */
+.dock-inner {
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.dock-sym {
+  border: 1px solid rgba(0,0,0,0.1);
+  background: rgba(0,0,0,0.03);
+  color: #4b5563;
+}
+
+.dock-sym:hover {
+  background: rgba(0,0,0,0.08);
+  border-color: var(--kob-voice-secondary);
+  color: #111827;
+}
+
+.dock-sym:active {
+  color: var(--kob-voice-primary);
+}
+
+/* Popups */
+#popup-layer {
+  background: rgba(0,0,0,0.3);
+}
+
+#popup-box {
+  background: rgba(255,255,255,0.9);
+}
+
+#popup-body textarea,
+#popup-body input[type="text"] {
+  background: rgba(0,0,0,0.03);
+  border: 1px solid rgba(0,0,0,0.15);
+  color: #1f2937;
+}
+
+/* Settings panel */
+#settings-panel {
+  background: rgba(0,0,0,0.3);
+}
+
+#kblx-panel {
+  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(245,247,255,0.9));
+  border: 1px solid rgba(0,0,0,0.1);
+  color: #1a1a2e;
+}
+
+.kblx-icon-btn {
+  background: rgba(0,0,0,0.04);
+  color: #1f2937;
+}
+
+.kblx-preset,
+.kblx-btn.kblx-save,
+.kblx-btn.kblx-clear {
+  background: rgba(0,0,0,0.05);
+  color: #1f2937;
+}
+
+.kblx-preset:hover,
+.kblx-btn.kblx-save:hover {
+  background: rgba(0,0,0,0.1);
+}
+
+.p-chip {
+  background: rgba(0,0,0,0.04);
+  color: #1f2937;
+}
+
+/* Orb elements mantêm contraste */
+.orb-core {
+  box-shadow: 0 0 18px rgba(0,0,0,0.15);
+}
+
+/* Checkbox e outros inputs */
+input[type="checkbox"] {
+  background: rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.2);
+}
+
+.switch-slider {
+  background: rgba(0,0,0,0.08);
+  border: 1px solid rgba(0,0,0,0.15);
+}
+</style></head>
 <body data-theme="dark">
 
   <div id="boot-screen">
@@ -38,7 +1291,7 @@
       </div>
 
       <div class="top-actions">
-        <button class="launcher-btn" id="openKobBtn">+ Abrir</button>
+
         <button class="soft-btn" id="openLogsBtn">Logs</button>
       </div>
     </div>
@@ -56,6 +1309,9 @@
 
     <div id="home-screen">
          <div id="stackWrap"></div>
+
+        <button class="launcher-btn" id="openKobBtn">+ Abrir</button>
+
  <h2>oiDual</h2>
       <div id="app-grid"></div>
     </div>
@@ -68,7 +1324,7 @@
   <!-- APP BROWSER (Tab Engine) -->
   <div style="z-index:3" id="app-browser" class="app-view">
 
-    
+    <script src="https://kodux78k.github.io/oiDual--Y-/M0D/FSWIN/js/modules/iFSw-fix.js"></script>
 
     <!-- Browser Header -->
     <div class="browser-header glass safe-pt">
@@ -167,8 +1423,540 @@
     </div>
   </div>
 
- 
+ <script>
+    /**
+     * KOBLLUX_MONOLITH_FINAL Engine
+     * Incorporates KODUX OS Boot, TabEngine, Browser, Notes, and Plugins.
+     */
+    const OS = {
+      state: { booted: false },
+
+      // 1. Storage Layer (Strict Validation: di_ prefix)
+      Storage: {
+        prefix: 'di_',
+        save(key, data) {
+          try { localStorage.setItem(this.prefix + key, JSON.stringify(data)); }
+          catch (e) { console.error("Storage Error", e); }
+        },
+        load(key, defaultVal = null) {
+          try {
+            const item = localStorage.getItem(this.prefix + key);
+            return item ? JSON.parse(item) : defaultVal;
+          } catch (e) { return defaultVal; }
+        },
+        remove(key) { localStorage.removeItem(this.prefix + key); }
+      },
+
+      // 2. Popup System (Strict Validation: textContent)
+      Popup: {
+        show(title, htmlContent, buttons = []) {
+          const layer     = document.getElementById('popup-layer');
+          const box       = document.getElementById('popup-box');
+          const titleEl   = document.getElementById('popup-title');
+          const bodyEl    = document.getElementById('popup-body');
+          const actionsEl = document.getElementById('popup-actions');
+
+          titleEl.textContent = title;
+          bodyEl.innerHTML    = htmlContent;
+          actionsEl.innerHTML = '';
+
+          if (buttons.length === 0) {
+            buttons = [{ text: 'OK', type: 'primary', onClick: () => OS.Popup.hide() }];
+          }
+
+          buttons.forEach(btn => {
+            const b = document.createElement('button');
+            b.textContent = btn.text;
+            b.className   = `popup-btn ${btn.type === 'primary' ? 'primary' : 'secondary'}`;
+            b.onclick = () => { if (btn.onClick) btn.onClick(); OS.Popup.hide(); };
+            actionsEl.appendChild(b);
+          });
+
+          layer.classList.add('visible');
+          requestAnimationFrame(() => {
+            layer.classList.add('opaque');
+            box.classList.add('popped');
+          });
+        },
+        hide() {
+          const layer = document.getElementById('popup-layer');
+          const box   = document.getElementById('popup-box');
+          layer.classList.remove('opaque');
+          box.classList.remove('popped');
+          setTimeout(() => layer.classList.remove('visible'), 300);
+        },
+        prompt(title, placeholder, callback) {
+          const inputHtml = `<input type="text" id="popup-input" placeholder="${placeholder}">`;
+          this.show(title, inputHtml, [
+            { text: 'Cancelar', type: 'secondary' },
+            { text: 'Confirmar', type: 'primary', onClick: () => {
+              const val = document.getElementById('popup-input').value;
+              callback(val);
+            }}
+          ]);
+          setTimeout(() => document.getElementById('popup-input').focus(), 100);
+        }
+      },
+
+      // 3. Window Manager (Strict Validation: 78px minimize state)
+      WindowManager: {
+        counter: 1,
+        
+        createSessionWindow({ id, title = '//', icon = '🌐', content = '' }) {
+          if (id && document.getElementById(id)) {
+            this.toggleMaximize(id);
+            return id;
+          }
+
+          const winId = id || `session-${Date.now()}-${this.counter++}`;
+          const stackWrap = document.getElementById('stackWrap');
+
+          const section = document.createElement('div');
+          section.className = 'session-window';
+          section.id = winId;
+
+          section.innerHTML = `
+            <div class="win-hdr" onclick="OS.WindowManager.handleHeaderClick(event, '${winId}')">
+              <div class="win-title"><i class="fa-solid ${icon}"></i> &nbsp; ${title}</div>
+              <div class="win-controls" onclick="event.stopPropagation()">
+                <button onclick="OS.WindowManager.toggleMaximize('${winId}')" title="Maximizar">⬜</button>
+                <button onclick="OS.WindowManager.minimizeWindow('${winId}')" title="Minimizar">🔘</button>
+                <button onclick="OS.WindowManager.closeWindow('${winId}')" title="Fechar">✕</button>
+              </div>
+            </div>
+            ${content}
+          `;
+
+          stackWrap.appendChild(section);
+          this.updateMaximizedStacks();
+          return winId;
+        },
+
+        handleHeaderClick(e, winId) {
+          if (e.target.closest('.win-controls')) return;
+          this.toggleMaximize(winId);
+        },
+
+        toggleMaximize(winId) {
+          const win = document.getElementById(winId);
+          if (!win) return;
+          win.classList.toggle('maximized');
+          win.classList.remove('minimized', 'minimized-78', 'peeked', 'collapsed');
+          
+          if (win.classList.contains('maximized')) {
+            document.querySelectorAll('.session-window').forEach(w => w.style.zIndex = '1');
+            win.style.zIndex = '92000';
+          } else {
+            win.style.zIndex = '1';
+          }
+          this.updateMaximizedStacks();
+        },
+
+        minimizeWindow(winId) {
+          const win = document.getElementById(winId);
+          if (!win) return;
+
+          if (!win.classList.contains('minimized-78')) {
+            win.classList.add('minimized-78', 'peeked', 'collapsed');
+            win.classList.remove('maximized');
+            this.updateMaximizedStacks();
+          } else {
+            win.classList.remove('minimized-78');
+            win.classList.add('minimized', 'collapsed');
+            this.updateMaximizedStacks();
+
+            const dock = document.getElementById('dock');
+            const bubble = document.createElement('div');
+            bubble.className = 'dock-bubble glass-panel';
+            bubble.style.padding = "10px 14px";
+            bubble.style.cursor = "pointer";
+            bubble.style.background = "rgba(10,14,40,.9)";
+            bubble.textContent = '🔘';
+            bubble.id = `dock-${winId}`;
+
+            bubble.onclick = () => {
+              win.classList.remove('minimized');
+              bubble.remove();
+              this.updateMaximizedStacks();
+            };
+            dock.appendChild(bubble);
+          }
+        },
+
+        closeWindow(winId) {
+          const win = document.getElementById(winId);
+          if (!win) return;
+          const bubble = document.getElementById(`dock-${winId}`);
+          if (bubble) bubble.remove();
+          win.remove();
+          this.updateMaximizedStacks();
+        },
+
+        updateMaximizedStacks() {
+          const maxWins = Array.from(document.querySelectorAll('.session-window.maximized'));
+          maxWins.forEach(win => {
+             win.style.top = `calc(var(--topbar-h, 50px) + var(--safe-top))`;
+          });
+        }
+      },
+
+      // 4. Tab Engine & Browser
+      TabEngine: {
+        tabs: [],
+        activeTabId: null,
+
+        init() {
+          this.tabs = OS.Storage.load('tabs', []);
+          if (this.tabs.length === 0) {
+            this.createTab();
+          } else {
+            this.activeTabId = this.tabs[0].id;
+            this.renderActiveTab();
+          }
+          this.updateUI();
+        },
+
+        createTab(url = '') {
+          const id = 'tab_' + Date.now();
+          this.tabs.push({ id, url, title: 'Nova Aba' });
+          this.activeTabId = id;
+          this.saveState();
+          this.renderActiveTab();
+          this.updateUI();
+        },
+
+        closeTab(id) {
+          this.tabs = this.tabs.filter(t => t.id !== id);
+          const iframe = document.getElementById(`iframe_${id}`);
+          if (iframe) iframe.remove();
+          if (this.tabs.length === 0) {
+            this.createTab();
+          } else if (this.activeTabId === id) {
+            this.activeTabId = this.tabs[this.tabs.length - 1].id;
+            this.renderActiveTab();
+          }
+          this.saveState();
+          this.renderSwitcherGrid();
+          this.updateUI();
+        },
+
+        switchTab(id) {
+          this.activeTabId = id;
+          this.renderActiveTab();
+          this.hideTabSwitcher();
+          this.updateUI();
+        },
+
+        saveState() { OS.Storage.save('tabs', this.tabs); },
+
+        renderActiveTab() {
+          const container  = document.getElementById('iframe-container');
+          const addressBar = document.getElementById('address-bar');
+          if (!container || !addressBar) return;
+
+          container.querySelectorAll('iframe').forEach(ifr => ifr.style.display = 'none');
+          document.getElementById('browser-empty-state').style.display = 'none';
+
+          const activeTab = this.tabs.find(t => t.id === this.activeTabId);
+          if (!activeTab) return;
+
+          addressBar.value = activeTab.url;
+
+          if (!activeTab.url) {
+            document.getElementById('browser-empty-state').style.display = 'flex';
+          } else {
+            let iframe = document.getElementById(`iframe_${activeTab.id}`);
+            if (!iframe) {
+              iframe = document.createElement('iframe');
+              iframe.id      = `iframe_${activeTab.id}`;
+              iframe.sandbox = "allow-scripts allow-same-origin allow-forms allow-popups";
+              iframe.src     = activeTab.url;
+              iframe.onload  = () => {
+                try {
+                  activeTab.title = iframe.contentDocument.title || activeTab.url;
+                } catch (e) {
+                  activeTab.title = activeTab.url.replace(/^https?:\/\//, '').split('/')[0];
+                }
+                this.saveState();
+              };
+              container.appendChild(iframe);
+            }
+            iframe.style.display = 'block';
+          }
+        },
+
+        updateActiveTabUrl(url) {
+          const tab = this.tabs.find(t => t.id === this.activeTabId);
+          if (tab) {
+            tab.url   = url;
+            tab.title = url;
+            this.saveState();
+            const oldIframe = document.getElementById(`iframe_${tab.id}`);
+            if (oldIframe) oldIframe.remove();
+            this.renderActiveTab();
+          }
+        },
+
+        updateUI() {
+          const tabEl = document.getElementById('tab-count');
+          if (tabEl) tabEl.textContent = this.tabs.length;
+        },
+
+        showTabSwitcher() {
+          this.renderSwitcherGrid();
+          document.getElementById('tab-switcher').style.display = 'flex';
+        },
+        hideTabSwitcher() {
+          document.getElementById('tab-switcher').style.display = 'none';
+        },
+
+        renderSwitcherGrid() {
+          const grid = document.getElementById('tabs-grid');
+          if(!grid) return;
+          grid.innerHTML = '';
+          this.tabs.forEach(tab => {
+            const isActive = tab.id === this.activeTabId;
+            const el = document.createElement('div');
+            el.className = `tab-card glass-panel${isActive ? ' is-active' : ''}`;
+            el.innerHTML = `
+              <div class="tab-card-header">
+                <span class="tab-card-title">${tab.title || 'Nova Aba'}</span>
+                <button class="tab-close-btn" onclick="event.stopPropagation(); OS.TabEngine.closeTab('${tab.id}')">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+              <div class="tab-card-preview" onclick="OS.TabEngine.switchTab('${tab.id}')">
+                <i class="fa-solid ${tab.url ? 'fa-globe' : 'fa-plus'}"></i>
+              </div>
+            `;
+            grid.appendChild(el);
+          });
+        },
+
+        newTab() {
+          this.createTab();
+          this.hideTabSwitcher();
+        }
+      },
+
+      Browser: {
+        navigateBar() {
+          let url = document.getElementById('address-bar').value.trim();
+          if (!url) return;
+          if (!/^https?:\/\//i.test(url)) {
+            if (url.includes('.') && !url.includes(' ')) {
+              url = 'https://' + url;
+            } else {
+              url = 'https://www.bing.com/search?q=' + encodeURIComponent(url);
+            }
+          }
+          OS.TabEngine.updateActiveTabUrl(url);
+        },
+        reload() {
+          const tab = OS.TabEngine.tabs.find(t => t.id === OS.TabEngine.activeTabId);
+          if (tab && tab.url) {
+            const iframe = document.getElementById(`iframe_${tab.id}`);
+            if (iframe) iframe.src = iframe.src;
+          }
+        },
+        loadUrl(url) {
+          const addr = document.getElementById('address-bar');
+          if(addr) addr.value = url;
+          OS.TabEngine.updateActiveTabUrl(url);
+        }
+      },
+
+      // 5. Plugins Engine
+      Plugins: {
+        list: [],
+        init() {
+          this.list = OS.Storage.load('plugins', []);
+          this.executeAll();
+        },
+        promptInstall() {
+          const html = `
+            <p style="font-size:.75rem;text-align:left;margin-bottom:.5rem;">Cole o código JavaScript do plugin:</p>
+            <textarea id="plugin-code" placeholder="OS.Popup.show('Hello', 'Plugin rodando!');"></textarea>
+            <input type="text" id="plugin-name" placeholder="Nome do Plugin">
+          `;
+          OS.Popup.show("Novo Plugin", html, [
+            { text: 'Cancelar', type: 'secondary' },
+            { text: 'Instalar', type: 'primary', onClick: () => {
+              const code = document.getElementById('plugin-code').value;
+              const name = document.getElementById('plugin-name').value || 'Plugin ' + (this.list.length + 1);
+              if (code) {
+                this.list.push({ id: Date.now(), name, code, active: true });
+                OS.Storage.save('plugins', this.list);
+                this.renderList();
+                this.execute(code);
+                OS.Popup.show("Sucesso", "Plugin instalado e executado.");
+              }
+            }}
+          ]);
+        },
+        remove(id) {
+          this.list = this.list.filter(p => p.id !== id);
+          OS.Storage.save('plugins', this.list);
+          this.renderList();
+        },
+        renderList() {
+          const container = document.getElementById('plugins-list');
+          if (!container) return;
+          if (this.list.length === 0) {
+            container.innerHTML = `
+              <div style="text-align:center;color:var(--muted);margin-top:2.5rem;">
+                <i class="fa-solid fa-puzzle-piece" style="font-size:2.5rem;display:block;margin-bottom:.75rem;"></i>
+                <p>Nenhum plugin instalado.</p>
+              </div>`;
+            return;
+          }
+          container.innerHTML = this.list.map(p => `
+            <div class="plugin-card glass-panel">
+              <div>
+                <h4>${p.name}</h4>
+                <p style="font-size:.75rem;color:#34d399;">Ativo</p>
+              </div>
+              <button class="plugin-remove-btn" onclick="OS.Plugins.remove(${p.id})"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          `).join('');
+        },
+        execute(code) {
+          try {
+            const fn = new Function('OS', code);
+            fn(OS);
+          } catch (e) {
+            OS.Popup.show("Erro no Plugin", `<p style="color:var(--danger);font-size:.75rem;">${e.message}</p>`);
+          }
+        },
+        executeAll() {
+          this.list.filter(p => p.active).forEach(p => this.execute(p.code));
+        }
+      },
+
+      // 6. Apps Configuration
+      Apps: {
+        registry: [
+          { id: 'browser', name: 'Navegador', icon: 'fa-compass', colorClass: 'icon-blue', action: () => OS.Apps.openBrowser() },
+          { id: 'notes', name: 'Notas', icon: 'fa-note-sticky', colorClass: 'icon-yellow', action: () => OS.Apps.openNotes() },
+          { id: 'plugins', name: 'Plugins', icon: 'fa-puzzle-piece', colorClass: 'icon-purple', action: () => OS.Apps.openPlugins() },
+          { id: 'settings', name: 'Ajustes', icon: 'fa-gear', colorClass: 'icon-gray', action: () => OS.Popup.show('Sistema', 'KODUX OS v3<br>Armazenamento Integrado') }
+        ],
+
+        openBrowser() {
+          const content = `
+            <div class="app-content" style="padding:0;">
+              <div class="browser-header">
+                <button class="browser-back-btn" onclick="OS.WindowManager.closeWindow('window-browser')"><i class="fa-solid fa-home"></i></button>
+                <div class="address-form">
+                  <i class="fa-solid fa-lock"></i>
+                  <input type="text" id="address-bar" placeholder="Pesquisar ou URL" onkeydown="if(event.key==='Enter'){OS.Browser.navigateBar();event.preventDefault();}">
+                  <button style="background:transparent;border:none;color:var(--muted);cursor:pointer;" onclick="OS.Browser.reload()"><i class="fa-solid fa-rotate-right"></i></button>
+                </div>
+                <button class="tab-count-btn" onclick="OS.TabEngine.showTabSwitcher()"><span id="tab-count">1</span></button>
+              </div>
+              <div id="iframe-container">
+                <div id="browser-empty-state" class="empty-state">
+                  <i class="fa-solid fa-globe" style="font-size:2.5rem;margin-bottom:1rem;"></i>
+                  <p>Motor de Busca Local.</p>
+                </div>
+              </div>
+              <div id="tab-switcher" style="display:none;">
+                <div class="tabs-header">
+                  <h2 style="font-weight:700;">Abas Abertas</h2>
+                  <button class="new-tab-btn" onclick="OS.TabEngine.newTab()"><i class="fa-solid fa-plus"></i></button>
+                </div>
+                <div id="tabs-grid"></div>
+                <div style="margin-top:auto;padding-top:2rem;display:flex;justify-content:center;">
+                  <button style="padding:.75rem 2rem;border-radius:999px;border:none;font-weight:600;cursor:pointer;" onclick="OS.TabEngine.hideTabSwitcher()">Concluído</button>
+                </div>
+              </div>
+            </div>
+          `;
+          OS.WindowManager.createSessionWindow({ id: 'window-browser', title: 'Navegador', icon: 'fa-compass', content });
+          OS.TabEngine.init();
+        },
+
+        openNotes() {
+          const notesData = OS.Storage.load('notes_data', '');
+          const content = `
+            <div class="app-content" style="padding:0;">
+              <div class="notes-header">
+                <span style="font-weight:600;">Bloco de Notas</span>
+                <button class="notes-save-btn" onclick="OS.Storage.save('notes_data', document.getElementById('notes-content').value); OS.Popup.show('Notas', 'Salvo com sucesso!');">Salvar</button>
+              </div>
+              <textarea id="notes-content" placeholder="Comece a digitar...">${notesData}</textarea>
+            </div>
+          `;
+          OS.WindowManager.createSessionWindow({ id: 'window-notes', title: 'Notas', icon: 'fa-note-sticky', content });
+        },
+
+        openPlugins() {
+          const content = `
+            <div class="app-content" style="padding:0;">
+              <div class="plugins-header">
+                <span style="font-weight:600;">Plugins JS</span>
+                <button class="plugins-add-btn" onclick="OS.Plugins.promptInstall()"><i class="fa-solid fa-plus"></i></button>
+              </div>
+              <div id="plugins-list"></div>
+            </div>
+          `;
+          OS.WindowManager.createSessionWindow({ id: 'window-plugins', title: 'Plugins', icon: 'fa-puzzle-piece', content });
+          OS.Plugins.renderList();
+        }
+      },
+
+      // 7. Core Boot System
+      UI: {
+        updateClock() {
+          const now = new Date();
+          const el  = document.getElementById('sys-time');
+          if (el) el.textContent = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        },
+        buildHome() {
+          const grid = document.getElementById('app-grid');
+          grid.innerHTML = OS.Apps.registry.map(app => `
+            <div class="app-icon-cell" onclick="(${app.action.toString()})()">
+              <button class="app-icon-btn ${app.colorClass}">
+                <i class="fa-solid ${app.icon}"></i>
+              </button>
+              <span>${app.name}</span>
+            </div>
+          `).join('');
+        }
+      },
+
+      boot() {
+        const progressBar = document.getElementById('boot-progress');
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += Math.random() * 20;
+          if (progress >= 100) {
+            progress = 100;
+            clearInterval(interval);
+            setTimeout(() => this.finishBoot(), 500);
+          }
+          progressBar.style.width = `${progress}%`;
+        }, 150);
+      },
+
+      finishBoot() {
+        const bootScreen = document.getElementById('boot-screen');
+        bootScreen.style.opacity = '0';
+        setTimeout(() => bootScreen.remove(), 800);
+
+        this.UI.buildHome();
+        this.Plugins.init();
+
+        this.UI.updateClock();
+        setInterval(() => this.UI.updateClock(), 10000);
+
+        this.state.booted = true;
+      }
+    };
+
+    window.addEventListener('load', () => OS.boot());
+  </script>
 
   <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/M0D/iFSw/css/iFSw-fix.css">
 
-<script type="module" src="./js/main.js"></script></body></html>
+</body></html>
