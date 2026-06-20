@@ -987,9 +987,9 @@ body, .nebula, details.acc, .btn, #fab, .kob-tts-dock, .kob-tts-panel.is-dock {
   }
 
   break;
-        break;
+        
       case "LOG":
-        console.log("[COB]", msg.payload);
+        console.log("[kob5]", msg.payload);
         break;
     }
   });
