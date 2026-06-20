@@ -34,7 +34,7 @@ class KOBParticles{
 
       linkDistance:160,
 
-      mouseForce:.6,
+      mouseForce:.18,
 
       ...config
 
