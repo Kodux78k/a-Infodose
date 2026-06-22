@@ -1,0 +1,201 @@
+<!doctype html>
+<!-- chronorithm_view.html
+     Integrated CHRONORITHM view for KODUX app
+     Place this file under: oiDual/KODUX/78K/APPS/78KH/chronorithm_view.html
+     Loads a local integration script (./js/chronorithm_integration.js) to communicate with the parent app via custom events / postMessage.
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CHRONORITHM — KODUX View</title>
+<style>
+  :root{ --bg:#05060a; --panel:#0f1113; --muted:#9aa3ad; --neon-cyan:#00f0d6; --neon-mag:#ff4fc1; --accent:#ffd166; --glass: rgba(255,255,255,0.03); }
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,#050507,#0b0b10);font-family:Inter,system-ui,Segoe UI,Arial;color:#e6eef6}
+  .wrap{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px}
+  .panel{background:var(--panel);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);width:980px;max-width:95%;box-shadow:0 6px 30px rgba(0,0,0,0.6)}
+  header{display:flex;align-items:center;gap:12px}
+  header h1{margin:0;font-size:18px}
+  .row{display:flex;gap:18px;margin-top:18px}
+  .left{flex:1}
+  .right{width:300px}
+  .controls{display:flex;flex-direction:column;gap:10px}
+  label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+  .btn{display:inline-block;padding:10px 14px;border-radius:8px;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-mag));color:#071017;border:none;cursor:pointer;font-weight:700}
+  svg{width:520px;height:520px;max-width:100%}
+  .node{cursor:pointer;transition:transform 0.12s ease}
+  .node-label{fill:#cfeaf0;font-size:11px;text-anchor:middle;pointer-events:none}
+  .node-dot{stroke:#071017;stroke-width:1.5}
+  .small{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <header>
+        <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--neon-cyan),var(--neon-mag));display:flex;align-items:center;justify-content:center;font-weight:800;color:#071017">Φ</div>
+        <div>
+          <h1>CHRONORITHM — KODUX View</h1>
+          <div class="small">Embedded view for KODUX app. Communicates with parent via postMessage & custom events.</div>
+        </div>
+      </header>
+
+      <div class="row">
+        <div class="left">
+          <div id="mandala-wrap">
+            <svg id="mandala" viewBox="-300 -300 600 600" aria-label="Mandala CHRONORITHM">
+              <defs>
+                <radialGradient id="g1" cx="50%" cy="50%">
+                  <stop offset="0%" stop-color="#001219" stop-opacity="0.8"/>
+                  <stop offset="100%" stop-color="#000000" stop-opacity="0.2"/>
+                </radialGradient>
+              </defs>
+              <circle r="50" fill="url(#g1)" opacity="0.85"></circle>
+              <g id="rings">
+                <circle r="120" class="pulse-ring" fill="none" stroke="rgba(0,255,214,0.06)" stroke-width="2"></circle>
+                <circle r="200" class="pulse-ring" fill="none" stroke="rgba(0,255,214,0.04)" stroke-width="2"></circle>
+              </g>
+              <g id="nodes"></g>
+              <text x="0" y="6" fill="white" font-size="14" font-weight="700" text-anchor="middle">JESUS</text>
+              <text x="0" y="24" fill="#9aa3ad" font-size="11" text-anchor="middle">CENTRO</text>
+            </svg>
+          </div>
+          <div class="small" style="margin-top:8px">Clique em nós para forçar pulso. Use controles na direita ou o DUAL APP para comandar remotamente.</div>
+        </div>
+
+        <div class="right">
+          <div class="controls">
+            <div>
+              <label>Φ (phi) — Fluxo / Aleatoriedade: <span id="phiVal">0.50</span></label>
+              <input id="phi" class="slider" type="range" min="0" max="1" step="0.01" value="0.5">
+            </div>
+
+            <div>
+              <label>Taxa de Batida (BPM): <span id="bpmVal">60</span></label>
+              <input id="bpm" class="slider" type="range" min="30" max="150" step="1" value="60">
+            </div>
+
+            <div style="display:flex;gap:8px;align-items:center">
+              <button id="activate" class="btn">ATIVAR CÓDICE</button>
+              <button id="reset" class="btn" style="background:linear-gradient(90deg,var(--accent),#ff9f1c)">RESET</button>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
+              <div class="small"><input id="soundToggle" type="checkbox"> Som (WebAudio)</div>
+              <div class="small">Estado: <span id="status">Dormir</span></div>
+            </div>
+
+            <div style="margin-top:12px" class="small">Export: <button id="downloadLog" class="btn" style="background:linear-gradient(90deg,#6be9ff,#8b6bff);padding:8px 10px">Exportar selo.json</button></div>
+            <div id="lastExport" class="small" style="margin-top:8px;color:var(--muted)">Nenhuma exportação ainda</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+/* Minimal integration script — the heavy logic is included here for portability.
+   This view will also dispatch and listen to window messages so a parent app (Dual App) can control it.
+*/
+(function(){
+const NODE_NAMES = ["ALPHA","BETA","GAMMA","DELTA","EPSILON","ZETA","ETA","THETA","IOTA","KODUX","BLLUE","NOVA"];
+const svg = document.getElementById('mandala');
+const nodesGroup = document.getElementById('nodes');
+const phiSlider = document.getElementById('phi');
+const phiVal = document.getElementById('phiVal');
+const bpmSlider = document.getElementById('bpm');
+const bpmVal = document.getElementById('bpmVal');
+const activateBtn = document.getElementById('activate');
+const resetBtn = document.getElementById('reset');
+const downloadBtn = document.getElementById('downloadLog');
+const lastExport = document.getElementById('lastExport');
+const statusEl = document.getElementById('status');
+const soundToggle = document.getElementById('soundToggle');
+
+let nodes = [];
+let phi = parseFloat(phiSlider.value);
+let bpm = parseInt(bpmSlider.value,10);
+let audioCtx = null;
+
+phiSlider.addEventListener('input', ()=>{ phi = parseFloat(phiSlider.value); phiVal.textContent = phi.toFixed(2); dispatchStateChange(); });
+bpmSlider.addEventListener('input', ()=>{ bpm = parseInt(bpmSlider.value,10); bpmVal.textContent = bpm; dispatchStateChange(); });
+
+function buildNodes(){
+  nodesGroup.innerHTML = '';
+  nodes = [];
+  const R = 200;
+  for(let i=0;i<12;i++){
+    const angle = (i/12) * Math.PI * 2 - Math.PI/2;
+    const x = Math.cos(angle)*R; const y = Math.sin(angle)*R;
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('transform', `translate(${x},${y})`);
+    g.dataset.index = i; g.classList.add('node');
+    const ring = document.createElementNS('http://www.w3.org/2000/svg','circle'); ring.setAttribute('r',28); ring.setAttribute('fill','none'); ring.setAttribute('stroke','rgba(255,255,255,0.03)'); ring.setAttribute('stroke-width','2');
+    const dot = document.createElementNS('http://www.w3.org/2000/svg','circle'); dot.setAttribute('r',12); dot.setAttribute('fill', i%2===0 ? '#00f0d6' : '#ff4fc1'); dot.setAttribute('class','node-dot');
+    const label = document.createElementNS('http://www.w3.org/2000/svg','text'); label.setAttribute('y','36'); label.setAttribute('class','node-label'); label.textContent = NODE_NAMES[i] || `N${i+1}`;
+    g.appendChild(ring); g.appendChild(dot); g.appendChild(label); nodesGroup.appendChild(g);
+    const node = { index:i, x,y, g, ring, dot, label, baseRadius:12, pulse:0, energy: Math.random() };
+    g.addEventListener('click', ()=>{ node.pulse = 1.8; node.energy = Math.min(1, node.energy + 0.25); triggerSound(300 + i*20); dispatchNodeClick(node); });
+    nodes.push(node);
+  }
+}
+
+function dispatchNodeClick(node){
+  const msg = { type:'chronorithm:nodeClick', node: NODE_NAMES[node.index], energy: node.energy };
+  // notify parent
+  window.parent.postMessage(msg, '*');
+}
+
+function triggerSound(freq=440, duration=0.12){
+  if(!soundToggle.checked) return; if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = 'sine'; o.frequency.value = freq; g.gain.value = 0.0001; o.connect(g); g.connect(audioCtx.destination);
+  const now = audioCtx.currentTime; g.gain.linearRampToValueAtTime(0.12, now+0.002); g.gain.exponentialRampToValueAtTime(0.0001, now+duration); o.start(now); o.stop(now+duration+0.02);
+}
+
+let lastTime = performance.now(); let accumulator = 0;
+function animate(now){ const dt = (now - lastTime)/1000; lastTime = now; const beatInterval = 60 / bpm; accumulator += dt;
+  nodes.forEach((n,idx)=>{ n.pulse = Math.max(0, n.pulse - dt * (1 + phi*3)); n.energy += (Math.sin(now*0.001*(0.5+phi*2) + idx) * 0.001) * (1 + phi*3); n.energy = Math.max(0, Math.min(1, n.energy)); const scale = 1 + 0.6 * n.pulse * (0.6 + n.energy); n.g.setAttribute('transform', `translate(${n.x},${n.y}) scale(${scale})`); n.dot.setAttribute('r', n.baseRadius * (1 + 0.28 * n.pulse)); n.ring.setAttribute('stroke-opacity', 0.03 + 0.12 * n.pulse); });
+  if(accumulator >= beatInterval){ accumulator -= beatInterval; const count = 1 + Math.floor(phi*4); for(let i=0;i<count;i++){ const idx = Math.floor(Math.random()*nodes.length); nodes[idx].pulse = Math.max(nodes[idx].pulse, 0.6 + Math.random()*0.8); nodes[idx].energy = Math.min(1, nodes[idx].energy + 0.06 + Math.random()*0.08); if(soundToggle.checked) triggerSound(220 + idx*30,0.06); }
+    statusEl.textContent = 'Pulso ativo'; setTimeout(()=>{ if(statusEl.textContent === 'Pulso ativo') statusEl.textContent = 'Dormir'; }, 600);
+  }
+  requestAnimationFrame(animate);
+}
+
+function downloadJSON(obj, filename){ const blob = new Blob([JSON.stringify(obj,null,2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); },500); }
+
+activateBtn.addEventListener('click', ()=>{ nodes.forEach(n=> n.pulse = Math.max(n.pulse, 1.2)); statusEl.textContent = 'CÓDICE ATIVADO'; const selo = { timestamp:new Date().toISOString(), system:'CHRONORITHM-KODUX', phi, bpm, nodes: nodes.map(n=>({name: NODE_NAMES[n.index], energy:Number(n.energy.toFixed(3)), pulse:Number(n.pulse.toFixed(3))})) }; downloadJSON(selo, `selo_${Date.now()}.json`); lastExport.textContent = `Último export: ${new Date().toLocaleString()}`; // announce activation to parent
+  window.parent.postMessage({type:'chronorithm:activated', selo}, '*');
+});
+resetBtn.addEventListener('click', ()=>{ phiSlider.value = 0.5; phi=0.5; phiVal.textContent='0.50'; bpmSlider.value=60; bpm=60; bpmVal.textContent='60'; nodes.forEach(n=>{n.energy=Math.random()*0.2;n.pulse=0}); statusEl.textContent='Reset completo'; setTimeout(()=>statusEl.textContent='Dormir',800); window.parent.postMessage({type:'chronorithm:reset'}, '*'); });
+downloadBtn.addEventListener('click', ()=>{ const log = { exportedAt: new Date().toISOString(), phi,bpm, nodes: nodes.map(n=>({name:NODE_NAMES[n.index],energy:n.energy})) }; downloadJSON(log, `chronorithm_log_${Date.now()}.json`); lastExport.textContent = `Último export: ${new Date().toLocaleString()}`; window.parent.postMessage({type:'chronorithm:export', log}, '*'); });
+
+// listen to parent messages
+window.addEventListener('message', (ev)=>{
+  const msg = ev.data || {};
+  if(msg && msg.type){
+    if(msg.type === 'kblx:setPhi'){ phi = parseFloat(msg.value); phiSlider.value = phi; phiVal.textContent = phi.toFixed(2); }
+    if(msg.type === 'kblx:setBPM'){ bpm = parseInt(msg.value,10); bpmSlider.value = bpm; bpmVal.textContent = bpm; }
+    if(msg.type === 'kblx:activate'){ activateBtn.click(); }
+    if(msg.type === 'kblx:nodePulse' && typeof msg.index === 'number'){ const n = nodes[msg.index]; if(n){ n.pulse = Math.max(n.pulse,1.2); n.energy = Math.min(1,n.energy+0.2); } }
+  }
+});
+
+// dispatch state change periodically so parent may read
+function dispatchStateChange(){ window.parent.postMessage({type:'chronorithm:state', phi,bpm, timestamp:new Date().toISOString()}, '*'); }
+setInterval(dispatchStateChange, 2200);
+
+buildNodes(); requestAnimationFrame(animate);
+
+// expose programmatic API on window for same-origin parent scripts
+window.__chronorithm = {
+  setPhi(v){ phi = Number(v); phiSlider.value = phi; phiVal.textContent = phi.toFixed(2); dispatchStateChange(); },
+  setBPM(v){ bpm = Number(v); bpmSlider.value = bpm; bpmVal.textContent = bpm; dispatchStateChange(); },
+  activate(){ activateBtn.click(); },
+  export(){ downloadBtn.click(); }
+};
+
+})();
+</script>
+</body>
+</html>
