@@ -23,9 +23,9 @@ import "./modules/KOB-RHEA-KAOS-sync.js";
 
 
 import "./modules/inline-7-9.js";
-import "./modules/inline-8.js";
+/*import "./modules/inline-8.js";
 import "./modules/inline-9.js";
-import "./modules/inline-10.js";
+import "./modules/inline-10.js";*/
 /*import "./modules/inline-11.js";*/
 import './modules/a€Arx.js';
 import './modules/kxtsk-shell.js';
