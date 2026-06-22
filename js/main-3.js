@@ -39,10 +39,10 @@ console.log(`
 
 try {
   await import(
-    "https://www.infodose.com.br/oiDual/KODUX/78K/DATA/kob4.js"
+    "https://www.infodose.com.br/oiDual/KODUX/78K/DATA/kob2.js"
   );
 
   console.log("✓ kob5.js carregado");
 } catch (err) {
-  console.error("✗ Falha ao carregar kob5.js", err);
+  console.error("✗ Falha ao carregar kob2.js", err);
 }
