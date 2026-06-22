@@ -7,9 +7,9 @@ console.log(
   }
 );
 
-window.KBLX_PROFILE = "7-9";
 
-import "./modules/KBllX_ASCII_BOOT.js";
+
+
 import "./modules/inline-00-arx.js";
 import "./modules/archz.js";
 
@@ -20,15 +20,7 @@ import "./modules/inline-4.js";
 import "./modules/inline-5.js";
 import "./modules/KOB-RHEA-KAOS-sync.js";
 
-try {
-  await import(
-    "https://www.infodose.com.br/oiDual/KODUX/78K/DATA/kob5.js"
-  );
 
-  console.log("✓ kob5.js carregado");
-} catch (err) {
-  console.error("✗ Falha ao carregar kob5.js", err);
-}
 
 import "./modules/inline-7-9.js";
 import "./modules/inline-8.js";
@@ -44,3 +36,13 @@ console.log(`
 ║ HASH    :: 1778•78K                ║
 ╚════════════════════════════════════╝
 `);
+
+try {
+  await import(
+    "https://www.infodose.com.br/oiDual/KODUX/78K/DATA/kob4.js"
+  );
+
+  console.log("✓ kob5.js carregado");
+} catch (err) {
+  console.error("✗ Falha ao carregar kob5.js", err);
+}
