@@ -97,6 +97,7 @@
   #particles{
     position:fixed;
     inset:0;
+    z-index:0;
   }
 
   #bgParticles{
