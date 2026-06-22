@@ -40,6 +40,10 @@
 
 })(`
 
+/* ═══════════════════════════════════════════════════════
+   🌌 KOBLLUX TRINITY ENGINE · TEMPLATE CORE
+   Versão: Injection Shell UI
+═══════════════════════════════════════════════════════ */
 
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -93,7 +97,6 @@
   #particles{
     position:fixed;
     inset:0;
-    z-index:0;
   }
 
   #bgParticles{
