@@ -91,7 +91,7 @@ class KOBParticles{
   resize(){
 
     const ratio=
-      window.devicePixelRatio||1;
+      window.devicePixelRatio||.87;
 
     this.canvas.width=
       innerWidth*ratio;
