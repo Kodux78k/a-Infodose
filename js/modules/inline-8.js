@@ -580,7 +580,7 @@
 
     let userName = 'Você';
     try{
-      userName = localStorage.getItem('infodoseUserName') || 'Você';
+      userName = localStorage.getItem('di_userName') || 'Você';
     }catch(e){}
     dashUser.textContent = 'Você: ' + userName;
 
@@ -612,7 +612,7 @@
 
   if (dashThemeBtn){
     dashThemeBtn.addEventListener('click', ()=>{
-      const cycle = ['dark','vibe','medium'];
+      const cycle = ['dark','light','vibe','medium'];
       const current = document.body.dataset.theme || 'dark';
       const idx = cycle.indexOf(current);
       const next = cycle[(idx+1+cycle.length)%cycle.length];
