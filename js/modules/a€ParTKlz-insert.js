@@ -81,7 +81,7 @@
   html, body{
     width:100%;
     height:100%;
-    overflow:hidden;
+
 
     background:
       radial-gradient(circle at top, rgba(0,245,255,.08), transparent 40%),
@@ -153,7 +153,7 @@
 
   body{
     position:relative;
-    overflow-x:hidden;
+
   }
 
   #universe-viewport{
