@@ -39,16 +39,11 @@
   });
 
 })(`
-
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 
-  <!-- ─────────────────────────────────────────────
-       META CONFIG
-  ───────────────────────────────────────────── -->
-  <meta charset="UTF-8">
+    <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
 
   <title>KOBLLUX Trinity Engine</title>
@@ -92,7 +87,7 @@
   ═══════════════════════════════════════════ */
   #particles{
     position:fixed;
-    inset:0;
+    inset:0; z-index:1;
   }
 
   #bgParticles{
