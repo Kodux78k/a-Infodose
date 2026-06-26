@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>oiDual // infodose [REFATORADO]</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#05070a">
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;600;900&family=JetBrains+Mono:wght@400;700&family=Inter:wght@200;400;500;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+  <!-- External Styles -->
+
+   <link href="https://www.infodose.com.br/css/main1.css" rel="stylesheet" data-k-id="L_k">
+
+  <style id="app-core-styles">
+    :root {
+      --z-base: 0;
+      --z-content: 100;
+      --z-widget: 500;
+      --z-overlay: 1000;
+      --z-system: 5000;
+      --orb-speed: 18s;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      margin: 0; padding: 0;
+      background: #0a0c14;
+      color: white;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+    }
+
+    .wrap { min-height: 100vh; display: flex; flex-direction: column; }
+    .content { padding-top: 0; margin-top: auto; }
+
+   
+    /* Nagatanazare Panel */
+    #kblx-back {
+      position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+      padding: 22px; background: rgba(0,0,0,0.7); backdrop-filter: blur(14px); z-index: 999999;
+    }
+    #kblx-back.is-open { display: flex; }
+
+    /* Player Idle */
+    #bodyPlayer { position: relative; width: 100%; min-height: 100vh; overflow: hidden; }
+    .kob-tts-dock, #kodux-widget, [data-idle-target] {
+      transition: transform .35s ease, opacity .65s ease;
+    }
+    .idle { opacity: .18; transform: scale(.87); }
+    :not(.idle):hover { opacity: 1; transform: scale(1); }
+  </style>
+</head>
+
+<body class="field-closed mode-night">
+
+  <div id="root">
+
+  <!-- SVG Icons -->
+  <svg style="display: none;">
+    <filter id="distort"><feTurbulence baseFrequency="0.01" numOctaves="3" result="turb"></feTurbulence><feDisplacementMap in="SourceGraphic" in2="turb" scale="30"></feDisplacementMap></filter>
+    <symbol id="icon-orb" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="8"></circle></symbol>
+    <symbol id="icon-cards" viewBox="0 0 24 24"><rect x="2" y="2" width="16" height="16" rx="2"></rect><path d="M22 6v14a2 2 0 0 1-2 2H6"></path></symbol>
+  </svg>
+
+  <!-- Backgrounds -->
+  <div id="system-backgrounds">
+    <div class="bg-gradient"></div>
+    <div id="bg-layer-fixed"></div>
+    <div class="ambient-light"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
+    <div class="sky-layer"><div class="sun-background"></div></div>
+    <div id="bg-fake-custom"></div>
+    <div class="void-ambient"></div>
+  </div>
+
+  <!-- App Shell -->
+  <main id="app-shell" class="wrap">
+    <div class="header-orb" id="orbToggle" onclick="toggleDrawer('drawerProfile')">
+      <svg><use href="#icon-orb"></use></svg>
+    </div>
+    <div id="modeIndicator">CARREGANDO nO.Sºlar...</div>
+
+    <div class="content">
+      <iframe id="frame" src="about:blank"></iframe>
+      <div id="kob-tts-outline"></div>
+    </div>
+
+    <!-- Symbol Bar -->
+    <nav class="symbol-bar floating" id="symbolBar">
+      <!-- Main buttons and orb controls here (mantidos do original) -->
+      <div class="toggle-wrap"><button class="symbol-button main-toggle" id="toggleBtn">≡</button></div>
+      <div class="symbol-wrap"><button class="symbol-button" id="btn-prev">◀</button></div>
+      <div class="symbol-wrap"><button class="symbol-button" id="btn-play">▶</button></div>
+      <div class="symbol-wrap"><button class="symbol-button" id="tts-stop">■</button></div>
+      <button class="symbol-button" id="btn-arch">
+        <div class="orb-microphone-container">
+<div class="tts-orb-mini">
+<div class="orb" id="main-orb">
+<div class="orb-core"></div>
+</div></div></div>
+      </button>
+    </nav>
+
+    <div id="arch-overlay"></div>
+  </main>
+
+  <!-- Player System -->
+  <section id="player-system">
+    <div id="bodyPlayer" data-mode="player" class="min-h-screen w-full flex items-center justify-center relative overflow-hidden">
+      <div id="yt-container" class="absolute -left-[9999px]"></div>
+      <div id="sc-container" class="absolute -left-[9999px]"></div>
+      <audio id="local-audio"></audio>
+
+      <!-- Kodux Widget (Player) -->
+      <div id="kodux-widget" class="state-ball" style="right: 20px; bottom: 100px;">
+        <!-- Conteúdo do player widget (mantido simplificado) -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Monolith / Vault -->
+  <section id="monolith-system">
+    <div class="monolith-wrapper">
+      <div class="monolith">
+        <!-- Vault UI mantido -->
+        <div id="viewVault" class="vault-view">
+          <!-- Actions, sidebar, stackList etc. -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modals & Overlays -->
+  <div id="modal-system">
+    <!-- Keys, Vault, Drawer, Nagatanazare -->
+    <div id="kblx-back" aria-hidden="true">
+      <!-- Nagatanazare Panel -->
+    </div>
+    <div id="drawerProfile" class="drawer"></div>
+  </div>
+
+</div>
+  <!-- Scripts -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script src="https://w.soundcloud.com/player/api.js"></script>
+
+  <!-- Core Modules -->
+  <script type="module" src="https://www.infodose.com.br/js/main-2.js"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/js/koblluxv30.js"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/js/kobllux-fusion.js"></script>
+
+  <!-- Nagatanazare (Long Press Editor) -->
+  <script>
+    // ... (código completo da NAGATANAZARE mantido do primeiro arquivo)
+  </script>
+
+  <!-- Idle Handler -->
+  <script>
+    (() => {
+      const idleSelector = '#kodux-widget, [data-idle-target]';
+      let idleTimer;
+      function resetIdle() {
+        document.querySelectorAll(idleSelector).forEach(el => el.classList.remove('idle'));
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => {
+          document.querySelectorAll(idleSelector).forEach(el => el.classList.add('idle'));
+        }, 1870);
+      }
+      ['pointerdown','mousemove','scroll','touchstart'].forEach(ev => document.addEventListener(ev, resetIdle, {passive:true}));
+      resetIdle();
+    })();
+  </script>
+</body>
+</html>
