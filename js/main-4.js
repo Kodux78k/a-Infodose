@@ -43,7 +43,7 @@ import './modules/firmware.js';
 
 /* ⚠️ Bridge NÃO deve ser “duplicado”
    Ele precisa ser SINGLE SOURCE OF TRUTH */
-import './modules/bridge.js'; 
+/* import './modules/bridge.js'; */
 
 
 import './a€Arx.js';
