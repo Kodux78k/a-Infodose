@@ -39,10 +39,162 @@ console.log(`
 
 try {
   await import(
-    "https://www.infodose.com.br/oiDual/KODUX/78K/DATA/kob2.js"
+    "https://www.infodose.com.br/oiDual/KODUX/78K/DATA/kob5.js"
   );
 
   console.log("✓ kob5.js carregado");
 } catch (err) {
   console.error("✗ Falha ao carregar kob2.js", err);
 }
+
+/* ==========================================================
+   3. CORE ENGINE (NO DOM DEPENDENCY)
+   ========================================================== */
+
+const $ = (s, p=document) => p.querySelector(s);
+const $$ = (s, p=document) => [...p.querySelectorAll(s)];
+
+
+/* ==========================================================
+   4. LOGGER (SIMPLE + SAFE)
+   ========================================================== */
+
+const Log = {
+    info: (...a) => console.log("[INFO]", ...a),
+    action: (...a) => console.log("[ACTION]", ...a),
+    state: (...a) => console.log("[STATE]", ...a),
+    warn: (...a) => console.warn("[WARN]", ...a),
+    error: (...a) => console.error("[ERROR]", ...a),
+};
+
+
+/* ==========================================================
+   5. UI CACHE (ONLY AFTER DOM READY)
+   ========================================================== */
+
+const UI = {};
+
+function cacheUI(){
+
+    Object.assign(UI,{
+        root: $("#root"),
+        frame: $("#frame"),
+        appFrame: $("#appFrame"),
+        runtime: $("#runtimeLayer"),
+        symbolBar: $("#symbolBar"),
+        orb: $("#orbBtn"),
+        vault: $("#viewVault"),
+        editor: $("#viewEditor"),
+        drawer: $("#drawerProfile"),
+        drawerOverlay: $("#drawerOverlay"),
+        toast: $("#toast"),
+        toaster: $("#toasterWrap"),
+        quickMenu: $("#kblx-quick"),
+        routeEditor: $("#kblx-back"),
+        particles: $("#particles-js")
+    });
+
+    Log.info("UI cached");
+    return UI;
+}
+
+
+/* ==========================================================
+   6. GLOBAL STATE HOLDERS (placeholders)
+   ========================================================== */
+
+let Bridge = null;
+let Registry = null;
+let Bus = null;
+let Router = null;
+
+
+/* ==========================================================
+   7. BOOT CORE INIT (SAFE ENTRY POINT)
+   ========================================================== */
+
+function initCore(){
+
+    Log.info("Initializing CORE...");
+
+    /* Bridge comes from module OR global export */
+    Bridge = window.Bridge || null;
+    Registry = window.Registry || null;
+    Bus = window.Bus || null;
+
+    Router = {
+        go(url, target="frame"){
+            Bridge?.navigate?.(url, target);
+            Log.action("Router go:", url, target);
+        }
+    };
+
+    window.UI = cacheUI();
+
+    window.Bridge = Bridge;
+    window.Registry = Registry;
+    window.Bus = Bus;
+    window.Router = Router;
+    window.Log = Log;
+
+    Log.info("CORE READY");
+}
+
+
+/* ==========================================================
+   8. RUNTIME START
+   ========================================================== */
+
+function startRuntime(){
+
+    Log.info("Starting runtime layer...");
+
+    document.addEventListener("click", (e) => {
+
+        const btn = e.target.closest("[data-action]");
+        if(!btn) return;
+
+        const action = btn.dataset.action;
+
+        Log.action("UI action:", action);
+
+        switch(action){
+
+            case "nav":
+                if(btn.dataset.url)
+                    Router.go(btn.dataset.url);
+                break;
+
+            case "runtime":
+                Bridge?.openRuntime?.();
+                break;
+
+            case "drawer":
+                Bridge?.toggleDrawer?.();
+                break;
+
+            case "toggle":
+                Bridge?.toggle?.(btn.dataset.state);
+                break;
+        }
+    });
+}
+
+
+/* ==========================================================
+   9. BOOT SEQUENCE CONTROL
+   ========================================================== */
+
+window.addEventListener("DOMContentLoaded", () => {
+
+    initCore();
+    startRuntime();
+
+});
+
+
+/* ==========================================================
+   END
+   ========================================================== */
+
+console.log("MAIN LOADED (await DOM)");
