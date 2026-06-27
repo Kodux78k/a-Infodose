@@ -39,6 +39,7 @@ import './modules/inline-8.js';
 import './modules/inline-9.js';
 import './modules/inline-10.js';
 
+import './modules/a€Arx.js';
 import './modules/firmware.js';
 
 /* ⚠️ Bridge NÃO deve ser “duplicado”
@@ -46,7 +47,7 @@ import './modules/firmware.js';
 /*import './modules/bridge.js'; */
 
 
-import './modules/a€Arx.js';
+
 
 
 /* ==========================================================
