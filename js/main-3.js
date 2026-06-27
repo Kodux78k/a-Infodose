@@ -10,7 +10,7 @@ console.log(
 
 
 
-import "./modules/inline-00-arx.js";
+import "./modules/bridge.js";
 import "./modules/archz.js";
 
 import "./modules/inline-1.js";
@@ -39,7 +39,7 @@ console.log(`
 
 try {
   await import(
-    "https://www.infodose.com.br/oiDual/KODUX/78K/DATA/kob5.js"
+    "https://www.infodose.com.br/js/kob.js"
   );
 
   console.log("✓ kob5.js carregado");
@@ -81,7 +81,7 @@ function cacheUI(){
         frame: $("#frame"),
         appFrame: $("#appFrame"),
         runtime: $("#runtimeLayer"),
-        symbolBar: $("#symbolBar"),
+        symbolBar: $(".symbolBar"),
         orb: $("#orbBtn"),
         vault: $("#viewVault"),
         editor: $("#viewEditor"),
@@ -91,7 +91,7 @@ function cacheUI(){
         toaster: $("#toasterWrap"),
         quickMenu: $("#kblx-quick"),
         routeEditor: $("#kblx-back"),
-        particles: $("#particles-js")
+        particles: $("#particles")
     });
 
     Log.info("UI cached");
