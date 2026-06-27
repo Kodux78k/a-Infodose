@@ -84,7 +84,7 @@ function cacheUI(){
         frame: $("#frame"),
         appFrame: $("#appFrame"),
         runtime: $("#runtimeLayer"),
-        symbolBar: $("#symbolBar"),
+        symbolBar: $(".symbolBar"),
         orb: $("#orbBtn"),
         vault: $("#viewVault"),
         editor: $("#viewEditor"),
@@ -94,7 +94,7 @@ function cacheUI(){
         toaster: $("#toasterWrap"),
         quickMenu: $("#kblx-quick"),
         routeEditor: $("#kblx-back"),
-        particles: $("#particles-js")
+        particles: $("#particles")
     });
 
     Log.info("UI cached");
