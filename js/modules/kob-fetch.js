@@ -33,7 +33,7 @@
   const CFG = {
     // URL primária do JSON de arquétipos (altere conforme necessário)
     remoteUrl: localStorage.getItem('kxat_arch_url') ||
-      'https://kodux78k.github.io/oiDual--Y-/data/arquetipos.json',
+      'https://www.infodose.com.br/js/modules/archetypes.json',
 
     // Chave localStorage para cache do JSON
     cacheKey: 'kxat_arch_cache',
