@@ -32,7 +32,7 @@ import './modules/inline-4.js';
 import './modules/inline-5.js';
 
 import './modules/KOB-RHEA-KAOS-sync.js';
-import './modules/kob.js';
+import './kob.js';
 
 import './modules/inline-7-9.js';
 import './modules/inline-8.js';
