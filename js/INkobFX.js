@@ -21,9 +21,9 @@ import "https://kodux78k.github.io/oiDual--Y-/M0D/0RB/js/modules/inline-2.js";
 // Núcleo
 import "https://kodux78k.github.io/oiDual--Y-/js/kob-mestre-878.js";
 import "https://kodux78k.github.io/oiDual--Y-/js/koblluxv30.js";
-import "https://kodux78k.github.io/oiDual--Y-/js/kodbrain-66.js";
+
 import "https://kodux78k.github.io/oiDual--Y-/js/kobllux-fusion.js";
 import "https://kodux78k.github.io/oiDual--Y-/js/di-icon-btn.js";
 import "https://kodux78k.github.io/oiDual--Y-/js/NAGATANAZARE.js";
 
-import "https://www.infodose.com.br/js/main.js";
+import "https://www.infodose.com.br/js/main-v0.js";
