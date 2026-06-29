@@ -19,7 +19,7 @@ import './modules/inline-9.js';
 import './modules/inline-10.js';
 
 import './modules/firmware.js';
-import './modules/nephesh.js';
+import './modules/nephesh-0.js';
 import './modules/a€Arx.js';
 console.log(`
 ╔════════════════════════════════════╗
