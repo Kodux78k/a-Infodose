@@ -24,6 +24,7 @@ import './modules/inline-10.js';
 import './modules/a€Arx.js';
 
 import './modules/firmware.js';
+import './modules/nephesh.js';
 console.log(`
 ╔════════════════════════════════════╗
 ║ KBllX  Bridg                       ║
