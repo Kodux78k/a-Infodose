@@ -23,7 +23,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
 /* ---------- 3 · BOTÕES + SOMBRA DA VOZ · 528Hz ---------- */
 window.KOB_BUTTON_FADE_AND_TTS_SHADOW_CSS = `
 button,[class*="btn-"],#orbBtn,.toggleBtn{border:1px solid rgba(0,255,255,.35) !important;background:rgba(0,255,255,.04) !important;color:#b8ffff !important;box-shadow:inset 0 0 8px rgba(0,255,255,.08) !important;}
-button:hover{border-color:#ff00ff !important;color:#fff !important;box-shadow:0 0 18px rgba(255,0,255,.45),inset 0 0 10px rgba(255,0,255,.15) !important;transform:translateY(-1px);}
+button:hover{border-color: border: var(--kob-voice-primary) !important; !important;color:#fff !important;box-shadow:0 0 18px rgba(255,0,255,.45),inset 0 0 10px rgba(255,0,255,.15) !important;transform:translateY(-1px);}
 .tts-orb-mini.speaking{animation:kob-tts 1.4s ease-out infinite;}
 @keyframes kob-tts{
  0%{box-shadow:0 0 0 0 rgba(255,0,255,.6),0 0 14px #00ffff88;}
