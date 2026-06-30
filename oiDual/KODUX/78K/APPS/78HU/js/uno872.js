@@ -1057,11 +1057,16 @@
     /* ===================== Archetypes (Central Circle) ===================== */
     (function () {
       const archList = [
-        'luxara.html',
+        'luxara.html', 
+        'nova.html',
         'rhea.html',
         'aion.html',
         'atlas.html',
-        'nova.html',
+        'artemis.html',
+        'vitalis.html',
+        'solus.html',
+        'pulse.html',
+        'anamyx.html',
         'genus.html',
         'lumine.html',
         'kaion.html',
@@ -1086,7 +1091,7 @@
         const n = (idx + archList.length) % archList.length;
         select.selectedIndex = n;
         const file = archList[n];
-        frame.src = './archetypes/' + file;
+        frame.src = 'https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78HU/archetypes/' + file;
         // Pronuncia o nome do arquétipo sempre que for selecionado
         try {
           const base = file.replace(/\.html$/i, '');
