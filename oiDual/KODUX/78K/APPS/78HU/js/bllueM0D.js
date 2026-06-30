@@ -1,0 +1,10 @@
+console.log("Infodose conectado", {"ts":1771291932319,"id":"26fbbf40-793d-4a9a-9a44-5d395a462def","meta":{"app":"generated.app"}});
+import "./bllueM0D/inline-0.js";
+import "./bllueM0D/inline-1.js";
+import "./bllueM0D/inline-2.js";
+import "./bllueM0D/inline-3.js";
+import "./bllueM0D/inline-4.js";
+import "./bllueM0D/inline-5.js";
+import "./bllueM0D/inline-6.js";
+import "./bllueM0D/inline-7.js";
+import "./bllueM0D/inline-8.js";
