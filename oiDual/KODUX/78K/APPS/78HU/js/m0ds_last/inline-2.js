@@ -42,7 +42,7 @@
     const toastBox = document.createElement('div');
     toastBox.style.cssText = 'position:fixed;right:14px;bottom:calc(var(--tabsH) + 16px);display:grid;gap:8px;z-index:120';
     document.body.appendChild(toastBox);
-function __toast_OLD(msg, type = 'ok') {
+    function toast(msg, type = 'ok') {
       const el = document.createElement('div'); el.className = 'fx-trans';
       const bg = type === 'ok' ? 'linear-gradient(90deg,#1b2a2a,#123c2e)' : (type === 'warn' ? 'linear-gradient(90deg,#2f261b,#3c2d12)' : 'linear-gradient(90deg,#2f1b1b,#3c1212)');
       el.style.cssText = `background:${bg}; color:var(--fg); border:${getComputedStyle(document.documentElement).getPropertyValue('--bd')}; padding:.6rem .8rem; border-radius:12px; box-shadow:var(--shadow)`;
@@ -335,7 +335,7 @@ function __toast_OLD(msg, type = 'ok') {
         archCircleEl.style.boxShadow = '';
       }
       // Atualiza a opacidade da camada conforme o volume (RMS)
-function __animate_OLD() {
+      function animate() {
         if (!enabled || !analyser) return;
         const buf = new Uint8Array(analyser.fftSize);
         analyser.getByteTimeDomainData(buf);
@@ -1530,7 +1530,7 @@ function __animate_OLD() {
         const color = ARCH_OVERLAYS[key] || ARCH_OVERLAYS.default;
         document.documentElement.style.setProperty('--arch-overlay', color);
       }
-function __populate_OLD() {
+      function populate() {
         select.innerHTML = '';
         archList.forEach(name => {
           const opt = document.createElement('option');

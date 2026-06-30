@@ -6,7 +6,7 @@
   const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
   const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
 
-function __toast_OLD(msg, ms=1800){
+  function toast(msg, ms=1800){
     let t = $('#hdToast'); 
     if(!t){ t = document.createElement('div'); t.id='hdToast'; document.body.appendChild(t); }
     t.textContent = msg;
@@ -253,7 +253,7 @@ function __toast_OLD(msg, ms=1800){
   }
 
   // 3) Start
-function __boot_OLD(){
+  function boot(){
     mountHandle();
     mountHDPro();
   }

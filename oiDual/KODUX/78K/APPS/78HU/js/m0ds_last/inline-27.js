@@ -29,8 +29,8 @@
       var t = new Date().toLocaleTimeString();
       var tag = type ? ('['+String(type).toUpperCase()+'] ') : '';
       var line = '['+t+'] ' + tag + String(msg);
-      box.textContent = (line + `
-` + box.textContent).slice(0, 16000);
+      box.textContent = (line + '
+' + box.textContent).slice(0, 16000);
     } catch(e){}
   };
 
