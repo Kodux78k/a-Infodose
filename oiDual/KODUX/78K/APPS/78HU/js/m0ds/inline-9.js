@@ -1,3 +1,6 @@
+// ⚜️ GUARDA DOM · Δ⁷ · CORRIGIDO /tmp
+document.addEventListener('DOMContentLoaded', () => {
+
 
 (() => {
   const $ = (s, r=document)=> r.querySelector(s);
@@ -163,3 +166,5 @@
 
   window.DualLS = { open: openLS, close: closeLS, render: renderAll };
 })();
+
+});

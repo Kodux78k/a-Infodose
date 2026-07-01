@@ -17,4 +17,4 @@ const dados =
     ]
   }
   
-export default dados;
+window.camada_1 = dados;

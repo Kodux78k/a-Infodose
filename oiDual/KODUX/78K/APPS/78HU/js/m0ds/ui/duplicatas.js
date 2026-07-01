@@ -1,30 +1,16 @@
 /* 💧 BLLUE · 432Hz · 28 funções · 2~8x → 1x ÚNICA */
-export function add(){}
-export function animate(){}
-export function apply(){}
-export function bind(){}
-export function boot(){}
-export function chat(){}
-export function create(){}
-export function current(){}
-export function draw(){}
-export function ensure(){}
-export function get(){}
-export function init(){}
-export function isFn(){}
-export function mount(){}
-export function populate(){}
-export function push(){}
-export function render(){}
-export function resize(){}
-export function sanitize(){}
-export function save(){}
-export function send(){}
-export function set(){}
-export function speak(){}
-export function start(){}
-export function toast(){}
-export function toggle(){}
-export function update(){}
-export function rippleEffect(){}
-export function onReady(fn){document.addEventListener('DOMContentLoaded',fn)}
+
+// ⚜️ EXPORTAÇÃO GLOBAL · Δ⁷ CORREÇÃO HYPERVISOR
+window.draw     = draw;
+window.toast    = toast;
+window.start    = start;
+window.resize   = resize;
+window.bind     = bind;
+window.toggle   = toggle;
+window.sanitize = sanitize;
+window.push     = push;
+window.populate = populate;
+window.init     = init;
+window.boot     = boot;
+window.animate  = animate;
+window.set      = set;

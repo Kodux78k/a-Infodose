@@ -1,3 +1,6 @@
+// ⚜️ GUARDA DOM · Δ⁷ · CORRIGIDO /tmp
+document.addEventListener('DOMContentLoaded', () => {
+
 
 (() => {
   const uploadBtn = document.getElementById('btnStackUpload');
@@ -44,3 +47,5 @@
     });
   }
 })();
+
+});
