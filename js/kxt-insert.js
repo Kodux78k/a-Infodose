@@ -18,7 +18,7 @@
   
   
   
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/styles/github-dark.min.css" id="hljs-theme">
+
   
 
 
@@ -158,7 +158,7 @@
 
   
 
-<!-- <script src="https://kodux78k.github.io/oiDual-0i/0RB-0S17.js"></script> -->
+
 
 
 <script src="https://kodux78k.github.io/oiDual-KxT-di_oi/js/modules/bgPanel.js"></script>
