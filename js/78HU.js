@@ -199,12 +199,20 @@
 
 <div class="frase"><strong>Sempre</strong> único<strong>. Sempre</strong> seu<strong>.</strong></div>
 
-<script  src="https://kodux78k.github.io/oi-Dual/js/modules/inline-000.js"></script>
 <!--
 <script type="module" src="https://kodux78k.github.io/oi-Dual/js/main.js"></script>
 -->
 
 <script src="https://www.infodose.com.br/js/78HU-insert.js"></script>
+
+<script src="https://www.infodose.com.br/js/modules/KDX_KARD.js"></script>
+
+<script src="https://kodux78k.github.io/oiDual--Y-/js/kob-mestre-878.js"                  data-k-id="JS_9"></script>
+<script src="https://kodux78k.github.io/oiDual--Y-/js/kobllux-fusion.js"                  data-k-id="JS_13"></script>
+<script src="https://kodux78k.github.io/oiDual--Y-/M0D/kob-DH0/js/kob-outline-uni.js"    data-k-id="JS_14"></script>
+<script src="https://kodux78k.github.io/oiDual--Y-/js/di-icon-btn.js"                     data-k-id="JS_15"></script>
+
+<!-- ORB Modules -->
 
 </body>
 </html> `); 
