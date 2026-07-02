@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 import json, os, hashlib
 from datetime import datetime, timezone
 
