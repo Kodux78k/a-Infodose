@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KDX Perf</title>
+</head>
+<body>
+  <input type="file" id="file">
+  <input type="text" id="q" placeholder="Pergunte...">
+  <button id="send">Enviar</button>
+  <pre id="out"></pre>
+
+  <script type="module">
+    import KdxPerfContainer, { KDX_META } from 'https://www.infodose.com.br/js/modules/kdx-perf-container.js';
+
+    const motor = new KdxPerfContainer();
+    await motor.init();
+    console.log('KDX META:', KDX_META);
+
+    document.getElementById('file').onchange = async e => {
+      const file = e.target.files[0];
+      await motor.ingest(file);
+    };
+
+    document.getElementById('send').onclick = async () => {
+      motor.setArquetipo('Artemis');
+      const res = await motor.answer(document.getElementById('q').value);
+      document.getElementById('out').textContent = res.resposta + '\n\nFontes: ' + res.fontes.join(', ');
+    };
+  </script>
+</body>
+</html>

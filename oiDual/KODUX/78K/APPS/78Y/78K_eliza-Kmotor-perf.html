@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#030508">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>MOTOR78K × FRACTAL 369 — Monólito</title>
+    <style>
+        :root {
+            --bg-main: #030508;
+            --bg-card: #0d1117;
+            --bg-input: #161b22;
+            --text-main: #f0f6fc;
+            --text-muted: #8b949e;
+            --accent-glow: #58a6ff;
+            --accent-purple: #8957e5;
+            --accent-pink: #da55a3;
+            --accent-orange: #f0883e;
+            --border-color: #30363d;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --radius: 12px;
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            overflow: hidden;
+            overscroll-behavior: none;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: -20% -20% auto -20%;
+            height: 140vh;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(40% 30% at 20% 20%, rgba(137, 87, 229, 0.15), transparent 60%),
+                        radial-gradient(35% 35% at 80% 0%, rgba(88, 166, 255, 0.12), transparent 70%);
+            filter: blur(60px);
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100dvh;
+            padding-top: var(--safe-top);
+            padding-bottom: var(--safe-bottom);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* HEADER */
+        .app-header {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background-color: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 10;
+        }
+
+        .app-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .app-sig {
+            font-size: 0.75rem;
+            background: linear-gradient(135deg, var(--accent-glow), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-family: monospace;
+        }
+
+        .menu-btn {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+        /* SIDEBAR / GAVETA OFF-CANVAS */
+        #sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 85vw;
+            max-width: 320px;
+            height: 100dvh;
+            background-color: var(--bg-card);
+            border-right: 1px solid var(--border-color);
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            overflow-y: auto;
+            padding-top: calc(16px + var(--safe-top));
+            padding-bottom: calc(16px + var(--safe-bottom));
+        }
+
+        #sidebar.open {
+            transform: translateX(0);
+        }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 19;
+        }
+
+        .overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* NAVEGAÇÃO POR ABAS */
+        .tabs-nav {
+            display: flex;
+            background: var(--bg-input);
+            border-bottom: 1px solid var(--border-color);
+            flex: 0 0 auto;
+        }
+
+        .tab-link {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .tab-link.active {
+            color: var(--accent-glow);
+            border-bottom-color: var(--accent-glow);
+            background: rgba(88, 166, 255, 0.05);
+        }
+
+        /* CONTEÚDO PRINCIPAL */
+        #main-content {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1 1 auto;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 16px;
+            gap: 16px;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        /* FUSOR DUAL CONFIGS & INTERFACE */
+        .card {
+            background: rgba(13, 17, 23, 0.7);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 14px;
+            backdrop-filter: blur(8px);
+        }
+
+        .card label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 90px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            padding: 10px;
+            resize: none;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: var(--accent-glow);
+        }
+
+        /* CONFIGURAÇÕES DO MOTOR CONTROLE (3-6-9) */
+        .engine-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .engine-label {
+            font-size: 0.7rem;
+            font-family: monospace;
+            color: var(--text-muted);
+            width: 50px;
+        }
+
+        .eng-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-family: monospace;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .eng-btn.is-active {
+            background: rgba(88, 166, 255, 0.15);
+            border-color: var(--accent-glow);
+            color: var(--accent-glow);
+        }
+
+        .phi-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .phi-track {
+            flex: 1;
+            height: 6px;
+            background: var(--bg-input);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .phi-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-glow));
+            width: 50%;
+            transition: width 0.3s;
+        }
+
+        .phi-val {
+            font-size: 0.75rem;
+            font-family: monospace;
+            color: var(--accent-glow);
+        }
+
+        .btn-merge {
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-glow));
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(137, 87, 229, 0.25);
+        }
+
+        /* OUTPUT VIEWS */
+        .fractal-block {
+            background: rgba(22, 27, 34, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            line-height: 1.45;
+        }
+
+        .fractal-meta {
+            font-family: monospace;
+            font-size: 0.7rem;
+            margin-bottom: 4px;
+            display: flex;
+            gap: 6px;
+        }
+
+        /* CHAT INTERFACE */
+        .chat-container {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+            padding-bottom: 80px;
+        }
+
+        .message {
+            max-width: 90%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            line-height: 1.4;
+            font-size: 0.95rem;
+        }
+
+        .message.user {
+            background-color: var(--bg-input);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .message.system {
+            background-color: var(--bg-card);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            border-left: 3px solid var(--accent-glow);
+        }
+
+        .message-meta {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            font-family: monospace;
+        }
+
+        /* INPUT FIXO INFERIOR (CHAT) */
+        .input-area {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 10px 16px calc(10px + var(--safe-bottom));
+            background-color: rgba(13, 17, 23, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px 14px;
+            border-radius: 20px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .action-btn {
+            background-color: var(--accent-glow);
+            color: var(--bg-main);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-weight: 700;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+        }
+
+        /* PLAYER DOCK INFERIOR */
+        #player-dock {
+            background: rgba(13, 17, 23, 0.95);
+            border-top: 1px solid var(--border-color);
+            padding: 10px 16px calc(10px + var(--safe-bottom));
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 0 0 auto;
+        }
+
+        .player-ctrls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .dock-title {
+            font-size: 0.8rem;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+        }
+
+        .playback-btn {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            font-size: 0.8rem;
+        }
+
+        .playback-btn.play-main {
+            background: var(--accent-glow);
+            color: var(--bg-main);
+            border: none;
+        }
+
+        /* GAVETA / SEÇÕES ADICIONAIS */
+        .section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin: 14px 0 6px;
+            font-weight: 700;
+        }
+
+        .file-upload-zone {
+            border: 2px dashed var(--border-color);
+            padding: 14px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            background-color: rgba(22, 27, 34, 0.5);
+            font-size: 0.8rem;
+        }
+
+        .file-list {
+            list-style: none;
+            max-height: 120px;
+            overflow-y: auto;
+            font-size: 0.75rem;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 8px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 4px;
+        }
+
+        .arch-badge-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            max-height: 140px;
+            overflow-y: auto;
+            padding: 2px;
+        }
+
+        .arch-mini-btn {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 6px 4px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            text-align: center;
+            cursor: pointer;
+            font-family: monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .arch-mini-btn.active {
+            border-color: var(--accent-glow);
+            color: var(--accent-glow);
+            background: rgba(88, 166, 255, 0.05);
+        }
+
+        .status-bar {
+            flex: 0 0 auto;
+            padding: 6px 16px;
+            background: #030508;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            font-family: monospace;
+        }
+
+        /* MEDIA MIN-WIDTH 768px (Override Desktop) */
+        @media (min-width: 768px) {
+            #app { flex-direction: row; }
+            .menu-btn, .overlay { display: none; }
+            #sidebar {
+                position: relative;
+                transform: translateX(0);
+                width: 300px;
+                height: auto;
+                padding-top: 16px;
+            }
+            #main-content { flex: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <div class="overlay" id="overlay"></div>
+
+        <!-- GAVETA LATERAL / PANEL DE CONTROLE -->
+        <aside id="sidebar">
+            <div class="section-title">Carregar Sementes Locais</div>
+            <label class="file-upload-zone">
+                <span>Toque para importar texto<br><small style="color: var(--text-muted)">(TXT, MD, HTML)</small></span>
+                <input type="file" id="file-input" accept=".txt,.md,.html" multiple>
+            </label>
+
+            <div class="section-title">Biblioteca Local (<span id="file-count">0</span>)</div>
+            <ul class="file-list" id="compiled-files"></ul>
+
+            <div class="section-title">Matriz de Arquétipos (41)</div>
+            <div class="arch-badge-grid" id="arch-grid"></div>
+
+            <div style="margin-top: auto; padding-top: 14px;">
+                <button id="clear-db-btn" style="width: 100%; background: none; border: 1px solid #f85149; color: #f85149; padding: 8px; border-radius: 6px; cursor: pointer; font-size: 0.75rem;">
+                    Limpar Armazenamento Local
+                </button>
+            </div>
+        </aside>
+
+        <!-- ESPAÇO OPERACIONAL PRINCIPAL -->
+        <div id="main-content">
+            <header class="app-header">
+                <div class="app-title">MOTOR78K <span class="app-sig">v3.0 · 369</span></div>
+                <button class="menu-btn" id="menu-btn">☰</button>
+            </header>
+
+            <nav class="tabs-nav">
+                <button class="tab-link active" data-tab="fusor">Fusor Dual 369</button>
+                <button class="tab-link" data-tab="chat">Chat Semântico 78K</button>
+            </nav>
+
+            <!-- ABA 1: FUSOR RECORRENTE -->
+            <div class="tab-content active" id="tab-fusor">
+                <div class="card">
+                    <label>Polo Alfa (Texto Semente)</label>
+                    <textarea id="t1" placeholder="Insira o manifesto primário ou fragmente a ideia de origem..."></textarea>
+                </div>
+
+                <div class="card">
+                    <label>Polo Beta (Texto Espelho)</label>
+                    <textarea id="t2" placeholder="Insira a contraparte dialética, dados brutos ou referências..."></textarea>
+                </div>
+
+                <!-- Painel Paramétrico ECL-1 -->
+                <div class="card">
+                    <label>Matriz de Interleaving & Vetores</label>
+                    <div class="engine-row">
+                        <span class="engine-label">Passo</span>
+                        <button class="eng-btn is-active" data-engine="1">1</button>
+                        <button class="eng-btn" data-engine="3">3</button>
+                        <button class="eng-btn" data-engine="6">6</button>
+                        <button class="eng-btn" data-engine="9">9</button>
+                    </div>
+                    <div class="engine-row">
+                        <span class="engine-label">Salto</span>
+                        <button class="eng-btn is-active" data-jump="0">0</button>
+                        <button class="eng-btn" data-jump="3">3</button>
+                        <button class="eng-btn" data-jump="6">6</button>
+                    </div>
+                    <div class="phi-bar">
+                        <span class="engine-label">Fluxo Φ</span>
+                        <div class="phi-track"><div class="phi-fill" id="phi-fill"></div></div>
+                        <span class="phi-val" id="phi-val">0.50</span>
+                    </div>
+                </div>
+
+                <button class="btn-merge" id="btn-merge">⊕ INTEGRAR FRACTAIS</button>
+
+                <div class="section-title">Resultados da Sincronização</div>
+                <div id="fusor-output"></div>
+            </div>
+
+            <!-- ABA 2: CHAT SEMÂNTICO (LOCAL RAG) -->
+            <div class="tab-content" id="tab-chat">
+                <div class="chat-container" id="chat-output">
+                    <div class="message system">
+                        Base local ativa. Faça perguntas cruzando os contextos armazenados na gaveta lateral (☰).
+                    </div>
+                </div>
+
+                <div class="input-area">
+                    <input type="text" class="chat-input" id="chat-input" placeholder="Consultar base indexada...">
+                    <button class="action-btn" id="send-btn">↑</button>
+                </div>
+            </div>
+
+            <!-- DOCA INFERIOR DO PLAYER (TTS ATIVO) -->
+            <footer id="player-dock">
+                <div class="player-ctrls">
+                    <div class="dock-track">
+                        <div class="dock-title" id="dock-title">Standby · Fusor pronto</div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted); font-family: monospace;" id="dock-meta">Arquétipo Ativo: ATLAS</div>
+                    </div>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="playback-btn" id="btn-prev">⏮</button>
+                        <button class="playback-btn play-main" id="btn-play">▶</button>
+                        <button class="playback-btn" id="btn-stop">■</button>
+                    </div>
+                </div>
+            </footer>
+
+            <div class="status-bar">
+                <div>Firmware: <span style="color: var(--accent-glow)">4278111c</span></div>
+                <div id="engine-status">Index: Offline OK</div>
+            </div>
+        </div>
+    </div>
+
+  <!--
+  <script>
+        // Matriz de 41 Arquétipos unificada[span_1](start_span)[span_1](end_span)
+        const ARCHETYPES = [
+            "atlas","nova","vitalis","pulse","kaos","kodux","lumine",
+            "aion","kobllux","artemis","serena","genus","solus",
+            "rhea","uno","dual","trinity","infodose","horus","bllue",
+            "velor","elya","sylon","naira","thenir","eloh","novael",
+            "aelya","ignyra","lumara","kaythar","sylla","anamyx",
+            "yamantek","metalux","kd1","koφd1","christos",
+            "aek_dion","aekael_domnnus","nephesh_elyon"
+        ];
+
+        // Perfis de Voz Customizados para o sintetizador[span_2](start_span)[span_2](end_span)
+        const ARCH_TTS_PROFILES = {
+            atlas: { rate: 0.92, pitch: 0.45 },
+            nova: { rate: 1.12, pitch: 0.75 },
+            kobllux: { rate: 0.98, pitch: 0.50 },
+            kodux: { rate: 1.02, pitch: 0.60 },
+            artemis: { rate: 1.04, pitch: 0.65 },
+            uno: { rate: 1.00, pitch: 0.50 }
+        };
+
+        class MotorMonolith {
+            constructor() {
+                this.dbName = 'motor78k_db';
+                this.storeName = 'document_chunks';
+                this.db = null;
+                
+                this.activeArch = 'atlas';
+                this.engineStep = 1;
+                this.jumpStep = 0;
+                this.phiFlux = 0.50;
+                
+                this.mergedText = "";
+                this.ttsChunks = [];
+                this.currentTtsIdx = 0;
+                this.isPaused = false;
+            }
+
+            async init() {
+                return new Promise((resolve, reject) => {
+                    const req = indexedDB.open(this.dbName, 1);
+                    req.onupgradeneeded = e => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains(this.storeName)) {
+                            db.createObjectStore(this.storeName, { keyPath: 'id', autoIncrement: true });
+                        }
+                    };
+                    req.onsuccess = e => { this.db = e.target.result; resolve(); };
+                    req.onerror = e => reject(e.target.error);
+                });
+            }
+
+            // Indexação de Arquivos na Base Semântica Local
+            async processFile(file) {
+                const text = await file.text();
+                const chunks = this.generateChunks(text);
+                const tx = this.db.transaction([this.storeName], 'readwrite');
+                const store = tx.objectStore(this.storeName);
+                chunks.forEach(chunk => store.put({ fonte: file.name, texto: chunk, ts: Date.now() }));
+                return new Promise(res => tx.oncomplete = () => res(chunks.length));
+            }
+
+            generateChunks(text, size = 300, overlap = 60) {
+                const words = text.split(/\s+/);
+                const chunks = [];
+                for (let i = 0; i < words.length; i += (size - overlap)) {
+                    const chunk = words.slice(i, i + size).join(' ').trim();
+                    if (chunk.length > 5) chunks.push(chunk);
+                }
+                return chunks;
+            }
+
+            async queryContext(query) {
+                const terms = query.toLowerCase().match(/\w+/g) || [];
+                if (!terms.length) return [];
+                const tx = this.db.transaction([this.storeName], 'readonly');
+                const store = tx.objectStore(this.storeName);
+                const all = await store.getAll();
+                return all.map(c => ({
+                    ...c,
+                    score: terms.filter(t => c.texto.toLowerCase().includes(t)).length
+                })).filter(r => r.score > 0).sort((a,b) => b.score - a.score).slice(0, 3);
+            }
+
+            // Algoritmo Iterativo de Interleaving 3-6-9 Dinâmico[span_3](start_span)[span_3](end_span)
+            integrateFractals(t1, t2) {
+                const parseSentences = t => (t.replace(/\n+/g, ' ').match(/[^.!?]+[.!?]+|[^.!?]+$/g) || []).map(s => s.trim()).filter(Boolean);
+                const s1 = parseSentences(t1);
+                const s2 = parseSentences(t2);
+                const maxLen = Math.max(s1.length, s2.length);
+                const combined = [];
+
+                for (let i = 0; i < maxLen; i++) {
+                    // ECL-1: Desvio estocástico regulado pelo nível do Fluxo Φ[span_4](start_span)[span_4](end_span)
+                    if (Math.random() < this.phiFlux) {
+                        if (Math.random() < 0.5 && s1[i]) combined.push({ text: s1[i], src: 'Polo Alfa' });
+                        else if (s2[i]) combined.push({ text: s2[i], src: 'Polo Beta' });
+                    } else {
+                        // Modo Determinístico padrão baseado em Ciclos Recorrentes[span_5](start_span)[span_5](end_span)
+                        const cycle = i % 9;
+                        if (cycle < 3) {
+                            if (s1[i]) combined.push({ text: s1[i], src: 'Alfa' });
+                            if (s2[i]) combined.push({ text: s2[i], src: 'Beta' });
+                        } else {
+                            if (s2[i]) combined.push({ text: s2[i], src: 'Beta' });
+                            if (s1[i]) combined.push({ text: s1[i], src: 'Alfa' });
+                        }
+                    }
+                }
+
+                // Distribuição de Sequência Circular baseada em di_getSequence()[span_6](start_span)[span_6](end_span)
+                let currentIdx = ARCHETYPES.indexOf(this.activeArch);
+                if (currentIdx < 0) currentIdx = 0;
+
+                const processedBlocks = combined.map((item, index) => {
+                    const arch = ARCHETYPES[currentIdx];
+                    currentIdx = (currentIdx + this.engineStep + this.jumpStep) % ARCHETYPES.length;
+                    return { arch, text: item.text, source: item.src };
+                });
+
+                this.mergedText = processedBlocks.map(b => `[${b.arch.toUpperCase()}] — ${b.text}`).join('\n\n');
+                return processedBlocks;
+            }
+
+            // Motor TTS Integrado
+            speakCurrentChunk() {
+                if (this.currentTtsIdx >= this.ttsChunks.length) {
+                    this.stopSpeech();
+                    return;
+                }
+                
+                speechSynthesis.cancel();
+                const chunk = this.ttsChunks[this.currentTtsIdx];
+                const u = new SpeechSynthesisUtterance(chunk.text);
+                u.lang = 'pt-BR';
+                
+                const profile = ARCH_TTS_PROFILES[chunk.arch] || { rate: 1.0, pitch: 0.5 };
+                u.rate = profile.rate;
+                u.pitch = profile.pitch;
+
+                document.getElementById('dock-title').textContent = chunk.text;
+                document.getElementById('dock-meta').textContent = `Voz: ${chunk.arch.toUpperCase()} (${this.currentTtsIdx+1}/${this.ttsChunks.length})`;
+
+                u.onend = () => {
+                    this.currentTtsIdx++;
+                    this.speakCurrentChunk();
+                };
+
+                speechSynthesis.speak(u);
+            }
+
+            stopSpeech() {
+                speechSynthesis.cancel();
+                this.isPaused = false;
+                document.getElementById('btn-play').textContent = '▶';
+                document.getElementById('dock-title').textContent = 'Standby · Execução Encerrada';
+            }
+        }
+
+        // Instanciação e Amarrações de Interface (UI Hooks)
+        const core = new MotorMonolith();
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await core.init();
+            renderArchGrid();
+            await updateLibraryUI();
+        });
+
+        // Controle da Gaveta (Mobile Drawer)
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        function toggleDrawer() {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('show');
+        }
+        document.getElementById('menu-btn').onclick = toggleDrawer;
+        overlay.onclick = toggleDrawer;
+
+        // Comutador de Abas Internas (Tabs System)
+        document.querySelectorAll('.tab-link').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.tab-link').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+            };
+        });
+
+        // Renderizador da Grade de Arquétipos[span_7](start_span)[span_7](end_span)
+        function renderArchGrid() {
+            const grid = document.getElementById('arch-grid');
+            grid.innerHTML = ARCHETYPES.map(arch => `
+                <div class="arch-mini-btn ${arch === core.activeArch ? 'active' : ''}" data-id="${arch}">
+                    ${arch.toUpperCase()}
+                </div>
+            `).join('');
+
+            document.querySelectorAll('.arch-mini-btn').forEach(b => {
+                b.onclick = () => {
+                    document.querySelectorAll('.arch-mini-btn').forEach(x => x.classList.remove('active'));
+                    b.classList.add('active');
+                    core.activeArch = b.dataset.id;
+                    document.getElementById('dock-meta').textContent = `Arquétipo Ativo: ${core.activeArch.toUpperCase()}`;
+                };
+            });
+        }
+
+        // Atualização da UI do Banco Local
+        async function updateLibraryUI() {
+            const tx = core.db.transaction([core.storeName], 'readonly');
+            const store = tx.objectStore(core.storeName);
+            const chunks = await store.getAll();
+            
+            const map = {};
+            chunks.forEach(c => map[c.fonte] = (map[c.fonte] || 0) + 1);
+            
+            const list = document.getElementById('compiled-files');
+            list.innerHTML = '';
+            let count = 0;
+            for(const [name, qty] of Object.entries(map)) {
+                count++;
+                list.innerHTML += `
+                    <li class="file-item">
+                        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;">${name} (${qty})</span>
+                    </li>
+                `;
+            }
+            document.getElementById('file-count').textContent = count;
+        }
+
+        // Upload e Ingestão de Documentos
+        document.getElementById('file-input').onchange = async (e) => {
+            if (!e.target.files.length) return;
+            document.getElementById('engine-status').textContent = "Indexando...";
+            for (const file of e.target.files) {
+                await core.processFile(file);
+            }
+            await updateLibraryUI();
+            document.getElementById('engine-status').textContent = "Index: Online OK";
+            e.target.value = '';
+            toggleDrawer();
+        };
+
+        // Parametria do Motor 3-6-9
+        document.querySelectorAll('[data-engine]').forEach(b => {
+            b.onclick = () => {
+                document.querySelectorAll('[data-engine]').forEach(x => x.classList.remove('is-active'));
+                b.classList.add('is-active');
+                core.engineStep = parseInt(b.dataset.engine);
+            };
+        });
+
+        document.querySelectorAll('[data-jump]').forEach(b => {
+            b.onclick = () => {
+                document.querySelectorAll('[data-jump]').forEach(x => x.classList.remove('is-active'));
+                b.classList.add('is-active');
+                core.jumpStep = parseInt(b.dataset.jump);
+            };
+        });
+
+        // Trigger de Integração Fractal
+        document.getElementById('btn-merge').onclick = () => {
+            const t1 = document.getElementById('t1').value.trim();
+            const t2 = document.getElementById('t2').value.trim();
+            if (!t1 || !t2) return alert("Preencha ambos os polos de texto para mesclar.");
+
+            document.getElementById('engine-status').textContent = "Fundindo...";
+            const blocks = core.integrateFractals(t1, t2);
+            
+            // Renderização dos resultados na UI
+            const out = document.getElementById('fusor-output');
+            out.innerHTML = blocks.map(b => `
+                <div class="fractal-block" style="border-left: 2px solid var(--accent-purple)">
+                    <div class="fractal-meta">
+                        <span style="color: var(--accent-glow)">⬡ ${b.arch.toUpperCase()}</span>
+                        <span style="color: var(--text-muted)">• ${b.source}</span>
+                    </div>
+                    <div>${b.text}</div>
+                </div>
+            `).join('');
+
+            // Popula os chunks para áudio (TTS)
+            core.ttsChunks = blocks;
+            core.currentTtsIdx = 0;
+            
+            // Recalcula o Fluxo baseado no rendimento da operação
+            core.phiFlux = Math.min(1.0, Math.max(0.0, core.phiFlux + (blocks.length * 0.01) - 0.05));
+            document.getElementById('phi-fill').style.width = `${core.phiFlux * 100}%`;
+            document.getElementById('phi-val').textContent = core.phiFlux.toFixed(2);
+
+            document.getElementById('engine-status').textContent = "Index: Online OK";
+            document.getElementById('dock-title').textContent = `Fusão Concluída: ${blocks.length} fragmentos gerados.`;
+        };
+
+        // Mecânica de Chat Semântico (RAG Local)
+        async function runChat() {
+            const input = document.getElementById('chat-input');
+            const q = input.value.trim();
+            if (!q) return;
+
+            appendMsg('user', q);
+            input.value = '';
+
+            document.getElementById('engine-status').textContent = "Buscando base...";
+            const ctx = await core.queryContext(q);
+            
+            let reply = "";
+            if (ctx.length) {
+                reply = `[${core.activeArch.toUpperCase()} RAG BASE] Encontrei as seguintes correlações diretas no banco de dados local:\n\n` + 
+                        ctx.map(c => `• "...${c.texto}..." (Fonte: ${c.fonte})`).join('\n\n');
+            } else {
+                reply = `[SYSTEM FALLBACK] Nenhum chunk semântico correspondente foi localizado no IndexedDB. Tente carregar mais arquivos na gaveta lateral.`;
+            }
+
+            appendMsg('system', reply);
+            document.getElementById('engine-status').textContent = "Index: Online OK";
+        }
+
+        document.getElementById('send-btn').onclick = runChat;
+        document.getElementById('chat-input').onkeydown = e => { if (e.key === 'Enter') runChat(); };
+
+        function appendMsg(sender, text) {
+            const out = document.getElementById('chat-output');
+            const div = document.createElement('div');
+            div.className = `message ${sender}`;
+            div.innerHTML = `<div>${text.replace(/\n/g, '<br>')}</div><div class="message-meta">${new Date().toLocaleTimeString()}</div>`;
+            out.appendChild(div);
+            out.scrollTop = out.scrollHeight;
+        }
+
+        // Eventos do Dock Reprodutor (TTS)
+        document.getElementById('btn-play').onclick = () => {
+            if (!core.ttsChunks.length) return alert("Gere uma fusão na aba anterior para habilitar a fila de áudio.");
+            
+            if (speechSynthesis.speaking && !core.isPaused) {
+                speechSynthesis.pause();
+                core.isPaused = true;
+                document.getElementById('btn-play').textContent = '▶';
+            } else if (core.isPaused) {
+                speechSynthesis.resume();
+                core.isPaused = false;
+                document.getElementById('btn-play').textContent = '⏸';
+            } else {
+                document.getElementById('btn-play').textContent = '⏸';
+                core.speakCurrentChunk();
+            }
+        };
+
+        document.getElementById('btn-stop').onclick = () => core.stopSpeech();
+        document.getElementById('btn-prev').onclick = () => {
+            if (core.currentTtsIdx > 0) {
+                core.currentTtsIdx--;
+                core.speakCurrentChunk();
+            }
+        };
+
+        // Reset Total
+        document.getElementById('clear-db-btn').onclick = async () => {
+            if (confirm("Deseja expurgar permanentemente todos os registros do IndexedDB local?")) {
+                const tx = core.db.transaction([core.storeName], 'readwrite');
+                await tx.objectStore(core.storeName).clear();
+                await updateLibraryUI();
+                alert("Banco local reiniciado.");
+                toggleDrawer();
+            }
+        };
+    </script>
+
+ <script>
+        class Motor78K {
+            constructor() {
+                this.dbName = 'motor78k_db';
+                this.storeName = 'document_chunks';
+                this.db = null;
+                
+                this.arquetipos = {
+                    Atlas: {
+                        prefixo: '• [Mapeamento Atlas] Estrutura e Próximos Passos:\n',
+                        formatar: (trechos) => "Com base nas suas fontes, organizei a seguinte estrutura de tópicos:\n\n" + trechos.map(t => `- ${t.texto} (Origem: ${t.fonte})`).join('\n')
+                    },
+                    Nova: {
+                        prefixo: '✦ [Conexão Nova] Insights e Expansão de Ideias:\n',
+                        formatar: (trechos) => "Cruzando os dados informados, podemos projetar caminhos alternativos:\n\n" + trechos.map(t => `> Proposta associada a [${t.fonte}]: "${t.texto}"`).join('\n\n')
+                    },
+                    Artemis: {
+                        prefixo: '✕ [Inquirição Artemis] Análise de Consistência e Limitações:\n',
+                        formatar: (trechos) => "Avaliando criticamente os trechos retornados para encontrar pontos cegos:\n\n" + trechos.map(t => `? O que valida a premissa em [${t.fonte}]: "${t.texto}"?`).join('\n\n')
+                    },
+                    Uno: {
+                        prefixo: '⌾ [Síntese Uno] Resumo Executivo e Essência:\n',
+                        formatar: (trechos) => "Sintetizando o núcleo das informações coletadas em um único fluxo:\n\n" + trechos.map(t => t.texto).join(' ')
+                    }
+                };
+                
+                this.arquetipoAtivo = 'Atlas';
+                
+                // Regras Avançadas do Mecanismo ELIZA (Regex e Respostas Reflexivas em PT-BR)
+                this.elizaRules = [
+                    { pattern: /estou (.+)/i, replies: ["Por que você se sente $1?", "O que na sua arquitetura mental causou esse estado de $1?", "Se voltarmos um passo atrás, o que disparou isso?"] },
+                    { pattern: /preciso (.+)/i, replies: ["O que obter $1 traria de concreto para o seu projeto?", "Como a falta de $1 está limitando seus testes?", "Qual o caminho mais rápido para suprir essa necessidade?"] },
+                    { pattern: /por que (.+)/i, replies: ["Quais hipóteses você tem para $1?", "A resposta para $1 mudaria a forma como você estrutura seu código?", "O que o seu instinto diz sobre isso?"] },
+                    { pattern: /não consigo (.+)/i, replies: ["O que está agindo como o principal gargalo para $1?", "Se dividirmos $1 em 3 sub-tarefas simples, qual seria a primeira?", "Isso é uma limitação técnica ou de modelagem conceitual?"] },
+                    { pattern: /projeto (.+)/i, replies: ["Fale mais sobre a arquitetura estrutural do seu projeto.", "Como você descreveria o fluxo central dele para um observador externo?", "Quais os marcos fundamentais que determinam o sucesso dele?"] },
+                    { pattern: /erro|falha|problema/i, replies: ["Erros e falhas costumam mapear com precisão as bordas do sistema. Onde o fluxo quebra?", "Como podemos transformar essa inconsistência em uma regra de validação robusta?"] }
+                ];
+                
+                this.elizaFallbacks = [
+                    "Isso é intrigante. Como esse ponto se conecta ao quadro geral do seu desenvolvimento?",
+                    "Interessante. Você está visualizando isso mais como uma questão de infraestrutura ou de fluxo lógico?",
+                    "Fale um pouco mais sobre os desdobramentos práticos dessa linha de raciocínio.",
+                    "Se você tivesse que explicar esse exato conceito para si mesmo daqui a um ano, o que mudaria?"
+                ];
+            }
+
+            // Inicialização do Storage Seguro via IndexedDB
+            async init() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, 1);
+                    
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains(this.storeName)) {
+                            db.createObjectStore(this.storeName, { keyPath: 'id', autoIncrement: true });
+                        }
+                    };
+
+                    request.onsuccess = (event) => {
+                        this.db = event.target.result;
+                        resolve();
+                    };
+
+                    request.onerror = (event) => reject(event.target.error);
+                });
+            }
+
+            // Processamento, Parsing e Chonking de Entradas de Arquivos
+            async processarArquivo(file) {
+                const extensao = file.name.split('.').pop().toLowerCase();
+                const textoBruto = await file.text();
+                let textoLimpo = '';
+
+                // Módulos de Parsing Dedicados
+                if (extensao === 'json') {
+                    try {
+                        const obj = JSON.parse(textoBruto);
+                        textoLimpo = JSON.stringify(obj, null, 2);
+                    } catch(e) { textoLimpo = textoBruto; }
+                } else if (extensao === 'html') {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(textoBruto, 'text/html');
+                    textoLimpo = doc.body.innerText || doc.documentElement.innerText;
+                } else {
+                    textoLimpo = textoBruto; // Fallback estrutural para TXT, Markdown e CSV
+                }
+
+                const chunks = this.gerarChunks(textoLimpo);
+                await this.salvarChunks(file.name, chunks);
+                return { nome: file.name, totalChunks: chunks.length };
+            }
+
+            // Algoritmo de Janela Deslizante de Chunks para RAG Local
+            gerarChunks(texto, tamanhoChunk = 400, overlap = 80) {
+                const palavras = texto.split(/\s+/);
+                const chunks = [];
+                let i = 0;
+
+                while (i < palavras.length) {
+                    const fim = Math.min(i + tamanhoChunk, palavras.length);
+                    const chunkTexto = palavras.slice(i, fim).join(' ').trim();
+                    if (chunkTexto.length > 5) {
+                        chunks.push(chunkTexto);
+                    }
+                    i += (tamanhoChunk - overlap);
+                }
+                return chunks;
+            }
+
+            // Gravação Massiva no IndexedDB
+            async salvarChunks(nomeArquivo, chunks) {
+                const transaction = this.db.transaction([this.storeName], 'readwrite');
+                const store = transaction.objectStore(this.storeName);
+
+                for (const chunk of chunks) {
+                    store.put({
+                        fonte: nomeArquivo,
+                        texto: chunk,
+                        timestamp: Date.now()
+                    });
+                }
+
+                return new Promise((resolve) => {
+                    transaction.oncomplete = () => resolve();
+                });
+            }
+
+            // Algoritmo de Busca de Similaridade por Frequência de Palavras-Chave (Engine RAG Local)
+            async buscarContexto(query) {
+                return new Promise((resolve) => {
+                    const transaction = this.db.transaction([this.storeName], 'readonly');
+                    const store = transaction.objectStore(this.storeName);
+                    const request = store.getAll();
+
+                    request.onsuccess = () => {
+                        const todosChunks = request.result;
+                        const termosQuery = query.toLowerCase().match(/\w+/g) || [];
+                        
+                        if (termosQuery.length === 0) { resolve([]); return; }
+
+                        const resultados = [];
+
+                        todosChunks.forEach(chunk => {
+                            let score = 0;
+                            const textoLower = chunk.texto.toLowerCase();
+                            
+                            termosQuery.forEach(termo => {
+                                if (textoLower.includes(termo)) {
+                                    score += 1;
+                                    // Bônus de densidade se a palavra for longa
+                                    if (termo.length > 4) score += 0.5;
+                                }
+                            });
+
+                            if (score > 0) {
+                                resultados.push({
+                                    fonte: chunk.fonte,
+                                    texto: chunk.texto,
+                                    score: score
+                                });
+                            }
+                        });
+
+                        // Ordena por maior relevância e retorna os 4 melhores matches
+                        resultados.sort((a, b) => b.score - a.score);
+                        resolve(resultados.slice(0, 4));
+                    };
+                });
+            }
+
+            // Motor de Espelhamento de Conversação ELIZA
+            processarEliza(pergunta) {
+                for (const regra of this.elizaRules) {
+                    const match = pergunta.match(regra.pattern);
+                    if (match) {
+                        const respostaBase = regra.replies[Math.floor(Math.random() * regra.replies.length)];
+                        // Substitui o grupo capturado se houver
+                        if (match[1]) {
+                            return respostaBase.replace('$1', match[1].trim());
+                        }
+                        return respostaBase;
+                    }
+                }
+                return this.elizaFallbacks[Math.floor(Math.random() * this.elizaFallbacks.length)];
+            }
+
+            // Orquestrador Central: Fusão de Camadas RAG + ELIZA + Arquétipos
+            async processarPergunta(pergunta) {
+                const trechosEncontrados = await this.buscarContexto(pergunta);
+                const arq = this.arquetipos[this.arquetipoAtivo];
+                
+                let respostaFinal = '';
+                let fontesUtilizadas = [];
+
+                if (trechosEncontrados.length > 0) {
+                    // Camada 2: RAG Ativo com Filtro do Arquétipo Operacional
+                    respostaFinal = arq.prefixo + arq.formatar(trechosEncontrados);
+                    fontesUtilizadas = [...new Set(trechosEncontrados.map(t => t.fonte))];
+                } else {
+                    // Camada 1: Sem correspondência local -> Fallback Reflexivo ELIZA
+                    respostaFinal = `[Camada Reflexiva ELIZA]\n\n` + this.processarEliza(pergunta);
+                }
+
+                // Pergunta sugerida dinâmica para retroalimentar o loop cognitivo
+                const sugestoes = [
+                    "Essa abordagem gerou novas conexões conceituais?",
+                    "Você gostaria de refinar a busca adicionando mais variáveis?",
+                    "Faz sentido cruzar essa afirmação com outro documento do acervo?",
+                    "Como isso impacta as premissas iniciais do seu escopo?"
+                ];
+                const perguntaSugerida = sugestoes[Math.floor(Math.random() * sugestoes.length)];
+
+                return {
+                    resposta: respostaFinal,
+                    fontes: fontesUtilizadas,
+                    sugestao: perguntaSugerida,
+                    arquétipo: this.arquetipoAtivo
+                };
+            }
+
+            // Listagem de Documentos Consolidados sem duplicatas
+            async listarDocumentos() {
+                return new Promise((resolve) => {
+                    const transaction = this.db.transaction([this.storeName], 'readonly');
+                    const store = transaction.objectStore(this.storeName);
+                    const request = store.getAll();
+
+                    request.onsuccess = () => {
+                        const chunks = request.result;
+                        const mapaDocs = {};
+                        chunks.forEach(c => {
+                            if (!mapaDocs[c.fonte]) {
+                                mapaDocs[c.fonte] = 0;
+                            }
+                            mapaDocs[c.fonte]++;
+                        });
+                        resolve(mapaDocs);
+                    };
+                });
+            }
+
+            // Remoção Seletiva de Arquivos
+            async removerDocumento(nomeFonte) {
+                return new Promise((resolve) => {
+                    const transaction = this.db.transaction([this.storeName], 'readwrite');
+                    const store = transaction.objectStore(this.storeName);
+                    const request = store.openCursor();
+
+                    request.onsuccess = (event) => {
+                        const cursor = event.target.result;
+                        if (cursor) {
+                            if (cursor.value.fonte === nomeFonte) {
+                                cursor.delete();
+                            }
+                            cursor.continue();
+                        } else {
+                            resolve();
+                        }
+                    };
+                });
+            }
+
+            // Reseta toda a base de dados IndexedDB
+            async limparTudo() {
+                return new Promise((resolve) => {
+                    const transaction = this.db.transaction([this.storeName], 'readwrite');
+                    const store = transaction.objectStore(this.storeName);
+                    const request = store.clear();
+                    request.onsuccess = () => resolve();
+                });
+            }
+        }
+
+        // ==========================================
+        //  INTERFACE GRÁFICA & INTERAÇÃO (ENGINE GLUE)
+        // ==========================================
+        const motor = new Motor78K();
+        
+        // Elementos de Controle do DOM
+        const chatOutput = document.getElementById('chat-output');
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
+        const fileInput = document.getElementById('file-input');
+        const compiledFilesList = document.getElementById('compiled-files');
+        const fileCountEl = document.getElementById('file-count');
+        const clearDbBtn = document.getElementById('clear-db-btn');
+        const voiceBtn = document.getElementById('voice-btn');
+        const engineStatus = document.getElementById('engine-status');
+
+        // Inicialização do Motor
+        window.addEventListener('DOMContentLoaded', async () => {
+            await motor.init();
+            await atualizarBibliotecaUI();
+        });
+
+        // Loop de Renderização da Lista de Arquivos
+        async function atualizarBibliotecaUI() {
+            const docs = await motor.listarDocumentos();
+            compiledFilesList.innerHTML = '';
+            let contador = 0;
+
+            for (const [nome, total] of Object.entries(docs)) {
+                contador++;
+                const li = document.createElement('li');
+                li.className = 'file-item';
+                li.innerHTML = `
+                    <span class="file-item-name" title="${nome}">${nome} (${total} chunks)</span>
+                    <button class="file-delete-btn" onclick="deletarArquivo('${nome}')">Remover</button>
+                `;
+                compiledFilesList.appendChild(li);
+            }
+            fileCountEl.textContent = contador;
+        }
+
+        // Deletar arquivo globalmente
+        window.deletarArquivo = async (nome) => {
+            engineStatus.textContent = "Removendo...";
+            await motor.removerDocumento(nome);
+            await atualizarBibliotecaUI();
+            engineStatus.textContent = "Pronto (100% Local e Privado)";
+        };
+
+        // Evento de Upload de Arquivo
+        fileInput.addEventListener('change', async (e) => {
+            if (e.target.files.length === 0) return;
+            engineStatus.textContent = "Indexando documento...";
+            
+            for (const file of e.target.files) {
+                await motor.processarArquivo(file);
+            }
+            
+            await atualizarBibliotecaUI();
+            engineStatus.textContent = "Pronto (100% Local e Privado)";
+            fileInput.value = '';
+        });
+
+        // Chaveador de Personalidades / Arquétipos
+        document.querySelectorAll('.archetype-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.archetype-btn').forEach(b => b.classList.remove('active'));
+                const targetBtn = e.currentTarget;
+                targetBtn.classList.add('active');
+                
+                const archNome = targetBtn.getAttribute('data-arch');
+                motor.arquetipoAtivo = archNome;
+            });
+        });
+
+        // Limpar Base de Dados Completa
+        clearDbBtn.addEventListener('click', async () => {
+            if(confirm("Tem certeza que deseja apagar permanentemente todos os documentos indexados no seu navegador?")) {
+                await motor.limparTudo();
+                await atualizarBibliotecaUI();
+                appendMessage('system', 'Base de dados local completamente limpa.', 'Atlas');
+            }
+        });
+
+        // Envio de Mensagens para o Processador Central
+        async function enviarMensagem() {
+            const texto = chatInput.value.trim();
+            if (!texto) return;
+
+            appendMessage('user', texto);
+            chatInput.value = '';
+            engineStatus.textContent = "Processando RAG/ELIZA...";
+
+            const resultado = await motor.processarPergunta(texto);
+            
+            appendMessage('system', resultado.resposta, resultado.arquétipo, resultado.fontes, resultado.sugestao);
+            
+            // Se a voz estiver habilitada, aciona Síntese de Fala Local
+            if (synthActive) {
+                falarTexto(resultado.resposta.replace(/<[^>]*>/g, ''));
+            }
+
+            engineStatus.textContent = "Pronto (100% Local e Privado)";
+        }
+
+        sendBtn.addEventListener('click', enviarMensagem);
+        chatInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') enviarMensagem(); });
+
+        // Helper para injetar mensagens na UI de forma limpa e modular
+        function appendMessage(sender, text, arquetipo = '', fontes = [], sugestao = '') {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${sender} ${arquetipo}`;
+            
+            // Substitui quebras de linha por tags <br> para formatação correta do texto
+            let textoFormatado = text.replace(/\n/g, '<br>');
+            msgDiv.innerHTML = `<div>${textoFormatado}</div>`;
+
+            if (fontes.length > 0 || sugestao) {
+                const metaDiv = document.createElement('div');
+                metaDiv.className = 'message-meta';
+                
+                if (fontes.length > 0) {
+                    metaDiv.innerHTML += `<span>Fontes: ${fontes.map(f => `<span class="source-tag">${f}</span>`).join(' ')}</span>`;
+                }
+                if (sugestao) {
+                    metaDiv.innerHTML += `<div style="width:100%; color: var(--accent-glow); font-style: italic; margin-top: 4px;">Sugerido: "${sugestao}"</div>`;
+                }
+                msgDiv.appendChild(metaDiv);
+            }
+
+            chatOutput.appendChild(msgDiv);
+            chatOutput.scrollTop = chatOutput.scrollHeight;
+        }
+
+        // ==========================================
+        //  MÓDULO OPCIONAL DE VOZ (SPEECH API BROWSER)
+        // ==========================================
+        let recognition = null;
+        let speechActive = false;
+        let synthActive = false;
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechObj = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechObj();
+            recognition.lang = 'pt-BR';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                voiceBtn.classList.add('active');
+                speechActive = true;
+                engineStatus.textContent = "Escutando...";
+            };
+
+            recognition.onresult = (event) => {
+                const resultadoTexto = event.results[0][0].transcript;
+                chatInput.value = resultadoTexto;
+                enviarMensagem();
+            };
+
+            recognition.onerror = () => {
+                desativarVozUI();
+            };
+
+            recognition.onend = () => {
+                desativarVozUI();
+            };
+        } else {
+            voiceBtn.style.display = 'none'; // Esconde se o browser não tiver suporte nativo
+        }
+
+        function desativarVozUI() {
+            voiceBtn.classList.remove('active');
+            speechActive = false;
+            engineStatus.textContent = "Pronto (100% Local e Privado)";
+        }
+
+        voiceBtn.addEventListener('click', () => {
+            if (!speechActive && recognition) {
+                synthActive = true; // Ativa também a leitura da resposta por síntese caso use áudio
+                recognition.start();
+            } else if (recognition) {
+                recognition.stop();
+                synthActive = false;
+            }
+        });
+
+        function falarTexto(texto) {
+            if ('speechSynthesis' in window) {
+                // Cancela falas anteriores em andamento
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(texto);
+                utterance.lang = 'pt-BR';
+                utterance.rate = 1.1;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+    </script>
+-->
+
+
+  <script type="module">
+    import 'https://www.infodose.com.br/js/modules/78K_eliza.js';
+
+    console.log('KDX ELIZA:', KDX_ELIZA);
+  </script>
+
+<script type="module">
+    import 'https://www.infodose.com.br/js/modules/Kmotor.js';
+
+    console.log('KDX KM:', KDX_KM);
+  </script>
+
+<script type="module">
+    import 'https://www.infodose.com.br/js/modules/kdx-perf-container.js';
+
+    const perf = new KdxPerfContainer();
+    await perf.init();
+    console.log('KDX PERF:', KDX_PERF);
+  </script>
+
+</body>
+</html>
