@@ -208,7 +208,7 @@
 <script type="module" src="https://kodux78k.github.io/oi-Dual/js/main.js"></script>
 -->
 
-<script src="https://kodux78k.github.io/oi-Dual/kxt-insert.js"></script>
+<script src="https://www.infodose.com.br/js/kxt-insert.js"></script>
 
 </body>
 
