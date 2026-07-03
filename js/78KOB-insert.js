@@ -511,9 +511,10 @@ const ARCHETYPES = [
 <script src="https://kodux78k.github.io/oiDual--Y-/js/di_mood.js" data-k-id="JS_26"></script>
 <!-- dikob0 + bgPanel 78F -->
 
+<!-- 
 <script type="module">
     import 'https://www.infodose.com.br/js/modules/kdx-perf-container.js';
-  </script>
+  </script> -->
 
 <!-- ── IDLE DOCK (JSI_1) ─────────────────────────────────────
      Posicionado APÓS todos os scripts para garantir que
