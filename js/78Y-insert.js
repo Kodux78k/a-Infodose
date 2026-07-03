@@ -185,6 +185,6 @@
   <!-- INJEÇÕES DE SCRIPTS DE INICIALIZAÇÃO   -->
   <!-- ===================================== -->
 <script src="https://www.infodose.com.br/js/modules/KDX_KARD.js"></script>
-  <script src="https://www.infodose.com.br/js/78HU-insert.js"></script>
+  <script src="https://www.infodose.com.br/js/KxTKoB.js"></script>
 </body>
 </html>`);
