@@ -172,7 +172,7 @@
 <!-- 3 -->
 <script src="https://kodux78k.github.io/oiDual-KxT-di_oi/js/modules/inline-3.js"></script>
 
-<!-- 4 -->
+<!-- 4   src="https://kodux78k.github.io/oiDual-H0/DH0-10.html"-->
 <script src="https://kodux78k.github.io/oiDual-KxT-di_oi/js/modules/inline-4.js"></script>
 
 
