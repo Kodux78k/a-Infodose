@@ -180,7 +180,7 @@
 
 
 <iframe
-  src="https://kodux78k.github.io/oiDual-H0/DH0-10.html"
+  src="https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78Y/kob-lt.html"
   sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
   allow="fullscreen; accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
   loading="lazy"
