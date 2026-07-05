@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>KOBLLUX DevTools</title>
+<style>
+    /* KOBLLUX CSS - Theme Engine & Layout */
+    :root {
+        --bg-main: #121212;
+        --bg-panel: rgba(30, 30, 30, 0.6);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --text-main: #d4d4d4;
+        --text-muted: #858585;
+        --accent: #007acc;
+        --accent-hover: #005f9e;
+        --log-info: #007acc;
+        --log-warn: #d7ba7d;
+        --log-error: #f48771;
+        --font-mono: 'Consolas', 'Courier New', monospace;
+        --header-height: 50px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg-main);
+        color: var(--text-main);
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* Header / Tabs - Mobile First (Scrollable horizontally) */
+    #sidebar {
+        display: flex;
+        flex-direction: row;
+        background: var(--bg-panel);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--glass-border);
+        height: var(--header-height);
+        flex-shrink: 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
+        scrollbar-width: none; /* Firefox */
+    }
+    #sidebar::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+    .brand {
+        display: flex;
+        align-items: center;
+        padding: 0 15px;
+        font-weight: 800;
+        font-size: 14px;
+        color: #fff;
+        border-right: 1px solid var(--glass-border);
+        background: rgba(0, 0, 0, 0.2);
+        letter-spacing: 1px;
+    }
+
+    #nav-tabs {
+        display: flex;
+        flex: 1;
+    }
+
+    .tab-btn {
+        padding: 0 16px;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        font-weight: 500;
+        font-size: 13px;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        border-bottom: 2px solid transparent;
+    }
+
+    .tab-btn:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.05); }
+    .tab-btn.active { color: #fff; border-bottom-color: var(--accent); }
+
+    /* Main Content & Panels */
+    #main-content {
+        flex: 1;
+        position: relative;
+        background: var(--bg-main);
+        overflow: hidden;
+    }
+
+    #panels { height: 100%; width: 100%; }
+
+    .panel {
+        display: none;
+        height: 100%;
+        overflow-y: auto;
+        padding: 15px;
+    }
+    .panel.active { display: block; }
+
+    /* Utilities & Components */
+    .module-header {
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--glass-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    button.btn {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    button.btn:hover { background: var(--accent-hover); }
+
+    /* Console Styles */
+    .log-entry {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        padding: 8px 5px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        word-break: break-all;
+    }
+    .log-warn { color: var(--log-warn); background: rgba(215, 186, 125, 0.1); }
+    .log-error { color: var(--log-error); background: rgba(244, 135, 113, 0.1); }
+    .log-info { color: var(--log-info); }
+
+    /* Table Styles (Storage, Network) */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+    th { color: var(--text-muted); padding: 8px; border-bottom: 1px solid var(--glass-border); font-weight: normal; }
+    td { padding: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-family: var(--font-mono); }
+
+    /* Tree/DOM View Styles */
+    .dom-node { font-family: var(--font-mono); font-size: 13px; padding-left: 15px; }
+    .tag { color: #569cd6; }
+    .attr-name { color: #9cdcfe; }
+    .attr-value { color: #ce9178; }
+
+    /* Desktop Adjustments */
+    @media (min-width: 768px) {
+        body { flex-direction: row; }
+        #sidebar {
+            flex-direction: column;
+            width: 220px;
+            height: 100vh;
+            border-bottom: none;
+            border-right: 1px solid var(--glass-border);
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        .brand { height: var(--header-height); justify-content: center; border-right: none; border-bottom: 1px solid var(--glass-border); }
+        #nav-tabs { flex-direction: column; flex: unset; }
+        .tab-btn { height: 40px; border-bottom: none; border-left: 3px solid transparent; justify-content: flex-start; }
+        .tab-btn.active { border-bottom-color: transparent; border-left-color: var(--accent); background: rgba(255,255,255,0.05); }
+    }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+    <div class="brand">KOBLLUX</div>
+    <div id="nav-tabs"></div>
+</div>
+
+<div id="main-content">
+    <div id="panels"></div>
+</div>
+
+<script>
+// ==========================================
+// KOBLLUX CORE - Boot Loader & Namespace
+// ==========================================
+window.KOBLLUX = {
+    modules: {},
+    tabsEl: null,
+    panelsEl: null,
+    
+    init() {
+        this.tabsEl = document.getElementById('nav-tabs');
+        this.panelsEl = document.getElementById('panels');
+        console.log("%cKOBLLUX DevTools Core Initialized", "color: #007acc; font-weight: bold;");
+    },
+
+    register(name, moduleObj) {
+        this.modules[name] = moduleObj;
+        this.createTab(name);
+        
+        // Setup module UI container
+        const panel = this.getPanel(name);
+        if(moduleObj.init) {
+            moduleObj.init(panel);
+        }
+        console.log(`[KOBLLUX] Módulo registrado: ${name}`);
+    },
+
+    createTab(name) {
+        // Create Tab Button
+        const btn = document.createElement('button');
+        btn.className = 'tab-btn';
+        btn.id = `tab-${name}`;
+        btn.innerText = name;
+        btn.onclick = () => this.showPanel(name);
+        this.tabsEl.appendChild(btn);
+
+        // Create Panel Container
+        const panel = document.createElement('div');
+        panel.id = `panel-${name}`;
+        panel.className = 'panel';
+        this.panelsEl.appendChild(panel);
+    },
+
+    getPanel(name) {
+        return document.getElementById(`panel-${name}`);
+    },
+
+    showPanel(name) {
+        // Reset classes
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        
+        // Set Active
+        document.getElementById(`tab-${name}`).classList.add('active');
+        document.getElementById(`panel-${name}`).classList.add('active');
+    },
+
+    boot() {
+        this.init();
+        
+        // Registering native modules
+        this.register('Console', ConsoleModule);
+        this.register('Elements', ElementsModule);
+        this.register('Network', NetworkModule);
+        this.register('Storage', StorageModule);
+        this.register('Performance', PerformanceModule);
+        this.register('Settings', SettingsModule);
+
+        // Auto-open first panel
+        this.showPanel('Console');
+        console.log("%cKOBLLUX Boot Loader Completo.", "color: #4CAF50; font-weight: bold;");
+    }
+};
+
+// ==========================================
+// KOBLLUX MODULES (The Super Monolith)
+// ==========================================
+
+// 1. Console Module
+const ConsoleModule = {
+    container: null,
+    originalConsole: {},
+    
+    init(panel) {
+        panel.innerHTML = `
+            <div class="module-header">
+                <h3>Console</h3>
+                <div>
+                    <button class="btn" id="btn-test-log">Gerar Log</button>
+                    <button class="btn" id="btn-clear-log" style="background:#444">Limpar</button>
+                </div>
+            </div>
+            <div id="console-output"></div>
+        `;
+        
+        this.container = document.getElementById('console-output');
+        this.intercept();
+
+        document.getElementById('btn-test-log').onclick = () => {
+            console.log("Log de teste gerado no DualApp!", { key: "value", id: Math.random() });
+            console.warn("Isso é um aviso de teste.");
+            console.error("Simulando um erro fatal no sistema.");
+        };
+
+        document.getElementById('btn-clear-log').onclick = () => {
+            this.container.innerHTML = '';
+        };
+    },
+
+    intercept() {
+        const methods = ['log', 'warn', 'error', 'info'];
+        methods.forEach(method => {
+            this.originalConsole[method] = console[method];
+            console[method] = (...args) => {
+                this.originalConsole[method].apply(console, args); // Keep native
+                this.renderLog(method, args); // Render to UI
+            };
+        });
+    },
+
+    renderLog(type, args) {
+        if(!this.container) return;
+        const div = document.createElement('div');
+        div.className = `log-entry log-${type}`;
+        
+        // Basic parser for objects
+        const parsedArgs = args.map(arg => {
+            if (typeof arg === 'object') return JSON.stringify(arg);
+            return String(arg);
+        }).join(' ');
+
+        div.innerText = `> ${parsedArgs}`;
+        this.container.appendChild(div);
+        this.container.parentElement.scrollTop = this.container.parentElement.scrollHeight;
+    }
+};
+
+// 2. Elements / DOM Inspector Module
+const ElementsModule = {
+    init(panel) {
+        panel.innerHTML = `
+            <div class="module-header">
+                <h3>Elements (DOM Inspector)</h3>
+                <button class="btn" id="btn-refresh-dom">Inspecionar Body</button>
+            </div>
+            <div id="dom-tree" style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px;"></div>
+        `;
+
+        document.getElementById('btn-refresh-dom').onclick = () => {
+            const tree = document.getElementById('dom-tree');
+            tree.innerHTML = '';
+            tree.appendChild(this.buildTree(document.body));
+        };
+    },
+
+    buildTree(node, level = 0) {
+        const div = document.createElement('div');
+        div.className = 'dom-node';
+        
+        if (node.nodeType === Node.TEXT_NODE) {
+            const text = node.textContent.trim();
+            if(text) div.innerText = text;
+            return div;
+        }
+
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            let html = `<span class="tag">&lt;${node.tagName.toLowerCase()}</span>`;
+            
+            // Attributes
+            for (let attr of node.attributes) {
+                html += ` <span class="attr-name">${attr.name}</span>="<span class="attr-value">${attr.value}</span>"`;
+            }
+            html += `<span class="tag">&gt;</span>`;
+            
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = html;
+            div.appendChild(wrapper);
+
+            // Don't recursively dive too deep to avoid browser crash in this POC
+            if(level < 3 && node.id !== 'sidebar') { 
+                const childrenContainer = document.createElement('div');
+                node.childNodes.forEach(child => {
+                    childrenContainer.appendChild(this.buildTree(child, level + 1));
+                });
+                div.appendChild(childrenContainer);
+                
+                const closeTag = document.createElement('div');
+                closeTag.innerHTML = `<span class="tag">&lt;/${node.tagName.toLowerCase()}&gt;</span>`;
+                div.appendChild(closeTag);
+            } else if (node.childNodes.length > 0) {
+                 const more = document.createElement('div');
+                 more.style.color = '#888';
+                 more.innerText = `... (${node.childNodes.length} children)`;
+                 div.appendChild(more);
+            }
+        }
+        return div;
+    }
+};
+
+// 3. Network Interceptor Module
+const NetworkModule = {
+    init(panel) {
+        panel.innerHTML = `
+            <div class="module-header">
+                <h3>Network</h3>
+                <button class="btn" id="btn-test-fetch">Testar Fetch</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Método</th>
+                        <th>URL</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="network-logs"></tbody>
+            </table>
+        `;
+        
+        this.interceptFetch();
+
+        document.getElementById('btn-test-fetch').onclick = () => {
+            fetch('https://jsonplaceholder.typicode.com/todos/1')
+                .then(r => r.json())
+                .then(data => console.log("Fetch success:", data))
+                .catch(e => console.error("Fetch falhou:", e));
+        };
+    },
+
+    interceptFetch() {
+        const originalFetch = window.fetch;
+        window.fetch = async (...args) => {
+            const url = typeof args[0] === 'string' ? args[0] : args[0].url;
+            const method = args[1]?.method || 'GET';
+            
+            try {
+                const response = await originalFetch(...args);
+                this.logRequest(method, url, response.status);
+                return response;
+            } catch (error) {
+                this.logRequest(method, url, 'ERROR');
+                throw error;
+            }
+        };
+    },
+
+    logRequest(method, url, status) {
+        const tbody = document.getElementById('network-logs');
+        if(!tbody) return;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${method}</td>
+            <td style="word-break: break-all; font-size: 11px;">${url}</td>
+            <td style="color: ${status === 200 ? '#4CAF50' : '#f48771'}">${status}</td>
+        `;
+        tbody.prepend(tr);
+    }
+};
+
+// 4. Storage Module
+const StorageModule = {
+    init(panel) {
+        panel.innerHTML = `
+            <div class="module-header">
+                <h3>Local Storage</h3>
+                <button class="btn" id="btn-refresh-storage">Atualizar</button>
+            </div>
+            <table>
+                <thead><tr><th>Chave</th><th>Valor</th></tr></thead>
+                <tbody id="storage-list"></tbody>
+            </table>
+        `;
+
+        const refreshBtn = document.getElementById('btn-refresh-storage');
+        refreshBtn.onclick = () => this.renderStorage();
+        
+        // Add a test item
+        localStorage.setItem('KOBLLUX_LAST_BOOT', new Date().toISOString());
+        this.renderStorage();
+    },
+
+    renderStorage() {
+        const tbody = document.getElementById('storage-list');
+        if(!tbody) return;
+        tbody.innerHTML = '';
+        
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            const value = localStorage.getItem(key);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${key}</td>
+                <td style="word-break: break-all; font-size: 11px;">${value}</td>
+            `;
+            tbody.appendChild(tr);
+        }
+    }
+};
+
+// 5. Performance Placeholder
+const PerformanceModule = {
+    init(panel) {
+        panel.innerHTML = `
+            <div class="module-header">
+                <h3>Performance</h3>
+            </div>
+            <div style="text-align:center; padding: 40px; color: var(--text-muted);">
+                <div style="font-size: 48px; margin-bottom: 10px;">⚡</div>
+                <p>Módulo em construção.</p>
+                <p style="font-size: 12px; margin-top: 10px;">Futuramente integrado com Chart.js para telemetria de FPS e Memória.</p>
+            </div>
+        `;
+    }
+};
+
+// 6. Settings Placeholder
+const SettingsModule = {
+    init(panel) {
+        panel.innerHTML = `
+            <div class="module-header">
+                <h3>Settings</h3>
+            </div>
+            <div style="padding: 10px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor:pointer;">
+                    <input type="checkbox" checked> Habilitar Telemetria KOBLLUX
+                </label>
+            </div>
+        `;
+    }
+};
+
+// ==========================================
+// MAIN EXECUTION
+// ==========================================
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+    KOBLLUX.boot();
+});
+
+</script>
+</body>
+</html>
+
+
