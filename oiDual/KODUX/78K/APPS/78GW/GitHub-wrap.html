@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Warp - Minha Biblioteca</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-indigo-400">🚀 GitHub Warp</h1>
+            <p class="text-slate-400">Sua coleção de achados do GitHub, curada e pronta para uso.</p>
+        </header>
+
+        <!-- Campo de Busca -->
+        <div class="mb-6">
+            <input type="text" id="searchInput" placeholder="🔎 Buscar por nome, tag ou tecnologia..." 
+                   class="w-full bg-slate-800 border border-slate-700 rounded-lg p-4 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <!-- Tags -->
+        <div class="flex flex-wrap gap-2 mb-8" id="tagContainer">
+            <!-- Gerado via JS -->
+        </div>
+
+        <!-- Lista de Cards -->
+        <div id="libraryList" class="grid gap-6 md:grid-cols-2">
+            <!-- Cards inseridos dinamicamente -->
+        </div>
+    </div>
+
+    <script>
+        const library = [
+            { id: 1, name: "Tailwind Components", tags: ["CSS", "HTML"], cdn: "https://cdn...", readme: "https://github.com/...", code: "const x = 1;" },
+            { id: 2, name: "Audio Visualizer JS", tags: ["Áudio", "Canvas"], cdn: "https://cdn...", readme: "https://github.com/...", code: "function play() {}" },
+            { id: 3, name: "Neural Network Tiny", tags: ["IA"], cdn: "https://cdn...", readme: "https://github.com/...", code: "const model = {};" }
+        ];
+
+        const render = (filter = "") => {
+            const list = document.getElementById('libraryList');
+            list.innerHTML = "";
+            const filtered = library.filter(item => 
+                item.name.toLowerCase().includes(filter.toLowerCase()) || 
+                item.tags.some(t => t.toLowerCase().includes(filter.toLowerCase()))
+            );
+
+            filtered.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-800 p-5 rounded-xl border border-slate-700 hover:border-indigo-500 transition";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <h3 class="font-bold text-lg text-white">${item.name}</h3>
+                        <button onclick="alert('Adicionado aos favoritos!')">⭐</button>
+                    </div>
+                    <div class="flex gap-2 my-3">
+                        ${item.tags.map(t => `<span class="bg-indigo-900 text-indigo-200 text-xs px-2 py-1 rounded">${t}</span>`).join('')}
+                    </div>
+                    <div class="flex gap-2 mt-4">
+                        <button onclick="copyToClipboard('${item.cdn}')" class="flex-1 bg-slate-700 p-2 rounded text-sm hover:bg-slate-600">📦 CDN</button>
+                        <a href="${item.readme}" target="_blank" class="flex-1 bg-slate-700 p-2 rounded text-sm text-center hover:bg-slate-600">📄 README</a>
+                        <button onclick="copyToClipboard('${item.code}')" class="flex-1 bg-indigo-600 p-2 rounded text-sm hover:bg-indigo-500">📋 Código</button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        };
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => alert("Copiado com sucesso!"));
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => render(e.target.value));
+
+        render();
+    </script>
+</body>
+</html>
+
