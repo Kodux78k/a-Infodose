@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wellington PRO - JS to JSON Extractor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #020617; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+        .scrollbar-dark::-webkit-scrollbar { width: 8px; height: 8px; }
+        .scrollbar-dark::-webkit-scrollbar-track { background: #0f172a; border-radius: 4px; }
+        .scrollbar-dark::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .scrollbar-dark::-webkit-scrollbar-thumb:hover { background: #475569; }
+        .textarea-code { font-family: 'Fira Code', 'Courier New', monospace; font-size: 0.875rem; }
+        
+        /* Smooth scrolling for the whole page */
+        html { scroll-behavior: smooth; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- Header Fixo -->
+    <header class="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center shrink-0 z-10 shadow-md">
+        <div class="flex items-center gap-3">
+            <svg class="w-8 h-8 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+            <div>
+                <h1 class="text-xl font-bold text-white tracking-tight">Wellington <span class="text-indigo-500">PRO</span></h1>
+                <p class="text-xs text-slate-400 hidden sm:block">JS to JSON Extractor & Patcher</p>
+            </div>
+        </div>
+        
+        <button id="btn-analyze" class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-lg shadow-lg shadow-indigo-900/20 transition text-sm font-bold flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <span class="hidden sm:inline">Analisar Código</span>
+            <span class="sm:hidden">Analisar</span>
+        </button>
+    </header>
+
+    <!-- Main Workspace (Estritamente Vertical) -->
+    <main id="workspace" class="flex-1 overflow-y-auto scrollbar-dark bg-slate-950 p-3 sm:p-6 space-y-6">
+        
+        <div class="max-w-5xl mx-auto space-y-6 pb-12">
+            <!-- Passo 1: Input & Upload -->
+            <section id="sec-input" class="w-full flex flex-col border border-slate-800 bg-slate-900 rounded-xl shadow-sm overflow-hidden min-h-[400px]">
+                <div class="p-4 border-b border-slate-800 bg-slate-800/40 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
+                    <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                        <span class="w-6 h-6 bg-indigo-900/80 border border-indigo-500/30 text-indigo-400 text-xs flex items-center justify-center rounded-full">1</span>
+                        Cole ou Carregue seu JavaScript
+                    </h2>
+                    
+                    <!-- Botão de Upload -->
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <input type="file" id="file-upload" class="hidden" accept=".js,.jsx,.ts,.txt">
+                        <button id="btn-upload" class="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 px-4 py-2 rounded-lg transition text-xs font-semibold flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            Fazer Upload de Arquivo
+                        </button>
+                    </div>
+                </div>
+                <textarea id="input-js" class="flex-1 w-full bg-slate-900/50 text-slate-300 p-5 outline-none resize-y min-h-[300px] textarea-code scrollbar-dark" placeholder="Cole aqui seu código contendo:&#10;&#10;const ARCHETYPES = [...]&#10;const CONFIG = {...}&#10;export const THEMES = [...]&#10;window.APP_DATA = {...}&#10;&#10;Ou clique em 'Fazer Upload' acima."></textarea>
+            </section>
+
+            <!-- Passo 2: Configurações & Descobertas -->
+            <section id="sec-config" class="w-full flex flex-col border border-slate-800 bg-slate-900 rounded-xl shadow-sm overflow-hidden">
+                <div class="p-4 border-b border-slate-800 bg-slate-800/40 shrink-0">
+                    <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                        <span class="w-6 h-6 bg-indigo-900/80 border border-indigo-500/30 text-indigo-400 text-xs flex items-center justify-center rounded-full">2</span>
+                        Configurações & Constantes Encontradas
+                    </h2>
+                </div>
+                
+                <div class="p-5 border-b border-slate-800 flex flex-col sm:flex-row gap-4 shrink-0 bg-slate-900/80">
+                    <div class="flex-1">
+                        <label class="block text-xs font-medium text-slate-400 mb-1.5">Caminho / Prefixo do Arquivo JSON</label>
+                        <input type="text" id="config-path" value="./json/" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-xs font-medium text-slate-400 mb-1.5">Como injetar no código JS? (Patch Mode)</label>
+                        <select id="config-mode" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition appearance-none">
+                            <option value="fetch">Fetch: const X = await (await fetch(...)).json()</option>
+                            <option value="import">Import: import X from "..." assert { type: "json" }</option>
+                            <option value="export">Export: export const X = await fetch...</option>
+                            <option value="window">Window: window.X = await fetch...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Lista de Variáveis -->
+                <div class="flex-1 overflow-y-auto scrollbar-dark max-h-[500px] min-h-[250px] p-4 bg-slate-950/30" id="var-list">
+                    <div class="h-full flex items-center justify-center text-slate-500 text-sm text-center py-12">
+                        <div class="space-y-2">
+                            <svg class="w-8 h-8 mx-auto text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                            <p>Nenhuma constante detectada ainda.</p>
+                            <p class="text-xs text-slate-600">Cole o código ou faça upload e clique em "Analisar".</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-3 border-t border-slate-800 bg-slate-900 flex justify-between items-center shrink-0">
+                    <button id="btn-select-all" class="text-sm text-indigo-400 hover:text-indigo-300 font-medium hidden px-2 py-1 rounded hover:bg-indigo-900/30 transition">Selecionar Todos</button>
+                    <span id="status-text" class="text-xs text-slate-500 hidden"></span>
+                </div>
+            </section>
+
+            <!-- Passo 3: Previews & Download -->
+            <section id="sec-preview" class="w-full flex flex-col border border-slate-800 bg-slate-900 rounded-xl shadow-sm overflow-hidden min-h-[600px]">
+                <div class="p-4 border-b border-slate-800 bg-slate-800/40 flex justify-between items-center shrink-0">
+                    <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                        <span class="w-6 h-6 bg-indigo-900/80 border border-indigo-500/30 text-indigo-400 text-xs flex items-center justify-center rounded-full">3</span>
+                        Resultados & Exportação
+                    </h2>
+                </div>
+
+                <div class="p-0 border-b border-slate-800 bg-slate-900 flex gap-0 shrink-0">
+                    <button id="tab-patch" class="flex-1 py-3 text-sm font-semibold text-indigo-400 border-b-2 border-indigo-500 bg-slate-800/50 transition">Código JS Atualizado</button>
+                    <button id="tab-json" class="flex-1 py-3 text-sm font-semibold text-slate-500 hover:text-slate-300 hover:bg-slate-800/30 border-b-2 border-transparent transition">Preview JSON</button>
+                </div>
+                
+                <div class="flex-1 relative min-h-[350px]">
+                    <textarea id="preview-patch" class="absolute inset-0 w-full h-full bg-slate-950 text-slate-300 p-5 outline-none resize-none textarea-code scrollbar-dark" readonly placeholder="O código JS atualizado com os links (fetch/import) aparecerá aqui..."></textarea>
+                    <textarea id="preview-json" class="absolute inset-0 w-full h-full bg-slate-950 text-emerald-300 p-5 outline-none resize-none textarea-code scrollbar-dark hidden" readonly placeholder="Selecione uma variável na lista acima para ver como ficará o seu arquivo .json..."></textarea>
+                </div>
+
+                <!-- Ações Finais -->
+                <div class="p-5 border-t border-slate-800 bg-slate-900 gap-4 flex flex-col sm:flex-row shrink-0 items-center">
+                    <div class="flex gap-3 w-full sm:w-1/2">
+                        <button id="btn-download-js" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 py-3 rounded-lg border border-slate-700 shadow-sm transition text-xs sm:text-sm font-semibold opacity-50 cursor-not-allowed disabled flex flex-col items-center justify-center gap-1">
+                            <span>Baixar Patch .js</span>
+                        </button>
+                        <button id="btn-download-json" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 py-3 rounded-lg border border-slate-700 shadow-sm transition text-xs sm:text-sm font-semibold opacity-50 cursor-not-allowed disabled flex flex-col items-center justify-center gap-1">
+                            <span>Baixar JSONs</span>
+                        </button>
+                    </div>
+                    <div class="w-full sm:w-1/2">
+                        <button id="btn-generate-all" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 px-4 rounded-lg shadow-lg shadow-emerald-900/20 transition font-bold text-sm flex justify-center items-center gap-2 opacity-50 cursor-not-allowed disabled">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            BAIXAR TUDO (JS + JSON)
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        // State
+        let detectedVars = [];
+        let activeTab = 'patch';
+
+        // DOM Elements
+        const secInput = document.getElementById('sec-input');
+        const secConfig = document.getElementById('sec-config');
+        const secPreview = document.getElementById('sec-preview');
+
+        const inputJs = document.getElementById('input-js');
+        const fileUpload = document.getElementById('file-upload');
+        const btnUpload = document.getElementById('btn-upload');
+        
+        const btnAnalyze = document.getElementById('btn-analyze');
+        const varList = document.getElementById('var-list');
+        const btnSelectAll = document.getElementById('btn-select-all');
+        const statusText = document.getElementById('status-text');
+        
+        const configPath = document.getElementById('config-path');
+        const configMode = document.getElementById('config-mode');
+        
+        const tabPatch = document.getElementById('tab-patch');
+        const tabJson = document.getElementById('tab-json');
+        const previewPatch = document.getElementById('preview-patch');
+        const previewJson = document.getElementById('preview-json');
+        
+        const btnDownloadJs = document.getElementById('btn-download-js');
+        const btnDownloadJson = document.getElementById('btn-download-json');
+        const btnGenerateAll = document.getElementById('btn-generate-all');
+
+        // --- File Upload Logic ---
+        btnUpload.addEventListener('click', () => {
+            fileUpload.click();
+        });
+
+        fileUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                inputJs.value = event.target.result;
+                // Auto-analyze right after uploading
+                btnAnalyze.click();
+                // Reset file input so same file can be uploaded again if needed
+                fileUpload.value = '';
+            };
+            reader.onerror = () => {
+                alert('Erro ao ler o arquivo.');
+            };
+            reader.readAsText(file);
+        });
+
+        // --- Parser Logic ---
+        function parseJavaScript(code) {
+            const results = [];
+            // Catch const, let, var, export const, window.X
+            const regex = /(?:(export)\s+)?(?:(const|let|var)\s+|(window\.)\s*)([a-zA-Z_$][0-9a-zA-Z_$]*)\s*=\s*([\[\{])/g;
+            let match;
+
+            while ((match = regex.exec(code)) !== null) {
+                const startIndex = match.index;
+                const isExport = !!match[1];
+                const decType = match[3] ? 'window' : match[2];
+                const name = match[4];
+                const openChar = match[5];
+                const closeChar = openChar === '{' ? '}' : ']';
+
+                let depth = 0;
+                let i = match.index + match[0].length - 1;
+                let inString = false;
+                let stringChar = '';
+
+                // Parser to find exact boundaries of objects/arrays
+                for (; i < code.length; i++) {
+                    const char = code[i];
+                    if ((char === '"' || char === "'" || char === "`") && code[i-1] !== '\\') {
+                        if (!inString) {
+                            inString = true;
+                            stringChar = char;
+                        } else if (char === stringChar) {
+                            inString = false;
+                        }
+                    }
+
+                    if (!inString) {
+                        if (char === openChar) depth++;
+                        if (char === closeChar) depth--;
+                        if (depth === 0) break;
+                    }
+                }
+
+                if (depth === 0 && i < code.length) {
+                    const block = code.substring(match.index + match[0].length - 1, i + 1);
+                    const fullMatch = code.substring(startIndex, i + 1);
+                    
+                    let parsedData = null;
+                    let isValidJson = false;
+                    let errorMsg = null;
+                    let jsonString = '';
+
+                    try {
+                        // Evaluate to check data
+                        parsedData = new Function(`return ${block}`)();
+                        jsonString = JSON.stringify(parsedData, null, 2);
+                        if (jsonString === undefined) throw new Error("Undefined result");
+                        
+                        // Strict check for functions or references that evaluate perfectly but strip data silently
+                        if (block.includes('=>') || block.includes('function') || block.match(/[a-zA-Z_$][0-9a-zA-Z_$]*\s*(?::|=|\()/)) {
+                            JSON.parse(jsonString); // Test parsing back
+                            isValidJson = true; 
+                        } else {
+                            isValidJson = true;
+                        }
+
+                    } catch (e) {
+                        errorMsg = "Contém funções ou referências JS. Não é JSON puro.";
+                    }
+
+                    results.push({
+                        id: 'var_' + Math.random().toString(36).substr(2, 9),
+                        name,
+                        type: isExport ? 'export' : decType,
+                        originalCode: fullMatch,
+                        blockCode: block,
+                        jsonString: isValidJson ? jsonString : null,
+                        startIndex,
+                        endIndex: i + 1,
+                        isValidJson,
+                        errorMsg,
+                        selected: isValidJson // default true if valid
+                    });
+                }
+            }
+            return results;
+        }
+
+        // --- Generate Replacement ---
+        function generateReplacement(item, mode, pathPrefix) {
+            const fileName = `${item.name.toLowerCase()}.json`;
+            const fullPath = `${pathPrefix}${fileName}`;
+            
+            switch (mode) {
+                case 'fetch':
+                    return `const ${item.name} = await (\n  await fetch("${fullPath}")\n).json();`;
+                case 'import':
+                    return `import ${item.name} from "${fullPath}" assert { type: "json" };`;
+                case 'export':
+                    return `export const ${item.name} = await (\n  await fetch("${fullPath}")\n).json();`;
+                case 'window':
+                    return `window.${item.name} = await (\n  await fetch("${fullPath}")\n).json();`;
+                default:
+                    return item.originalCode;
+            }
+        }
+
+        // --- UI Rendering ---
+        function renderList() {
+            if (detectedVars.length === 0) {
+                varList.innerHTML = `<div class="h-full flex items-center justify-center text-slate-500 text-sm text-center py-12">
+                        <div class="space-y-2">
+                            <svg class="w-8 h-8 mx-auto text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            <p>Nenhuma estrutura JSON detectável encontrada.</p>
+                        </div>
+                    </div>`;
+                btnSelectAll.classList.add('hidden');
+                statusText.classList.add('hidden');
+                updateButtons(false);
+                return;
+            }
+
+            btnSelectAll.classList.remove('hidden');
+            statusText.classList.remove('hidden');
+            
+            varList.innerHTML = '<div class="space-y-3 pb-2"></div>';
+            const container = varList.querySelector('div');
+
+            let validCount = 0;
+            let selectedCount = 0;
+
+            detectedVars.forEach(item => {
+                if (item.isValidJson) validCount++;
+                if (item.selected) selectedCount++;
+
+                const div = document.createElement('div');
+                div.className = `p-4 rounded-xl border ${item.isValidJson ? (item.selected ? 'bg-indigo-900/30 border-indigo-500/50 shadow-sm' : 'bg-slate-800/80 border-slate-700/60') : 'bg-red-950/20 border-red-900/40 opacity-75'} flex items-start gap-4 cursor-pointer transition hover:border-slate-500`;
+                
+                div.innerHTML = `
+                    <div class="pt-0.5 flex items-center shrink-0">
+                        <input type="checkbox" class="w-5 h-5 rounded border-slate-600 text-indigo-500 bg-slate-900 focus:ring-indigo-500 cursor-pointer" 
+                            ${item.selected ? 'checked' : ''} ${!item.isValidJson ? 'disabled' : ''}>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
+                            <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-slate-950 text-slate-300 border border-slate-800">${item.type}</span>
+                            <span class="font-bold text-slate-100 text-base truncate">${item.name}</span>
+                            <span class="text-[11px] font-mono text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded">${item.blockCode[0] === '[' ? 'Array' : 'Objeto'}</span>
+                        </div>
+                        ${!item.isValidJson 
+                            ? `<div class="text-xs text-red-400 mt-1.5 flex items-center gap-1.5 font-medium"><svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg> ${item.errorMsg}</div>` 
+                            : `<div class="text-[12px] text-slate-400 mt-1 font-mono flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> ${configPath.value}${item.name.toLowerCase()}.json</div>`
+                        }
+                    </div>
+                    ${item.isValidJson ? `<div class="shrink-0 text-xs text-indigo-400 hover:text-indigo-300 font-medium px-2 py-1">Ver JSON</div>` : ''}
+                `;
+
+                const cb = div.querySelector('input');
+                cb.addEventListener('change', (e) => {
+                    item.selected = e.target.checked;
+                    renderList();
+                    updatePreviews();
+                });
+
+                div.addEventListener('click', (e) => {
+                    if (e.target !== cb && item.isValidJson) {
+                        showJsonPreview(item);
+                        secPreview.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+
+                container.appendChild(div);
+            });
+
+            statusText.innerText = `${selectedCount} selecionados de ${validCount} válidos`;
+            updateButtons(true);
+        }
+
+        // --- Update Previews ---
+        function updatePreviews() {
+            const originalCode = inputJs.value;
+            const mode = configMode.value;
+            const pathPrefix = configPath.value;
+            
+            if (!originalCode || detectedVars.length === 0) {
+                previewPatch.value = '';
+                return;
+            }
+
+            let patchedCode = originalCode;
+            let importsToAdd = [];
+
+            // Sort descending to replace from bottom to top (keeps indices correct)
+            const sortedItems = [...detectedVars].filter(i => i.selected).sort((a, b) => b.startIndex - a.startIndex);
+
+            sortedItems.forEach(item => {
+                const replacement = generateReplacement(item, mode, pathPrefix);
+                
+                if (mode === 'import') {
+                    importsToAdd.push(replacement);
+                    const before = patchedCode.substring(0, item.startIndex);
+                    const after = patchedCode.substring(item.endIndex);
+                    const afterTrimmed = after.replace(/^\s*;?\s*/, '\n');
+                    patchedCode = before + `/* ${item.name} movido para import */` + afterTrimmed;
+                } else {
+                    const before = patchedCode.substring(0, item.startIndex);
+                    const after = patchedCode.substring(item.endIndex);
+                    const afterTrimmed = after.replace(/^\s*;?\s*/, '\n\n');
+                    patchedCode = before + replacement + afterTrimmed;
+                }
+            });
+
+            if (importsToAdd.length > 0) {
+                patchedCode = importsToAdd.reverse().join('\n') + '\n\n' + patchedCode;
+            }
+
+            previewPatch.value = patchedCode;
+        }
+
+        function showJsonPreview(item) {
+            tabJson.click();
+            if (item.jsonString) {
+                previewJson.value = item.jsonString;
+            } else {
+                previewJson.value = "// Selecione uma estrutura válida.";
+            }
+        }
+
+        function updateButtons(hasData) {
+            const hasSelected = detectedVars.some(v => v.selected);
+            const enable = hasData && hasSelected;
+            
+            [btnDownloadJs, btnDownloadJson, btnGenerateAll].forEach(btn => {
+                if (enable) {
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed', 'disabled');
+                    btn.classList.add('hover:bg-slate-700');
+                    if(btn === btnGenerateAll) {
+                        btn.classList.remove('bg-slate-800', 'text-slate-500');
+                        btn.classList.add('bg-emerald-600', 'text-white', 'hover:bg-emerald-500');
+                    }
+                } else {
+                    btn.classList.add('opacity-50', 'cursor-not-allowed', 'disabled');
+                    btn.classList.remove('hover:bg-slate-700');
+                    if(btn === btnGenerateAll) {
+                        btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-500');
+                        btn.classList.add('bg-slate-800', 'text-slate-500');
+                    }
+                }
+            });
+        }
+
+        // --- Downloader ---
+        function downloadFile(filename, content) {
+            const element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(content));
+            element.setAttribute('download', filename);
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        }
+
+        // --- Event Listeners ---
+        btnAnalyze.addEventListener('click', () => {
+            const code = inputJs.value;
+            if(!code.trim()) return;
+
+            detectedVars = parseJavaScript(code);
+            renderList();
+            updatePreviews();
+            
+            if (detectedVars.length > 0) {
+                tabPatch.click();
+                secConfig.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+
+        configMode.addEventListener('change', () => {
+            updatePreviews();
+            renderList();
+        });
+        
+        configPath.addEventListener('input', () => {
+            updatePreviews();
+            renderList();
+        });
+
+        btnSelectAll.addEventListener('click', () => {
+            const allSelected = detectedVars.filter(v => v.isValidJson).every(v => v.selected);
+            detectedVars.forEach(v => {
+                if (v.isValidJson) v.selected = !allSelected;
+            });
+            renderList();
+            updatePreviews();
+        });
+
+        // Tabs
+        tabPatch.addEventListener('click', () => {
+            activeTab = 'patch';
+            tabPatch.className = "flex-1 py-3 text-sm font-semibold text-indigo-400 border-b-2 border-indigo-500 bg-slate-800/50 transition";
+            tabJson.className = "flex-1 py-3 text-sm font-semibold text-slate-500 hover:text-slate-300 hover:bg-slate-800/30 border-b-2 border-transparent transition";
+            previewPatch.classList.remove('hidden');
+            previewJson.classList.add('hidden');
+        });
+
+        tabJson.addEventListener('click', () => {
+            activeTab = 'json';
+            tabJson.className = "flex-1 py-3 text-sm font-semibold text-indigo-400 border-b-2 border-indigo-500 bg-slate-800/50 transition";
+            tabPatch.className = "flex-1 py-3 text-sm font-semibold text-slate-500 hover:text-slate-300 hover:bg-slate-800/30 border-b-2 border-transparent transition";
+            previewJson.classList.remove('hidden');
+            previewPatch.classList.add('hidden');
+            
+            if (previewJson.value === '' || previewJson.value.includes('válida')) {
+                const firstSel = detectedVars.find(v => v.selected);
+                if (firstSel) showJsonPreview(firstSel);
+            }
+        });
+
+        // Downloads
+        btnDownloadJs.addEventListener('click', () => {
+            if (btnDownloadJs.classList.contains('disabled')) return;
+            downloadFile('app_patched.js', previewPatch.value);
+        });
+
+        btnDownloadJson.addEventListener('click', async () => {
+            if (btnDownloadJson.classList.contains('disabled')) return;
+            const selected = detectedVars.filter(v => v.selected);
+            
+            for (const item of selected) {
+                downloadFile(`${item.name.toLowerCase()}.json`, item.jsonString);
+                await new Promise(r => setTimeout(r, 300)); 
+            }
+        });
+
+        btnGenerateAll.addEventListener('click', async () => {
+            if (btnGenerateAll.classList.contains('disabled')) return;
+            
+            downloadFile('app_patched.js', previewPatch.value);
+            await new Promise(r => setTimeout(r, 500));
+            
+            const selected = detectedVars.filter(v => v.selected);
+            for (const item of selected) {
+                downloadFile(`${item.name.toLowerCase()}.json`, item.jsonString);
+                await new Promise(r => setTimeout(r, 300));
+            }
+            
+            const notification = document.createElement('div');
+            notification.className = "fixed top-20 right-4 bg-emerald-600 text-white px-6 py-3 rounded-lg shadow-xl font-bold text-sm z-50 animate-bounce flex items-center gap-2";
+            notification.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Downloads iniciados!`;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 4000);
+        });
+
+    </script>
+</body>
+</html>
+
+

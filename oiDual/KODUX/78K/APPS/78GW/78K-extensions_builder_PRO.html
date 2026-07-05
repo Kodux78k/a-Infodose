@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DualInfodose Extension Builder PRO - a_78KODUX</title>
+  
+  <!-- Dependências Externas Fundamentais -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --bg: #090a0f;
+      --card: #121520;
+      --card-header: #191e2b;
+      --border: #232b3c;
+      --border-focus: #3b82f6;
+      --txt: #f3f4f6;
+      --txt-muted: #9ca3af;
+      --accent: #00e5ff;
+      --accent-hover: #00b8d4;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --safari-purple: #a855f7;
+      --workspace-bg: #05060a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--txt);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      padding: 16px;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    .container-fluid {
+      max-width: 1800px;
+      margin: 0 auto;
+    }
+
+    /* Top Bar */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+    }
+
+    header h1 span.gradient-text {
+      background: linear-gradient(135deg, var(--accent), var(--safari-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .badge-pro {
+      background: linear-gradient(135deg, var(--accent), var(--safari-purple));
+      padding: 2px 8px;
+      font-size: 0.65rem;
+      border-radius: 20px;
+      color: #fff;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Grid principal do Sistema */
+    .app-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    @media (min-width: 1200px) {
+      .app-grid {
+        grid-template-columns: 280px 1fr 340px;
+      }
+    }
+
+    /* Layout dos Painéis */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .card-header {
+      background: var(--card-header);
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #fff;
+    }
+
+    .card-body {
+      padding: 12px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+    }
+
+    /* Árvore de Projetos (Biblioteca Local via IndexedDB) */
+    .project-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .project-item {
+      padding: 8px 10px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s;
+    }
+
+    .project-item:hover {
+      background: rgba(255,255,255,0.05);
+      border-color: var(--accent);
+    }
+
+    .project-item.active {
+      background: rgba(0, 229, 255, 0.08);
+      border-color: var(--accent);
+    }
+
+    .project-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      max-width: 70%;
+    }
+
+    .project-title {
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .project-meta {
+      font-size: 0.75rem;
+      color: var(--txt-muted);
+    }
+
+    .project-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .btn-icon {
+      background: transparent;
+      border: none;
+      color: var(--txt-muted);
+      cursor: pointer;
+      padding: 4px;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .btn-icon:hover {
+      color: var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .btn-icon.edit-icon:hover {
+      color: var(--accent);
+      background: rgba(0, 229, 255, 0.1);
+    }
+
+    /* Formulários e Inputs */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-group label {
+      font-size: 0.8rem;
+      color: var(--txt-muted);
+      font-weight: 600;
+    }
+
+    input, select, textarea {
+      background: #090a0f;
+      color: var(--txt);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      width: 100%;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--border-focus);
+    }
+
+    /* Botões Gerais */
+    .btn {
+      background: #181f2d;
+      color: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+      font-size: 0.85rem;
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+      background: #20293c;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #005ce6, #00b8d4);
+      border: none;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.95;
+    }
+
+    .btn-success {
+      background: var(--success);
+      border: none;
+    }
+
+    .btn-success:hover {
+      opacity: 0.9;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      border: none;
+    }
+
+    .btn-danger:hover {
+      opacity: 0.9;
+    }
+
+    /* Workspace Editor & Árvore de Ficheiros */
+    .workspace-container {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      height: 480px;
+      background: var(--workspace-bg);
+    }
+
+    .workspace-tree {
+      width: 180px;
+      background: #0d1017;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .workspace-tree-header {
+      padding: 6px 10px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--txt-muted);
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,0.2);
+    }
+
+    .workspace-file-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .workspace-file-item {
+      padding: 8px 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--txt-muted);
+      border-bottom: 1px solid rgba(255,255,255,0.01);
+      transition: all 0.2s;
+    }
+
+    .workspace-file-item:hover {
+      background: rgba(255,255,255,0.02);
+      color: #fff;
+    }
+
+    .workspace-file-item.active {
+      background: rgba(59, 130, 246, 0.12);
+      color: var(--accent);
+      border-left: 3px solid var(--accent);
+      font-weight: 600;
+    }
+
+    .workspace-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .workspace-content-header {
+      padding: 6px 14px;
+      background: #0d1017;
+      font-family: monospace;
+      font-size: 0.8rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .code-editor-area {
+      flex: 1;
+      margin: 0;
+      padding: 12px;
+      width: 100%;
+      height: 100%;
+      background: var(--workspace-bg);
+      color: #e5e7eb;
+      font-family: 'Fira Code', 'Courier New', Courier, monospace;
+      font-size: 12px;
+      border: none;
+      resize: none;
+      outline: none;
+    }
+
+    /* Drag and Drop Zone */
+    #dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(0,0,0,0.15);
+      transition: all 0.2s;
+    }
+
+    #dropzone:hover {
+      border-color: var(--accent);
+      background: rgba(0, 229, 255, 0.03);
+    }
+
+    #dropzone i {
+      font-size: 1.5rem;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    /* Árvore de Componentes DOM (Extrator de Divs) */
+    .dom-components-tree {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      max-height: 160px;
+      overflow-y: auto;
+      background: #090a0f;
+      padding: 8px;
+    }
+
+    .dom-node {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 0;
+      font-family: monospace;
+      font-size: 0.75rem;
+    }
+
+    .dom-node label {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Iframe de Live Preview */
+    .preview-box {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      height: 250px;
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .preview-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #fff;
+    }
+
+    /* Abas de visualização */
+    .tab-bar {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: var(--card-header);
+    }
+
+    .tab-item {
+      padding: 8px 14px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--txt-muted);
+      border-right: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+
+    .tab-item:hover {
+      color: #fff;
+    }
+
+    .tab-item.active {
+      background: var(--card);
+      color: var(--accent);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    /* Listas de Auditoria */
+    .audit-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .audit-item {
+      padding: 8px 10px;
+      background: rgba(255,255,255,0.02);
+      border-left: 3px solid var(--border);
+      border-radius: 0 6px 6px 0;
+      font-size: 0.8rem;
+    }
+
+    .audit-item.success { border-left-color: var(--success); }
+    .audit-item.warning { border-left-color: var(--warning); }
+    .audit-item.danger { border-left-color: var(--danger); }
+
+    .audit-title {
+      font-weight: 600;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .modal-window {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      overflow: hidden;
+    }
+
+    .modal-hdr {
+      background: var(--card-header);
+      padding: 12px 16px;
+      font-weight: bold;
+      font-size: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-bdy {
+      padding: 16px;
+      font-size: 0.85rem;
+      color: var(--txt-muted);
+      line-height: 1.6;
+    }
+
+    .modal-ftr {
+      padding: 10px 16px;
+      background: var(--card-header);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container-fluid">
+
+  <!-- Cabeçalho -->
+  <header>
+    <h1>
+
+<i class="badge-pro">a€</i>
+
+      <span class="gradient-text">DualInfodose</span>
+    </h1>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <button class="btn btn-primary" id="btnNewProject"><i class="fa-solid fa-plus"></i></button>
+      <span style="font-size:0.75rem; color:var(--txt-muted);">Database: <b style="color:var(--success)">iDB 🟢</b></span>
+    </div>
+  </header>
+
+  <!-- Corpo da Aplicação -->
+  <div class="app-grid">
+
+    <!-- COLUNA 1: GESTÃO DE PROJETOS & ENTRADA -->
+    <div class="card">
+      <div class="card-header">
+        <span><i class="fa-solid fa-cubes"></i> Workspace Local</span>
+        <span style="font-size:0.7rem;" id="projectCount">0 Projetos</span>
+      </div>
+      <div class="card-body">
+        
+        <!-- Biblioteca de Projetos -->
+        <div style="max-height: 200px; overflow-y:auto; border: 1px solid var(--border); padding: 6px; border-radius:6px; background:rgba(0,0,0,0.15)">
+          <ul class="project-list" id="projectLibrary">
+            <!-- Projetos Populados por JS -->
+            <li style="text-align:center; color:var(--txt-muted); padding:12px; font-size:0.8rem;">
+              <i class="fa-solid fa-spinner fa-spin"></i> A carregar base de dados...
+            </li>
+          </ul>
+        </div>
+
+        <hr style="border:0; border-top:1px solid var(--border); margin:4px 0;">
+
+        <!-- Drag & Drop / Carregar -->
+        <div id="dropzone">
+          <i class="fa-solid fa-file-import"></i>
+          <div><b>Arraste o HTML Fonte</b></div>
+          <div style="font-size:0.7rem; color:var(--txt-muted);">ou clique aqui para abrir</div>
+        </div>
+        <input type="file" id="fileImporter" accept=".html,.htm" style="display:none;">
+
+        <!-- Configurações do Projeto Selecionado -->
+        <div class="form-group">
+          <label>Nome do Projeto</label>
+          <input type="text" id="inpProjectName" placeholder="Ex: Cibolbar Dock Pro">
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <div class="form-group">
+            <label>Versão</label>
+            <input type="text" id="inpProjectVersion" value="1.0.0">
+          </div>
+          <div class="form-group">
+            <label>Tipo de Saída</label>
+            <select id="selExtensionMode">
+              <option value="popup">Popup Tradicional</option>
+              <option value="widget">Widget Overlay (Injetado)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Descrição</label>
+          <input type="text" id="inpProjectDesc" placeholder="Breve resumo da extensão...">
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+          <button class="btn btn-primary" id="btnAnalyzeBuild"><i class="fa-solid fa-wand-magic-sparkles"></i> Analisar & Construir</button>
+          <button class="btn" id="btnSaveToLibrary"><i class="fa-solid fa-floppy-disk"></i> Guardar no IndexedDB</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- COLUNA 2: WORKSPACE DE DESENVOLVIMENTO (CENTRAL) -->
+    <div class="card" style="min-height: 600px;">
+      <div class="tab-bar">
+        <div class="tab-item active" id="tabEditor" onclick="switchMainTab('editor')"><i class="fa-solid fa-code"></i> Editor de Ficheiros</div>
+        <div class="tab-item" id="tabSource" onclick="switchMainTab('source')"><i class="fa-solid fa-file-lines"></i> HTML Fonte Original</div>
+      </div>
+
+      <!-- Área de Edição Virtual dos Ficheiros -->
+      <div class="card-body" id="containerEditorTab" style="padding: 10px; gap: 10px;">
+        <div class="workspace-container">
+          <!-- Árvore Virtual -->
+          <div class="workspace-tree">
+            <div class="workspace-tree-header">Ficheiros Virtuais</div>
+            <ul class="workspace-file-list" id="workspaceFileList">
+              <li class="workspace-file-item active" data-file="manifest.json">
+                <i class="fa-solid fa-file-code" style="color:#f1c40f"></i> manifest.json
+              </li>
+              <li class="workspace-file-item" data-file="popup.html">
+                <i class="fa-solid fa-code" style="color:#e67e22"></i> popup.html
+              </li>
+              <li class="workspace-file-item" data-file="popup.js">
+                <i class="fa-brands fa-square-js" style="color:#f39c12"></i> popup.js
+              </li>
+              <li class="workspace-file-item" data-file="popup.css">
+                <i class="fa-solid fa-css3-alt" style="color:#3498db"></i> popup.css
+              </li>
+              <li class="workspace-file-item" data-file="background.js">
+                <i class="fa-solid fa-gears" style="color:#9b59b6"></i> background.js
+              </li>
+              <li class="workspace-file-item" data-file="content.js">
+                <i class="fa-solid fa-terminal" style="color:#1abc9c"></i> content.js
+              </li>
+              <li class="workspace-file-item" data-file="Info.plist">
+                <i class="fa-brands fa-apple" style="color:#7f8c8d"></i> Info.plist
+              </li>
+              <li class="workspace-file-item" data-file="ExtensionHandler.swift">
+                <i class="fa-solid fa-file-signature" style="color:#e74c3c"></i> Handler.swift
+              </li>
+            </ul>
+          </div>
+
+          <!-- Conteúdo -->
+          <div class="workspace-content">
+            <div class="workspace-content-header">
+              <span id="lblActiveFile">manifest.json</span>
+              <span id="lblEditingStatus" style="color:var(--success); font-size:0.75rem;"><i class="fa-solid fa-pencil"></i> Prontos a Exportar</span>
+            </div>
+            <textarea class="code-editor-area" id="txtCodeEditor" spellcheck="false">// Selecione um ficheiro ou clique em Analisar para começar</textarea>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.75rem; color:var(--txt-muted);">
+            <i class="fa-solid fa-info-circle"></i> Pode modificar as saídas diretamente antes de empacotar.
+          </span>
+          <div style="display:flex; gap:8px;">
+            <button class="btn" id="btnPreviewApp"><i class="fa-solid fa-play"></i> Atualizar Live Preview</button>
+            <button class="btn btn-success" id="btnExportZip"><i class="fa-solid fa-file-zipper"></i> Descarregar ZIP</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Área do HTML de Origem -->
+      <div class="card-body" id="containerSourceTab" style="display:none;">
+        <div style="margin-bottom:6px; font-size:0.8rem; color:var(--txt-muted);">
+          Cole o código HTML nativo da sua aplicação ou PWA neste campo para ser processado.
+        </div>
+        <textarea style="flex:1; background:#05060a; color:#76ffd6; font-family:monospace; font-size:12px; resize:none; border:1px solid var(--border);" id="txtSourceHTML" placeholder="&lt;!DOCTYPE html&gt;&#10;&lt;html&gt;&#10;..."></textarea>
+      </div>
+    </div>
+
+    <!-- COLUNA 3: LIVE PREVIEW & EXTRATOR DOM -->
+    <div class="card">
+      <div class="card-header">
+        <span><i class="fa-solid fa-eye"></i> Live Sandbox & DOM Extractor</span>
+      </div>
+      <div class="card-body">
+        
+        <!-- Live Preview Box -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <label style="font-weight:600; font-size:0.8rem;">Popup / Widget Preview</label>
+          <span style="font-size:0.7rem; color:var(--txt-muted);" id="lblPreviewSize">Viewport Simulado</span>
+        </div>
+        <div class="preview-box">
+          <iframe id="iframeSandbox" class="preview-iframe" srcdoc="<body style='background:#111; color:#fff; font-family:sans-serif; display:flex; align-items:center; justify-content:center; height:100%; margin:0;'>Clique em 'Analisar' ou 'Atualizar Preview' para ver o ecrã simulado</body>"></iframe>
+        </div>
+
+        <hr style="border:0; border-top:1px solid var(--border); margin:4px 0;">
+
+        <!-- Seletor de Divs (DOM Extractor) -->
+        <div class="form-group">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label><i class="fa-solid fa-network-wired"></i> Extrator de Componentes</label>
+            <span style="font-size:0.7rem; color:var(--accent); cursor:pointer;" onclick="toggleAllNodes(true)">Todos</span>
+          </div>
+          <p style="margin:0 0 6px 0; font-size:0.75rem; color:var(--txt-muted);">Selecione as secções que quer extrair para a extensão final:</p>
+          <div class="dom-components-tree" id="domComponentTree">
+            <span style="color:var(--txt-muted); font-size:0.75rem;">Aguardando carregamento de HTML para mapeamento...</span>
+          </div>
+        </div>
+
+        <!-- Auditorias Rápidas -->
+        <label style="font-weight:600; font-size:0.8rem; margin-top:4px;"><i class="fa-solid fa-shield-halved"></i> Auditoria de Conformidade</label>
+        <div class="audit-list">
+          <div class="audit-item success" id="auditSecurity">
+            <div class="audit-title"><span>Segurança Mv3</span> <span style="font-size:0.7rem; color:var(--success);">Ok</span></div>
+            <div style="font-size:0.75rem; color:var(--txt-muted); margin-top:2px;" id="auditSecurityText">Não analisado</div>
+          </div>
+          <div class="audit-item" id="auditAssets">
+            <div class="audit-title"><span>Ficheiros & Dependências</span> <span style="font-size:0.7rem;">Pendente</span></div>
+            <div style="font-size:0.75rem; color:var(--txt-muted); margin-top:2px;" id="auditAssetsText">Sem dependências detetadas.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Modal Customizado -->
+<div class="modal-backdrop" id="systemModal">
+  <div class="modal-window">
+    <div class="modal-hdr">
+      <span id="sysModalTitle">Mensagem do Sistema</span>
+      <span style="cursor:pointer;" onclick="closeSysModal()"><i class="fa-solid fa-xmark"></i></span>
+    </div>
+    <div class="modal-bdy" id="sysModalBody">
+      Conteúdo dinâmico aqui.
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-primary" onclick="closeSysModal()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /******************************************************************
+   * SISTEMA DE ARMAZENAMENTO OFFLINE - INDEXEDDB (Workspace Manager)
+   ******************************************************************/
+  const DB_NAME = "DualInfodoseStudioDB";
+  const DB_VERSION = 1;
+  const STORE_PROJECTS = "projects";
+  let db;
+
+  // Inicializa o IndexedDB
+  function initDatabase() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      
+      request.onerror = (e) => reject("Erro ao abrir base de dados: " + e.target.errorCode);
+      
+      request.onupgradeneeded = (e) => {
+        const database = e.target.result;
+        if (!database.objectStoreNames.contains(STORE_PROJECTS)) {
+          database.createObjectStore(STORE_PROJECTS, { keyPath: "id" });
+        }
+      };
+
+      request.onsuccess = (e) => {
+        db = e.target.result;
+        resolve(db);
+      };
+    });
+  }
+
+  // Grava ou Atualiza um Projeto
+  function saveProject(project) {
+    return new Promise((resolve, reject) => {
+      if (!db) return reject("Database não inicializada");
+      const transaction = db.transaction([STORE_PROJECTS], "readwrite");
+      const store = transaction.objectStore(STORE_PROJECTS);
+      const request = store.put(project);
+
+      request.onsuccess = () => resolve();
+      request.onerror = (e) => reject("Erro ao salvar projeto: " + e.target.error);
+    });
+  }
+
+  // Carrega todos os Projetos
+  function getAllProjects() {
+    return new Promise((resolve, reject) => {
+      if (!db) return reject("Database não inicializada");
+      const transaction = db.transaction([STORE_PROJECTS], "readonly");
+      const store = transaction.objectStore(STORE_PROJECTS);
+      const request = store.getAll();
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = (e) => reject("Erro ao listar projetos: " + e.target.error);
+    });
+  }
+
+  // Elimina um Projeto
+  function deleteProjectFromDB(id) {
+    return new Promise((resolve, reject) => {
+      if (!db) return reject("Database não inicializada");
+      const transaction = db.transaction([STORE_PROJECTS], "readwrite");
+      const store = transaction.objectStore(STORE_PROJECTS);
+      const request = store.delete(id);
+
+      request.onsuccess = () => resolve();
+      request.onerror = (e) => reject("Erro ao eliminar projeto: " + e.target.error);
+    });
+  }
+
+  /******************************************************************
+   * ESTADO GLOBAL DA APLICAÇÃO (Single State Tree)
+   ******************************************************************/
+  let currentProjectId = null;
+  let activeVirtualFile = "manifest.json";
+  let virtualFilesState = {
+    "manifest.json": "",
+    "popup.html": "",
+    "popup.js": "",
+    "popup.css": "",
+    "background.js": "",
+    "content.js": "",
+    "Info.plist": "",
+    "ExtensionHandler.swift": ""
+  };
+  let domNodesExtracted = []; // Guarda a lista de IDs de elementos mapeados para exportação parcial
+
+  // Captura dos Elementos de Interface
+  const txtSourceHTML = document.getElementById("txtSourceHTML");
+  const inpProjectName = document.getElementById("inpProjectName");
+  const inpProjectVersion = document.getElementById("inpProjectVersion");
+  const selExtensionMode = document.getElementById("selExtensionMode");
+  const inpProjectDesc = document.getElementById("inpProjectDesc");
+  const projectLibrary = document.getElementById("projectLibrary");
+  const fileImporter = document.getElementById("fileImporter");
+  const dropzone = document.getElementById("dropzone");
+  const workspaceFileList = document.getElementById("workspaceFileList");
+  const txtCodeEditor = document.getElementById("txtCodeEditor");
+  const lblActiveFile = document.getElementById("lblActiveFile");
+  const domComponentTree = document.getElementById("domComponentTree");
+  const iframeSandbox = document.getElementById("iframeSandbox");
+  
+  // Tab Handling
+  let activeMainTab = "editor";
+  function switchMainTab(tab) {
+    activeMainTab = tab;
+    document.getElementById("tabEditor").classList.toggle("active", tab === "editor");
+    document.getElementById("tabSource").classList.toggle("active", tab === "source");
+    
+    document.getElementById("containerEditorTab").style.display = tab === "editor" ? "flex" : "none";
+    document.getElementById("containerSourceTab").style.display = tab === "source" ? "block" : "none";
+  }
+
+  // Sistema de Modal
+  function showSysModal(title, message) {
+    document.getElementById("sysModalTitle").textContent = title;
+    document.getElementById("sysModalBody").innerHTML = message;
+    document.getElementById("systemModal").style.display = "flex";
+  }
+
+  function closeSysModal() {
+    document.getElementById("systemModal").style.display = "none";
+  }
+
+  /******************************************************************
+   * LOGIC: PARSING, AST SCANNING & BINDING
+   ******************************************************************/
+
+  // Mapeia Componentes DOM relevantes para permitir exportação parcial
+  function buildDOMTree(htmlContent) {
+    domComponentTree.innerHTML = "";
+    domNodesExtracted = [];
+
+    if (!htmlContent.trim()) {
+      domComponentTree.innerHTML = `<span style="color:var(--txt-muted);">Nenhum HTML inserido</span>`;
+      return;
+    }
+
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlContent, "text/html");
+      
+      // Selecionamos tags estruturais chave e elementos com ID que possam ser widgets
+      const selectors = "section, article, main, [data-widget], [id]";
+      const nodes = doc.querySelectorAll(selectors);
+
+      if (nodes.length === 0) {
+        domComponentTree.innerHTML = `<span style="color:var(--txt-muted);">Nenhum componente estrutural detectado. O HTML completo será utilizado.</span>`;
+        return;
+      }
+
+      nodes.forEach((node, index) => {
+        const tagName = node.tagName.toLowerCase();
+        const idAttr = node.id ? `#${node.id}` : "";
+        const classAttr = node.className ? `.${node.className.trim().split(/\s+/).join(".")}` : "";
+        
+        // Determina um nome descritivo amigável para o nó
+        const labelText = `&lt;${tagName}${idAttr}${classAttr}&gt;`;
+        const nodeUniqueId = node.id || `node-extracted-${index}`;
+        
+        // Garante que o nó no documento tenha o ID se não tiver para podermos mapear
+        if (!node.id) {
+          node.setAttribute("id", nodeUniqueId);
+        }
+
+        const div = document.createElement("div");
+        div.className = "dom-node";
+        div.innerHTML = `
+          <label>
+            <input type="checkbox" class="dom-node-checkbox" data-selector="#${nodeUniqueId}" checked>
+            <span>${labelText}</span>
+          </label>
+        `;
+        domComponentTree.appendChild(div);
+      });
+
+      // Salva o HTML modificado com os IDs atribuídos para manter integridade
+      txtSourceHTML.value = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+
+    } catch (err) {
+      console.error("Erro ao mapear árvore DOM: ", err);
+    }
+  }
+
+  // Inversão rápida do seletor
+  function toggleAllNodes(check) {
+    document.querySelectorAll(".dom-node-checkbox").forEach(cb => {
+      cb.checked = check;
+    });
+  }
+
+  // Executa Análise Avançada e compila os ficheiros para a área de transferência virtual
+  function runCompilerPipeline() {
+    const rawHTML = txtSourceHTML.value.trim();
+    if (!rawHTML) {
+      showSysModal("Aviso", "Não existe código fonte HTML para compilar. Insira código ou arraste um ficheiro!");
+      return;
+    }
+
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(rawHTML, "text/html");
+
+      // 1. EXTRAÇÃO PARCIAL (Módulo de Secções e Widgets)
+      const selectedCheckboxes = document.querySelectorAll(".dom-node-checkbox:checked");
+      const unselectedCheckboxes = document.querySelectorAll(".dom-node-checkbox:not(:checked)");
+      
+      // Se houver elementos desmarcados, removemo-los do DOM do popup
+      if (selectedCheckboxes.length > 0 && unselectedCheckboxes.length > 0) {
+        unselectedCheckboxes.forEach(cb => {
+          const sel = cb.getAttribute("data-selector");
+          const el = doc.querySelector(sel);
+          if (el) el.remove();
+        });
+      }
+
+      // Detetar Metadados Adicionais
+      const detectedTitle = doc.querySelector("title")?.textContent?.trim() || "Nova Extensão";
+      if (!inpProjectName.value.trim()) inpProjectName.value = detectedTitle;
+
+      // 2. HIGIENIZAÇÃO DE SCRIPTS & SEGURANÇA MV3
+      // Manifest V3 do Chrome proíbe inline scripts por questões de segurança (CSP).
+      // Extraímos e concatenamos todo o JS inline para um ficheiro separado popup.js.
+      let compiledJsCode = `"use strict";\n\nconsole.log("[Studio Core] Extensão carregada com sucesso.");\n`;
+      const inlineScripts = doc.querySelectorAll("script:not([src])");
+      
+      inlineScripts.forEach((script, index) => {
+        compiledJsCode += `\n// --- Bloco Inline Extraído #${index + 1} ---\n`;
+        compiledJsCode += script.textContent + "\n";
+        script.remove(); // Remove tag inline insegura do documento compilado
+      });
+
+      // 3. HIGIENIZAÇÃO DE FOLHAS DE ESTILO (CSS Inline)
+      let compiledCssCode = `/* Estilos consolidados do DualInfodose Studio */\n`;
+      const inlineStyles = doc.querySelectorAll("style");
+      
+      inlineStyles.forEach((style, index) => {
+        compiledCssCode += `\n/* --- Bloco Style Extraído #${index + 1} --- */\n`;
+        compiledCssCode += style.textContent + "\n";
+        style.remove();
+      });
+
+      // 4. CORREÇÃO DE REFERÊNCIAS E IMPORTAÇÃO DE DEPENDÊNCIAS (Scanner de Assets)
+      // Mapeia chamadas a recursos remotos (como imagens, fontes, estilos CSS remotos)
+      const externalDependencies = [];
+      const imageAssets = doc.querySelectorAll("img[src], link[rel='stylesheet'][href]");
+      
+      imageAssets.forEach(asset => {
+        const url = asset.getAttribute("src") || asset.getAttribute("href");
+        if (url && (url.startsWith("http") || url.startsWith("cdn"))) {
+          externalDependencies.push(url);
+        }
+      });
+
+      // Atualiza Cabeçalhos para referenciar as folhas unificadas seguras em ficheiro local
+      if (!doc.querySelector("head")) {
+        const headEl = doc.createElement("head");
+        doc.documentElement.insertBefore(headEl, doc.documentElement.firstChild);
+      }
+      const head = doc.querySelector("head");
+
+      // Injeta referências locais limpas
+      const localCss = doc.createElement("link");
+      localCss.setAttribute("rel", "stylesheet");
+      localCss.setAttribute("href", "popup.css");
+      head.appendChild(localCss);
+
+      const localJs = doc.createElement("script");
+      localJs.setAttribute("src", "popup.js");
+      localJs.setAttribute("defer", "");
+      head.appendChild(localJs);
+
+      const finalHtmlContent = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+
+      // 5. MAPEAR PERMISSÕES AUTOMATICAMENTE ATRAVÉS DO ESBOÇO DO CÓDIGO (AST Simulado)
+      const scannedCode = compiledJsCode + rawHTML;
+      const permissionsNeeded = ["storage", "activeTab"];
+      
+      if (scannedCode.includes("chrome.tabs") || scannedCode.includes("browser.tabs")) permissionsNeeded.push("tabs");
+      if (scannedCode.includes("chrome.bookmarks")) permissionsNeeded.push("bookmarks");
+      if (scannedCode.includes("chrome.notifications")) permissionsNeeded.push("notifications");
+      if (scannedCode.includes("chrome.cookies")) permissionsNeeded.push("cookies");
+      if (scannedCode.includes("chrome.downloads")) permissionsNeeded.push("downloads");
+      if (scannedCode.includes("chrome.scripting") || selExtensionMode.value === "widget") {
+        permissionsNeeded.push("scripting");
+      }
+
+      // Deteta URLs de API externa para Host Permissions (Evitar falhas CORS)
+      const hostPermissions = [];
+      const apiCalls = scannedCode.match(/https?:\/\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g);
+      if (apiCalls) {
+        const uniqueHosts = new Set();
+        apiCalls.forEach(url => {
+          try {
+            const host = new URL(url).origin;
+            if (!host.includes("cdnjs") && !host.includes("jsdelivr")) {
+              uniqueHosts.add(host + "/*");
+            }
+          } catch(e){}
+        });
+        uniqueHosts.forEach(h => hostPermissions.push(h));
+      }
+
+      // 6. ADAPTAÇÃO: MODO POPUP vs MODO WIDGET
+      // Se selecionado Widget, alteramos o comportamento por defeito para injeção programática via Service Worker
+      let backgroundJsContent = "";
+      let manifestActionSection = {};
+
+      if (selExtensionMode.value === "widget") {
+        // Modo Widget Flutuante Overlay
+        manifestActionSection = {
+          "default_title": inpProjectName.value || detectedTitle
+        };
+        backgroundJsContent = `// Modo Widget Flutuante - DualInfodose Studio
+chrome.action.onClicked.addListener((tab) => {
+  if (!tab.id) return;
+  chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    func: injectWidgetOverlay
+  });
+});
+
+function injectWidgetOverlay() {
+  if (document.getElementById("dualinfodose-floating-widget")) {
+    document.getElementById("dualinfodose-floating-widget").remove();
+    return;
+  }
+
+  const container = document.createElement("div");
+  container.id = "dualinfodose-floating-widget";
+  container.style.position = "fixed";
+  container.style.bottom = "20px";
+  container.style.right = "20px";
+  container.style.width = "400px";
+  container.style.height = "500px";
+  container.style.zIndex = "99999";
+  container.style.boxShadow = "0 8px 32px rgba(0,0,0,0.5)";
+  container.style.borderRadius = "12px";
+  container.style.overflow = "hidden";
+  container.style.border = "1px solid #333";
+
+  const iframe = document.createElement("iframe");
+  iframe.src = chrome.runtime.getURL("popup.html");
+  iframe.style.width = "100%";
+  iframe.style.height = "100%";
+  iframe.style.border = "none";
+
+  container.appendChild(iframe);
+  document.body.appendChild(container);
+}
+`;
+      } else {
+        // Modo Popup Tradicional
+        manifestActionSection = {
+          "default_popup": "popup.html",
+          "default_title": inpProjectName.value || detectedTitle
+        };
+        backgroundJsContent = `// Modo Popup Tradicional - DualInfodose Studio
+chrome.runtime.onInstalled.addListener(() => {
+  console.log("Extensão Manifest V3 carregada com Sucesso!");
+});
+`;
+      }
+
+      // 7. COMPILAÇÃO DO MANIFESTO (MANIFEST V3)
+      const manifestJson = {
+        "manifest_version": 3,
+        "name": inpProjectName.value || detectedTitle,
+        "version": inpProjectVersion.value || "1.0.0",
+        "description": inpProjectDesc.value || "Extensão criada no Studio PRO",
+        "permissions": permissionsNeeded,
+        "host_permissions": hostPermissions.length > 0 ? hostPermissions : ["<all_urls>"],
+        "action": manifestActionSection,
+        "background": {
+          "service_worker": "background.js"
+        },
+        "content_scripts": [
+          {
+            "matches": ["<all_urls>"],
+            "js": ["content.js"]
+          }
+        ],
+        "icons": {
+          "16": "assets/icon16.png",
+          "48": "assets/icon48.png",
+          "128": "assets/icon128.png"
+        }
+      };
+
+      // 8. CRIAÇÃO DE MODELO NATIVO SAFARI (Plists e Xcode Swift Wrapper)
+      const bundleId = `com.dualinfodose.${(inpProjectName.value || "ext").toLowerCase().replace(/[^a-z0-9]/g, "")}`;
+      const infoPlistContent = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleDisplayName</key>
+    <string>${inpProjectName.value}</string>
+    <key>CFBundleIdentifier</key>
+    <string>${bundleId}</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>XPC!</string>
+    <key>CFBundleShortVersionString</key>
+    <string>${inpProjectVersion.value}</string>
+    <key>NSExtension</key>
+    <dict>
+        <key>NSExtensionPointIdentifier</key>
+        <string>com.apple.Safari.web-extension</string>
+        <key>NSExtensionPrincipalClass</key>
+        <string>$(PRODUCT_MODULE_NAME).SafariWebExtensionHandler</string>
+    </dict>
+</dict>
+</plist>`;
+
+      const swiftHandlerContent = `import SafariServices
+import os.log
+
+class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
+    func beginRequest(with context: NSExtensionContext) {
+        let response = NSExtensionItem()
+        response.userInfo = [ SFExtensionMessageKey: [ "status": "Conectado", "message": "Ativo no Safari!" ] ]
+        context.completeRequest(returningItems: [response], completionHandler: nil)
+    }
+}`;
+
+      // Atualiza Árvore Virtual de Ficheiros
+      virtualFilesState["manifest.json"] = JSON.stringify(manifestJson, null, 2);
+      virtualFilesState["popup.html"] = finalHtmlContent;
+      virtualFilesState["popup.js"] = compiledJsCode;
+      virtualFilesState["popup.css"] = compiledCssCode;
+      virtualFilesState["background.js"] = backgroundJsContent;
+      virtualFilesState["content.js"] = `// Content script injetado de forma segura nas abas\nconsole.log("[DualInfodose] Content Script carregado.");\n`;
+      virtualFilesState["Info.plist"] = infoPlistContent;
+      virtualFilesState["ExtensionHandler.swift"] = swiftHandlerContent;
+
+      // Sincroniza o Editor de Código com o ficheiro activo
+      syncCodeEditorWithActiveFile();
+
+      // Atualiza Painel de Auditoria e Informações Globais
+      updateAuditsAndMetrics(inlineScripts.length, externalDependencies);
+
+      // Atualiza o Simulador de Preview
+      runSandboxSimulation();
+
+      showSysModal("Compilação Concluída", "Ficheiros compilados e otimizados! Os scripts em linha inline e folhas de estilo foram isolados e o sandbox de simulação foi gerado.");
+
+    } catch (err) {
+      showSysModal("Erro de Processamento", "Houve uma falha na compilação estrutural: " + err.message);
+      console.error(err);
+    }
+  }
+
+  // Sincroniza o Campo de Texto do Editor
+  function syncCodeEditorWithActiveFile() {
+    lblActiveFile.textContent = activeVirtualFile;
+    txtCodeEditor.value = virtualFilesState[activeVirtualFile] || `// Nenhum conteúdo no ficheiro virtual [${activeVirtualFile}]`;
+  }
+
+  // Ouve alterações no editor para manter estado em sincronia
+  txtCodeEditor.addEventListener("input", () => {
+    virtualFilesState[activeVirtualFile] = txtCodeEditor.value;
+  });
+
+  // Atualização das Métricas de Auditoria
+  function updateAuditsAndMetrics(inlineScriptsCount, dependencies) {
+    const auditSecurity = document.getElementById("auditSecurity");
+    const auditSecurityText = document.getElementById("auditSecurityText");
+    const auditAssets = document.getElementById("auditAssets");
+    const auditAssetsText = document.getElementById("auditAssetsText");
+
+    // Segurança
+    if (inlineScriptsCount > 0) {
+      auditSecurity.className = "audit-item success";
+      auditSecurityText.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--success)"></i> Foram filtrados e migrados <b>${inlineScriptsCount}</b> blocos script nocivos.`;
+    } else {
+      auditSecurity.className = "audit-item success";
+      auditSecurityText.innerHTML = `<i class="fa-solid fa-shield-halved" style="color:var(--success)"></i> Código limpo sem perigos CSP.`;
+    }
+
+    // Ficheiros e Dependências Externas
+    if (dependencies.length > 0) {
+      auditAssets.className = "audit-item warning";
+      auditAssetsText.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:var(--warning)"></i> Mapeados ${dependencies.length} URLs de API/recursos. Lembre-se que conexões precisam de host_permissions no manifesto.`;
+    } else {
+      auditAssets.className = "audit-item success";
+      auditAssetsText.innerHTML = `<i class="fa-solid fa-square-check" style="color:var(--success)"></i> Totalmente auto-contido. Executará offline de forma nativa.`;
+    }
+  }
+
+  // Gera o Live Preview usando Blobs virtuais locais (Módulo Host Local)
+  function runSandboxSimulation() {
+    try {
+      const htmlCode = virtualFilesState["popup.html"];
+      const jsCode = virtualFilesState["popup.js"];
+      const cssCode = virtualFilesState["popup.css"];
+
+      if (!htmlCode) return;
+
+      // Parsing temporário para injetar o Javascript real local em formato Inline apenas para o Preview Simulator
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlCode, "text/html");
+
+      // Substitui as referências a popup.css e popup.js por estilos e scripts injetados
+      const cleanScript = doc.querySelector("script[src='popup.js']");
+      if (cleanScript) cleanScript.remove();
+
+      const cleanCss = doc.querySelector("link[href='popup.css']");
+      if (cleanCss) cleanCss.remove();
+
+      // Injeta inline no Sandbox simulado
+      const styleEl = doc.createElement("style");
+      styleEl.textContent = cssCode;
+      doc.head.appendChild(styleEl);
+
+      const scriptEl = doc.createElement("script");
+      scriptEl.textContent = jsCode;
+      doc.body.appendChild(scriptEl);
+
+      // Atualiza o srcdoc do iframe
+      const compiledSandboxHTML = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+      iframeSandbox.srcdoc = compiledSandboxHTML;
+
+    } catch (e) {
+      console.error("Falha ao atualizar Sandbox Simulation: ", e);
+    }
+  }
+
+  /******************************************************************
+   * SISTEMA DE GESTÃO DA BIBLIOTECA (IndexedDB Event Hooks)
+   ******************************************************************/
+
+  // Renderiza a Biblioteca Lateral
+  async function refreshProjectLibrary() {
+    try {
+      const list = await getAllProjects();
+      projectLibrary.innerHTML = "";
+      document.getElementById("projectCount").textContent = `${list.length} Projetos`;
+
+      if (list.length === 0) {
+        projectLibrary.innerHTML = `
+          <li style="text-align:center; color:var(--txt-muted); padding:12px; font-size:0.75rem;">
+            Nenhum projeto salvo. Arraste ou insira um HTML fonte para começar!
+          </li>
+        `;
+        return;
+      }
+
+      list.forEach(proj => {
+        const li = document.createElement("li");
+        li.className = `project-item ${currentProjectId === proj.id ? 'active' : ''}`;
+        
+        li.innerHTML = `
+          <div class="project-info" onclick="loadProjectIntoWorkspace('${proj.id}')">
+            <span class="project-title">${proj.name}</span>
+            <span class="project-meta">v${proj.version} | ${new Date(proj.updatedAt).toLocaleDateString()}</span>
+          </div>
+          <div class="project-actions">
+            <button class="btn-icon edit-icon" onclick="duplicateProject('${proj.id}')" title="Duplicar Projeto"><i class="fa-solid fa-copy"></i></button>
+            <button class="btn-icon" onclick="deleteProject('${proj.id}')" title="Apagar"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        `;
+        projectLibrary.appendChild(li);
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // Carrega um Projeto do IndexedDB para a Área de Trabalho Ativa
+  async function loadProjectIntoWorkspace(id) {
+    try {
+      const list = await getAllProjects();
+      const proj = list.find(p => p.id === id);
+      if (!proj) return;
+
+      currentProjectId = proj.id;
+      inpProjectName.value = proj.name;
+      inpProjectVersion.value = proj.version;
+      inpProjectDesc.value = proj.description || "";
+      selExtensionMode.value = proj.mode || "popup";
+      
+      // Carrega o HTML fonte e os ficheiros virtuais compilados
+      txtSourceHTML.value = proj.rawHTML || "";
+      virtualFilesState = proj.virtualFiles || { ...virtualFilesState };
+
+      // Sincroniza abas e visualizadores
+      buildDOMTree(proj.rawHTML || "");
+      syncCodeEditorWithActiveFile();
+      runSandboxSimulation();
+      refreshProjectLibrary();
+      
+      switchMainTab("editor");
+      showSysModal("Workspace Carregado", `Projeto <strong>${proj.name}</strong> reaberto localmente com sucesso.`);
+    } catch (err) {
+      showSysModal("Erro", "Erro ao carregar projeto: " + err);
+    }
+  }
+
+  // Guarda o Estado de Trabalho Ativo no IndexedDB
+  async function saveActiveWorkspace() {
+    if (!inpProjectName.value.trim()) {
+      showSysModal("Campo Obrigatório", "Atribua um nome ao projeto para poder guardá-lo na Biblioteca Local.");
+      return;
+    }
+
+    const projectId = currentProjectId || "proj_" + Date.now();
+    currentProjectId = projectId;
+
+    const projectData = {
+      id: projectId,
+      name: inpProjectName.value,
+      version: inpProjectVersion.value,
+      mode: selExtensionMode.value,
+      description: inpProjectDesc.value,
+      rawHTML: txtSourceHTML.value,
+      virtualFiles: virtualFilesState,
+      updatedAt: Date.now()
+    };
+
+    try {
+      await saveProject(projectData);
+      refreshProjectLibrary();
+      showSysModal("Guardado com Sucesso", `O estado do projeto <strong>${projectData.name}</strong> foi sincronizado na sua base de dados offline!`);
+    } catch (err) {
+      showSysModal("Falha na Database", "Não foi possível persistir: " + err);
+    }
+  }
+
+  // Duplicar Projeto (Git-like Clone)
+  async function duplicateProject(id) {
+    try {
+      const list = await getAllProjects();
+      const origin = list.find(p => p.id === id);
+      if (!origin) return;
+
+      const clone = JSON.parse(JSON.stringify(origin));
+      clone.id = "proj_" + Date.now();
+      clone.name = origin.name + " (Cópia)";
+      clone.updatedAt = Date.now();
+
+      await saveProject(clone);
+      refreshProjectLibrary();
+      showSysModal("Cópia Criada", `Projeto clonado com sucesso: <strong>${clone.name}</strong>`);
+    } catch (err) {
+      showSysModal("Erro", "Falha ao duplicar: " + err);
+    }
+  }
+
+  // Eliminar Projeto da Workspace
+  async function deleteProject(id) {
+    if (confirm("Tem certeza de que deseja eliminar permanentemente este projeto da base de dados?")) {
+      try {
+        await deleteProjectFromDB(id);
+        if (currentProjectId === id) {
+          currentProjectId = null;
+          resetActiveWorkspaceFields();
+        }
+        refreshProjectLibrary();
+      } catch (err) {
+        showSysModal("Erro", "Falha ao excluir: " + err);
+      }
+    }
+  }
+
+  function resetActiveWorkspaceFields() {
+    inpProjectName.value = "";
+    inpProjectVersion.value = "1.0.0";
+    inpProjectDesc.value = "";
+    txtSourceHTML.value = "";
+    virtualFilesState = {
+      "manifest.json": "",
+      "popup.html": "",
+      "popup.js": "",
+      "popup.css": "",
+      "background.js": "",
+      "content.js": "",
+      "Info.plist": "",
+      "ExtensionHandler.swift": ""
+    };
+    buildDOMTree("");
+    syncCodeEditorWithActiveFile();
+    iframeSandbox.srcdoc = "<body style='background:#111; color:#fff; font-family:sans-serif; display:flex; align-items:center; justify-content:center; height:100%; margin:0;'>Crie ou carregue um projeto</body>";
+  }
+
+  /******************************************************************
+   * INTERACTION BINDINGS & DRAG AND DROP
+   ******************************************************************/
+  
+  // Botão Novo Projeto
+  document.getElementById("btnNewProject").onclick = () => {
+    currentProjectId = null;
+    resetActiveWorkspaceFields();
+    switchMainTab("source");
+    showSysModal("Nova Workspace", "Pronto para começar! Cole o código HTML ou arraste um ficheiro para a área de importação.");
+  };
+
+  // Carregar ficheiros de upload
+  dropzone.onclick = () => fileImporter.click();
+  fileImporter.onchange = (e) => {
+    if (e.target.files[0]) {
+      handleUploadedFile(e.target.files[0]);
+    }
+  };
+
+  async function handleUploadedFile(file) {
+    try {
+      const code = await file.text();
+      txtSourceHTML.value = code;
+      
+      // Auto preenche o nome da workspace
+      inpProjectName.value = file.name.replace(/\.[^/.]+$/, "").replaceAll("_", " ").replaceAll("-", " ");
+      
+      // Constrói árvore estrutural para análise parcial
+      buildDOMTree(code);
+      
+      switchMainTab("source");
+      showSysModal("Upload Concluído", `Ficheiro <strong>${file.name}</strong> carregado com sucesso. Verifique os nós disponíveis no painel à direita ou clique em <strong>Analisar & Construir</strong>.`);
+    } catch (err) {
+      showSysModal("Erro de Leitura", "Não foi possível carregar o ficheiro: " + err.message);
+    }
+  }
+
+  // Configura Drag Over no Dropzone
+  dropzone.ondragover = (e) => {
+    e.preventDefault();
+    dropzone.style.borderColor = "var(--accent)";
+  };
+  dropzone.ondragleave = () => {
+    dropzone.style.borderColor = "var(--border)";
+  };
+  dropzone.ondrop = (e) => {
+    e.preventDefault();
+    dropzone.style.borderColor = "var(--border)";
+    const file = e.dataTransfer.files[0];
+    if (file) handleUploadedFile(file);
+  };
+
+  // Botões de Ação Principal
+  document.getElementById("btnAnalyzeBuild").onclick = () => runCompilerPipeline();
+  document.getElementById("btnSaveToLibrary").onclick = () => saveActiveWorkspace();
+  document.getElementById("btnPreviewApp").onclick = () => runSandboxSimulation();
+
+  // Escuta alteração direta no HTML de origem para remodelar seletor
+  txtSourceHTML.addEventListener("change", () => {
+    buildDOMTree(txtSourceHTML.value);
+  });
+
+  // Troca de ficheiro ativo na árvore do editor de código
+  document.querySelectorAll(".workspace-file-item").forEach(item => {
+    item.onclick = function() {
+      document.querySelectorAll(".workspace-file-item").forEach(i => i.classList.remove("active"));
+      this.classList.add("active");
+      activeVirtualFile = this.getAttribute("data-file");
+      syncCodeEditorWithActiveFile();
+    };
+  });
+
+  // EXPORTADOR COMPLETO ZIP MULTIPLATAFORMA
+  document.getElementById("btnExportZip").onclick = async () => {
+    if (!virtualFilesState["manifest.json"]) {
+      showSysModal("Ação Necessária", "Nenhum ficheiro foi construído ainda. Clique em 'Analisar & Construir' antes de descarregar!");
+      return;
+    }
+
+    try {
+      const zip = new JSZip();
+
+      // Estrutura Base
+      zip.file("manifest.json", virtualFilesState["manifest.json"]);
+      zip.file("popup.html", virtualFilesState["popup.html"]);
+      zip.file("popup.js", virtualFilesState["popup.js"]);
+      zip.file("popup.css", virtualFilesState["popup.css"]);
+      zip.file("background.js", virtualFilesState["background.js"]);
+      zip.file("content.js", virtualFilesState["content.js"]);
+
+      // Diretório de Recursos Gráficos
+      const assetsFolder = zip.folder("assets");
+      const sampleIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="128" height="128">
+        <circle cx="50" cy="50" r="45" fill="#121620" stroke="#00e5ff" stroke-width="5"/>
+        <path d="M30,35 L70,35 L50,70 Z" fill="#00e5ff" opacity="0.4"/>
+        <text x="50" y="55" font-family="monospace" font-size="20" font-weight="bold" fill="#fff" text-anchor="middle">DUAL</text>
+      </svg>`;
+      
+      assetsFolder.file("icon.svg", sampleIconSvg);
+      
+      // Base de Imagem de Fallback Transparente
+      const blankPixelBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+      assetsFolder.file("icon16.png", blankPixelBase64, {base64: true});
+      assetsFolder.file("icon48.png", blankPixelBase64, {base64: true});
+      assetsFolder.file("icon128.png", blankPixelBase64, {base64: true});
+
+      // Pasta Xcode Nativa para Conversor do Safari
+      const appleFolder = zip.folder("SafariNative_Wrapper");
+      appleFolder.file("Info.plist", virtualFilesState["Info.plist"]);
+      appleFolder.file("SafariWebExtensionHandler.swift", virtualFilesState["ExtensionHandler.swift"]);
+
+      // Adiciona Instrução Técnica Premium (README.txt)
+      zip.file("README.txt", `========================================================
+DUALINFODOSE EXTENSION STUDIO PRO - v2.5.0-PRO (a_78KODUX)
+========================================================
+
+Exportado em: ${new Date().toLocaleString("pt-PT")}
+Nome da Aplicação: ${inpProjectName.value}
+Preset Selecionado: ${selExtensionMode.value === "widget" ? "Widget Overlay Injetado" : "Popup Tradicional"}
+
+PACOTE COMPILADO EM TOTAL CONFORMIDADE COM MANIFEST V3.
+Isento de códigos inline proibidos pelo Content Security Policy (CSP).
+
+---
+COMO CARREGAR NO CHROME / EDGE / OPERA:
+1. Descompacte este ficheiro ZIP para uma pasta no seu computador.
+2. Aceda a: chrome://extensions ou edge://extensions
+3. Active o "Modo do programador" no canto superior direito.
+4. Clique no botão "Carregar sem compactação" (Load unpacked).
+5. Selecione a pasta onde descompactou o ficheiro (a pasta que contém o manifest.json).
+
+---
+COMO COMPILAR PARA SAFARI (XCODE):
+A pasta "SafariNative_Wrapper" contém o esqueleto nativo plist e handlers em Swift.
+Para gerar a aplicação macOS / iOS nativa:
+1. Abra o terminal no macOS.
+2. Corra o comando de conversão:
+   xcrun safari-web-extension-converter /caminho/para/pasta_descompactada
+
+---
+Obrigado por utilizar ferramentas de engenharia DualInfodose.`);
+
+      // Dispara Descarregamento
+      const blob = await zip.generateAsync({type: "blob"});
+      const formatName = inpProjectName.value.replaceAll(" ", "_").toLowerCase();
+      saveAs(blob, `${formatName}_v${inpProjectVersion.value}_a78KODUX.zip`);
+
+      showSysModal("Descarregamento Iniciado", `O pacote <strong>${inpProjectName.value}</strong> foi estruturado e compilado com sucesso! Siga as instruções do <strong>README.txt</strong> incluído.`);
+    } catch(err) {
+      showSysModal("Erro de Exportação", "Houve um problema ao empacotar o ZIP: " + err.message);
+    }
+  };
+
+  // Inicialização no Window Onload
+  window.onload = async function() {
+    try {
+      await initDatabase();
+      await refreshProjectLibrary();
+    } catch (e) {
+      console.error("Base de Dados IndexedDB indisponível: ", e);
+    }
+  };
+</script>
+
+</body>
+</html>
+

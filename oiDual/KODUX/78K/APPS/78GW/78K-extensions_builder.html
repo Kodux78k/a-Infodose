@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DualInfodose Extension Builder PRO</title>
+  
+  <!-- JSZip para empacotar o ZIP e FileSaver para descarregar -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  
+  <!-- FontAwesome para ícones premium -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --bg: #090b0e;
+      --card: #12161f;
+      --card-header: #1a202c;
+      --border: #262f3f;
+      --border-focus: #3b82f6;
+      --txt: #f3f4f6;
+      --txt-muted: #9ca3af;
+      --accent: #00e5ff;
+      --accent-hover: #00b8d4;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --safari-purple: #a855f7;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--txt);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      padding: 16px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 15px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.6rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+    }
+
+    header h1 span {
+      background: linear-gradient(135deg, var(--accent), var(--safari-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .badge-pro {
+      background: linear-gradient(135deg, var(--accent), var(--safari-purple));
+      padding: 3px 8px;
+      font-size: 0.7rem;
+      border-radius: 20px;
+      color: #fff;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Grid Layout */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    @media (min-width: 1024px) {
+      .grid {
+        grid-template-columns: 4fr 5fr 3fr;
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-header {
+      background: var(--card-header);
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #fff;
+    }
+
+    .card-body {
+      padding: 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Inputs e Form Elements */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 0.85rem;
+      color: var(--txt-muted);
+      font-weight: 500;
+    }
+
+    input, select, textarea {
+      background: #090b0e;
+      color: var(--txt);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+
+    .row-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* Buttons */
+    .btn {
+      background: #1d2433;
+      color: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+      background: #242d40;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0072ff, #00d4ff);
+      border: none;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    .btn-safari {
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      border: none;
+    }
+
+    .btn-safari:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    /* Dropzone */
+    .dropzone-container {
+      position: relative;
+    }
+
+    #dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: rgba(0,0,0,0.15);
+    }
+
+    #dropzone:hover, #dropzone.dragover {
+      border-color: var(--accent);
+      background: rgba(0, 229, 255, 0.05);
+    }
+
+    #dropzone i {
+      font-size: 2rem;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    /* Editor Layout */
+    .editor-wrapper {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      height: 100%;
+      min-height: 350px;
+    }
+
+    #htmlSource {
+      width: 100%;
+      flex: 1;
+      font-family: 'Fira Code', 'Courier New', Courier, monospace;
+      font-size: 13px;
+      resize: none;
+      background: #07080b;
+      border: 1px solid var(--border);
+      color: #76ffd6;
+    }
+
+    /* File Virtual Workspace (PRO feature) */
+    .workspace-layout {
+      display: flex;
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      height: 480px;
+    }
+
+    .file-tree {
+      width: 180px;
+      background: #0d1117;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .file-tree-header {
+      padding: 8px 12px;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--txt-muted);
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,0.2);
+    }
+
+    .file-list {
+      flex: 1;
+      overflow-y: auto;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .file-item {
+      padding: 10px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      border-bottom: 1px solid rgba(255,255,255,0.02);
+      transition: all 0.2s;
+      color: var(--txt-muted);
+    }
+
+    .file-item:hover {
+      background: rgba(255,255,255,0.03);
+      color: #fff;
+    }
+
+    .file-item.active {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--accent);
+      font-weight: 500;
+      border-left: 3px solid var(--accent);
+    }
+
+    .file-item i {
+      width: 14px;
+    }
+
+    .file-content-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #05070a;
+    }
+
+    .file-content-header {
+      padding: 8px 16px;
+      background: #0d1117;
+      font-family: monospace;
+      font-size: 0.85rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .file-content-header span {
+      color: var(--accent);
+    }
+
+    #fileCodePreview {
+      margin: 0;
+      padding: 16px;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      font-family: 'Fira Code', 'Courier New', Courier, monospace;
+      font-size: 13px;
+      color: #e5e7eb;
+      background: #05070a;
+      white-space: pre;
+    }
+
+    /* Analysis & Compatibility Panels */
+    .analysis-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .analysis-item {
+      background: #1c2331;
+      border-left: 4px solid var(--accent);
+      padding: 10px 12px;
+      border-radius: 0 8px 8px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .analysis-item.success { border-left-color: var(--success); }
+    .analysis-item.warning { border-left-color: var(--warning); }
+    .analysis-item.danger { border-left-color: var(--danger); }
+
+    .analysis-info h4 {
+      margin: 0 0 2px 0;
+      font-size: 0.9rem;
+    }
+
+    .analysis-info p {
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--txt-muted);
+    }
+
+    .analysis-badge {
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(0,0,0,0.3);
+      font-weight: 600;
+    }
+
+    /* Progress and Compatibility meters */
+    .compatibility-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+    }
+
+    .comp-icon {
+      width: 24px;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+
+    .comp-name {
+      width: 80px;
+    }
+
+    .progress-bar-container {
+      flex: 1;
+      height: 8px;
+      background: #0a0e14;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      border-radius: 4px;
+    }
+
+    .chrome-color { background: #4285f4; }
+    .firefox-color { background: #ff7139; }
+    .edge-color { background: #0078d7; }
+    .safari-color { background: #00cdff; }
+
+    .comp-val {
+      width: 40px;
+      text-align: right;
+      font-weight: bold;
+      font-size: 0.85rem;
+    }
+
+    /* Modal de Notificações */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      width: 90%;
+      max-width: 500px;
+      border-radius: 14px;
+      overflow: hidden;
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.active .modal {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      padding: 16px;
+      background: var(--card-header);
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-body {
+      padding: 20px;
+      color: var(--txt-muted);
+    }
+
+    .modal-footer {
+      padding: 12px 16px;
+      background: var(--card-header);
+      display: flex;
+      justify-content: flex-end;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <h1>
+
+ <span class="badge-pro">PRO</span>
+
+      <i class="fa-solid fa-puzzle-piece" style="color: var(--accent);"></i>
+      <span>DualInfodose</span>
+    </h1>
+    <div style="font-size: 0.85rem; color: var(--txt-muted);">
+     78K Extension: <strong style="color:#fff;">v2.5.0-PRO</strong>
+    </div>
+  </header>
+
+  <!-- Grid Principal -->
+  <div class="grid">
+
+    <!-- COLUNA 1: CONFIGURAÇÕES E FONTE -->
+    <div class="card">
+      <div class="card-header">
+        <span><i class="fa-solid fa-gears"></i> Definições do Projeto</span>
+        <i class="fa-solid fa-circle-info" style="color:var(--txt-muted); cursor:pointer;" onclick="showHelp()"></i>
+      </div>
+      <div class="card-body">
+
+        <div class="dropzone-container">
+          <div id="dropzone">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <p style="margin: 0; font-weight: 500;">Arraste o PWA / HTML aqui</p>
+            <p style="margin: 4px 0 0 0; font-size: 0.75rem; color: var(--txt-muted);">ou clique para selecionar o ficheiro</p>
+          </div>
+          <input id="fileInput" type="file" accept=".html,.htm" style="display:none;">
+        </div>
+
+        <div class="row-inputs" style="margin-top: 5px;">
+          <button class="btn" id="pasteBtn">
+            <i class="fa-solid fa-paste"></i> Colar Clipboard
+          </button>
+          <button class="btn btn-primary" id="analyzeBtn">
+            <i class="fa-solid fa-magnifying-glass"></i> Analisar & Build
+          </button>
+        </div>
+
+        <hr style="border:0; border-top: 1px solid var(--border); margin: 10px 0;">
+
+        <div class="form-group">
+          <label for="appName">Nome da Extensão</label>
+          <input id="appName" type="text" placeholder="Ex: Meu PWA Fantástico">
+        </div>
+
+        <div class="row-inputs">
+          <div class="form-group">
+            <label for="appVersion">Versão</label>
+            <input id="appVersion" type="text" value="1.0.0">
+          </div>
+          <div class="form-group">
+            <label for="targetPlatform">Preset Principal</label>
+            <select id="targetPlatform">
+              <option value="chrome">Chrome / Edge (Mv3)</option>
+              <option value="safari">Safari (Extension Kit)</option>
+              <option value="firefox">Firefox (Gecko)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="appDesc">Descrição Curta</label>
+          <input id="appDesc" type="text" placeholder="Extraída automaticamente...">
+        </div>
+
+        <div class="editor-wrapper" style="margin-top: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label style="font-size: 0.85rem; color: var(--txt-muted); font-weight: 500;">Código HTML / PWA Origem</label>
+            <span style="font-size: 0.75rem; color: var(--accent);" id="charCount">0 carateres</span>
+          </div>
+          <textarea id="htmlSource" placeholder="Cole aqui o código fonte do seu HTML ou arraste um ficheiro acima..."></textarea>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- COLUNA 2: WORKSPACE DE FICHEIROS VIRTUAIS -->
+    <div class="card">
+      <div class="card-header">
+        <span><i class="fa-solid fa-folder-tree"></i> Workspace Virtual (Ficheiros a Exportar)</span>
+        <button class="btn btn-primary" id="exportBtn" style="padding: 5px 12px; font-size: 0.8rem;">
+          <i class="fa-solid fa-file-zipper"></i> Exportar ZIP
+        </button>
+      </div>
+      <div class="card-body" style="padding: 10px; gap: 0;">
+        <div style="margin-bottom: 12px; font-size:0.8rem; color: var(--txt-muted); padding: 0 6px;">
+          Selecione um ficheiro da árvore à esquerda para pré-visualizar ou editar as saídas compiladas:
+        </div>
+        
+        <div class="workspace-layout">
+          <!-- File Tree -->
+          <div class="file-tree">
+            <div class="file-tree-header">Ficheiros</div>
+            <ul class="file-list" id="virtualFileTree">
+              <li class="file-item active" data-file="manifest.json">
+                <i class="fa-solid fa-file-code" style="color: #f1c40f;"></i> manifest.json
+              </li>
+              <li class="file-item" data-file="popup.html">
+                <i class="fa-solid fa-file-lines" style="color: #e67e22;"></i> popup.html
+              </li>
+              <li class="file-item" data-file="popup.js">
+                <i class="fa-solid fa-file-shield" style="color: #3498db;"></i> popup.js
+              </li>
+              <li class="file-item" data-file="popup.css">
+                <i class="fa-solid fa-css3-alt" style="color: #2ecc71;"></i> popup.css
+              </li>
+              <li class="file-item" data-file="background.js">
+                <i class="fa-solid fa-gears" style="color: #9b59b6;"></i> background.js
+              </li>
+              <li class="file-item" data-file="content.js">
+                <i class="fa-solid fa-file-signature" style="color: #e74c3c;"></i> content.js
+              </li>
+              <!-- Safari Segment -->
+              <li class="file-item" data-file="Info.plist" style="border-top: 1px dashed var(--border);">
+                <i class="fa-brands fa-apple" style="color: #fff;"></i> Info.plist
+              </li>
+              <li class="file-item" data-file="entitlements.plist">
+                <i class="fa-solid fa-key" style="color: var(--safari-purple);"></i> Entitlements
+              </li>
+              <li class="file-item" data-file="ExtensionHandler.swift">
+                <i class="fa-solid fa-code" style="color: #ff3b30;"></i> Handler.swift
+              </li>
+            </ul>
+          </div>
+
+          <!-- File Content Viewer -->
+          <div class="file-content-panel">
+            <div class="file-content-header">
+              <span id="currentFileName">manifest.json</span>
+              <span style="font-size: 0.75rem; color: var(--txt-muted);">Modo de Leitura</span>
+            </div>
+            <pre id="fileCodePreview">// Aguardando análise do HTML para popular os ficheiros...</pre>
+          </div>
+        </div>
+
+        <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 0.75rem; color: var(--txt-muted);">
+            <i class="fa-solid fa-circle-check" style="color: var(--success);"></i> Purificação Inline-Script Ativa para Mv3
+          </span>
+          <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" id="resetWorkspaceBtn">
+            <i class="fa-solid fa-rotate-left"></i> Limpar Workspace
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- COLUNA 3: AUDITORIA, COMPATIBILIDADE E PWA -->
+    <div class="card">
+      <div class="card-header">
+        <span><i class="fa-solid fa-chart-line"></i> Auditoria & Compatibilidade</span>
+      </div>
+      <div class="card-body">
+        
+        <!-- Compatibilidade Bars -->
+        <h3 style="margin: 0 0 10px 0; font-size: 0.95rem; color: #fff;">Conformidade Multiplataforma</h3>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          
+          <div class="compatibility-item">
+            <div class="comp-icon"><i class="fa-brands fa-chrome" style="color:#4285f4;"></i></div>
+            <div class="comp-name">Chrome</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar chrome-color" id="chromeBar" style="width: 0%"></div>
+            </div>
+            <div class="comp-val" id="chromeVal">0%</div>
+          </div>
+
+          <div class="compatibility-item">
+            <div class="comp-icon"><i class="fa-brands fa-firefox-browser" style="color:#ff7139;"></i></div>
+            <div class="comp-name">Firefox</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar firefox-color" id="firefoxBar" style="width: 0%"></div>
+            </div>
+            <div class="comp-val" id="firefoxVal">0%</div>
+          </div>
+
+          <div class="compatibility-item">
+            <div class="comp-icon"><i class="fa-brands fa-edge" style="color:#0078d7;"></i></div>
+            <div class="comp-name">Edge</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar edge-color" id="edgeBar" style="width: 0%"></div>
+            </div>
+            <div class="comp-val" id="edgeVal">0%</div>
+          </div>
+
+          <div class="compatibility-item">
+            <div class="comp-icon"><i class="fa-brands fa-safari" style="color:#00cdff;"></i></div>
+            <div class="comp-name">Safari</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar safari-color" id="safariBar" style="width: 0%"></div>
+            </div>
+            <div class="comp-val" id="safariVal">0%</div>
+          </div>
+
+        </div>
+
+        <hr style="border:0; border-top: 1px solid var(--border); margin: 15px 0;">
+
+        <!-- Análise da Auditoria -->
+        <h3 style="margin: 0 0 10px 0; font-size: 0.95rem; color: #fff;">Auditorias de Segurança & PWA</h3>
+        
+        <div class="analysis-list">
+          <!-- Item 1: Inline Scripts -->
+          <div class="analysis-item warning" id="auditScripts">
+            <div class="analysis-info">
+              <h4>Inline Scripts</h4>
+              <p id="auditScriptsText">Nenhum HTML analisado até ao momento.</p>
+            </div>
+            <span class="analysis-badge" id="auditScriptsBadge">PENDENTE</span>
+          </div>
+
+          <!-- Item 2: Permissões API -->
+          <div class="analysis-item success" id="auditPerms">
+            <div class="analysis-info">
+              <h4>Permissões da API</h4>
+              <p id="auditPermsText">Nenhuma permissão especial detetada ainda.</p>
+            </div>
+            <span class="analysis-badge" id="auditPermsBadge">-</span>
+          </div>
+
+          <!-- Item 3: Chamadas CORS -->
+          <div class="analysis-item success" id="auditCors">
+            <div class="analysis-info">
+              <h4>External APIs (CORS)</h4>
+              <p id="auditCorsText">Nenhuma chamada a endpoints de rede detetada.</p>
+            </div>
+            <span class="analysis-badge" id="auditCorsBadge">OK</span>
+          </div>
+
+          <!-- Item 4: Estrutura PWA -->
+          <div class="analysis-item" id="auditPWA">
+            <div class="analysis-info">
+              <h4>Análise de Manifesto PWA</h4>
+              <p id="auditPWAText">Sem manifestos externos injetados.</p>
+            </div>
+            <span class="analysis-badge" id="auditPWABadge">-</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Modal Customizado -->
+<div class="modal-overlay" id="customModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span id="modalTitle">Mensagem do Sistema</span>
+      <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="closeModal()"></i>
+    </div>
+    <div class="modal-body" id="modalBody">
+      Conteúdo da notificação.
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Objeto Global que guarda o estado dos ficheiros virtuais compilados
+  let virtualWorkspace = {
+    "manifest.json": "",
+    "popup.html": "",
+    "popup.js": "",
+    "popup.css": "",
+    "background.js": "",
+    "content.js": "",
+    "Info.plist": "",
+    "entitlements.plist": "",
+    "ExtensionHandler.swift": ""
+  };
+
+  let activeFile = "manifest.json";
+
+  // Captura de Elementos UI
+  const htmlSource = document.getElementById("htmlSource");
+  const fileInput = document.getElementById("fileInput");
+  const dropzone = document.getElementById("dropzone");
+  const pasteBtn = document.getElementById("pasteBtn");
+  const analyzeBtn = document.getElementById("analyzeBtn");
+  const exportBtn = document.getElementById("exportBtn");
+  const charCount = document.getElementById("charCount");
+  const appName = document.getElementById("appName");
+  const appVersion = document.getElementById("appVersion");
+  const appDesc = document.getElementById("appDesc");
+  const targetPlatform = document.getElementById("targetPlatform");
+  const virtualFileTree = document.getElementById("virtualFileTree");
+  const currentFileName = document.getElementById("currentFileName");
+  const fileCodePreview = document.getElementById("fileCodePreview");
+  const resetWorkspaceBtn = document.getElementById("resetWorkspaceBtn");
+
+  // Auditoria UI
+  const auditScripts = document.getElementById("auditScripts");
+  const auditScriptsText = document.getElementById("auditScriptsText");
+  const auditScriptsBadge = document.getElementById("auditScriptsBadge");
+
+  const auditPerms = document.getElementById("auditPerms");
+  const auditPermsText = document.getElementById("auditPermsText");
+  const auditPermsBadge = document.getElementById("auditPermsBadge");
+
+  const auditCors = document.getElementById("auditCors");
+  const auditCorsText = document.getElementById("auditCorsText");
+  const auditCorsBadge = document.getElementById("auditCorsBadge");
+
+  const auditPWA = document.getElementById("auditPWA");
+  const auditPWAText = document.getElementById("auditPWAText");
+  const auditPWABadge = document.getElementById("auditPWABadge");
+
+  // Barras de Compatibilidade
+  const chromeBar = document.getElementById("chromeBar");
+  const chromeVal = document.getElementById("chromeVal");
+  const firefoxBar = document.getElementById("firefoxBar");
+  const firefoxVal = document.getElementById("firefoxVal");
+  const edgeBar = document.getElementById("edgeBar");
+  const edgeVal = document.getElementById("edgeVal");
+  const safariBar = document.getElementById("safariBar");
+  const safariVal = document.getElementById("safariVal");
+
+  // Funções Utilitárias de Notificação
+  function showModal(title, msg) {
+    document.getElementById("modalTitle").innerText = title;
+    document.getElementById("modalBody").innerHTML = msg;
+    document.getElementById("customModal").classList.add("active");
+  }
+
+  function closeModal() {
+    document.getElementById("customModal").classList.remove("active");
+  }
+
+  function showHelp() {
+    showModal("Ajuda - DualInfodose Builder", `
+      <p>Este utilitário compila qualquer ficheiro HTML PWA de página única numa extensão robusta de Manifest V3 para múltiplos browsers.</p>
+      <p><strong>Recursos Pro:</strong></p>
+      <ul>
+        <li>Gera automaticamente popup.js e popup.css para contornar restrições CSP impostas pelo Chrome.</li>
+        <li>Detecta automaticamente permissões requisitadas via chrome.* no código.</li>
+        <li>Fornece suporte à estrutura Apple Xcode Safari Extension.</li>
+      </ul>
+    `);
+  }
+
+  // Monitorizador do tamanho do HTML de entrada
+  htmlSource.addEventListener("input", () => {
+    charCount.textContent = `${htmlSource.value.length} carateres`;
+  });
+
+  // Gatilhos de Upload de Ficheiro
+  dropzone.onclick = () => fileInput.click();
+
+  fileInput.onchange = e => {
+    if (e.target.files[0]) {
+      loadFile(e.target.files[0]);
+    }
+  };
+
+  async function loadFile(file) {
+    try {
+      const text = await file.text();
+      htmlSource.value = text;
+      charCount.textContent = `${text.length} carateres`;
+      
+      // Auto-preenche o nome baseado no nome do ficheiro, se vazio
+      if(!appName.value) {
+        appName.value = file.name.replace(/\.[^/.]+$/, "").replaceAll("_", " ").replaceAll("-", " ");
+      }
+      
+      showModal("Sucesso", `Ficheiro <strong>${file.name}</strong> carregado com sucesso! Clique em <strong>Analisar & Build</strong> para processar.`);
+      triggerAnalysis();
+    } catch (err) {
+      showModal("Erro", `Erro ao ler ficheiro: ${err.message}`);
+    }
+  }
+
+  // Drag and Drop
+  dropzone.ondragover = e => {
+    e.preventDefault();
+    dropzone.classList.add("dragover");
+  };
+
+  dropzone.ondragleave = () => {
+    dropzone.classList.remove("dragover");
+  };
+
+  dropzone.ondrop = e => {
+    e.preventDefault();
+    dropzone.classList.remove("dragover");
+    const file = e.dataTransfer.files[0];
+    if (file) loadFile(file);
+  };
+
+  // Clipboard Paste
+  pasteBtn.onclick = async () => {
+    try {
+      // Fallback robusto usando execCommand para iFrames restritos
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        const text = await navigator.clipboard.readText();
+        htmlSource.value = text;
+        charCount.textContent = `${text.length} carateres`;
+        triggerAnalysis();
+      } else {
+        showModal("Aviso de Clipboard", "A API de clipboard do browser bloqueou o acesso direto no iFrame. Por favor, cole o HTML diretamente na caixa de texto.");
+      }
+    } catch (err) {
+      showModal("Permissão Negada", "Não foi possível colar da Área de Transferência. Cole manualmente com Ctrl+V / Cmd+V.");
+    }
+  };
+
+  // Gerenciador de cliques na Árvore de Ficheiros do Workspace Virtual
+  document.querySelectorAll(".file-item").forEach(item => {
+    item.onclick = function() {
+      document.querySelectorAll(".file-item").forEach(i => i.classList.remove("active"));
+      this.classList.add("active");
+      activeFile = this.getAttribute("data-file");
+      updateFilePreviewPanel();
+    };
+  });
+
+  function updateFilePreviewPanel() {
+    currentFileName.textContent = activeFile;
+    const content = virtualWorkspace[activeFile];
+    if (content && content.trim() !== "") {
+      fileCodePreview.textContent = content;
+    } else {
+      fileCodePreview.textContent = `// Ficheiro virtual [${activeFile}] está vazio ou não foi gerado.\n// Carregue um HTML fonte e clique em 'Analisar & Build'.`;
+    }
+  }
+
+  // Limpeza de Workspace
+  resetWorkspaceBtn.onclick = () => {
+    htmlSource.value = "";
+    charCount.textContent = "0 carateres";
+    appName.value = "";
+    appDesc.value = "";
+    
+    for (let key in virtualWorkspace) {
+      virtualWorkspace[key] = "";
+    }
+    
+    activeFile = "manifest.json";
+    document.querySelectorAll(".file-item").forEach(i => i.classList.remove("active"));
+    document.querySelector('[data-file="manifest.json"]').classList.add("active");
+    
+    updateFilePreviewPanel();
+    resetAudits();
+    
+    showModal("Workspace Limpo", "Toda a memória e ficheiros virtuais temporários foram redefinidos.");
+  };
+
+  function resetAudits() {
+    auditScripts.className = "analysis-item warning";
+    auditScriptsText.textContent = "Nenhum HTML analisado até ao momento.";
+    auditScriptsBadge.textContent = "PENDENTE";
+
+    auditPerms.className = "analysis-item success";
+    auditPermsText.textContent = "Nenhuma permissão especial detetada ainda.";
+    auditPermsBadge.textContent = "-";
+
+    auditCors.className = "analysis-item success";
+    auditCorsText.textContent = "Nenhuma chamada a endpoints de rede detetada.";
+    auditCorsBadge.textContent = "OK";
+
+    auditPWA.className = "analysis-item";
+    auditPWAText.textContent = "Sem manifestos externos injetados.";
+    auditPWABadge.textContent = "-";
+
+    updateMeters(0, 0, 0, 0);
+  }
+
+  function updateMeters(ch, ff, ed, sa) {
+    chromeBar.style.width = `${ch}%`;
+    chromeVal.textContent = `${ch}%`;
+    
+    firefoxBar.style.width = `${ff}%`;
+    firefoxVal.textContent = `${ff}%`;
+    
+    edgeBar.style.width = `${ed}%`;
+    edgeVal.textContent = `${ed}%`;
+    
+    safariBar.style.width = `${sa}%`;
+    safariVal.textContent = `${sa}%`;
+  }
+
+  // ATIVADOR DO BUILD & ANALISE
+  analyzeBtn.onclick = () => {
+    triggerAnalysis();
+  };
+
+  function triggerAnalysis() {
+    const rawHTML = htmlSource.value.trim();
+    if (!rawHTML) {
+      showModal("Aviso", "Por favor, introduza ou cole o código fonte de um HTML válido primeiro.");
+      return;
+    }
+
+    try {
+      // 1. Parsing DOM do HTML recebido
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(rawHTML, "text/html");
+
+      // Obter Informações Básicas
+      const docTitle = doc.querySelector("title")?.textContent?.trim() || "PWA Extension";
+      if (!appName.value) appName.value = docTitle;
+      
+      // Auto-preenchimento de descrição através das Meta Tags
+      const metaDesc = doc.querySelector('meta[name="description"]')?.getAttribute("content") || "Empacotado nativamente com o DualInfodose Builder";
+      appDesc.value = metaDesc;
+
+      // 2. Extração dos scripts inline (Para conformidade de segurança Mv3)
+      let popupScriptsCombined = "";
+      const inlineScripts = doc.querySelectorAll("script:not([src])");
+      inlineScripts.forEach((script, idx) => {
+        popupScriptsCombined += `\n// --- Bloco Inline Script Extraído #${idx+1} ---\n`;
+        popupScriptsCombined += script.textContent + "\n";
+        script.remove(); // Remove o inline script original do DOM
+      });
+
+      // Extração de Scripts com src remota ou local
+      const externalScriptsDetected = [];
+      const srcScripts = doc.querySelectorAll("script[src]");
+      srcScripts.forEach(script => {
+        const srcVal = script.getAttribute("src");
+        externalScriptsDetected.push(srcVal);
+      });
+
+      // 3. Extração dos estilos de CSS Inline
+      let popupCssCombined = "";
+      const inlineStyles = doc.querySelectorAll("style");
+      inlineStyles.forEach((style, idx) => {
+        popupCssCombined += `\n/* --- Bloco Style Extraído #${idx+1} --- */\n`;
+        popupCssCombined += style.textContent + "\n";
+        style.remove(); // Remove do DOM para separar num ficheiro CSS dedicado
+      });
+
+      // Extração de ícones do HTML original
+      let extractedIcon = "";
+      const linksIcons = doc.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon']");
+      if (linksIcons.length > 0) {
+        extractedIcon = linksIcons[0].getAttribute("href") || "";
+      }
+
+      // Adiciona referências limpas e seguras de Script e Estilo na Tag Head
+      if (!doc.querySelector("head")) {
+        const headEl = doc.createElement("head");
+        doc.documentElement.insertBefore(headEl, doc.documentElement.firstChild);
+      }
+      
+      const head = doc.querySelector("head");
+
+      // Injeta link do CSS e Script limpos
+      const linkTag = doc.createElement("link");
+      linkTag.setAttribute("rel", "stylesheet");
+      linkTag.setAttribute("href", "popup.css");
+      head.appendChild(linkTag);
+
+      const scriptTag = doc.createElement("script");
+      scriptTag.setAttribute("src", "popup.js");
+      scriptTag.setAttribute("defer", "");
+      head.appendChild(scriptTag);
+
+      // Re-serializar HTML limpo e sem inline ilegal
+      const cleanedHTML = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+
+      // 4. SCANNER INTELIGENTE DE PERMISSÕES (AST Regex)
+      const permissionsSet = new Set(["storage", "activeTab"]);
+      const codeToScan = popupScriptsCombined + rawHTML;
+
+      if (codeToScan.includes("chrome.tabs") || codeToScan.includes("browser.tabs")) permissionsSet.add("tabs");
+      if (codeToScan.includes("chrome.bookmarks")) permissionsSet.add("bookmarks");
+      if (codeToScan.includes("chrome.history")) permissionsSet.add("history");
+      if (codeToScan.includes("chrome.cookies")) permissionsSet.add("cookies");
+      if (codeToScan.includes("chrome.downloads")) permissionsSet.add("downloads");
+      if (codeToScan.includes("chrome.notifications")) permissionsSet.add("notifications");
+      if (codeToScan.includes("navigator.clipboard") || codeToScan.includes("execCommand")) permissionsSet.add("clipboardRead");
+
+      const finalPermissions = Array.from(permissionsSet);
+
+      // 5. SCANNER DE HOST PERMISSIONS (CORS API)
+      const hostPermissionsSet = new Set();
+      const urlRegex = /https?:\/\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+      let matchedUrl;
+      while ((matchedUrl = urlRegex.exec(codeToScan)) !== null) {
+        try {
+          const parsedUrl = new URL(matchedUrl[0]);
+          // Ignora scripts injetados de cdnjs oujsdelivr para focar em endpoints API
+          if (!parsedUrl.hostname.includes("cdnjs") && !parsedUrl.hostname.includes("jsdelivr") && !parsedUrl.hostname.includes("gstatic")) {
+            hostPermissionsSet.add(`${parsedUrl.protocol}//${parsedUrl.hostname}/*`);
+          }
+        } catch(e) {}
+      }
+      const finalHostPermissions = Array.from(hostPermissionsSet);
+
+      // 6. BUILD MANIFEST.JSON (MANIFEST V3)
+      const manifest = {
+        manifest_version: 3,
+        name: appName.value || docTitle,
+        version: appVersion.value || "1.0.0",
+        description: appDesc.value || metaDesc,
+        permissions: finalPermissions,
+        host_permissions: finalHostPermissions.length > 0 ? finalHostPermissions : ["<all_urls>"],
+        action: {
+          default_popup: "popup.html",
+          default_title: appName.value || docTitle
+        },
+        background: {
+          service_worker: "background.js",
+          type: "module"
+        },
+        content_scripts: [
+          {
+            matches: ["<all_urls>"],
+            js: ["content.js"]
+          }
+        ],
+        icons: {
+          "16": "assets/icon.png",
+          "48": "assets/icon.png",
+          "128": "assets/icon.png"
+        }
+      };
+
+      // 7. GERAÇÃO DE FICHEIROS DO SAFARI (PLIST & SWIFT WRAPPERS)
+      const extensionBundleId = `com.dualinfodose.${(appName.value || "extension").toLowerCase().replace(/[^a-z0-9]/g, "")}`;
+      
+      const infoPlist = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleDisplayName</key>
+    <string>${appName.value || docTitle}</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>${extensionBundleId}</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>XPC!</string>
+    <key>CFBundleShortVersionString</key>
+    <string>${appVersion.value}</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>NSExtension</key>
+    <dict>
+        <key>NSExtensionPointIdentifier</key>
+        <string>com.apple.Safari.web-extension</string>
+        <key>NSExtensionPrincipalClass</key>
+        <string>$(PRODUCT_MODULE_NAME).SafariWebExtensionHandler</string>
+    </dict>
+</dict>
+</plist>`;
+
+      const entitlements = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.files.user-selected.read-only</key>
+    <true/>
+    <key>com.apple.security.network.client</key>
+    <true/>
+</dict>
+</plist>`;
+
+      const extensionHandler = `import SafariServices
+import os.log
+
+class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
+
+    func beginRequest(with context: NSExtensionContext) {
+        let item = context.inputItems[0] as! NSExtensionItem
+        let message = item.userInfo?[SFExtensionMessageKey]
+        os_log(.default, "Mensagem recebida do Safari Extension Popup: %{public}@", String(describing: message))
+        
+        let response = NSExtensionItem()
+        response.userInfo = [ SFExtensionMessageKey: [ "status": "Sucesso", "source": "XcodeSwiftHandler" ] ]
+        
+        context.completeRequest(returningItems: [response], completionHandler: nil)
+    }
+
+}`;
+
+      // 8. UPDATE WORKSPACE VIRTUAL
+      virtualWorkspace["manifest.json"] = JSON.stringify(manifest, null, 2);
+      virtualWorkspace["popup.html"] = cleanedHTML;
+      virtualWorkspace["popup.js"] = popupScriptsCombined.trim() || `// Nenhum inline script foi encontrado na análise.\nconsole.log("Popup carregado perfeitamente!");`;
+      virtualWorkspace["popup.css"] = popupCssCombined.trim() || `/* Nenhum CSS inline foi encontrado no HTML fonte. */\nbody { font-family: sans-serif; }`;
+      virtualWorkspace["background.js"] = `// Service Worker da Extensão gerada pelo DualInfodose Builder\n\nchrome.runtime.onInstalled.addListener(() => {\n  console.log("Extensão instalada e pronta a funcionar.");\n});\n\n// Escuta mensagens vindas do popup.js\nchrome.runtime.onMessage.addListener((request, sender, sendResponse) => {\n  if (request.action === "ping") {\n    sendResponse({ status: "ok", message: "Background ativo!" });\n  }\n  return true;\n});`;
+      virtualWorkspace["content.js"] = `// Content script injetado nas páginas web selecionadas\nconsole.log("[DualInfodose] Content Script carregado.");`;
+      virtualWorkspace["Info.plist"] = infoPlist;
+      virtualWorkspace["entitlements.plist"] = entitlements;
+      virtualWorkspace["ExtensionHandler.swift"] = extensionHandler;
+
+      // Renderiza as telas do Editor Virtual
+      updateFilePreviewPanel();
+
+      // 9. ATUALIZAÇÕES DA AUDITORIA (LADO DIREITO DA TELA)
+      // Auditoria de Scripts
+      if (inlineScripts.length > 0) {
+        auditScripts.className = "analysis-item success";
+        auditScriptsText.textContent = `Detetados e limpos ${inlineScripts.length} blocos <script> inline.`;
+        auditScriptsBadge.textContent = "CONFORME MV3";
+      } else {
+        auditScripts.className = "analysis-item success";
+        auditScriptsText.textContent = "Nenhum script inline detetado (Conformidade nativa).";
+        auditScriptsBadge.textContent = "PERFEITO";
+      }
+
+      // Auditoria de Permissões
+      if (finalPermissions.length > 2) {
+        auditPerms.className = "analysis-item warning";
+        auditPermsText.textContent = `Detetadas chamadas para: ${finalPermissions.filter(p => p !== 'storage' && p !== 'activeTab').join(", ")}`;
+        auditPermsBadge.textContent = "MÉDIO";
+      } else {
+        auditPerms.className = "analysis-item success";
+        auditPermsText.textContent = "Permissões básicas e seguras declaradas no manifesto.";
+        auditPermsBadge.textContent = "SEGURO";
+      }
+
+      // Auditoria de CORS
+      if (finalHostPermissions.length > 0) {
+        auditCors.className = "analysis-item warning";
+        auditCorsText.textContent = `Detetados ${finalHostPermissions.length} domínios externos. Declarados em host_permissions.`;
+        auditCorsBadge.textContent = "ATENÇÃO";
+      } else {
+        auditCors.className = "analysis-item success";
+        auditCorsText.textContent = "Nenhuma API de domínio cruzado identificada.";
+        auditCorsBadge.textContent = "SEGURO";
+      }
+
+      // Auditoria PWA
+      const pwaManifestLink = doc.querySelector("link[rel='manifest']");
+      if (pwaManifestLink) {
+        auditPWA.className = "analysis-item success";
+        auditPWAText.textContent = `Meta link para manifesto PWA localizado: ${pwaManifestLink.getAttribute('href')}`;
+        auditPWABadge.textContent = "PWA ATIVO";
+      } else {
+        auditPWA.className = "analysis-item info";
+        auditPWAText.textContent = "Sem metadados adicionais de manifesto externo.";
+        auditPWABadge.textContent = "WEB APP";
+      }
+
+      // Calcular Compatibilidade
+      let scoreChrome = 100;
+      let scoreFirefox = 95; // Firefox às vezes restringe service workers tipo módulo sem fallback
+      let scoreEdge = 100;
+      let scoreSafari = 90;  // Safari necessita do Swift Wrapper
+
+      // Se houver excesso de permissões ou scripts não conformes, deduz pontos de portabilidade
+      if (finalHostPermissions.length > 3) {
+        scoreFirefox -= 10;
+        scoreSafari -= 15;
+      }
+
+      updateMeters(scoreChrome, scoreFirefox, scoreEdge, scoreSafari);
+      
+      showModal("Análise Concluída", "O HTML foi processado! Todos os scripts em linha incompatíveis com a <strong>Manifest V3</strong> foram separados em ficheiros dinâmicos. Veja os ficheiros no <strong>Workspace Virtual</strong>.");
+
+    } catch (err) {
+      showModal("Erro de Conversão", `Falha ao processar o HTML: ${err.message}`);
+    }
+  }
+
+  // EXPORTAR ZIP MULTIPLATAFORMA
+  exportBtn.onclick = async () => {
+    if (!virtualWorkspace["manifest.json"]) {
+      showModal("Aviso", "Por favor, clique primeiro no botão 'Analisar & Build' para preencher a sua estrutura virtual antes de exportar.");
+      return;
+    }
+
+    try {
+      const zip = new JSZip();
+
+      // Estrutura de Extensão Comum
+      zip.file("manifest.json", virtualWorkspace["manifest.json"]);
+      zip.file("popup.html", virtualWorkspace["popup.html"]);
+      zip.file("popup.js", virtualWorkspace["popup.js"]);
+      zip.file("popup.css", virtualWorkspace["popup.css"]);
+      zip.file("background.js", virtualWorkspace["background.js"]);
+      zip.file("content.js", virtualWorkspace["content.js"]);
+
+      // Pasta de Assets (ícones de fallback gerados em formato vetorial SVG leve)
+      const assetFolder = zip.folder("assets");
+      const sampleIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="128" height="128">
+        <circle cx="50" cy="50" r="45" fill="#12161f" stroke="#00e5ff" stroke-width="5"/>
+        <path d="M35,35 L65,35 L65,65 L35,65 Z" fill="#00e5ff" opacity="0.3"/>
+        <text x="50" y="58" font-family="sans-serif" font-size="24" font-weight="bold" fill="#00e5ff" text-anchor="middle">DI</text>
+      </svg>`;
+      assetFolder.file("icon.svg", sampleIconSvg);
+      // Dummy PNG base de ícone caso o browser não leia SVG (ícone estático transparente)
+      const transparentPixelBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+      assetFolder.file("icon.png", transparentPixelBase64, {base64: true});
+
+      // Pasta Safari Native Wrapper (Se selecionado preset Safari ou por padrão para versatilidade)
+      const safariFolder = zip.folder("SafariPackage");
+      safariFolder.file("Info.plist", virtualWorkspace["Info.plist"]);
+      safariFolder.file("entitlements.plist", virtualWorkspace["entitlements.plist"]);
+      safariFolder.file("SafariWebExtensionHandler.swift", virtualWorkspace["ExtensionHandler.swift"]);
+
+      // Ficheiro README contendo instrução de carregamento
+      zip.file("README.txt", `========================================================
+DUALINFODOSE EXTENSION BUILDER PRO - INSTRUÇÕES DE INSTALAÇÃO
+========================================================
+
+GERADO EM: ${new Date().toLocaleString('pt-PT')}
+PLATAFORMA PRESET: ${targetPlatform.value.toUpperCase()}
+
+COMO INSTALAR NO CHROME / EDGE / OPERA:
+--------------------------------------------------------
+1. Extraia o conteúdo deste ficheiro ZIP para uma pasta local.
+2. Abra o browser e navegue até: chrome://extensions (ou edge://extensions).
+3. Ative a opção "Modo do programador" (Developer Mode) no canto superior direito.
+4. Clique em "Carregar sem compactação" (Load unpacked).
+5. Selecione a pasta onde extraiu o conteúdo do ZIP (aquela que contém o "manifest.json").
+6. Pronto! O ícone da sua aplicação aparecerá no menu de extensões.
+
+COMO CONFIGURAR O SAFARI WEB EXTENSION (MACOS/XCODE):
+--------------------------------------------------------
+O pacote inclui a pasta "SafariPackage" com as definições Swift e Plist para compilar no Xcode.
+Para converter diretamente o diretório gerado:
+1. Abra o Terminal no macOS.
+2. Execute o comando de conversão oficial da Apple:
+   xcrun safari-web-extension-converter /caminho/para/pasta_extraida
+
+Aproveite a sua nova Extensão Profissional!
+Desenvolvido por DualInfodose.`);
+
+      const blob = await zip.generateAsync({type: "blob"});
+      const finalFileName = (appName.value || "DualInfodose_Extension").replaceAll(" ", "_").toLowerCase();
+      
+      saveAs(blob, `${finalFileName}_v${appVersion.value}_extension_PRO.zip`);
+      
+      showModal("Exportação de Sucesso", `
+        <p>A sua extensão <strong>${appName.value}</strong> foi gerada em conformidade Manifest V3 e descarregada com sucesso!</p>
+        <p>Consulte as instruções de carregamento no ficheiro <strong>README.txt</strong> incluído no ficheiro ZIP.</p>
+      `);
+
+    } catch (e) {
+      showModal("Erro na Exportação", `Ocorreu um erro ao gerar o pacote ZIP: ${e.message}`);
+    }
+  };
+</script>
+
+</body>
+</html>
