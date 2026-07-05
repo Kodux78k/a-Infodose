@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>KOBLLUX DevTools</title>
+<style>
+    /* KOBLLUX CSS - Theme Engine & Layout */
+    :root {
+        --bg-main: #121212;
+        --bg-panel: rgba(30, 30, 30, 0.6);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --text-main: #d4d4d4;
+        --text-muted: #858585;
+        --accent: #007acc;
+        --accent-hover: #005f9e;
+        --accent-success: #4CAF50;
+        --log-info: #007acc;
+        --log-warn: #d7ba7d;
+        --log-error: #f48771;
+        --font-mono: 'Consolas', 'Courier New', monospace;
+        --header-height: 50px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg-main);
+        color: var(--text-main);
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* Header / Tabs - Mobile First */
+    #sidebar {
+        display: flex;
+        flex-direction: row;
+        background: var(--bg-panel);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--glass-border);
+        height: var(--header-height);
+        flex-shrink: 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
+        scrollbar-width: none;
+    }
+    #sidebar::-webkit-scrollbar { display: none; }
+
+    .brand {
+        display: flex;
+        align-items: center;
+        padding: 0 15px;
+        font-weight: 800;
+        font-size: 14px;
+        color: #fff;
+        border-right: 1px solid var(--glass-border);
+        background: rgba(0, 0, 0, 0.2);
+        letter-spacing: 1px;
+    }
+
+    #nav-tabs { display: flex; flex: 1; }
+
+    .tab-btn {
+        padding: 0 16px;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        font-weight: 500;
+        font-size: 13px;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        border-bottom: 2px solid transparent;
+    }
+
+    .tab-btn:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.05); }
+    .tab-btn.active { color: #fff; border-bottom-color: var(--accent); }
+
+    /* Main Content & Panels */
+    #main-content {
+        flex: 1;
+        position: relative;
+        background: var(--bg-main);
+        overflow: hidden;
+    }
+
+    #panels { height: 100%; width: 100%; }
+
+    .panel {
+        display: none;
+        height: 100%;
+        overflow-y: auto;
+        padding: 15px;
+    }
+    .panel.active { display: block; }
+
+    /* Utilities & Components */
+    .module-header {
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--glass-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    h3 { font-size: 16px; font-weight: 600; }
+    h4 { font-size: 14px; color: var(--text-muted); margin: 15px 0 10px 0; border-bottom: 1px dashed var(--glass-border); padding-bottom: 5px; }
+
+    button.btn {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    button.btn:hover { background: var(--accent-hover); }
+    button.btn.success { background: var(--accent-success); }
+
+    /* Console Styles */
+    .log-entry {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        padding: 8px 5px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        word-break: break-all;
+    }
+    .log-warn { color: var(--log-warn); background: rgba(215, 186, 125, 0.1); }
+    .log-error { color: var(--log-error); background: rgba(244, 135, 113, 0.1); }
+    .log-info { color: var(--log-info); }
+
+    /* Table Styles */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; margin-bottom: 20px; }
+    th { color: var(--text-muted); padding: 8px; border-bottom: 1px solid var(--glass-border); font-weight: normal; }
+    td { padding: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-family: var(--font-mono); }
+
+    /* Tree/DOM View Styles */
+    .dom-node { font-family: var(--font-mono); font-size: 13px; padding-left: 15px; }
+    .tag { color: #569cd6; }
+    .attr-name { color: #9cdcfe; }
+    .attr-value { color: #ce9178; }
+
+    /* Sensor Cards */
+    .sensors-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    .sensor-card {
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--glass-border);
+        border-radius: 8px;
+        padding: 15px;
+    }
+    .sensor-card h5 { color: var(--accent); margin-bottom: 10px; font-size: 14px; }
+    .sensor-val { font-family: var(--font-mono); font-size: 18px; display: block; margin: 5px 0; font-weight: bold; }
+    .sensor-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+    /* Desktop Adjustments */
+    @media (min-width: 768px) {
+        body { flex-direction: row; }
+        #sidebar { flex-direction: column; width: 220px; height: 100vh; border-bottom: none; border-right: 1px solid var(--glass-border); }
+        .brand { height: var(--header-height); justify-content: center; border-right: none; border-bottom: 1px solid var(--glass-border); }
+        #nav-tabs { flex-direction: column; flex: unset; }
+        .tab-btn { height: 40px; border-bottom: none; border-left: 3px solid transparent; justify-content: flex-start; }
+        .tab-btn.active { border-bottom-color: transparent; border-left-color: var(--accent); background: rgba(255,255,255,0.05); }
+    }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+    <div class="brand">KOBLLUX</div>
+    <div id="nav-tabs"></div>
+</div>
+
+<div id="main-content">
+    <div id="panels"></div>
+</div>
+
+<script>
+// ==========================================
+// KOBLLUX CORE - Boot Loader & Namespace
+// ==========================================
+window.KOBLLUX = {
+    modules: {},
+    tabsEl: null,
+    panelsEl: null,
+    
+    init() {
+        this.tabsEl = document.getElementById('nav-tabs');
+        this.panelsEl = document.getElementById('panels');
+        console.log("%cKOBLLUX DevTools Core Initialized", "color: #007acc; font-weight: bold;");
+    },
+
+    register(name, moduleObj) {
+        this.modules[name] = moduleObj;
+        this.createTab(name);
+        
+        const panel = this.getPanel(name);
+        if(moduleObj.init) {
+            moduleObj.init(panel);
+        }
+    },
+
+    createTab(name) {
+        const btn = document.createElement('button');
+        btn.className = 'tab-btn';
+        btn.id = `tab-${name}`;
+        btn.innerText = name;
+        btn.onclick = () => this.showPanel(name);
+        this.tabsEl.appendChild(btn);
+
+        const panel = document.createElement('div');
+        panel.id = `panel-${name}`;
+        panel.className = 'panel';
+        this.panelsEl.appendChild(panel);
+    },
+
+    getPanel(name) { return document.getElementById(`panel-${name}`); },
+
+    showPanel(name) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        
+        document.getElementById(`tab-${name}`).classList.add('active');
+        document.getElementById(`panel-${name}`).classList.add('active');
+    },
+
+    boot() {
+        this.init();
+        
+        // Native Modules Register
+        this.register('Console', ConsoleModule);
+        this.register('Elements', ElementsModule);
+        this.register('Network', NetworkModule);
+        this.register('Storage', StorageModule);
+        this.register('Sensors', SensorsModule); // NOVO MÓDULO!
+        this.register('Performance', PerformanceModule);
+
+        this.showPanel('Sensors'); // Abrindo em Sensors para você testar logo de cara!
+        console.log("%cKOBLLUX Boot Loader Completo.", "color: #4CAF50; font-weight: bold;");
+    }
+};
+
+// ==========================================
+// KOBLLUX MODULES (The Super Monolith V2)
+// ==========================================
+
+// 1. Console Module
+const ConsoleModule = {
+    container: null,
+    originalConsole: {},
+    init(panel) {
+        panel.innerHTML = `
+            <div class="module-header">
+                <h3>Console</h3>
+                <div>
+                    <button class="btn" id="btn-test-log">Gerar Log</button>
+                    <button class="btn" id="btn-clear-log" style="background:#444">Limpar</button>
+                </div>
+            </div>
+            <div id="console-output"></div>
+        `;
+        this.container = document.getElementById('console-output');
+        this.intercept();
+        document.getElementById('btn-test-log').onclick = () => { console.log("DualApp Log:", { id: Math.random() }); console.warn("Aviso do sistema."); };
+        document.getElementById('btn-clear-log').onclick = () => { this.container.innerHTML = ''; };
+    },
+    intercept() {
+        ['log', 'warn', 'error', 'info'].forEach(method => {
+            this.originalConsole[method] = console[method];
+            console[method] = (...args) => {
+                this.originalConsole[method].apply(console, args);
+                this.renderLog(method, args);
+            };
+        });
+    },
+    renderLog(type, args) {
+        if(!this.container) return;
+        const div = document.createElement('div');
+        div.className = `log-entry log-${type}`;
+        div.innerText = `> ` + args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ');
+        this.container.appendChild(div);
+        this.container.parentElement.scrollTop = this.container.parentElement.scrollHeight;
+    }
+};
+
+// 2. Elements / DOM Inspector Module
+const ElementsModule = {
+    init(panel) {
+        panel.innerHTML = `
+            <div class="module-header">
+                <h3>Elements (DOM Inspector)</h3>
+                <button class="btn" id="btn-refresh-dom">Inspecionar Body</button>
+            </div>
+            <div id="dom-tree" style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px;"></div>
+        `;
+        document.getElementById('btn-refresh-dom').onclick = () => {
+            const tree = document.getElementById('dom-tree');
+            tree.innerHTML = ''; tree.appendChild(this.buildTree(document.body));
+        };
+    },
+    buildTree(node, level = 0) {
+        const div = document.createElement('div');
+        div.className = 'dom-node';
+        if (node.nodeType === Node.TEXT_NODE) {
+            const text = node.textContent.trim();
+            if(text) div.innerText = text; return div;
+        }
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            let html = `<span class="tag">&lt;${node.tagName.toLowerCase()}</span>`;
+            for (let attr of node.attributes) html += ` <span class="attr-name">${attr.name}</span>="<span class="attr-value">${attr.value}</span>"`;
+            html += `<span class="tag">&gt;</span>`;
+            
+            const wrapper = document.createElement('div'); wrapper.innerHTML = html; div.appendChild(wrapper);
+
+            if(level < 3 && node.id !== 'sidebar') { 
+                const childrenContainer = document.createElement('div');
+                node.childNodes.forEach(child => childrenContainer.appendChild(this.buildTree(child, level + 1)));
+                div.appendChild(childrenContainer);
+                const closeTag = document.createElement('div'); closeTag.innerHTML = `<span class="tag">&lt;/${node.tagName.toLowerCase()}&gt;</span>`; div.appendChild(closeTag);
+            } else if (node.childNodes.length > 0) {
+                 const more = document.createElement('div'); more.style.color = '#888'; more.innerText = `... (${node.childNodes.length} children)`; div.appendChild(more);
+            }
+        }
+        return div;
+    }
+};
+
+// 3. Network Interceptor Module
+const NetworkModule = {
+    init(panel) {
+        panel.innerHTML = `
+            <div class="module-header">
+                <h3>Network</h3>
+                <button class="btn" id="btn-test-fetch">Testar Fetch</button>
+            </div>
+            <table>
+                <thead><tr><th>Método</th><th>URL</th><th>Status</th></tr></thead>
+                <tbody id="network-logs"></tbody>
+            </table>
+        `;
+        this.interceptFetch();
+        document.getElementById('btn-test-fetch').onclick = () => fetch('https://jsonplaceholder.typicode.com/todos/1').catch(e=>{});
+    },
+    interceptFetch() {
+        const originalFetch = window.fetch;
+        window.fetch = async (...args) => {
+            const url = typeof args[0] === 'string' ? args[0] : args[0].url;
+            const method = args[1]?.method || 'GET';
+            try {
+                const response = await originalFetch(...args);
+                this.logRequest(method, url, response.status);
+                return response;
+            } catch (error) {
+                this.logRequest(method, url, 'ERROR'); throw error;
+            }
+        };
+    },
+    logRequest(method, url, status) {
+        const tbody = document.getElementById('network-logs');
+        if(!tbody) return;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${method}</td><td style="word-break: break-all; font-size: 11px;">${url}</td><td style="color: ${status === 200 ? '#4CAF50' : '#f48771'}">${status}</td>`;
+        tbody.prepend(tr);
+    }
+};
+
+// 4. Storage & IndexedDB Module (UPGRADED)
+const StorageModule = {
+    init(panel) {
+        panel.innerHTML = `
+            <div class="module-header">
+                <h3>Storage & IndexedDB</h3>
+                <button class="btn" id="btn-refresh-storage">Atualizar Todos</button>
+            </div>
+            
+            <h4>Local Storage</h4>
+            <table>
+                <thead><tr><th>Chave</th><th>Valor</th></tr></thead>
+                <tbody id="storage-list"></tbody>
+            </table>
+
+            <h4>IndexedDB</h4>
+            <table>
+                <thead><tr><th>Banco de Dados</th><th>Versão</th></tr></thead>
+                <tbody id="idb-list"></tbody>
+            </table>
+        `;
+
+        // Criar um banco IDB de teste para o KOBLLUX mostrar algo na tela
+        const testDB = indexedDB.open('KOBLLUX_TestDB_v1', 1);
+        testDB.onupgradeneeded = (e) => {
+            if (!e.target.result.objectStoreNames.contains('sys_logs')) {
+                e.target.result.createObjectStore('sys_logs', { autoIncrement: true });
+            }
+        };
+
+        const refreshBtn = document.getElementById('btn-refresh-storage');
+        refreshBtn.onclick = () => {
+            this.renderLocalStorage();
+            this.renderIDB();
+        };
+        
+        localStorage.setItem('KOBLLUX_BOOT', new Date().toLocaleTimeString());
+        
+        // Aguarda 500ms para garantir que o banco de teste foi criado antes de renderizar a lista
+        setTimeout(() => {
+            this.renderLocalStorage();
+            this.renderIDB();
+        }, 500);
+    },
+
+    renderLocalStorage() {
+        const tbody = document.getElementById('storage-list');
+        if(!tbody) return; tbody.innerHTML = '';
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${key}</td><td style="word-break: break-all; font-size: 11px;">${localStorage.getItem(key)}</td>`;
+            tbody.appendChild(tr);
+        }
+    },
+
+    async renderIDB() {
+        const tbody = document.getElementById('idb-list');
+        if(!tbody) return; tbody.innerHTML = '';
+        
+        // A API databases() é suportada em navegadores modernos (incluindo Safari no iPhone atual)
+        if (!window.indexedDB || !window.indexedDB.databases) {
+            tbody.innerHTML = `<tr><td colspan="2" style="color:var(--log-warn)">A API indexedDB.databases() não é suportada neste navegador.</td></tr>`;
+            return;
+        }
+
+        try {
+            const dbs = await window.indexedDB.databases();
+            if (dbs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="2">Nenhum IndexedDB encontrado.</td></tr>`;
+                return;
+            }
+            dbs.forEach(db => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td><span style="color:var(--accent)">🗄️ ${db.name}</span></td><td>v${db.version}</td>`;
+                tbody.appendChild(tr);
+            });
+        } catch (e) {
+            console.error("Erro ao ler IDB:", e);
+        }
+    }
+};
+
+// 5. Sensors Module (NOVO!)
+const SensorsModule = {
+    isListening: false,
+    init(panel) {
+        panel.innerHTML = `
+            <div class="module-header">
+                <h3>Device Sensors</h3>
+                <button class="btn" id="btn-toggle-sensors">Ativar Sensores</button>
+            </div>
+            
+            <div class="sensors-grid">
+                <div class="sensor-card">
+                    <h5>🧭 Giroscópio (Orientação)</h5>
+                    <span class="sensor-label">Alpha (Z - Bússola)</span>
+                    <span class="sensor-val" id="sens-alpha">0.00°</span>
+                    <span class="sensor-label">Beta (X - Inclinação Frente/Trás)</span>
+                    <span class="sensor-val" id="sens-beta">0.00°</span>
+                    <span class="sensor-label">Gamma (Y - Inclinação Esquerda/Direita)</span>
+                    <span class="sensor-val" id="sens-gamma">0.00°</span>
+                </div>
+                
+                <div class="sensor-card">
+                    <h5>🚀 Acelerômetro (G-Force)</h5>
+                    <span class="sensor-label">Eixo X (Lateral)</span>
+                    <span class="sensor-val" id="sens-acc-x">0.00</span>
+                    <span class="sensor-label">Eixo Y (Vertical)</span>
+                    <span class="sensor-val" id="sens-acc-y">0.00</span>
+                    <span class="sensor-label">Eixo Z (Profundidade)</span>
+                    <span class="sensor-val" id="sens-acc-z">0.00</span>
+                </div>
+            </div>
+            <p style="font-size: 11px; color: var(--text-muted); margin-top: 15px; text-align: center;">
+                Nota: No iOS (iPhone), é obrigatório clicar no botão e permitir o acesso aos sensores.
+            </p>
+        `;
+
+        document.getElementById('btn-toggle-sensors').onclick = () => this.toggleSensors();
+        
+        // Bind functions to keep context
+        this.handleOrientation = this.handleOrientation.bind(this);
+        this.handleMotion = this.handleMotion.bind(this);
+    },
+
+    async toggleSensors() {
+        const btn = document.getElementById('btn-toggle-sensors');
+
+        if (this.isListening) {
+            // Desligar
+            window.removeEventListener('deviceorientation', this.handleOrientation);
+            window.removeEventListener('devicemotion', this.handleMotion);
+            this.isListening = false;
+            btn.innerText = "Ativar Sensores";
+            btn.classList.remove('success');
+            return;
+        }
+
+        // Ligar e pedir permissão (Regra rigorosa da Apple para Safari iOS 13+)
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            try {
+                const permissionState = await DeviceOrientationEvent.requestPermission();
+                if (permissionState === 'granted') {
+                    this.startListening(btn);
+                } else {
+                    alert("Permissão para sensores negada pelo iOS.");
+                }
+            } catch (error) {
+                console.error("Erro ao pedir permissão dos sensores:", error);
+                alert("Erro ao solicitar acesso aos sensores.");
+            }
+        } else {
+            // Android ou navegadores que não exigem permissão explícita
+            this.startListening(btn);
+        }
+    },
+
+    startListening(btn) {
+        window.addEventListener('deviceorientation', this.handleOrientation);
+        window.addEventListener('devicemotion', this.handleMotion);
+        this.isListening = true;
+        btn.innerText = "Parar Sensores";
+        btn.classList.add('success');
+    },
+
+    handleOrientation(event) {
+        // Alpha, Beta e Gamma em graus
+        if (event.alpha !== null) document.getElementById('sens-alpha').innerText = event.alpha.toFixed(2) + '°';
+        if (event.beta !== null) document.getElementById('sens-beta').innerText = event.beta.toFixed(2) + '°';
+        if (event.gamma !== null) document.getElementById('sens-gamma').innerText = event.gamma.toFixed(2) + '°';
+    },
+
+    handleMotion(event) {
+        // Aceleração incluindo a gravidade (m/s²)
+        if (event.accelerationIncludingGravity) {
+            const acc = event.accelerationIncludingGravity;
+            if (acc.x !== null) document.getElementById('sens-acc-x').innerText = acc.x.toFixed(2);
+            if (acc.y !== null) document.getElementById('sens-acc-y').innerText = acc.y.toFixed(2);
+            if (acc.z !== null) document.getElementById('sens-acc-z').innerText = acc.z.toFixed(2);
+        }
+    }
+};
+
+// 6. Performance Placeholder
+const PerformanceModule = {
+    init(panel) { panel.innerHTML = `<div class="module-header"><h3>Performance</h3></div><div style="text-align:center; padding: 40px; color: var(--text-muted);"><div style="font-size: 48px; margin-bottom: 10px;">⚡</div><p>Módulo em construção.</p></div>`; }
+};
+
+// ==========================================
+// MAIN EXECUTION
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    KOBLLUX.boot();
+});
+
+</script>
+</body>
+</html>
+
+
