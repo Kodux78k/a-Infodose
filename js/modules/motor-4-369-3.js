@@ -101,9 +101,9 @@
         ARCHETYPES_BASE.push(userKey);
       }
 
-      const archetypes = [...ARCHETYPES_BASE];
+      let archetypes = [...ARCHETYPES_BASE];
 
-      const archNames = {
+      let archNames = {
         atlas: "Atlas",
         nova: "Nova",
         vitalis: "Vitalis",
