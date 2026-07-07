@@ -54,7 +54,7 @@ modelSelect?.addEventListener('change', e => {
     }
     
     function updateToggleBtnVisual() {
-        const btn = els.toggleBtn;
+        const btn = els.toggleBtnF;
         if(assistantEnabled) {
             btn.classList.add('active');
             btn.title = "Assistant ON";
@@ -271,7 +271,7 @@ const showLoading = msg => {
     }
     
     // Quick Toggle Action
-    els.toggleBtn.addEventListener('click', () => {
+    els.toggleBtnF.addEventListener('click', () => {
         assistantEnabled = !assistantEnabled;
         localStorage.setItem('di_assistantEnabled', assistantEnabled ? '1' : '0');
         showToaster(assistantEnabled ? 'Assistant ON (Fetch Ativo)' : 'Assistant OFF (Fetch Desativado)', assistantEnabled ? 'success' : 'default');
