@@ -4,7 +4,7 @@ lucide.createIcons();
       card: document.getElementById('mainCard'),
       header: document.getElementById('cardHeader'),
       avatarTgt: document.getElementById('avatarTarget'),
-      input: document.getElementById('inputUserMsg'),
+      input: document.getElementById('inputUser'),
       lblHello: document.getElementById('lblHello'),
       lblName: document.getElementById('lblName'),
       clock: document.getElementById('clockTime'),
