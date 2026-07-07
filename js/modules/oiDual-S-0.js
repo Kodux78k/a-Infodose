@@ -46,7 +46,7 @@ lucide.createIcons();
       vaultCancel: document.getElementById('vaultCancelBtn'),
       // New System UI
       systemCard: document.getElementById('systemCard'),
-      toggleBtn: document.getElementById('toggleBtn')
+      toggleBtnF: document.getElementById('toggleBtnF')
     };
 
     // --- CRYPTO UTILS ---
