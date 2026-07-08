@@ -162,3 +162,32 @@ border-radius: 50%;
         .fusion-zonei { position: relative; z-index: 100; pointer-events: auto; padding: 20px; }
         .modal-overlayy { z-index: 9999; }
 #root{overflow-y:auto}
+
+
+
+/* ===== TEXT OVERRIDE ===== */
+
+.response-container,
+.response-container *{
+    color:var(--kob-voice-primary) !important;
+}
+
+.response-container .page.initial,
+.response-container .page.initial strong,
+.response-container .page.initial em,
+.response-container .page.initial span{
+    color:#fff !important;
+    text-shadow:0 0 8px color-mix(in srgb,var(--kob-voice-primary) 35%,transparent) !important;
+}
+
+.response-container p,
+.response-container li,
+.response-container div,
+.response-container strong,
+.response-container em{
+    color:#fff !important;
+}
+
+.response-container a{
+    color:var(--kob-voice-secondary) !important;
+}
