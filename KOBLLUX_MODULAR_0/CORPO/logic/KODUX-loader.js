@@ -1,7 +1,9 @@
 // CORPO/logic/bootloader.js
+/* 
 import 'https://kodux78k.github.io/oiDual--Y-/M0D/KxaT/js/main-1.js';
 import 'https://www.infodose.com.br/js/modules/kob5.js';
 import 'https://www.infodose.com.br/js/modules/oiDual-S-0e1.js';
+*/
 // ═══ CORE ENGINES ═══
 import { StateManager } from './state_manager.js';
 import { CryptoVault } from './crypto_vault.js';
@@ -59,7 +61,8 @@ window.KOBLLUX = {
             const link = document.createElement('link');
             link.id = 'KOBLLUX_UNIFIED_CSS';
             link.rel = 'stylesheet';
-            link.href = './ESPIRITO/visual/unified_fusion.css';
+            link.href = 'https://www.infodose.com.br/css/main-fusion.css';
+            // link.href = './ESPIRITO/visual/unified_fusion.css';
             document.head.appendChild(link);
         }
 
