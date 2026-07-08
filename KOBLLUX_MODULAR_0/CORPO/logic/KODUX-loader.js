@@ -5,28 +5,28 @@ import 'https://www.infodose.com.br/js/modules/kob5.js';
 import 'https://www.infodose.com.br/js/modules/oiDual-S-0e1.js';
 */
 // ═══ CORE ENGINES ═══
-import { StateManager } from './state_manager.js';
-import { CryptoVault } from './crypto_vault.js';
-import { FusionCore } from '../engines/fusion_core.js';
-import { CortexEngine } from '../engines/cortex_engine.js';
-import { OrbEngine } from '../engines/orb_engine.js';
+// ═══ CORE ENGINES ═══
+import { StateManager } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/CORPO/logic/state_manager.js';
+import { CryptoVault } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/CORPO/logic/crypto_vault.js';
+import { FusionCore } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/CORPO/engines/fusion_core.js';
+import { CortexEngine } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/CORPO/engines/cortex_engine.js';
+import { OrbEngine } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/CORPO/engines/orb_engine.js';
 
-// ═══ ESPIRITO: UI MODULES ═══
-import { CardComponent } from '../../ESPIRITO/ui/card_component.js';
-import { ActivationPanel } from '../../ESPIRITO/ui/activation_panel.js';
-import { SystemPanel } from '../../ESPIRITO/ui/system_panel.js';
-import { KeysManager } from '../../ESPIRITO/ui/keys_manager.js';
-import { ResponseHandler } from '../../ESPIRITO/ui/response_handler.js';
+// ═══ ESPÍRITO: UI MODULES ═══
+import { CardComponent } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/ui/card_component.js';
+import { ActivationPanel } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/ui/activation_panel.js';
+import { SystemPanel } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/ui/system_panel.js';
+import { KeysManager } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/ui/keys_manager.js';
+import { ResponseHandler } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/ui/response_handler.js';
 
-// ═══ ESPIRITO: VISUAL & BEAUTY ═══
-import { InterfaceManager } from '../../ESPIRITO/ui/interface_manager.js';
-import { ModalSystem } from '../../ESPIRITO/ui/modal_system.js';
-import { ToastSystem } from '../../ESPIRITO/ui/toast_system.js';
-import { VisualPulse } from '../../ESPIRITO/visual/visual_pulse.js';
-import { AnimationEngine } from '../../ESPIRITO/visual/animation_engine.js';
-import { VocalPulse } from '../../ESPIRITO/audio/vocal_pulse.js';
-import '../../ESPIRITO/UNIFIED_BEAUTY_SCRIPT.js';
-
+// ═══ ESPÍRITO: VISUAL & BEAUTY ═══
+import { InterfaceManager } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/ui/interface_manager.js';
+import { ModalSystem } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/ui/modal_system.js';
+import { ToastSystem } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/ui/toast_system.js';
+import { VisualPulse } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/visual/visual_pulse.js';
+import { AnimationEngine } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/visual/animation_engine.js';
+import { VocalPulse } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/audio/vocal_pulse.js';
+import 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/UNIFIED_BEAUTY_SCRIPT.js';
 window.KOBLLUX = {
     state: StateManager,
     crypto: CryptoVault,
