@@ -1,18 +1,22 @@
 // CORPO/logic/bootloader.js
 
-import { StateManager } from './state_manager.js';
-import { CryptoVault } from './crypto_vault.js';
-import { FusionCore } from '../engines/fusion_core.js';
-import { CortexEngine } from '../engines/cortex_engine.js';
-import { OrbEngine } from '../engines/orb_engine.js';
-import { InterfaceManager } from '../../ESPIRITO/ui/interface_manager.js';
-import { ModalSystem } from '../../ESPIRITO/ui/modal_system.js';
-import { ToastSystem } from '../../ESPIRITO/ui/toast_system.js';
-import { VisualPulse } from '../../ESPIRITO/visual/visual_pulse.js';
-import { AnimationEngine } from '../../ESPIRITO/visual/animation_engine.js';
-import { VocalPulse } from '../../ESPIRITO/audio/vocal_pulse.js';
-import '../../ESPIRITO/UNIFIED_BEAUTY_SCRIPT.js';
+import { StateManager } from 'https://www.infodose.com.br/KOBLLUX_MODULAR/CORPO/logic/state_manager.js';
+import { CryptoVault } from 'https://www.infodose.com.br/KOBLLUX_MODULAR/CORPO/logic/crypto_vault.js';
 
+import { FusionCore } from 'https://www.infodose.com.br/KOBLLUX_MODULAR/CORPO/engines/fusion_core.js';
+import { CortexEngine } from 'https://www.infodose.com.br/KOBLLUX_MODULAR/CORPO/engines/cortex_engine.js';
+import { OrbEngine } from 'https://www.infodose.com.br/KOBLLUX_MODULAR/CORPO/engines/orb_engine.js';
+
+import { InterfaceManager } from 'https://www.infodose.com.br/KOBLLUX_MODULAR/ESPIRITO/ui/interface_manager.js';
+import { ModalSystem } from 'https://www.infodose.com.br/KOBLLUX_MODULAR/ESPIRITO/ui/modal_system.js';
+import { ToastSystem } from 'https://www.infodose.com.br/KOBLLUX_MODULAR/ESPIRITO/ui/toast_system.js';
+
+import { VisualPulse } from 'https://www.infodose.com.br/KOBLLUX_MODULAR/ESPIRITO/visual/visual_pulse.js';
+import { AnimationEngine } from 'https://www.infodose.com.br/KOBLLUX_MODULAR/ESPIRITO/visual/animation_engine.js';
+
+import { VocalPulse } from 'https://www.infodose.com.br/KOBLLUX_MODULAR/ESPIRITO/audio/vocal_pulse.js';
+
+import 'https://www.infodose.com.br/KOBLLUX_MODULAR/ESPIRITO/UNIFIED_BEAUTY_SCRIPT.js';
 window.KOBLLUX = {
     state: StateManager,
     crypto: CryptoVault,
@@ -43,7 +47,8 @@ window.KOBLLUX = {
             const link = document.createElement('link');
             link.id = 'KOBLLUX_UNIFIED_CSS';
             link.rel = 'stylesheet';
-            link.href = './ESPIRITO/visual/unified_fusion.css';
+                        link.href = 'https://www.infodose.com.br/css/main-fusion.css';
+            // link.href = './ESPIRITO/visual/unified_fusion.css';
             document.head.appendChild(link);
         }
 
