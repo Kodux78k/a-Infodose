@@ -125,7 +125,7 @@
                 const link = document.createElement('link');
                 link.id = 'KOBLLUX_UNIFIED_CSS';
                 link.rel = 'stylesheet';
-                link.href = 'https://www.infodose.com.br/css/main-S0.css';
+                link.href = 'https://www.infodose.com.br/css/main-fusion.css';
                 document.head.appendChild(link);
             }
 
