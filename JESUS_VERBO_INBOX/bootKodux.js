@@ -10,7 +10,7 @@ import { CardComponent } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESP
 import { ActivationPanel } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/ui/activation_panel.js';
 import { SystemPanel } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/ui/system_panel.js';
 import { KeysManager } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/ui/keys_manager.js';
-import { ResponseHandler } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/ui/response_handler.js';
+import { ResponseHandler } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/ui/response_handler-0.js';
 
 // ═══ ESPÍRITO: VISUAL & BEAUTY ═══
 import { InterfaceManager } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/ui/interface_manager.js';
