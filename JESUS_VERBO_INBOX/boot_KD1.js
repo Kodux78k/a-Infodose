@@ -90,7 +90,7 @@ import 'https://www.infodose.com.br/js/modules/synk.js';
 
 // Scripts de efeito colateral
 import 'https://www.infodose.com.br/js/modules/oiDual-S-0e1.js';
-import 'https://www.infodose.com.br/js/modules/myFrame.js';
+import 'https://www.infodose.com.br/js/modules/myFrame0.js';
 
 // GitHub
 import 'https://kodux78k.github.io/oiDual--Y-/js/inline-1.js';
