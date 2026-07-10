@@ -44,7 +44,7 @@ export const FusionCore = {
     async loadMetaPulso() {
         // Caminhos relativos a partir de CORPO/engines/
         const paths = [
-            '../KOBLLUX_MODULAR/metapulso_70_combinacoes.json',  // Caminho correto
+            'https://www.infodose.com.br/KOBLLUX_MODULAR_0/SEMENTE/config/metapulso_70_combinacoes.json',  // Caminho correto
             '../../../SEMENTE/config/metapulso_70_combinacoes.json', // Alternativa
             './metapulso_70_combinacoes.json' // Fallback raiz
         ];
