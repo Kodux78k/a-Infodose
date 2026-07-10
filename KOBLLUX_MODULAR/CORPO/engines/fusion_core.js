@@ -36,10 +36,10 @@ export const FusionCore = {
         // Lista de paths possíveis (ordem de tentativa)
         const paths = [
             // Path absoluto a partir da raiz do servidor
-            '/SEMENTE/config/metapulso_70_combinacoes.json',
-            '/metapulso_70_combinacoes.json',
+            'https://www.infodose.com.br/KOBLLUX_MODULAR/SEMENTE/config/metapulso_70_combinacoes.json',
+            'https://www.infodose.com.br/KOBLLUX_MODULAR/metapulso_70_combinacoes.json',
             // Paths relativos usando import.meta.url
-            new URL('../../SEMENTE/config/metapulso_70_combinacoes.json', import.meta.url).href,
+            new URL('https://www.infodose.com.br/KOBLLUX_MODULAR_0/SEMENTE/config/metapulso_70_combinacoes.json', import.meta.url).href,
             new URL('../../../metapulso_70_combinacoes.json', import.meta.url).href,
             // Fallbacks relativos tradicionais
             './SEMENTE/config/metapulso_70_combinacoes.json',
