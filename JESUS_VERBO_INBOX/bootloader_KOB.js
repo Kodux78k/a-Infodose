@@ -10,10 +10,10 @@
 //   boot(MANIFEST);
 // ─────────────────────────────────────────────────────────────
 
-import { ResponseHandler } from '../ESPIRITO/ui/response_handler.js';
-import { SwissKnifeUI } from '../ESPIRITO/ui/swiss_knife.js';
-import { FractalEngine369 } from '../ESPIRITO/core/fractal_engine.js';
-import { initBodyThemeSync } from '../ESPIRITO/core/body_theme_sync.js';
+import { ResponseHandler } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/ui/response_handler.js';
+import { SwissKnifeUI } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/ui/swiss_knife.js';
+import { FractalEngine369 } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/core/fractal_engine.js';
+import { initBodyThemeSync } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0/ESPIRITO/core/body_theme_sync.js';
 
 // ── MANIFEST PADRÃO (sobrescrevível na chamada de boot()) ────
 export const DEFAULT_MANIFEST = {
