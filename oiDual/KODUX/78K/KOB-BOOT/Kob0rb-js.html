@@ -1,0 +1,535 @@
+(function(h,s='#KOB0RB'){const p=new DOMParser(),c=p.parseFromString(h,'text/html'),f=document.createDocumentFragment(),t=document.querySelector(s)||document.body;Array.from(c.body.childNodes).forEach(n=>f.appendChild(document.importNode(n,true)));t.appendChild(f);Array.from(c.querySelectorAll('script')).forEach(x=>{const n=document.createElement('script');for(const a of x.attributes)n.setAttribute(a.name,a.value);n.textContent=x.textContent;document.body.appendChild(n)})})(`
+<!DOCTYPE html>
+<html lang="pt-BR" data-arch="" data-user="" data-opcode="0x00" data-camada="METΔ0">
+<head data-opcode="0x02" data-arch="integrar">
+<meta charset="utf-8" data-opcode="0x04" data-arch="lapidar">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" data-opcode="0x03" data-arch="expandir">
+<meta name="theme-color" content="#050510" data-opcode="0x07" data-arch="selar">
+
+<title data-opcode="0x0C">
+Canivete Suíço
+</title>
+  <!-- ── FONTS ───────────────────────────────────────────────── -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;400;500;600;800&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet" data-k-id="L_1">
+  <!-- ── CSS EXTERNOS (deduplicados) ───────────────────────────
+       KxTsK-unified.css   → carregado 1x só (era 2x)
+       kxt-solar.css       → única variante solar (era solarr + solar)
+       78F/main.css + ovr  → mantidos
+       infodose main.css   → mantido
+  ──────────────────────────────────────────────────────────── -->
+  <!-- ── Z-INDEX TOKENS (1x só) ────────────────────────────── -->
+  <!-- ── LUCIDE (1x, no head, síncrono) ────────────────────── -->
+  <script src="https://unpkg.com/lucide@latest" data-k-id="JS_0"></script>
+  <!-- ── PARTICLES ─────────────────────────────────────────── -->
+    <link rel="apple-touch-icon" href="./icons/icon-192.png">
+
+
+    <div style="display:none" id="avatarTargett" class="orb">.</div>
+
+    <div style="display:none" id="themeName">Tema: (selecionado aqui)</div>
+
+ 
+  <link href="https://www.infodose.com.br/css/main.css" rel="stylesheet" data-k-id="L_5">
+</head>
+
+
+</head>
+
+
+<body>
+
+<!--
+<body data-arch="kobllux" data-user="">
+<div class="orb">.</div>
+    <div id="themeName">Tema: (selecionado aqui)</div>
+-->
+
+<!-- ══════════════════════════════════════════════════════════
+     ROOT
+══════════════════════════════════════════════════════════ -->
+<div id="root">  
+
+  <!-- ── BACKGROUNDS (1x cada) ─────────────────────────────── -->
+  <div class="bg-gradient-base" style="opacity:.39"></div>
+  <div id="bg-layer-fixed"></div>
+  <div class="nebula"></div>
+  <div id="bg-fake-custom"></div>
+  <div class="sky-layer"><div class="sun-background"></div></div>
+  <div class="ambient-light"></div>
+  <!-- ── PARTICLES ──────────────────────────────────────────── -->
+  <div id="particles"></div>
+  <!-- ── DISTORTION SVG ────────────────────────────────────── -->
+  <svg style="display:none;">
+    <filter id="distort">
+      <feTurbulence baseFrequency="0.01" numOctaves="3" result="turb"></feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="turb" scale="30"></feDisplacementMap>
+    </filter>
+  </svg>
+<section style="min-height:100vh">
+ <div class="infodose">dual.<strong>Infodose</strong></div>
+</section>
+  <!-- ── ICON SPRITES (SVG) ────────────────────────────────── -->
+  <svg style="display:none;">
+    <symbol id="icon-orb" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="7"></circle>
+      <circle cx="12" cy="12" r="8"></circle>
+    </symbol>
+    <symbol id="icon-cards" viewBox="0 0 24 24">
+      <rect x="2" y="2" width="16" height="16" rx="2"></rect>
+      <path d="M22 6v14a2 2 0 0 1-2 2H6"></path>
+    </symbol>
+    <symbol id="icon-gem" viewBox="0 0 24 24">
+      <path d="M6 3h12l4 6-10 12L2 9z"></path>
+    </symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+    </symbol>
+    <symbol id="icon-send" viewBox="0 0 24 24">
+      <line x1="22" y1="2" x2="11" y2="13"></line>
+      <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+    </symbol>
+    <symbol id="icon-voice" viewBox="0 0 24 24">
+      <rect x="9" y="1" width="6" height="12" rx="3"></rect>
+      <path d="M5 10a7 7 0 0 0 14 0"></path>
+      <line x1="12" y1="19" x2="12" y2="23"></line>
+      <line x1="8" y1="23" x2="16" y2="23"></line>
+    </symbol>
+    <symbol id="icon-upload" viewBox="0 0 24 24">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+      <polyline points="7 10 12 3 7 8"></polyline>
+      <line x1="12" y1="3" x2="12" y2="15"></line>
+    </symbol>
+  </svg>
+  <!-- ── ÁUDIO ──────────────────────────────────────────────── -->
+  <audio id="transitionSound" src="https://kodux78k.github.io/oiDual-oiio/suave_portal.mp3" preload="auto"></audio>
+  <div id="modeIndicator">CARREGANDO nO.Sºlar...</div>
+  <!-- ── SNAP / TOASTER ────────────────────────────────────── -->
+  <div id="snap-zone"></div>
+  <div class="toaster-wrap" id="toasterWrap"></div>
+  <div id="nv-toast"></div>
+  <!-- ════════════════════════════════════════════════════════
+       SESSION FRAME  (iframe principal)
+  ════════════════════════════════════════════════════════ -->
+ <div class="wrap">
+    <div class="content">
+      <iframe id="frame"></iframe>
+      <div id="kob-tts-outline"></div>
+    </div>
+  </div>
+  <!-- ════════════════════════════════════════════════════════
+       HUD · SYMBOL BAR
+  ════════════════════════════════════════════════════════ -->
+  <div class="symbol-bar floating" id="symbolBar">
+    <!-- ORB -->
+<div class="blob blob-1"></div><div class="blob blob-2"></div>
+    <div class="symbol-toolbar">
+      <div class="orb-container">
+        <button id="orbBtn" class="orb" aria-label="Toggle System">
+          <div class="orb-core"></div>
+        </button>
+      </div>
+    </div>
+    <!-- Menu toggle -->
+    <div class="toggle-wrap">
+      <button class="symbol-button main-toggle" id="toggleBtn" title="Menu / Iniciar">≡</button>
+    </div>
+    <!-- Controles TTS -->
+    <div class="symbol-wrap">
+      <button class="symbol-button" id="btn-prev" title="Voltar Bloco" data-action="back">◀</button>
+    </div>
+    <div class="symbol-wrap">
+      <button class="symbol-button" id="btn-play" title="Play/Pause" data-action="nav">▶</button>
+    </div>
+    <div class="symbol-wrap">
+      <button class="symbol-button" id="tts-stop" title="Parar" data-action="back">■</button>
+    </div>
+    <!-- Arquétipo -->
+    <button class="symbol-button" id="btn-arch" title="Trocar Arquétipo de Voz">
+      <div class="orb-microphone-container">
+        <div class="tts-orb-mini">
+          <div class="orb-coret" id="main-orb">
+            <div class="orb-coret"></div>
+          </div>
+        </div>
+      </div>
+    </button>
+    <div class="hud-info" id="hudStatus">KOBLLUX · ORB NEXUS</div>
+  </div>
+  <!-- ── Arch Overlay ──────────────────────────────────────── -->
+  <div id="arch-overlay"></div>
+  <!-- ════════════════════════════════════════════════════════
+       SOLAR COCKPIT · ORB TOGGLE
+  ════════════════════════════════════════════════════════ -->
+  <div class="header-orb" id="orbToggle" title="Acessar Cockpit do Usuário" onclick="toggleDrawer('drawerProfile')">
+    <svg><use href="#icon-orb"></use></svg>
+  </div>
+  <div id="usernameDisplay"></div>
+  <div id="drawerOverlay" class="drawer-overlay" onclick="toggleDrawer()"></div>
+  <div id="drawerProfile" class="drawer" aria-hidden="true">
+    <div class="drawer-content">
+      <div class="drawer-header">
+        <h3>
+          <svg style="width:20px;height:20px;margin-right:8px;stroke:var(--secondary)"><use href="#icon-orb"></use></svg>
+          Cockpit Solar
+        </h3>
+        <button class="btn-icon" style="width:38px;height:38px;border-radius:12px;" onclick="toggleDrawer('drawerProfile')">✕</button>
+      </div>
+      <div class="drawer-body">
+          <div id="bgThumbPanel" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:15px;"></div>
+        <div class="cockpit-item" style="text-align:center;margin-bottom:15px;">
+          <div class="cockpit-label">Ciclo Solar</div>
+          <div id="statusSolarMode" style="font-size:1.2rem;font-weight:bold;margin:5px 0;">AUTO</div>
+          <div class="control-row">
+            <button class="btn-block" id="btnCycleSolar">Manual ☀️/🌙</button>
+            <button class="btn-block" id="btnAutoSolar">Auto 🕒</button>
+          </div>
+        </div>
+        <div class="cockpit-grid">
+          <div class="cockpit-item">
+            <div class="cockpit-label">Identificação</div>
+            <input type="text" id="inputUserId" class="cockpit-input" placeholder="Viajante">
+          </div>
+          <div class="cockpit-item">
+            <div class="cockpit-label">Modelo IA</div>
+            <input type="text" id="inputModel" class="cockpit-input" placeholder="google/gemini-2.0-flash-exp">
+          </div>
+          <div class="cockpit-item">
+            <div class="cockpit-label">Background</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span id="bgStatusText" style="font-size:0.8rem;color:var(--text-muted)">Nenhum</span>
+              <label class="btn-icon" style="width:30px;height:30px;border-radius:5px;">
+                <input type="file" id="bgUploadInput" accept="image/*" style="display:none">
+                <svg><use href="#icon-cards"></use></svg>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ════════════════════════════════════════════════════════
+       KOBLLUX ROUTE EDITOR  (LONG-PRESS · versão legacy — id único)
+       ⚠ Este bloco era o 1º kblx-back duplicado.
+         IDs renomeados → kblx-legacy-*
+  ════════════════════════════════════════════════════════ -->
+  <!-- ╔══════════════════════════════════════════╗
+       ║  KOBLLUX · LONG-PRESS URL EDITOR (v1)  ║
+       ║  Segurar 3s → edita data-url do botão  ║
+       ╚══════════════════════════════════════════╝ -->
+  <!-- <div id="kblx-legacy-back">
+    <div id="kblx-legacy-panel">
+      <div class="p-chip">⌘ KOBLLUX HUD · EDITOR DE ROTA</div>
+      <div class="p-title" id="kblx-legacy-ttl">Botão</div>
+      <label class="p-lbl" for="kblx-legacy-inp">Novo valor para data-url</label>
+      <input id="kblx-legacy-inp" type="text" placeholder="arquivo.html  ou  https://..." spellcheck="false" autocomplete="off">
+      <div class="kblx-row">
+        <button class="kblx-btn kblx-save" id="kblx-legacy-btn-save">⊙ Salvar no botão</button>
+        <button class="kblx-btn kblx-close" id="kblx-legacy-btn-close">✕ Fechar</button>
+      </div>
+    </div>
+  </div> -->
+  <!-- ════════════════════════════════════════════════════════
+       MONOLITH VAULT
+  ════════════════════════════════════════════════════════ -->
+  <div class="void-ambient"></div>
+  <div class="monolith-wrapper">
+    <div class="monolith">
+      <div class="mono-header">
+        <div class="mono-brand">
+          <div class="brand-icon"></div>
+          <div class="brand-title">DUAL <span style="opacity:0.3; margin:0 4px;">//</span> MONOLITH</div>
+        </div>
+        <div id="sysStatus" class="status-badge">STANDBY</div>
+      </div>
+      <div class="mono-body">
+        <!-- VAULT VIEW -->
+        <div id="viewVault" class="vault-view">
+          <div class="actions-grid">
+            <button id="createBtn" class="action-card btn-create"><span>NOVO</span></button>
+            <div id="dropZone" class="action-card dashed">
+              <span style="font-family:var(--font-code)">UPLOAD</span>
+            </div>
+            <button id="backupBtn" class="action-card"><span>BACKUP</span></button>
+            <button id="safeBtn" class="action-card"><span id="safeLabel">SAFE</span></button>
+          </div>
+          <div class="top-bar">
+            <div class="brand-text"></div>
+            <div class="sep"></div>
+            <button id="themeToggle" class="theme-btn" title="Toggle Theme">
+              <i class="fa-solid fa-circle-half-stroke"></i>
+            </button>
+          </div>
+          <!-- Sidebar direita: atalhos de navegação -->
+          <div class="sidebar right">
+            <button class="symbol-button icon-btnn nav-btn" data-url="https://www.infodose.com.br/splash.html" data-action="nav" data-hover="true" title="Void">Φ</button>
+            <button class="symbol-button icon-btnn nav-btn" data-url="https://kodux78k.github.io/oiDual--Y-/M0D/KKP/index.html" title="a€dualDex">꩜</button>
+            <button class="symbol-button icon-btnn nav-btn" data-url="https://kodux78k.github.io/oiDual-SmB/" title="a€SUMBUS">☼</button>
+            <div class="symbol-wrap">
+              <button class="symbol-button" data-id="phi" data-url="https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78F.html">🌌</button>
+            </div>
+            <div class="symbol-wrap">
+              <button class="symbol-button" data-id="viv" data-url="https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78EM.html">🛋️</button>
+            </div>
+            <div class="symbol-wrap">
+              <button class="symbol-button" data-id="home" data-url="https://kodux78k.github.io/oiDual-idHome/">◌</button>
+            </div>
+            <div class="symbol-wrap">
+              <button class="symbol-button" data-id="doc" data-url="https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78NP.html">◘</button>
+            </div>
+          </div>
+          <!-- Sidebar esquerda -->
+          <div class="sidebar left">
+            <button id="uploadBtn" class="icon-btn" title="Import File">
+              <i class="fa-solid fa-upload"></i>
+            </button>
+            <input type="file" id="uploadInput" hidden="" accept=".html,.js,.json">
+            <button id="remoteBtn" class="icon-btn" title="Fetch Remote">
+              <i class="fa-solid fa-globe"></i>
+            </button>
+          </div>
+          <div class="list-header">
+            <span class="list-label">VAULT STORAGE</span>
+            <span class="list-label" id="vaultCount">0 ITEMS</span>
+          </div>
+          <div id="stackList" class="flex flex-col gap-3" style="padding-bottom:3rem;"></div>
+        </div>
+        <!-- EDITOR VIEW -->
+        <div id="viewEditor" class="editor-view state-translated-x">
+          <div class="editor-header">
+            <div class="editor-title">:: MODULE CREATOR</div>
+            <button id="cancelEditor" class="btn-cancel">CANCELAR</button>
+          </div>
+          <input id="modTitle" type="text" placeholder="NOME DO MÓDULO" class="input-title">
+          <div class="code-area">
+            <textarea id="modContent" placeholder=""></textarea>
+          </div>
+          <div class="flex gap-3">
+            <button id="saveEditor" class="btn-save">SALVAR NO VAULT</button>
+          </div>
+        </div>
+      </div>
+      <div class="mono-footer">
+        <div id="pulseBar"></div>
+      </div>
+      <!-- RUNTIME LAYER -->
+      <div id="runtimeLayer" class="runtime-layer">
+        <div class="runtime-bar">
+          <div class="runtime-indicator">
+            <div class="dot"></div>
+            <span>a€Dual // ACTIVE</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="exportBtn" class="btn-cancel" style="font-size:10px;">EXPORT TO NAV</button>
+            <button id="closeRuntime" class="icon-btn" style="width:24px;height:24px;border:none;background:transparent;">
+              <i data-lucide="x" style="width:16px;"></i>
+            </button>
+          </div>
+        </div>
+        <div class="runtime-frame-wrap">
+          <iframe id="appFrame" style="border:0;width:100%;height:100%;display:block;" sandbox="allow-scripts allow-forms allow-modals allow-same-origin allow-pointer-lock"></iframe>
+          <div class="scanline"></div>
+        </div>
+      </div>
+    </div><!-- .monolith -->
+  </div><!-- .monolith-wrapper -->
+  <!-- TOAST (Vault) -->
+  <div id="toast" class="toast-hidden">
+    <span id="toastMsg">System Ready</span>
+  </div>
+  <!-- ════════════════════════════════════════════════════════
+       KOBLLUX QUICK MENU
+  ════════════════════════════════════════════════════════ -->
+  <div id="kblx-quick">
+    <button class="kq-item" data-kq="edit">✦ Editar</button>
+    <button class="kq-item" data-kq="symbol">◉ SymbolBar</button>
+    <button class="kq-item" data-kq="frame">⟁ Session</button>
+    <button class="kq-item" data-kq="dock">⌘ Dock</button>
+    <button class="kq-item" data-kq="duplicate">📋 Duplicar</button>
+    <button class="kq-item" data-kq="favorite">⭐ Favoritar</button>
+    <button class="kq-item" data-kq="full">⋯ Mais</button>
+  </div>
+  <!-- ════════════════════════════════════════════════════════
+       KOBLLUX ROUTE EDITOR  (NAGATANAZARE · QUICK ROUTE — versão principal)
+  ════════════════════════════════════════════════════════ -->
+  <div id="kblx-back" aria-hidden="true">
+    <div id="kblx-panel">
+      <div class="kblx-head">
+        <div class="p-chip">⌘ NAGATANAZARE · QUICK ROUTE</div>
+        <button class="kblx-icon-btn" id="kblx-btn-close" type="button">✕</button>
+      </div>
+      <div class="kblx-title-wrap">
+        <h2 class="p-title" id="kblx-ttl">Botão</h2>
+        <p class="kblx-sub" id="kblx-sub">Escolha rápido, salve e injete sem cobrir a tela.</p>
+      </div>
+      <div class="kblx-current" id="kblx-current">Nenhuma rota definida.</div>
+      <section class="kblx-section">
+        <label class="p-lbl" for="kblx-inp">
+          Novo valor para <code>data-url</code>
+        </label>
+        <input id="kblx-inp" type="text" placeholder="arquivo.html  ou  https://..." spellcheck="false" autocomplete="off">
+      </section>
+      <div class="kblx-actions">
+        <button class="kblx-btn kblx-save" id="kblx-btn-save" type="button">Salvar</button>
+        <button class="kblx-btn kblx-inject" id="kblx-btn-orb-inject" type="button">SymbolBar</button>
+        <button class="kblx-btn kblx-frame" id="kblx-btn-frame" type="button">Session Frame</button>
+      </div>
+      <div class="kblx-more-row">
+        <button class="kblx-mini" id="kblx-btn-more" type="button">Mais</button>
+        <button class="kblx-mini" id="kblx-btn-clear" type="button">Limpar</button>
+      </div>
+      <div class="kblx-advanced" id="kblx-advanced">
+        <section class="kblx-section">
+          <div class="kblx-note" style="margin-top:0">Presets rápidos</div>
+          <div class="kblx-more-row">
+            <button class="kblx-mini" type="button" data-orb-preset="orb">◉ Orb</button>
+            <button class="kblx-mini" type="button" data-orb-preset="frame">⟁ Frame</button>
+            <button class="kblx-mini" type="button" data-orb-preset="dock">⌘ Dock</button>
+          </div>
+        </section>
+        <section class="kblx-section">
+          <div class="kblx-note">
+            Long press em qualquer <code>.symbol-button[data-url]</code> abre este painel.
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</div><!-- #root -->
+<!-- ══════════════════════════════════════════════════════════
+     SCRIPTS  (ordem de carregamento preservada)
+     — JS_0  : type=module  (KxaT main-1)
+     — JS_2+3: 78F inline scripts
+     — JSI_1 : idle dock logic
+     — JSI_4 : boot log
+     — JSI_5 : ARCHETYPES global
+     — JS_6→15: módulos DH0 / vault / fusion
+     — JS_9+10 : ORB modules (type=module)
+     — Solar scripts
+     — dikob0 + bgPanel
+     — JSI_16  : BODY THEME SYNC (novo — sempre por último)
+══════════════════════════════════════════════════════════ -->
+<!-- KxaT Main -->
+<script src="https://kodux78k.github.io/oiDual--Y-/M0D/kob-DH0/js/kob-outline-uuni.js" data-k-id="JS_1"></script>
+<script type="module" src="https://www.infodose.com.br/js/modules/kob-fetchh.js" data-k-id="JS_2"></script>
+<script type="module" src="https://www.infodose.com.br/js/kob.js" data-k-id="JS_3"></script>
+<!-- 78F Inline -->
+<script data-k-id="JSI_4">
+  console.log("Sistema operacional SÜMBÜS Pronto.");
+</script>
+<!-- ARCHETYPES global —
+     • window.ARCHETYPES em vez de "const ARCHETYPES": evita
+       "Identifier has already been declared" se algum outro módulo
+       (ex.: fetch de infodose.com.br/js/modules/archetypes.json)
+       também definir esse nome no escopo global.
+     • Nome do usuário REMOVIDO da lista — ele não é um arquétipo,
+       e ficava injetando "null" (ou o nome) como 21º item, causando
+       os index mismatches nas funções do motor. Agora vive separado
+       em window.KOB_USER_NAME. -->
+<script data-k-id="JSI_5">
+window.ARCHETYPES = window.ARCHETYPES || [
+  "atlas","nova","vitalis","pulse","kaos","kodux","lumine","aion",
+  "kobllux","artemis","serena","genus","solus","rhea","uno","dual",
+  "trinity","infodose","horus","bllue"
+];
+window.KOB_USER_NAME = localStorage.getItem("di_userName") || "";
+</script>
+<!-- DH0 Modules -->
+<!-- <script src="https://kodux78k.github.io/oiDual--Y-/M0D/kob-DH0/js/0x03_expandir_V_D7.js" data-k-id="JS_7"></script> -->
+<!-- <script src="https://kodux78k.github.io/oiDual--Y-/M0D/kob-DH0/js/0x07_selar_B_D3.js" data-k-id="JS_8"></script> -->
+<script src="https://kodux78k.github.io/oiDual--Y-/M0D/kard/js/modules/o0.js" data-k-id="JS_6"></script>
+<script src="https://kodux78k.github.io/oiDual--Y-/js/koblluxv30.js" data-k-id="JS_7"></script>
+<script src="https://kodux78k.github.io/oiDual--Y-/js/di-icon-btn.js" data-k-id="JS_8"></script>
+<!-- ORB Modules -->
+<script type="module" src="https://kodux78k.github.io/oiDual--Y-/M0D/0RB/js/modules/inline-1.js" data-k-id="JS_9"></script>
+<script type="module" src="https://kodux78k.github.io/oiDual--Y-/M0D/0RB/js/modules/inline-2.js" data-k-id="JS_10"></script>
+<!-- Solar / di_core -->
+<script src="https://kodux78k.github.io/oiDual--Y-/js/inline-1.js" data-k-id="JS_11"></script>
+<script src="https://kodux78k.github.io/oiDual-KxT-di_oi/js/modules/bgPanel.js" data-k-id="JS_12"></script>
+<script src="https://kodux78k.github.io/oiDual--Y-/js/di_corei.js" data-k-id="JS_13"></script>
+<script src="https://kodux78k.github.io/oiDual--Y-/js/di_mood.js" data-k-id="JS_14"></script>
+<!-- dikob0 + bgPanel 78F -->
+<!--
+<script type="module">
+    import 'https://www.infodose.com.br/js/modules/kdx-perf-container.js';
+  </script>
+-->
+   <script data-k-id="JSI_15">
+document.body.dataset.user = localStorage.getItem("di_userName") || "";
+   function atualizarTitulo() {
+    const user = document.documentElement.dataset.user || "";
+    const arch = document.documentElement.dataset.arch || "";
+    themeName.textContent = `${user} • ${arch}`;
+}
+     const observer = new MutationObserver(atualizarTitulo);
+observer.observe(document.documentElement,{
+    attributes:true,
+    attributeFilter:["data-arch"]
+});
+     const root = document.documentElement;
+root.dataset.user =
+    localStorage.getItem("di_userName") || "";
+const user = root.dataset.user;
+const arch = root.dataset.arch;
+</script>
+<!-- ── IDLE DOCK (JSI_1) ─────────────────────────────────────
+     Posicionado APÓS todos os scripts para garantir que
+     .kob-tts-dock já foi inserido no DOM pelos módulos acima
+─────────────────────────────────────────────────────────── -->
+
+<!-- ════════════════════════════════════════════════════════
+     BODY THEME SYNC (JSI_16) — novo, adicionado no final
+     de propósito, depois de TODOS os módulos externos
+     (o0.js, koblluxv30.js, di_corei.js, di_mood.js, ArchLoader
+     etc.), pra sempre rodar por último e nunca ser sobrescrito.
+
+     O que faz:
+     1. Copia data-arch do <html> pro <body> — <html> continua
+        sendo a fonte da verdade pro CSS (html[data-arch="..."]),
+        o <body> só reflete o mesmo valor, pra qualquer regra
+        body[data-arch] ou script que espere o atributo lá também.
+     2. Copia TODAS as CSS custom properties inline do <html>
+        (--kob-voice-primary, --kob-voice-secondary, --orb-*, etc.
+        — primária, secundária, qualquer uma que algum módulo
+        setar via .style.setProperty) pro <body>. Não precisa
+        saber os nomes exatos: pega tudo que comece com "--".
+     3. Roda 1x no boot (cobre o estado inicial) e depois fica
+        de olho via MutationObserver — qualquer módulo que trocar
+        data-arch ou o style do <html> atualiza o body sozinho,
+        sem precisar chamar nada manualmente.
+════════════════════════════════════════════════════════ -->
+<script data-k-id="JSI_16">
+(function () {
+  function syncBodyTheme() {
+    const html = document.documentElement;
+    const body = document.body;
+    if (!body) return;
+
+    // 1) arquétipo ativo espelhado no body
+    body.dataset.arch = html.dataset.arch || "";
+
+    // 2) todas as CSS custom properties (--kob-*, --orb-*, ...)
+    //    definidas inline no <html> pro <body>
+    const inline = html.style;
+    for (let i = 0; i < inline.length; i++) {
+      const prop = inline[i];
+      if (prop.indexOf("--") === 0) {
+        body.style.setProperty(prop, inline.getPropertyValue(prop));
+      }
+    }
+  }
+
+  // estado inicial (cobre data-arch já presente ao carregar a página)
+  syncBodyTheme();
+
+  // qualquer módulo que troque data-arch ou as CSS vars no <html>
+  // atualiza o body automaticamente
+  new MutationObserver(syncBodyTheme).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-arch", "style"]
+  });
+
+  console.log("[BodyThemeSync] ativo — body espelha data-arch + cores do html.");
+})();
+</script>
+</body></html>`); 
