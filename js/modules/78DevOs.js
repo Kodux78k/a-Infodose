@@ -2,7 +2,8 @@
 <!-- ========================================== -->
 <!-- KODUX DEV PANEL IMPLEMENTATION (UI)        -->
 <!-- ========================================== -->
-
+<html>
+<body>
 <style id="kdev-styles">
   /* CSS Base e Isolamento */
   .kdev-wrapper * {
@@ -639,4 +640,6 @@
   document.addEventListener('DOMContentLoaded', () => {
       KDevPanel.init();
   });
-</script>`);
+</script>
+  </body> </html>  
+  `);
