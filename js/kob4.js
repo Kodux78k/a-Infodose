@@ -14,9 +14,7 @@
 
   <!-- ── Z-INDEX TOKENS (1x só) ────────────────────────────── -->
 
-    <div style="display:none" id="avatarTargett" class="orb">.</div>
 
-    <div style="display:none" id="themeName">Tema: (selecionado aqui)</div>
 
  
   <link href="https://www.infodose.com.br/css/main.css" rel="stylesheet" data-k-id="L_5">
@@ -24,43 +22,37 @@
   <!-- ── LUCIDE (1x, no head, síncrono) ────────────────────── -->
   <script src="https://unpkg.com/lucide@latest" data-k-id="JS_0"></script>
   <!-- ── PARTICLES ─────────────────────────────────────────── -->
-<style data-k-id="SI_0">
-    :root {
-      --z-base:    0;
-      --z-content: 100;
-      --z-widget:  500;
-      --z-overlay: 1000;
-      --z-system:  5000;
-    }
 
-/* Overlay */
-
-#drawerProfile,
-
- .drawer{
-  position:fixed;
-  top:50%;
-  left:50%;
-  transform:translate(-50%, -50%);
-  width:min(90vw, 700px);
-  max-height:90vh;
-  overflow:auto;
-
-}
-  </style>
-
-<style>
-        :root {
-          --z-base: 0;
-          --z-content: 100;
-          --z-widget: 500;
-          --z-overlay: 1000;
-          --z-system: 5000;
-        }
-      </style>
 </head>
 <body>
+<style> 
+body, html{overflow-y:auto !important;}
+ /* Orb */
+ .orb {      
+ background: radial-gradient(circle at 30% 30%, var(--grad-a, #78e7ff), transparent 78%),
+                  radial-gradient(circle at 70% 70%, var(--kob-voice-secondary, #00f2ff), var(--orb-secondary, #3b82f6));
+      box-shadow: 0 0 18px var(--kob-voice-primary), 0 0 36px rgba(120,227,255,0.4);
+      animation: orbSpin var(--orb-speed) linear infinite;
+      width: 100%; height: 100%; border-radius: 50%; display: grid; place-items: center;
 
+      width: 56px; height: 56px; 
+
+    }
+    .orb-core {
+
+      min-width: 100%; min-height: 100%; 
+border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, var(--orb-accent, #78e7ff), transparent 78%),
+                  radial-gradient(circle at 70% 70%, var(--kob-voice-primary, #00f2ff), var(--kob-voice-secondary, #3b82f6));
+      box-shadow: 0 0 18px var(--kob-voice-secondary), 0 0 36px rgba(120,227,255,0.4);
+      animation: orbSpin var(--orb-speed) linear infinite;
+
+      width: 56px; height: 56px; 
+
+    }
+    @keyframes orbSpin { to { transform: rotate(360deg); } }
+    @keyframes orbPulse { from { transform: scale(1); } to { transform: scale(1.15); } }
+</style>
 <!-- ══════════════════════════════════════════════════════════
      ROOT
 ══════════════════════════════════════════════════════════ -->
