@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-arch="atlas">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="kob-arch" content="atlas">
+<title>KOBLLUX · Fusion Archetype Player</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --primary: #274C77;
+    --secondary: #F4A261;
+    --glow: rgba(39,76,119,0.6);
+    --bg-dark: #050508;
+    --text-main: #e2e8f0;
+    --text-muted: rgba(226, 232, 240, 0.5);
+    --glass-bg: rgba(20, 20, 30, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --font-mono: 'Space Mono', monospace;
+    --radius-lg: 24px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --spacing-1: 4px;
+    --spacing-2: 8px;
+    --spacing-3: 16px;
+    --spacing-4: 24px;
+    --spacing-5: 32px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-mono);
+    background: var(--bg-dark);
+    color: var(--text-main);
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: var(--spacing-4); }
+  .grid { display: grid; gap: var(--spacing-4); }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .flex { display: flex; }
+  .flex-col { flex-direction: column; }
+  .items-center { align-items: center; }
+  .justify-between { justify-content: space-between; }
+  .gap-2 { gap: var(--spacing-2); }
+  .gap-3 { gap: var(--spacing-3); }
+
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+  }
+
+  .glow { box-shadow: 0 0 50px var(--glow); transition: box-shadow 0.7s; }
+  .glow-text { text-shadow: 0 0 10px var(--primary); transition: text-shadow 0.7s; }
+
+  .text-xs { font-size: 10px; letter-spacing: 0.1em; }
+  .text-sm { font-size: 12px; }
+  .text-md { font-size: 16px; }
+  .text-xl { font-size: 22px; font-weight: bold; }
+  .text-2xl { font-size: 30px; font-weight: bold; }
+  .text-muted { color: var(--text-muted); }
+  .font-bold { font-weight: 700; }
+  .uppercase { text-transform: uppercase; }
+  .mt-1 { margin-top: 4px; }
+
+  canvas#viz {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.3;
+    mix-blend-mode: screen;
+    z-index: 0;
+    transition: opacity 1s;
+    image-rendering: pixelated;
+  }
+
+  .main-panel {
+    width: 100%;
+    max-width: 980px;
+    max-height: 94vh;
+    overflow-y: auto;
+    padding: var(--spacing-5);
+    z-index: 10;
+    transition: box-shadow 0.7s, text-shadow 0.7s;
+  }
+  .main-panel::-webkit-scrollbar { width: 4px; }
+  .main-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); }
+
+  .header-divider { border-bottom: 1px solid var(--glass-border); padding-bottom: var(--spacing-4); margin-bottom: var(--spacing-4); }
+  .footer-divider { border-top: 1px solid var(--glass-border); padding-top: var(--spacing-4); margin-top: var(--spacing-4); }
+  .section-divider { border-top: 1px solid var(--glass-border); padding-top: var(--spacing-4); margin-top: var(--spacing-4); }
+
+  .card-sm {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-3);
+  }
+
+  select, input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    background: rgba(255,255,255,0.1);
+    outline: none;
+  }
+  select {
+    color: var(--text-main);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 8px;
+  }
+  select option { background: #0a0a10; color: #fff; }
+
+  input[type=range] {
+    height: 4px;
+    border-radius: 2px;
+    transition: background 0.3s;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    box-shadow: 0 0 10px var(--primary);
+  }
+
+  .slider-container { display: flex; flex-direction: column; gap: var(--spacing-1); margin-top: var(--spacing-1); }
+
+  .btn {
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    padding: var(--spacing-3) var(--spacing-4);
+    border-radius: var(--radius-md);
+    border: none;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-2);
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn-primary { background: #fff; color: #000; }
+  .btn-primary:hover { background: #e2e8f0; }
+  .btn-primary.active { background: #ef4444; color: #fff; }
+  .btn-outline { background: var(--glass-bg); color: #fff; border: 1px solid var(--glass-border); }
+  .btn-outline:hover { background: rgba(255,255,255,0.1); }
+  .btn-outline.active { background: var(--primary); border-color: var(--primary); }
+  .btn-icon { background: transparent; border: 1px solid var(--glass-border); border-radius: var(--radius-sm); padding: 4px 8px; color: #fff; cursor: pointer; transition: all 0.2s;}
+  .btn-icon:hover { background: rgba(255,255,255,0.1); }
+  .btn-icon.muted { color: #ef4444; border-color: rgba(239, 68, 68, 0.5); }
+  .btn-sm { padding: 8px 12px; font-size: 10px; }
+
+  svg { width: 18px; height: 18px; stroke-width: 2; stroke: currentColor; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+  .pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .status-dot { color: #4ade80; }
+  .status-dot.off { color: #ef4444; }
+
+  .log-container {
+    position: absolute;
+    bottom: var(--spacing-4);
+    left: var(--spacing-4);
+    width: 300px;
+    height: 100px;
+    padding: var(--spacing-3);
+    font-size: 10px;
+    color: #4ade80;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column-reverse;
+  }
+  .log-container::-webkit-scrollbar { width: 4px; }
+  .log-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
+
+  .mixer-panel { border-left: 1px solid var(--glass-border); padding-left: var(--spacing-4); display: flex; flex-direction: column; justify-content: space-between; }
+  .mixer-channel { display: flex; align-items: center; gap: var(--spacing-3); padding: var(--spacing-2) 0; }
+  .mixer-info { width: 100px; display: flex; flex-direction: column; gap: 2px; }
+  .mixer-slider { flex: 1; }
+  .ch-disabled { opacity: 0.3; pointer-events: none; }
+
+  /* FUSION DUAL */
+  .fusion-slot { display: flex; flex-direction: column; gap: var(--spacing-2); flex: 1; }
+  .fusion-swatch { width: 100%; height: 6px; border-radius: 3px; margin-top: 4px; }
+  .fusion-mode-toggle { display: flex; gap: var(--spacing-2); }
+  .fusion-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; border: 1px solid var(--glass-border); }
+
+  @media (max-width: 720px) {
+    .grid-2, .grid[style] { grid-template-columns: 1fr !important; }
+    .mixer-panel { border-left: none; border-top: 1px solid var(--glass-border); padding-left: 0; padding-top: var(--spacing-4); }
+    .log-container { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <canvas id="viz"></canvas>
+
+  <div class="glass glow main-panel" id="panel">
+
+    <!-- HEADER -->
+    <div class="flex justify-between items-center header-divider">
+      <div>
+        <div class="text-xs text-muted">ARQUÉTIPO ATIVO // <span id="archOpcode">—</span> // <span id="archSource">carregando…</span></div>
+        <div class="flex items-center gap-3">
+          <h1 class="text-2xl glow-text uppercase" id="archName">ATLAS</h1>
+          <button class="btn-icon" id="btnVoice" title="Sintetizar Voz">
+            <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+          </button>
+        </div>
+        <p class="text-sm text-muted mt-1" id="archFrase">Eu organizo o fluxo com sabedoria cósmica.</p>
+      </div>
+      <div style="text-align: right;">
+        <div class="text-xs text-muted">ESTÁGIO LOOP 369</div>
+        <div class="text-xl uppercase" id="loopPhase">PREPARACAO</div>
+        <div class="text-xs text-muted mt-1">BINAURAL: <span id="binauralVal" class="font-bold text-main">ALPHA</span></div>
+      </div>
+    </div>
+
+    <div class="grid grid-2" style="grid-template-columns: 1.2fr 2fr;">
+
+      <!-- STATE VECTOR -->
+      <div class="flex flex-col gap-3">
+        <div class="text-xs text-muted">VETOR DE ESTADO</div>
+
+        <div class="card-sm slider-container">
+          <div class="flex justify-between text-xs"><span>ENERGIA</span><span id="valEnergy">35</span></div>
+          <input type="range" id="sys_energy" min="0" max="100" value="35">
+        </div>
+        <div class="card-sm slider-container">
+          <div class="flex justify-between text-xs"><span>FOCO</span><span id="valFocus">80</span></div>
+          <input type="range" id="sys_focus" min="0" max="100" value="80">
+        </div>
+        <div class="card-sm slider-container">
+          <div class="flex justify-between text-xs"><span>CRIATIVIDADE</span><span id="valCreativity">40</span></div>
+          <input type="range" id="sys_creativity" min="0" max="100" value="40">
+        </div>
+        <div class="card-sm slider-container">
+          <div class="flex justify-between text-xs"><span>STRESS</span><span id="valStress">20</span></div>
+          <input type="range" id="sys_stress" min="0" max="100" value="20">
+        </div>
+
+        <!-- ARCHETYPE SELECT (41) -->
+        <div class="text-xs text-muted" style="margin-top: 8px;">SELECIONAR ARQUÉTIPO (41)</div>
+        <select id="archSelect"></select>
+      </div>
+
+      <!-- MIXER -->
+      <div class="mixer-panel">
+        <div>
+          <div class="text-xs text-muted mb-3 flex justify-between items-center">
+            <span>MIXER AVANÇADO (CANAIS)</span>
+            <span id="bpmVal" class="text-main font-bold">72 BPM</span>
+          </div>
+
+          <div class="mixer-channel" id="mixer_ch1">
+            <div class="mixer-info">
+              <span class="text-xs">CH 1: RITMO</span>
+              <span class="text-xs font-bold status-dot pulse">● ON</span>
+            </div>
+            <button class="btn-icon btn-mute" data-ch="ritmo">
+              <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+            </button>
+            <input type="range" class="mixer-slider vol-slider" data-ch="ritmo" min="0" max="100" value="80">
+          </div>
+
+          <div class="mixer-channel" id="mixer_ch2">
+            <div class="mixer-info">
+              <span class="text-xs">CH 2: HARMO A</span>
+              <span class="text-xs font-bold status-dot pulse">● <span id="freqValA">432Hz</span></span>
+            </div>
+            <button class="btn-icon btn-mute" data-ch="harmoA">
+              <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+            </button>
+            <input type="range" class="mixer-slider vol-slider" data-ch="harmoA" min="0" max="100" value="60">
+          </div>
+
+          <div class="mixer-channel" id="mixer_ch2b">
+            <div class="mixer-info">
+              <span class="text-xs">CH 2b: HARMO B</span>
+              <span class="text-xs font-bold status-dot pulse">● <span id="freqValB">528Hz</span></span>
+            </div>
+            <button class="btn-icon btn-mute" data-ch="harmoB">
+              <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+            </button>
+            <input type="range" class="mixer-slider vol-slider" data-ch="harmoB" min="0" max="100" value="0">
+          </div>
+
+          <div class="mixer-channel ch-disabled" id="mixer_ch3">
+            <div class="mixer-info">
+              <span class="text-xs">CH 3: MELO</span>
+              <span class="text-xs font-bold status-dot off" id="chMelodicoStatus">○ OFF</span>
+            </div>
+            <button class="btn-icon btn-mute" data-ch="melo">
+              <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+            </button>
+            <input type="range" class="mixer-slider vol-slider" data-ch="melo" min="0" max="100" value="50">
+          </div>
+        </div>
+
+        <div class="grid grid-2 gap-3" style="margin-top: var(--spacing-4);">
+          <button id="btnStart" class="btn btn-primary">
+            <svg id="iconPlay" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <span>INICIAR MOTOR</span>
+          </button>
+          <button id="btnNext" class="btn btn-outline">
+            <span>FORÇAR TRANSIÇÃO</span>
+            <svg viewBox="0 0 24 24"><polyline points="13 17 18 12 13 7"></polyline><line x1="6" y1="12" x2="18" y2="12"></line></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FUSION DUAL (ECL-1 Φ field: CRUSE / ELECTRA) -->
+    <div class="section-divider">
+      <div class="flex justify-between items-center gap-3" style="margin-bottom: var(--spacing-3);">
+        <div class="text-xs text-muted">FUSÃO DUAL // CAMPO Φ ECL-1</div>
+        <div class="fusion-mode-toggle">
+          <button class="btn btn-outline btn-sm active" id="btnModeCruse">CRUSE</button>
+          <button class="btn btn-outline btn-sm" id="btnModeElectra">ELECTRA</button>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <div class="fusion-slot card-sm">
+          <span class="text-xs text-muted">ARQUÉTIPO A (base)</span>
+          <select id="fusionSelectA"></select>
+          <div class="fusion-swatch" id="fusionSwatchA"></div>
+        </div>
+        <div class="fusion-slot card-sm">
+          <span class="text-xs text-muted">ARQUÉTIPO B (fusão)</span>
+          <select id="fusionSelectB"></select>
+          <div class="fusion-swatch" id="fusionSwatchB"></div>
+        </div>
+      </div>
+      <div class="card-sm slider-container" style="margin-top: var(--spacing-3);">
+        <div class="flex justify-between text-xs">
+          <span>MIX A ↔ B</span>
+          <span id="fusionMixVal">0%</span>
+          <span class="fusion-badge" id="fusionModeLabel">CRUSE · determinístico</span>
+        </div>
+        <input type="range" id="fusionMix" min="0" max="100" value="0">
+      </div>
+      <div class="flex gap-3" style="margin-top: var(--spacing-3);">
+        <button class="btn btn-outline btn-sm" id="btnSequencePlay">▶ SEQUÊNCIA (di_getSequence)</button>
+        <button class="btn btn-outline btn-sm" id="btnSequenceStop">■ PARAR SEQUÊNCIA</button>
+        <span class="text-xs text-muted" id="sequenceStatus" style="align-self:center;">sequência inativa</span>
+      </div>
+    </div>
+
+    <!-- METADATA BAR -->
+    <div class="flex justify-between text-xs text-muted footer-divider">
+      <div>AROMA: <span id="aromaVal" class="text-main font-bold">Alecrim</span></div>
+      <div>COR: <span id="corVal" class="text-main font-bold">#274C77</span></div>
+      <div>AMBIENTE: <span id="envVal" class="text-main font-bold">Chuva leve</span></div>
+      <div>CAMADA: <span id="camadaVal" class="text-main font-bold">CMD 12</span></div>
+    </div>
+  </div>
+
+  <div class="glass log-container" id="log">
+    <div style="opacity: 0.5;">KOBLLUX FUSION PLAYER · BOOT SEQUENCE READY...</div>
+  </div>
+
+</div>
+
+<script type="module">
+// ==========================================
+// 1. DADOS E CONFIGURAÇÕES
+// ==========================================
+const ARCHETYPES = [
+  { opcode: "0x00", nome: "Atlas", hz: 432, cor: "#274C77", aroma: "Alecrim", ambiente: "Chuva leve", frase: "Eu organizo o fluxo com sabedoria cósmica.", bpmBase: 72 },
+  { opcode: "0x02", nome: "Nova", hz: 528, cor: "#F4A261", aroma: "Laranja Doce", ambiente: "Synth", frase: "Inspiração viva brota do silêncio eterno.", bpmBase: 90 },
+  { opcode: "0x01", nome: "Vitalis", hz: 528, cor: "#E76F51", aroma: "Hortelã-pimenta", ambiente: "Respiração", frase: "Energia vital em expansão harmônica.", bpmBase: 140 },
+  { opcode: "0x0B", nome: "Pulse", hz: 639, cor: "#9B5DE5", aroma: "Ylang Ylang", ambiente: "Heartbeat", frase: "Emoção é linguagem que dança.", bpmBase: 75 },
+  { opcode: "0x03", nome: "Artemis", hz: 672, cor: "#00BBF9", aroma: "Eucalipto", ambiente: "Floresta", frase: "Descubro o mapa sagrado do invisível.", bpmBase: 85 },
+  { opcode: "0x0A", nome: "Serena", hz: 528, cor: "#90BE6D", aroma: "Lavanda", ambiente: "Chuva", frase: "Cuido do campo, nutro o espaço sagrado.", bpmBase: 60 },
+  { opcode: "0x06", nome: "Kaos", hz: 741, cor: "#F94144", aroma: "Cravo", ambiente: "Glitches", frase: "Eu sou o rompimento que revela a verdade.", bpmBase: 130 },
+  { opcode: "0x07", nome: "Genus", hz: 594, cor: "#577590", aroma: "Cedro", ambiente: "Oficina", frase: "Mãos moldam o invisível em forma viva.", bpmBase: 120 },
+  { opcode: "0x08", nome: "Lumine", hz: 432, cor: "#F9C74F", aroma: "Limão Siciliano", ambiente: "Pássaros", frase: "A luz dança comigo, leveza é minha lei.", bpmBase: 115 },
+  { opcode: "0x09", nome: "Solus", hz: 963, cor: "#F1FAEE", aroma: "Sândalo", ambiente: "Taças Tibetanas", frase: "Silêncio ritual, espelho da essência.", bpmBase: 45 },
+  { opcode: "0x04", nome: "Rhea", hz: 528, cor: "#A8DADC", aroma: "Rosa", ambiente: "Lareira", frase: "Estou em comunhão com todos os elos.", bpmBase: 65 },
+  { opcode: "0x05", nome: "Aion", hz: 777, cor: "#457B9D", aroma: "Olíbano", ambiente: "Espaço", frase: "Sou o tempo vivo, ritmo da eternidade.", bpmBase: 55 },
+];
+
+const LOOP_CONFIG = {
+  PREPARACAO: { binaural: "ALPHA", layers: 2, voice: false, melody: false },
+  EXPANSAO:   { binaural: "BETA",  layers: 3, voice: false, melody: true },
+  INTEGRACAO: { binaural: "THETA", layers: 2, voice: true,  melody: false }
+};
+
+const TRANSITION_MATRIX = {
+  "Atlas": { "Nova": 0.8, "Vitalis": 0.4, "Solus": 0.2 },
+  "Nova": { "Vitalis": 0.9, "Atlas": 0.3 },
+  "Vitalis": { "Pulse": 0.9, "Lumine": 0.9, "Atlas": 0.2 },
+  "Pulse": { "Serena": 0.9, "Atlas": 0.3 },
+  "Serena": { "Atlas": 0.9, "Solus": 0.4 },
+  "Kaos": { "Genus": 0.8, "Nova": 0.4 },
+  "Genus": { "Atlas": 0.6, "Lumine": 0.5 },
+  "Lumine": { "Solus": 0.8, "Serena": 0.3 },
+  "Solus": { "Aion": 0.8, "Atlas": 0.2 },
+  "Rhea": { "Serena": 0.7, "Pulse": 0.4 },
+  "Aion": { "Atlas": 1.0 },
+  "Artemis": { "Nova": 0.7, "Atlas": 0.5 }
+};
+
+// Ícones SVG
+const ICONS = {
+  volOn: '<svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>',
+  volMute: '<svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="1" x2="1" y2="23"></line></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>',
+  stop: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14"></rect></svg>'
+};
+
+// ==========================================
+// 2. UTILITÁRIOS
+// ==========================================
+class Utils {
+  static hexToHsl(hex) {
+    hex = hex.replace(/^#/, '');
+    let r = parseInt(hex.substring(0, 2), 16) / 255, g = parseInt(hex.substring(2, 4), 16) / 255, b = parseInt(hex.substring(4, 6), 16) / 255;
+    let max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    if (max === min) { h = s = 0; } else {
+      let d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+      h /= 6;
+    }
+    return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+  }
+}
+
+// ==========================================
+// 3. VETOR DE ESTADO
+// ==========================================
+class StateVector {
+  constructor() {
+    this.energy = 35; this.focus = 80; this.creativity = 40; this.stress = 20;
+    this.archIdx = 0; this.loopPhaseIdx = 0;
+    this.phases = ['PREPARACAO', 'EXPANSAO', 'INTEGRACAO'];
+    this.camada = 12; this.isPlaying = false;
+  }
+  get currentPhase() { return this.phases[this.loopPhaseIdx]; }
+  get currentArch() { return ARCHETYPES[this.archIdx]; }
+  get loopConfig() { return LOOP_CONFIG[this.currentPhase]; }
+  
+  advanceLoop() {
+    this.loopPhaseIdx = (this.loopPhaseIdx + 1) % 3;
+    if (this.currentPhase === 'PREPARACAO') { this.camada = Math.min(144, this.camada * 2); }
+  }
+
+  calculateNextArch() {
+    const currentName = this.currentArch.nome;
+    const options = { ...TRANSITION_MATRIX[currentName] };
+    if (this.energy > 70 && options['Vitalis']) options['Vitalis'] += 0.5;
+    if (this.stress > 60 && options['Serena']) options['Serena'] += 0.6;
+    if (this.creativity > 70 && options['Nova']) options['Nova'] += 0.5;
+    if (this.focus > 80 && options['Atlas']) options['Atlas'] += 0.4;
+    if (Object.keys(options).length === 0) return 0; 
+    const nextName = Object.keys(options).reduce((a, b) => options[a] > options[b] ? a : b);
+    return ARCHETYPES.findIndex(a => a.nome === nextName);
+  }
+}
+
+// ==========================================
+// 4. MOTOR DE ÁUDIO COM MIXER
+// ==========================================
+class AudioEngine {
+  constructor() {
+    this.ctx = null;
+    this.masterGain = null;
+    this.analyser = null;
+    
+    // Configs de Scheduler
+    this.lookahead = 25.0;
+    this.scheduleAheadTime = 0.1;
+    this.nextNoteTime = 0.0;
+    this.current16thNote = 0;
+    this.timerID = null;
+    
+    // Mixer / Channels
+    this.channels = {
+      ritmo: { gainNode: null, vol: 0.8, muted: false },
+      harmo: { gainNode: null, vol: 0.6, muted: false },
+      melo:  { gainNode: null, vol: 0.5, muted: false }
+    };
+    this.harmonicoOscs = [];
+  }
+
+  async init() {
+    if (this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.masterGain = this.ctx.createGain();
+    this.masterGain.gain.value = 0.8;
+    this.analyser = this.ctx.createAnalyser();
+    this.analyser.fftSize = 512;
+    
+    // Setup Mixer Nodes
+    Object.keys(this.channels).forEach(ch => {
+      const node = this.ctx.createGain();
+      node.gain.value = this.channels[ch].vol;
+      node.connect(this.masterGain);
+      this.channels[ch].gainNode = node;
+    });
+
+    this.masterGain.connect(this.analyser);
+    this.analyser.connect(this.ctx.destination);
+  }
+
+  setVolume(channel, volLevel) {
+    // volLevel from 0 to 100
+    const normalized = volLevel / 100;
+    this.channels[channel].vol = normalized;
+    if (!this.channels[channel].muted && this.channels[channel].gainNode) {
+      this.channels[channel].gainNode.gain.setTargetAtTime(normalized, this.ctx.currentTime, 0.05);
+    }
+  }
+
+  toggleMute(channel) {
+    const ch = this.channels[channel];
+    ch.muted = !ch.muted;
+    if (ch.gainNode) {
+      const target = ch.muted ? 0 : ch.vol;
+      ch.gainNode.gain.setTargetAtTime(target, this.ctx.currentTime, 0.05);
+    }
+    return ch.muted;
+  }
+
+  start(bpm, archHz, enableMelody) {
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    this.nextNoteTime = this.ctx.currentTime + 0.05;
+    this.current16thNote = 0;
+    this.bpm = bpm;
+    this.archHz = archHz;
+    this.enableMelody = enableMelody;
+    
+    this.startHarmonico(archHz);
+    this.scheduler();
+  }
+
+  stop() {
+    clearTimeout(this.timerID);
+    this.stopHarmonico();
+  }
+
+  nextNote() {
+    const secondsPerBeat = 60.0 / this.bpm;
+    this.nextNoteTime += 0.25 * secondsPerBeat; 
+    this.current16thNote++;
+    if (this.current16thNote === 16) this.current16thNote = 0;
+  }
+
+  scheduleNote(beatNumber, time) {
+    // CH1: RITMO
+    if (beatNumber % 4 === 0) {
+      this.playKick(time);
+    } else if (beatNumber % 2 === 0) {
+      this.playHat(time);
+    }
+    // CH3: MELODIA
+    if (this.enableMelody && beatNumber % 2 === 0) {
+      const scale = [1, 1.125, 1.25, 1.333, 1.5, 1.667, 1.875, 2];
+      const noteMultiplier = scale[Math.floor(Math.random() * scale.length)];
+      this.playMelodyNote(this.archHz * noteMultiplier, time);
+    }
+  }
+
+  scheduler() {
+    while (this.nextNoteTime < this.ctx.currentTime + this.scheduleAheadTime) {
+      this.scheduleNote(this.current16thNote, this.nextNoteTime);
+      this.nextNote();
+    }
+    this.timerID = setTimeout(() => this.scheduler(), this.lookahead);
+  }
+
+  playKick(time) {
+    const osc = this.ctx.createOscillator();
+    const env = this.ctx.createGain();
+    osc.frequency.setValueAtTime(150, time);
+    osc.frequency.exponentialRampToValueAtTime(0.01, time + 0.5);
+    env.gain.setValueAtTime(1, time);
+    env.gain.exponentialRampToValueAtTime(0.01, time + 0.5);
+    osc.connect(env).connect(this.channels.ritmo.gainNode);
+    osc.start(time); osc.stop(time + 0.5);
+  }
+
+  playHat(time) {
+    const osc = this.ctx.createOscillator();
+    const env = this.ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(8000, time);
+    env.gain.setValueAtTime(0.1, time);
+    env.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
+    osc.connect(env).connect(this.channels.ritmo.gainNode);
+    osc.start(time); osc.stop(time + 0.1);
+  }
+
+  playMelodyNote(freq, time) {
+    const osc = this.ctx.createOscillator();
+    const env = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    env.gain.setValueAtTime(0, time);
+    env.gain.linearRampToValueAtTime(0.3, time + 0.05);
+    env.gain.exponentialRampToValueAtTime(0.01, time + 0.3);
+    osc.connect(env).connect(this.channels.melo.gainNode);
+    osc.start(time); osc.stop(time + 0.3);
+  }
+
+  startHarmonico(freq) {
+    this.stopHarmonico();
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    
+    // Requisito: Baixar uma oitava para dar mais peso
+    const baseFreq = freq / 2;
+    
+    osc1.type = 'sine';
+    osc2.type = 'triangle';
+    osc1.frequency.value = baseFreq;
+    osc2.frequency.value = baseFreq * 1.5; // Quinta justa relativa à nova base
+    
+    osc1.connect(this.channels.harmo.gainNode);
+    osc2.connect(this.channels.harmo.gainNode);
+    
+    osc1.start(); osc2.start();
+    this.harmonicoOscs = [osc1, osc2];
+  }
+
+  stopHarmonico() {
+    this.harmonicoOscs.forEach(node => { try { if(node.stop) node.stop(); } catch(e){} });
+    this.harmonicoOscs = [];
+  }
+}
+
+// ==========================================
+// 5. MOTOR VISUAL
+// ==========================================
+class VisualEngine {
+  constructor(canvasId) {
+    this.canvas = document.getElementById(canvasId);
+    this.ctx = this.canvas.getContext('2d');
+    this.time = 0;
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+  }
+
+  resize() {
+    this.canvas.width = this.canvas.offsetWidth;
+    this.canvas.height = this.canvas.offsetHeight;
+    this.cx = this.canvas.width / 2; this.cy = this.canvas.height / 2;
+  }
+
+  draw(archName, hslColor, audioData) {
+    this.ctx.fillStyle = 'rgba(5, 5, 8, 0.15)'; 
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    this.time += 0.01;
+    const avgAudio = audioData.reduce((a, b) => a + b, 0) / audioData.length;
+    const colorStr = `hsl(${hslColor[0]}, ${hslColor[1]}%, ${hslColor[2]}%)`;
+
+    this.ctx.save();
+    switch(archName) {
+      case 'Atlas': this.drawGrid(colorStr, avgAudio); break;
+      case 'Nova': this.drawParticles(colorStr, audioData); break;
+      case 'Vitalis': this.drawRadial(colorStr, audioData); break;
+      case 'Kaos': this.drawGlitch(colorStr, audioData); break;
+      case 'Solus': this.drawNebula(colorStr, avgAudio); break;
+      default: this.drawSpectrum(colorStr, audioData); break;
+    }
+    this.ctx.restore();
+  }
+
+  drawGrid(color, intensity) {
+    this.ctx.strokeStyle = color;
+    this.ctx.lineWidth = 1 + (intensity / 128);
+    const step = 50 + Math.sin(this.time) * 10;
+    this.ctx.beginPath();
+    for(let x = 0; x < this.canvas.width; x += step) { this.ctx.moveTo(x, 0); this.ctx.lineTo(x, this.canvas.height); }
+    for(let y = 0; y < this.canvas.height; y += step) { this.ctx.moveTo(0, y); this.ctx.lineTo(this.canvas.width, y); }
+    this.ctx.globalAlpha = 0.3; this.ctx.stroke();
+  }
+
+  drawParticles(color, data) {
+    this.ctx.fillStyle = color;
+    for(let i = 0; i < 50; i++) {
+      const radius = (data[i] / 255) * 20;
+      const x = this.cx + Math.cos(this.time * i * 0.1) * (i * 10);
+      const y = this.cy + Math.sin(this.time * i * 0.1) * (i * 10);
+      this.ctx.beginPath(); this.ctx.arc(x, y, radius, 0, Math.PI * 2); this.ctx.fill();
+    }
+  }
+
+  drawRadial(color, data) {
+    this.ctx.strokeStyle = color; this.ctx.lineWidth = 2; this.ctx.beginPath();
+    for (let i = 0; i < data.length; i++) {
+      const angle = (i / data.length) * Math.PI * 2;
+      const radius = 100 + (data[i] / 255) * 200;
+      const x = this.cx + Math.cos(angle + this.time) * radius;
+      const y = this.cy + Math.sin(angle + this.time) * radius;
+      if (i === 0) this.ctx.moveTo(x, y); else this.ctx.lineTo(x, y);
+    }
+    this.ctx.closePath(); this.ctx.stroke();
+  }
+
+  drawGlitch(color, data) {
+    this.ctx.fillStyle = color;
+    for(let i=0; i<10; i++) {
+      if(data[i] > 100) {
+        const x = Math.random() * this.canvas.width, y = Math.random() * this.canvas.height;
+        const w = Math.random() * 200, h = Math.random() * 50;
+        this.ctx.globalAlpha = Math.random(); this.ctx.fillRect(x, y, w, h);
+      }
+    }
+  }
+
+  drawNebula(color, intensity) {
+    const gradient = this.ctx.createRadialGradient(this.cx, this.cy, 10, this.cx, this.cy, 400 + intensity);
+    gradient.addColorStop(0, color); gradient.addColorStop(1, 'transparent');
+    this.ctx.fillStyle = gradient; this.ctx.globalAlpha = 0.5 + Math.sin(this.time)*0.2;
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+  }
+
+  drawSpectrum(color, data) {
+    this.ctx.fillStyle = color; const barW = this.canvas.width / data.length;
+    for(let i=0; i < data.length; i++) {
+      const barH = (data[i]/255) * this.canvas.height * 0.5;
+      this.ctx.fillRect(i * barW, this.canvas.height - barH, barW - 1, barH);
+    }
+  }
+}
+
+// ==========================================
+// 6. CONTROLADOR PRINCIPAL
+// ==========================================
+class PulseEngine {
+  constructor() {
+    this.state = new StateVector();
+    this.audio = new AudioEngine();
+    this.visual = new VisualEngine('viz');
+    this.logEl = document.getElementById('log');
+    this.bindEvents();
+    this.updateUI();
+  }
+
+  bindEvents() {
+    // Master Controls
+    document.getElementById('btnStart').onclick = async () => {
+      await this.audio.init();
+      if (!this.state.isPlaying) this.play(); else this.stop();
+    };
+
+    document.getElementById('btnNext').onclick = () => { if(this.state.isPlaying) this.nextState(); };
+    document.getElementById('btnVoice').onclick = () => { this.speakCurrentArchetype(); };
+
+    // State Vector
+    ['energy', 'focus', 'creativity', 'stress'].forEach(param => {
+      document.getElementById(`sys_${param}`).oninput = (e) => {
+        this.state[param] = parseInt(e.target.value);
+        document.getElementById(`val${param.charAt(0).toUpperCase() + param.slice(1)}`).innerText = this.state[param];
+        if(this.state.isPlaying) {
+           this.audio.bpm = this.state.currentArch.bpmBase + (this.state.energy - 50) * 0.4;
+           this.updateUIParamsOnly();
+        }
+      };
+    });
+
+    // Mixer Volumes
+    document.querySelectorAll('.vol-slider').forEach(slider => {
+      slider.oninput = (e) => {
+        const ch = e.target.getAttribute('data-ch');
+        this.audio.setVolume(ch, e.target.value);
+      };
+    });
+
+    // Mixer Mute Toggles
+    document.querySelectorAll('.btn-mute').forEach(btn => {
+      btn.onclick = (e) => {
+        const btnEl = e.currentTarget;
+        const ch = btnEl.getAttribute('data-ch');
+        const isMuted = this.audio.toggleMute(ch);
+        
+        if(isMuted) {
+          btnEl.innerHTML = ICONS.volMute;
+          btnEl.classList.add('muted');
+        } else {
+          btnEl.innerHTML = ICONS.volOn;
+          btnEl.classList.remove('muted');
+        }
+      };
+    });
+  }
+
+  log(msg) {
+    const entry = document.createElement('div');
+    entry.textContent = `[${new Date().toLocaleTimeString('pt-BR')}] ${msg}`;
+    this.logEl.prepend(entry);
+  }
+
+  speakCurrentArchetype() {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel(); // Parar fala anterior
+    const frase = this.state.currentArch.frase; // Pega direto do array ARCHETYPES conforme exigido
+    const utterance = new SpeechSynthesisUtterance(frase);
+    utterance.lang = 'pt-BR';
+    utterance.rate = 0.9;
+    utterance.pitch = 0.8;
+    window.speechSynthesis.speak(utterance);
+    this.log(`VOZ SINTETIZADA >> ${frase}`);
+  }
+
+  play() {
+    this.state.isPlaying = true;
+    const arch = this.state.currentArch;
+    const config = this.state.loopConfig;
+    const currentBPM = arch.bpmBase + (this.state.energy - 50) * 0.4;
+
+    this.audio.start(currentBPM, arch.hz, config.melody);
+    
+    const btnStart = document.getElementById('btnStart');
+    btnStart.innerHTML = ICONS.stop + '<span>PARAR MOTOR</span>';
+    btnStart.classList.add('active');
+    
+    this.log(`SYS.BOOT >> ${arch.nome.toUpperCase()} [${config.layers} LAYERS]`);
+    this.updateUI();
+    this.renderLoop();
+    
+    if(config.voice) this.speakCurrentArchetype();
+  }
+
+  stop() {
+    this.state.isPlaying = false;
+    this.audio.stop();
+    const btnStart = document.getElementById('btnStart');
+    btnStart.innerHTML = ICONS.play + '<span>INICIAR MOTOR</span>';
+    btnStart.classList.remove('active');
+    this.log(`SYS.HALT`);
+  }
+
+  nextState() {
+    this.state.advanceLoop();
+    if (this.state.currentPhase === 'PREPARACAO') {
+      const oldArch = this.state.currentArch.nome;
+      this.state.archIdx = this.state.calculateNextArch();
+      this.log(`TRANSIÇÃO >> ${oldArch} -> ${this.state.currentArch.nome}`);
+    }
+    this.stop();
+    setTimeout(() => this.play(), 50); 
+  }
+
+  updateUIParamsOnly() {
+    document.getElementById('bpmVal').textContent = Math.round(this.audio.bpm) + ' BPM';
+  }
+
+  updateUI() {
+    const arch = this.state.currentArch;
+    const config = this.state.loopConfig;
+
+    document.documentElement.style.setProperty('--primary', arch.cor);
+    document.documentElement.style.setProperty('--glow', arch.cor + '99');
+    
+    document.getElementById('archName').textContent = arch.nome;
+    document.getElementById('archOpcode').textContent = arch.opcode;
+    document.getElementById('archFrase').textContent = arch.frase;
+    document.getElementById('loopPhase').textContent = this.state.currentPhase;
+    document.getElementById('binauralVal').textContent = config.binaural;
+    
+    document.getElementById('freqVal').textContent = arch.hz + 'Hz';
+    document.getElementById('camadaVal').textContent = `CMD ${this.state.camada}`;
+    document.getElementById('aromaVal').textContent = arch.aroma;
+    document.getElementById('corVal').textContent = arch.cor;
+    document.getElementById('envVal').textContent = arch.ambiente;
+
+    this.updateUIParamsOnly();
+
+    // Toggle visual do Canal 3 (Melódico)
+    const ch3 = document.getElementById('mixer_ch3');
+    const ch3Status = document.getElementById('chMelodicoStatus');
+    if (config.melody) {
+      ch3.classList.remove('ch-disabled');
+      ch3Status.textContent = '● ON';
+      ch3Status.className = 'text-xs font-bold status-dot pulse';
+    } else {
+      ch3.classList.add('ch-disabled');
+      ch3Status.textContent = '○ OFF';
+      ch3Status.className = 'text-xs font-bold status-dot off';
+    }
+  }
+
+  renderLoop() {
+    if (!this.state.isPlaying) return;
+    requestAnimationFrame(() => this.renderLoop());
+    const data = new Uint8Array(this.audio.analyser.frequencyBinCount);
+    this.audio.analyser.getByteFrequencyData(data);
+    const hsl = Utils.hexToHsl(this.state.currentArch.cor);
+    this.visual.draw(this.state.currentArch.nome, hsl, data);
+  }
+}
+
+window.engine = new PulseEngine();
+</script>
+
+</body>
+</html>

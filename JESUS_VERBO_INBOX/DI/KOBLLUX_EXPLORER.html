@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KOBLLUX Explorer</title>
+  <style>
+    /* ===== RESET & BASE ===== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #0b0d17;
+      color: #f0f4fc;
+      min-height: 100vh;
+      padding: 0;
+      margin: 0;
+    }
+    a {
+      color: inherit;
+    }
+    /* ===== HEADER / NAV ===== */
+    .explorer-header {
+      background: rgba(14, 17, 30, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .explorer-header .logo {
+      font-weight: 800;
+      font-size: 1.2rem;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ff52e5, #00c5e5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .explorer-header .logo span {
+      font-weight: 300;
+      -webkit-text-fill-color: #8a9bb5;
+    }
+    .explorer-nav {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .explorer-nav button {
+      background: transparent;
+      border: 0;
+      color: #8a9bb5;
+      padding: 6px 14px;
+      border-radius: 40px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .explorer-nav button:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .explorer-nav button.active {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.10);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
+    }
+    /* ===== MAIN CONTENT ===== */
+    .explorer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px 24px 40px;
+    }
+    .tab-pane {
+      display: none;
+      animation: fadeIn 0.2s ease;
+    }
+    .tab-pane.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    /* ===== CARDS E GRIDS ===== */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .card-item {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 16px;
+      transition: 0.15s;
+      cursor: default;
+    }
+    .card-item:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+    .card-item .title {
+      font-weight: 700;
+      font-size: 1rem;
+      color: #d6e0f0;
+    }
+    .card-item .meta {
+      font-size: 0.75rem;
+      color: #6a7a92;
+      margin-top: 4px;
+    }
+    .card-item .preview {
+      font-size: 0.85rem;
+      color: #b0c0d8;
+      margin-top: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-item .actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 6px;
+    }
+    .card-item .actions button {
+      background: rgba(255, 255, 255, 0.06);
+      border: 0;
+      color: #b0c0d8;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .card-item .actions button:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+    /* ===== DASHBOARD ===== */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 14px;
+      padding: 14px;
+      text-align: center;
+    }
+    .stat-card .value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #ff52e5, #00c5e5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .stat-card .label {
+      font-size: 0.75rem;
+      color: #8a9bb5;
+      margin-top: 4px;
+    }
+    /* ===== BUSCA ===== */
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .search-box input {
+      flex: 1;
+      padding: 12px 18px;
+      border-radius: 40px;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      background: rgba(0, 0, 0, 0.4);
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      transition: 0.2s;
+    }
+    .search-box input:focus {
+      border-color: #7b6cf6;
+      box-shadow: 0 0 0 4px rgba(123, 108, 246, 0.15);
+    }
+    .search-box input::placeholder {
+      color: #5a6a82;
+    }
+    .search-results {
+      display: grid;
+      gap: 10px;
+    }
+    .search-result-item {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .search-result-item .key {
+      font-weight: 600;
+      color: #c8d6f0;
+    }
+    .search-result-item .score {
+      font-size: 0.75rem;
+      color: #6a7a92;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 2px 12px;
+      border-radius: 40px;
+    }
+    .search-result-item .value-preview {
+      font-size: 0.8rem;
+      color: #8a9bb5;
+      flex-basis: 100%;
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 90%;
+    }
+    /* ===== AJUSTES RESPONSIVOS ===== */
+    @media (max-width: 700px) {
+      .explorer-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+      .explorer-nav {
+        justify-content: center;
+      }
+      .stat-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .card-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    /* ===== BOTÃO DO BAÚ (já existe no script) ===== */
+    /* garantia de que o FAB não conflita */
+    #bau-fab {
+      z-index: 2147483647;
+    }
+    /* ===== ESTILOS DO BAÚ LITE (já injetados) ===== */
+    /* manteremos os estilos do script original, mas vamos garantir que não quebrem */
+  </style>
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="explorer-header">
+    <div class="logo">KOBLLUX <span>Explorer</span></div>
+    <nav class="explorer-nav" id="mainNav">
+      <button class="active" data-tab="dashboard">Dashboard</button>
+      <button data-tab="library">Biblioteca</button>
+      <button data-tab="drafts">Drafts</button>
+      <button data-tab="vault">Vault</button>
+      <button data-tab="fractals">Fractais</button>
+      <button data-tab="archetypes">Arquétipos</button>
+      <button data-tab="search">Busca</button>
+    </nav>
+  </header>
+
+  <!-- ===== CONTEÚDO ===== -->
+  <main class="explorer-content">
+
+    <!-- DASHBOARD -->
+    <section id="tab-dashboard" class="tab-pane active">
+      <h2 style="font-weight:600; font-size:1.4rem; margin-bottom:8px;">Painel</h2>
+      <div class="stat-grid" id="dashboardStats">
+        <div class="stat-card"><div class="value" id="statItems">—</div><div class="label">Itens no localStorage</div></div>
+        <div class="stat-card"><div class="value" id="statSize">—</div><div class="label">Espaço utilizado</div></div>
+        <div class="stat-card"><div class="value" id="statUser">—</div><div class="label">Usuário ativo</div></div>
+        <div class="stat-card"><div class="value" id="statAssistant">—</div><div class="label">Assistente</div></div>
+        <div class="stat-card"><div class="value" id="statTheme">—</div><div class="label">Tema</div></div>
+        <div class="stat-card"><div class="value" id="statArchetype">—</div><div class="label">Arquétipo</div></div>
+      </div>
+      <p style="color:#6a7a92; font-size:0.9rem;">Última sincronização: <span id="lastSync">agora</span></p>
+    </section>
+
+    <!-- BIBLIOTECA -->
+    <section id="tab-library" class="tab-pane">
+      <h2 style="font-weight:600; font-size:1.4rem; margin-bottom:8px;">Terra Library</h2>
+      <div class="card-grid" id="libraryGrid"></div>
+    </section>
+
+    <!-- DRAFTS -->
+    <section id="tab-drafts" class="tab-pane">
+      <h2 style="font-weight:600; font-size:1.4rem; margin-bottom:8px;">Koblox Draft</h2>
+      <div class="card-grid" id="draftsGrid"></div>
+    </section>
+
+    <!-- VAULT -->
+    <section id="tab-vault" class="tab-pane">
+      <h2 style="font-weight:600; font-size:1.4rem; margin-bottom:8px;">Vault</h2>
+      <div class="card-grid" id="vaultGrid"></div>
+    </section>
+
+    <!-- FRACTAIS -->
+    <section id="tab-fractals" class="tab-pane">
+      <h2 style="font-weight:600; font-size:1.4rem; margin-bottom:8px;">Fractais</h2>
+      <div class="card-grid" id="fractalsGrid"></div>
+    </section>
+
+    <!-- ARQUÉTIPOS -->
+    <section id="tab-archetypes" class="tab-pane">
+      <h2 style="font-weight:600; font-size:1.4rem; margin-bottom:8px;">Arquétipos</h2>
+      <div class="card-grid" id="archetypesGrid"></div>
+    </section>
+
+    <!-- BUSCA SEMÂNTICA -->
+    <section id="tab-search" class="tab-pane">
+      <h2 style="font-weight:600; font-size:1.4rem; margin-bottom:12px;">Busca Semântica</h2>
+      <div class="search-box">
+        <input type="text" id="semanticSearchInput" placeholder="Ex: 'persona', 'ciclo 369', 'configuração'..." autofocus>
+      </div>
+      <div id="searchResultsContainer" class="search-results"></div>
+    </section>
+
+  </main>
+
+  <!-- ============================================================ -->
+  <!--  SCRIPT PRINCIPAL: MemoryCore + Baú Lite + Navegação         -->
+  <!-- ============================================================ -->
+  <script>
+    // ================================================================
+    //  MEMORY CORE  –  índice invertido + cache do localStorage
+    // ================================================================
+    (function() {
+      'use strict';
+
+      const MemoryCore = {
+        cache: new Map(),
+        invertedIndex: new Map(),
+        ready: false,
+
+        load() {
+          this.cache.clear();
+          this.invertedIndex.clear();
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            const val = localStorage.getItem(key) || '';
+            this.cache.set(key, val);
+            this._indexDocument(key, val);
+          }
+          this.ready = true;
+        },
+
+        _indexDocument(key, text) {
+          const words = this._tokenize(text);
+          for (const w of words) {
+            if (!this.invertedIndex.has(w)) {
+              this.invertedIndex.set(w, new Set());
+            }
+            this.invertedIndex.get(w).add(key);
+          }
+        },
+
+        _tokenize(text) {
+          return text
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9\s]/g, ' ')
+            .split(/\s+/)
+            .filter(w => w.length > 1);
+        },
+
+        search(query) {
+          if (!this.ready) this.load();
+          if (!query || query.trim() === '') return [];
+          const terms = this._tokenize(query);
+          if (terms.length === 0) return [];
+          const scores = new Map();
+          for (const term of terms) {
+            const docs = this.invertedIndex.get(term);
+            if (docs) {
+              for (const key of docs) {
+                scores.set(key, (scores.get(key) || 0) + 1);
+              }
+            }
+          }
+          return Array.from(scores.entries())
+            .sort((a, b) => b[1] - a[1])
+            .map(([key, score]) => ({
+              key,
+              value: this.cache.get(key) || '',
+              score: score / terms.length
+            }));
+        },
+
+        set(key, value) {
+          localStorage.setItem(key, String(value));
+          this.cache.set(key, String(value));
+          this.invertedIndex.forEach((set, word) => {
+            if (set.has(key)) set.delete(key);
+          });
+          this._indexDocument(key, String(value));
+        },
+
+        delete(key) {
+          localStorage.removeItem(key);
+          this.cache.delete(key);
+          this.invertedIndex.forEach((set) => set.delete(key));
+        },
+
+        reload() {
+          this.load();
+        }
+      };
+
+      window.MemoryCore = MemoryCore;
+
+      // Carrega assim que possível
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => MemoryCore.load());
+      } else {
+        MemoryCore.load();
+      }
+
+      // ================================================================
+      //  NAVEGAÇÃO POR ABAS
+      // ================================================================
+      const navButtons = document.querySelectorAll('#mainNav button');
+      const panes = {
+        dashboard: document.getElementById('tab-dashboard'),
+        library: document.getElementById('tab-library'),
+        drafts: document.getElementById('tab-drafts'),
+        vault: document.getElementById('tab-vault'),
+        fractals: document.getElementById('tab-fractals'),
+        archetypes: document.getElementById('tab-archetypes'),
+        search: document.getElementById('tab-search')
+      };
+
+      function switchTab(tabId) {
+        // atualiza botões
+        navButtons.forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.tab === tabId);
+        });
+        // atualiza painéis
+        Object.entries(panes).forEach(([id, pane]) => {
+          pane.classList.toggle('active', id === tabId);
+        });
+        // se for busca, foca no input
+        if (tabId === 'search') {
+          document.getElementById('semanticSearchInput').focus();
+        }
+        // se for dashboard, atualiza stats
+        if (tabId === 'dashboard') {
+          updateDashboard();
+        }
+        // se for library, drafts, vault, etc, renderiza
+        if (tabId === 'library') renderLibrary();
+        if (tabId === 'drafts') renderDrafts();
+        if (tabId === 'vault') renderVault();
+        if (tabId === 'fractals') renderFractals();
+        if (tabId === 'archetypes') renderArchetypes();
+      }
+
+      navButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          switchTab(btn.dataset.tab);
+        });
+      });
+
+      // ================================================================
+      //  DASHBOARD
+      // ================================================================
+      function updateDashboard() {
+        const entries = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          entries.push(localStorage.key(i));
+        }
+        document.getElementById('statItems').textContent = entries.length;
+        let size = 0;
+        for (const k of entries) {
+          size += (k + (localStorage.getItem(k) || '')).length;
+        }
+        document.getElementById('statSize').textContent = prettyBytes(size);
+        document.getElementById('statUser').textContent = localStorage.getItem('infodose:userName') || '—';
+        document.getElementById('statAssistant').textContent = localStorage.getItem('infodose:assistantName') || '—';
+        document.getElementById('statTheme').textContent = localStorage.getItem('uno:theme') || '—';
+        // archetype: tenta pegar de alguma chave
+        const arch = localStorage.getItem('infodose:archetype') || localStorage.getItem('di_archetype') || '—';
+        document.getElementById('statArchetype').textContent = arch;
+        document.getElementById('lastSync').textContent = new Date().toLocaleTimeString();
+      }
+
+      function prettyBytes(n) {
+        if (!Number.isFinite(n) || n <= 0) return '0 B';
+        const u = ['B', 'KB', 'MB', 'GB'];
+        let i = 0;
+        while (n >= 1024 && i < u.length - 1) {
+          n /= 1024;
+          i++;
+        }
+        return n.toFixed(2) + ' ' + u[i];
+      }
+
+      // ================================================================
+      //  RENDERIZAÇÃO DE BIBLIOTECA, DRAFTS, VAULT, ETC.
+      // ================================================================
+      // Função auxiliar para criar cards a partir de um filtro de chaves
+      function renderCards(containerId, filterFn, titleFn, previewFn) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (filterFn(k)) keys.push(k);
+        }
+        if (keys.length === 0) {
+          container.innerHTML = '<p style="color:#6a7a92;">Nenhum item encontrado.</p>';
+          return;
+        }
+        for (const key of keys) {
+          const val = localStorage.getItem(key) || '';
+          const card = document.createElement('div');
+          card.className = 'card-item';
+          card.innerHTML = `
+            <div class="title">${titleFn(key, val)}</div>
+            <div class="meta">${key}</div>
+            <div class="preview">${previewFn(val)}</div>
+            <div class="actions">
+              <button data-action="view" data-key="${key}">Visualizar</button>
+              <button data-action="copy" data-key="${key}">Copiar</button>
+            </div>
+          `;
+          container.appendChild(card);
+        }
+        // eventos dos botões
+        container.querySelectorAll('[data-action="view"]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const k = btn.dataset.key;
+            const v = localStorage.getItem(k) || '';
+            alert(`🔍 ${k}\n\n${v}`);
+          });
+        });
+        container.querySelectorAll('[data-action="copy"]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const k = btn.dataset.key;
+            const v = localStorage.getItem(k) || '';
+            navigator.clipboard?.writeText(v).then(() => {
+              alert('Copiado!');
+            }).catch(() => {
+              // fallback
+              const ta = document.createElement('textarea');
+              ta.value = v;
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              ta.remove();
+              alert('Copiado!');
+            });
+          });
+        });
+      }
+
+      function renderLibrary() {
+        renderCards('libraryGrid',
+          (k) => k.includes('doc') || k.includes('note') || k.includes('prompt') || k.includes('text') || k.includes('article'),
+          (k) => k.replace(/^infodose:/, '').replace(/^di_/, '').replace(/[_-]/g, ' '),
+          (v) => v.length > 60 ? v.slice(0, 60) + '…' : v
+        );
+      }
+
+      function renderDrafts() {
+        renderCards('draftsGrid',
+          (k) => k.includes('draft') || k.includes('rascunho') || k.includes('wip'),
+          (k) => k,
+          (v) => v.length > 60 ? v.slice(0, 60) + '…' : v
+        );
+      }
+
+      function renderVault() {
+        renderCards('vaultGrid',
+          (k) => k.includes('html') || k.includes('css') || k.includes('json') || k.includes('template') || k.includes('asset'),
+          (k) => k,
+          (v) => v.length > 60 ? v.slice(0, 60) + '…' : v
+        );
+      }
+
+      function renderFractals() {
+        renderCards('fractalsGrid',
+          (k) => k.includes('fractal') || k.includes('ciclo') || k.includes('369'),
+          (k) => k,
+          (v) => v.length > 60 ? v.slice(0, 60) + '…' : v
+        );
+      }
+
+      function renderArchetypes() {
+        renderCards('archetypesGrid',
+          (k) => k.includes('archetype') || k.includes('arquétipo') || k.includes('persona'),
+          (k) => k,
+          (v) => v.length > 60 ? v.slice(0, 60) + '…' : v
+        );
+      }
+
+      // ================================================================
+      //  BUSCA SEMÂNTICA
+      // ================================================================
+      const searchInput = document.getElementById('semanticSearchInput');
+      const resultsContainer = document.getElementById('searchResultsContainer');
+
+      function performSearch(query) {
+        if (!query.trim()) {
+          resultsContainer.innerHTML = '';
+          return;
+        }
+        const results = MemoryCore.search(query);
+        if (results.length === 0) {
+          resultsContainer.innerHTML = `<div style="color:#6a7a92; text-align:center; padding:20px;">Nenhum resultado para “${query}”</div>`;
+          return;
+        }
+        let html = '';
+        for (const item of results) {
+          const scorePct = Math.round(item.score * 100);
+          html += `
+            <div class="search-result-item">
+              <div>
+                <div class="key">${item.key}</div>
+                <div class="value-preview">${item.value.length > 100 ? item.value.slice(0, 100) + '…' : item.value}</div>
+              </div>
+              <div class="score">${scorePct}% relevância</div>
+            </div>
+          `;
+        }
+        resultsContainer.innerHTML = html;
+      }
+
+      let debounceTimer;
+      searchInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          performSearch(searchInput.value);
+        }, 200);
+      });
+
+      // ================================================================
+      //  INICIALIZAÇÃO
+      // ================================================================
+      // Atualiza dashboard ao carregar
+      updateDashboard();
+
+      // Se houver uma query na URL (ex: ?q=teste), executa busca
+      const urlParams = new URLSearchParams(window.location.search);
+      const q = urlParams.get('q');
+      if (q) {
+        searchInput.value = q;
+        switchTab('search');
+        performSearch(q);
+      }
+
+      // Reagir a mudanças no localStorage (ex: via Baú Lite)
+      window.addEventListener('storage', (e) => {
+        MemoryCore.reload();
+        // Atualiza a aba atual
+        const activeTab = document.querySelector('#mainNav .active');
+        if (activeTab) {
+          const tabId = activeTab.dataset.tab;
+          if (tabId === 'dashboard') updateDashboard();
+          else if (tabId === 'library') renderLibrary();
+          else if (tabId === 'drafts') renderDrafts();
+          else if (tabId === 'vault') renderVault();
+          else if (tabId === 'fractals') renderFractals();
+          else if (tabId === 'archetypes') renderArchetypes();
+          else if (tabId === 'search') performSearch(searchInput.value);
+        }
+      });
+
+      // Expor refresh para o Baú Lite
+      window.__refreshExplorer = () => {
+        const activeTab = document.querySelector('#mainNav .active');
+        if (activeTab) {
+          const tabId = activeTab.dataset.tab;
+          if (tabId === 'dashboard') updateDashboard();
+          else if (tabId === 'library') renderLibrary();
+          else if (tabId === 'drafts') renderDrafts();
+          else if (tabId === 'vault') renderVault();
+          else if (tabId === 'fractals') renderFractals();
+          else if (tabId === 'archetypes') renderArchetypes();
+          else if (tabId === 'search') performSearch(searchInput.value);
+        }
+      };
+
+    })();
+  </script>
+
+  <!-- ============================================================ -->
+  <!--  SCRIPT DO BAÚ LITE (original, com adaptações)               -->
+  <!-- ============================================================ -->
+  <script>
+    // O código do Baú Lite é auto-contido e já foi fornecido.
+    // Para evitar conflitos, vamos garantir que ele só seja executado uma vez.
+    (function() {
+      'use strict';
+
+      if (window.__bauLiteLoaded) return;
+      window.__bauLiteLoaded = true;
+
+      // ========== CONFIGURAÇÃO ==========
+      const LS_KEYS = {
+        HTML: 'lastHTML',
+        USER_SYMBOL: 'userSymbol',
+        SKS: 'di_apiKey',
+        SK_ACTIVE: 'openrouter_active'
+      };
+
+      const DISABLED_KEY = 'infodose:presets.disabled';
+      const PRESETS = [
+        { key: 'di_userName', label: 'Usuário' },
+        { key: 'di_assistantName', label: 'Assistente' },
+        { key: 'di_apiKey', label: 'Chave OpenRouter (legacy)' },
+        { key: 'di_modelName', label: 'Modelo IA' },
+        { key: 'uno:theme', label: 'Tema' },
+        { key: 'uno:bg', label: 'Fundo Custom' },
+        { key: 'infodose:cssCustom', label: 'CSS Custom' },
+        { key: 'infodose:voices', label: 'Vozes Arquetípicas' }
+      ];
+
+      // ========== VERIFICA SE JÁ EXISTE ==========
+      if (document.getElementById('baulite-root')) return;
+
+      // ========== INJETA CSS ==========
+      const style = document.createElement('style');
+      style.textContent = `
+        /* Baú Lite - Estilos */
+        :root{
+          --grad-a:#ff52e5;
+          --grad-b:#00c5e5;
+          --bg: linear-gradient(135deg,var(--grad-a),var(--grad-b));
+          --fg:#fff;
+          --mut:#cfd8dc;
+          --glass:rgba(0,0,0,.45);
+          --r:22px;
+          --shadow:0 12px 34px rgba(0,0,0,.4);
+          --bd:1px solid rgba(255,255,255,.15);
+          --ok:#39FFB6;
+        }
+        .baulite *{box-sizing:border-box;margin:0;padding:0}
+        .baulite{
+          font-family:'Montserrat',system-ui,sans-serif;
+          position:relative;
+          z-index:2147483647;
+        }
+        .baulite .app{
+          width:100%;
+          max-width:860px;
+          display:flex;
+          flex-direction:column;
+          gap:18px;
+        }
+        .baulite .card{
+          background:var(--glass);
+          backdrop-filter:blur(18px);
+          border-radius:var(--r);
+          box-shadow:var(--shadow);
+          padding:14px 16px;
+          position:relative;
+          overflow:visible;
+          min-height:120px;
+        }
+        .baulite .open-ls-btn{
+          position:absolute;
+          top:12px;
+          right:-12px;
+          width:44px;
+          height:44px;
+          border-radius:50%;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          padding:0;
+          z-index:10;
+          background:rgba(255,255,255,.12);
+          border:1px solid rgba(255,255,255,.18);
+          box-shadow:0 10px 24px rgba(0,0,0,.35);
+          color:#fff;
+          cursor:pointer;
+          transition:.2s;
+        }
+        .baulite .open-ls-btn:hover{
+          background:rgba(255,255,255,.22);
+          transform:translateY(-1px);
+        }
+        .baulite .small{font-size:.8rem;color:var(--mut);margin-top:8px;}
+        .baulite .loader{
+          width:22px;height:22px;
+          border:3px solid rgba(255,255,255,.2);
+          border-top:3px solid #fff;
+          border-radius:50%;
+          animation:baulite-spin 1s linear infinite;
+          margin:8px auto;
+        }
+        @keyframes baulite-spin{100%{transform:rotate(360deg)}}
+        .baulite .modal{
+          position:fixed;
+          inset:0;
+          display:none;
+          align-items:center;
+          justify-content:center;
+          z-index:2147483647;
+          background:rgba(0,0,0,.55);
+          backdrop-filter:blur(8px);
+          padding:14px;
+        }
+        .baulite .modal.open{display:flex}
+        .baulite .panel{
+          width:min(980px,95vw);
+          max-height:86vh;
+          overflow:auto;
+          background:rgba(15,17,32,.92);
+          border:var(--bd);
+          border-radius:18px;
+          box-shadow:var(--shadow);
+          padding:14px;
+        }
+        .baulite .hdr{
+          display:flex;
+          gap:10px;
+          align-items:center;
+          justify-content:space-between;
+          border-bottom:var(--bd);
+          padding-bottom:10px;
+          margin-bottom:10px;
+          flex-wrap:wrap;
+        }
+        .baulite .hdr .ttl{
+          font-weight:900;
+          letter-spacing:.06em;
+        }
+        .baulite .actions{
+          display:flex;
+          gap:8px;
+          flex-wrap:wrap;
+        }
+        .baulite .meta{
+          color:var(--mut);
+          font-size:12px;
+          margin:6px 0 10px;
+        }
+        .baulite .list{
+          display:grid;
+          gap:10px;
+        }
+        .baulite .item{
+          background:rgba(255,255,255,.05);
+          border:var(--bd);
+          border-radius:14px;
+          padding:10px;
+          display:grid;
+          gap:8px;
+        }
+        .baulite .item .head{
+          display:flex;
+          align-items:flex-start;
+          justify-content:space-between;
+          gap:8px;
+          flex-wrap:wrap;
+        }
+        .baulite .key{
+          font-weight:800;
+          max-width:56vw;
+          overflow:hidden;
+          text-overflow:ellipsis;
+          white-space:nowrap;
+        }
+        .baulite .type{
+          font-size:11px;
+          color:var(--mut);
+        }
+        .baulite .val{
+          font:12px/1.4 ui-monospace,monospace;
+          background:#0b0f1a;
+          border:var(--bd);
+          border-radius:10px;
+          padding:8px;
+          max-height:140px;
+          overflow:auto;
+          word-break:break-word;
+          white-space:pre-wrap;
+        }
+        .baulite .switch{
+          inline-size:46px;
+          block-size:28px;
+          border-radius:999px;
+          border:var(--bd);
+          background:rgba(255,255,255,.15);
+          position:relative;
+          cursor:pointer;
+          flex:0 0 auto;
+        }
+        .baulite .switch::after{
+          content:"";
+          position:absolute;
+          inset:4px auto 4px 4px;
+          width:20px;
+          border-radius:999px;
+          background:#fff;
+          transition:all .18s;
+        }
+        .baulite .switch.on{
+          background:rgba(25,226,123,.28);
+        }
+        .baulite .switch.on::after{
+          left:22px;
+        }
+        .baulite details.presets{
+          border:var(--bd);
+          border-radius:14px;
+          padding:8px;
+          background:rgba(255,255,255,.04);
+          margin-bottom:10px;
+        }
+        .baulite .presets-grid{
+          display:grid;
+          grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+          gap:10px;
+          margin-top:8px;
+        }
+        .baulite .preset{
+          border:var(--bd);
+          border-radius:12px;
+          background:rgba(255,255,255,.04);
+          padding:10px;
+          display:grid;
+          gap:6px;
+        }
+        .baulite .img-grid{
+          display:grid;
+          grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+          gap:10px;
+        }
+        .baulite .img-card{
+          border:var(--bd);
+          background:rgba(255,255,255,.04);
+          border-radius:10px;
+          padding:8px;
+        }
+        .baulite .img-card img{
+          width:100%;
+          height:auto;
+          display:block;
+          border-radius:8px;
+        }
+        .baulite button{
+          background:rgba(255,255,255,.1);
+          border:0;
+          color:#fff;
+          padding:8px 12px;
+          border-radius:12px;
+          font-size:.9rem;
+          cursor:pointer;
+          transition:.2s;
+          display:inline-flex;
+          gap:6px;
+          align-items:center;
+        }
+        .baulite button:hover{background:rgba(255,255,255,.2)}
+        .baulite .btn-ghost{background:transparent;border:1px dashed rgba(255,255,255,.25)}
+        .baulite textarea,.baulite input,.baulite select{
+          width:100%;
+          margin:6px 0;
+          padding:10px;
+          border-radius:10px;
+          border:none;
+          font-family:inherit;
+          outline:none;
+        }
+        @media (max-width:560px){
+          .baulite .key{max-width:46vw}
+          .baulite .open-ls-btn{top:10px;right:-10px}
+        }
+        /* Ícones simples (fallback caso Lucide não carregue) */
+        .baulite i{font-style:normal;display:inline-block;width:1.2em;text-align:center}
+        .baulite i::before{content:"●";opacity:0.8}
+      `;
+      document.head.appendChild(style);
+
+      // ========== CRIA ESTRUTURA BASE ==========
+      const root = document.createElement('div');
+      root.id = 'baulite-root';
+      root.className = 'baulite';
+      document.body.appendChild(root);
+
+      // Elemento oculto para download
+      const dlLink = document.createElement('a');
+      dlLink.id = 'baulite-dl';
+      dlLink.style.display = 'none';
+      root.appendChild(dlLink);
+
+      // Container do app
+      const appDiv = document.createElement('div');
+      appDiv.className = 'app';
+      appDiv.id = 'baulite-app';
+      root.appendChild(appDiv);
+
+      // Modal
+      const modalDiv = document.createElement('div');
+      modalDiv.id = 'baulite-modal';
+      modalDiv.className = 'modal';
+      modalDiv.setAttribute('aria-hidden', 'true');
+      modalDiv.innerHTML = `
+        <div class="panel">
+          <div class="hdr">
+            <div class="ttl">LocalStorage • Baú Lite</div>
+            <div class="actions">
+              <button id="baulite-lsRescan"><i>⟳</i> Re-scan</button>
+              <button id="baulite-lsExport"><i>⬆</i> Exportar</button>
+              <label for="baulite-lsImportFile" style="display:inline-block">
+                <button type="button"><i>⬇</i> Importar</button>
+              </label>
+              <input id="baulite-lsImportFile" type="file" accept="application/json" hidden>
+              <button id="baulite-lsClearDisabled" class="btn-ghost"><i>⌫</i> Limpar desativados</button>
+              <button id="baulite-lsClose"><i>✕</i> Fechar</button>
+            </div>
+          </div>
+
+          <details class="presets" open>
+            <summary><strong>Presets (ON/OFF global)</strong></summary>
+            <div class="presets-grid" id="baulite-presetsGrid"></div>
+          </details>
+
+          <div class="meta"><span id="baulite-lsCount">—</span> • <span id="baulite-lsSize">—</span></div>
+          <div class="list" id="baulite-lsList"></div>
+
+          <details class="presets" style="margin-top:10px" open>
+            <summary><strong>Pré-visualização de Imagens</strong></summary>
+            <div class="img-grid" id="baulite-imgGrid"></div>
+          </details>
+        </div>
+      `;
+      root.appendChild(modalDiv);
+
+      // ========== UTILITÁRIOS ==========
+      const $ = (sel, ctx = document) => ctx.querySelector(sel);
+      const $$ = (sel, ctx = document) => ctx.querySelectorAll(sel);
+
+      function saveFile(name, str) {
+        const blob = new Blob([str], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = $('#baulite-dl', root);
+        a.href = url;
+        a.download = name;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 800);
+      }
+
+      function prettyBytes(n) {
+        if (!Number.isFinite(n) || n <= 0) return '0 B';
+        const u = ['B', 'KB', 'MB', 'GB'];
+        let i = 0;
+        while (n >= 1024 && i < u.length - 1) {
+          n /= 1024;
+          i++;
+        }
+        return n.toFixed(2) + ' ' + u[i];
+      }
+
+      function isJson(v) {
+        try { JSON.parse(v); return true; } catch { return false; }
+      }
+
+      function inferType(v) {
+        if (v == null || v === '') return 'empty';
+        if (isJson(v)) {
+          const p = JSON.parse(v);
+          if (Array.isArray(p)) return 'json[array]';
+          if (p && typeof p === 'object') return 'json[object]';
+          return 'json[' + (typeof p) + ']';
+        }
+        if (/^data:image\//i.test(v) || /\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(v)) return 'image';
+        if (/^(true|false|1|0)$/i.test(v)) return 'boolean-like';
+        if (/^https?:\/\//i.test(v)) return 'url';
+        if (/^data:/i.test(v)) return 'data-url';
+        return 'string';
+      }
+
+      // ========== GERENCIAMENTO DE DADOS ==========
+      function disabledSet() {
+        try { return new Set(JSON.parse(localStorage.getItem(DISABLED_KEY) || '[]')); }
+        catch { return new Set(); }
+      }
+
+      function saveDisabled(set) {
+        localStorage.setItem(DISABLED_KEY, JSON.stringify(Array.from(set)));
+      }
+
+      function toggleDisabled(k) {
+        const s = disabledSet();
+        s.has(k) ? s.delete(k) : s.add(k);
+        saveDisabled(s);
+        renderPresets();
+        renderLS();
+        // Notifica o explorer para atualizar
+        if (window.__refreshExplorer) window.__refreshExplorer();
+      }
+
+      function lsEntries() {
+        const out = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          const v = localStorage.getItem(k) || '';
+          out.push({ key: k, val: v });
+        }
+        return out.sort((a, b) => a.key.localeCompare(b.key));
+      }
+
+      function lsSizeBytes() {
+        let sum = 0;
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          const v = localStorage.getItem(k) || '';
+          sum += k.length + v.length;
+        }
+        return sum;
+      }
+
+      // ========== RENDERIZAÇÃO ==========
+      function renderPresets() {
+        const grid = $('#baulite-presetsGrid', root);
+        if (!grid) return;
+        grid.innerHTML = '';
+        const dis = disabledSet();
+
+        PRESETS.forEach(p => {
+          const val = localStorage.getItem(p.key);
+          const on = !dis.has(p.key);
+
+          const wrap = document.createElement('div');
+          wrap.className = 'preset';
+
+          const head = document.createElement('div');
+          head.style.padding = '0';
+          head.style.border = '0';
+          head.style.display = 'flex';
+          head.style.justifyContent = 'space-between';
+          head.style.alignItems = 'center';
+
+          const nameDiv = document.createElement('div');
+          nameDiv.innerHTML = `<strong>${p.label}</strong><div class="type">${p.key}</div>`;
+
+          const sw = document.createElement('div');
+          sw.className = 'switch' + (on ? ' on' : '');
+          sw.title = on ? 'Desativar (não apaga)' : 'Ativar';
+          sw.addEventListener('click', () => toggleDisabled(p.key));
+
+          head.append(nameDiv, sw);
+
+          const meta = document.createElement('div');
+          meta.className = 'val';
+          meta.textContent = val ?
+            (inferType(val).startsWith('json') ? JSON.stringify(JSON.parse(val), null, 2) : val) :
+            '—';
+
+          wrap.append(head, meta);
+          grid.append(wrap);
+        });
+      }
+
+      function addImagePreview(key, src) {
+        const g = $('#baulite-imgGrid', root);
+        const card = document.createElement('div');
+        card.className = 'img-card';
+
+        const cap = document.createElement('div');
+        cap.className = 'small';
+        cap.textContent = key;
+
+        const im = new Image();
+        im.src = src;
+        im.loading = 'lazy';
+        im.style.maxWidth = '100%';
+
+        card.append(cap, im);
+        g.append(card);
+      }
+
+      function renderLS() {
+        const list = $('#baulite-lsList', root);
+        const imgGrid = $('#baulite-imgGrid', root);
+        if (!list) return;
+
+        list.innerHTML = '';
+        imgGrid.innerHTML = '';
+
+        const entries = lsEntries();
+        $('#baulite-lsCount', root).textContent = entries.length + ' chave(s)';
+        $('#baulite-lsSize', root).textContent = prettyBytes(lsSizeBytes());
+
+        const dis = disabledSet();
+
+        entries.forEach(({ key, val }) => {
+          if (key === DISABLED_KEY) return;
+
+          const it = document.createElement('div');
+          it.className = 'item';
+
+          const head = document.createElement('div');
+          head.className = 'head';
+
+          const left = document.createElement('div');
+          left.innerHTML = `
+            <div class="key">${key}${dis.has(key) ? ' <span class="type">(desativado)</span>' : ''}</div>
+            <div class="type">${inferType(val)} • ${prettyBytes((val || '').length)}</div>
+          `;
+
+          const ctr = document.createElement('div');
+          ctr.style.display = 'flex';
+          ctr.style.gap = '8px';
+          ctr.style.flexWrap = 'wrap';
+          ctr.style.alignItems = 'center';
+
+          const sw = document.createElement('div');
+          sw.className = 'switch' + (!dis.has(key) ? ' on' : '');
+          sw.title = !dis.has(key) ? 'Desativar' : 'Ativar';
+          sw.addEventListener('click', () => toggleDisabled(key));
+
+          const bEdit = document.createElement('button');
+          bEdit.innerHTML = '<i>✎</i> Editar';
+          bEdit.addEventListener('click', () => {
+            const next = prompt(`Editar valor de\n${key}`, val ?? '');
+            if (next == null) return;
+            localStorage.setItem(key, String(next));
+            // Atualiza MemoryCore
+            if (window.MemoryCore) {
+              window.MemoryCore.set(key, String(next));
+            }
+            renderAll();
+            if (window.__refreshExplorer) window.__refreshExplorer();
+          });
+
+          const bDel = document.createElement('button');
+          bDel.innerHTML = '<i>🗑</i> Apagar';
+          bDel.addEventListener('click', () => {
+            if (confirm('Apagar ' + key + '?')) {
+              if (window.MemoryCore) {
+                window.MemoryCore.delete(key);
+              } else {
+                localStorage.removeItem(key);
+              }
+              renderAll();
+              if (window.__refreshExplorer) window.__refreshExplorer();
+            }
+          });
+
+          ctr.append(sw, bEdit, bDel);
+
+          if (inferType(val) === 'image') {
+            const bImg = document.createElement('button');
+            bImg.innerHTML = '<i>🖼</i> Ver imagem';
+            bImg.addEventListener('click', () => addImagePreview(key, val));
+            ctr.append(bImg);
+          }
+
+          head.append(left, ctr);
+
+          const v = document.createElement('div');
+          v.className = 'val';
+          v.textContent = inferType(val).startsWith('json') ?
+            JSON.stringify(JSON.parse(val), null, 2) :
+            (val ?? '—');
+
+          it.append(head, v);
+          list.append(it);
+        });
+      }
+
+      function renderAll() {
+        renderPresets();
+        renderLS();
+      }
+
+      // ========== AÇÕES DO MODAL ==========
+      function openModal() {
+        modalDiv.classList.add('open');
+        modalDiv.setAttribute('aria-hidden', 'false');
+        renderAll();
+      }
+
+      function closeModal() {
+        modalDiv.classList.remove('open');
+        modalDiv.setAttribute('aria-hidden', 'true');
+      }
+
+      function exportLS() {
+        const dump = {};
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k === DISABLED_KEY) continue;
+          dump[k] = localStorage.getItem(k);
+        }
+        saveFile('localstorage_export.json', JSON.stringify(dump, null, 2));
+      }
+
+      function importLS(file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const data = JSON.parse(reader.result || '{}');
+            Object.entries(data).forEach(([k, v]) => {
+              if (window.MemoryCore) {
+                window.MemoryCore.set(k, String(v));
+              } else {
+                localStorage.setItem(k, String(v));
+              }
+            });
+            alert('Importado com sucesso.');
+            renderAll();
+            if (window.__refreshExplorer) window.__refreshExplorer();
+          } catch (e) {
+            alert('JSON inválido.');
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      function clearDisabled() {
+        localStorage.setItem(DISABLED_KEY, '[]');
+        renderAll();
+        if (window.__refreshExplorer) window.__refreshExplorer();
+      }
+
+      // ========== INICIALIZAÇÃO DO APP ==========
+      function renderApp() {
+        appDiv.innerHTML = '';
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <button id="baulite-btnOpenLS" class="open-ls-btn" title="Abrir painel" aria-label="Abrir painel">
+            <i>📦</i>
+          </button>
+          <div class="small">Baú Lite pronto.</div>
+        `;
+        appDiv.appendChild(card);
+
+        $('#baulite-btnOpenLS', root).addEventListener('click', openModal);
+      }
+
+      // ========== SEEDS (dados de exemplo) ==========
+      function seedData() {
+        if (localStorage.getItem('__baulite_seeded__')) return;
+        localStorage.setItem('infodose:userName', 'KODUX');
+        localStorage.setItem('infodose:assistantName', 'Dual Infodose');
+        localStorage.setItem('uno:theme', 'nebula');
+        localStorage.setItem('infodose:archetype', 'Mago');
+        localStorage.setItem('gallery:img1', 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=640');
+        localStorage.setItem('feature:ritual:enabled', 'true');
+        localStorage.setItem(LS_KEYS.HTML, '<div class="demo"><h1>Hello Nebula</h1><p>Baú Lite</p></div>');
+
+        const demoSKs = ['sk-demo-AAA111', 'sk-demo-BBB222', 'sk-demo-CCC333'];
+        localStorage.setItem(LS_KEYS.SKS, JSON.stringify(demoSKs));
+        localStorage.setItem(LS_KEYS.SK_ACTIVE, demoSKs[0]);
+
+        const demoSig = `<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'><circle cx='13' cy='13' r='12' fill='none' stroke='#ff52e5' stroke-width='2'/><path d='M4 16 L13 4 L22 16 L13 22 Z' fill='none' stroke='#00c5e5' stroke-width='2'/></svg>`;
+        localStorage.setItem(LS_KEYS.USER_SYMBOL, demoSig);
+
+        // Alguns documentos de exemplo
+        localStorage.setItem('doc:sobre_koblux', 'KOBLLUX é um sistema de exploração de dados e conhecimento.');
+        localStorage.setItem('doc:ciclo_369', 'O ciclo 369 é uma sequência de ativação e alinhamento.');
+        localStorage.setItem('draft:ritual_madeira', 'Ritual da madeira: conexão com a terra e estabilidade.');
+        localStorage.setItem('fractal:energia', 'Fractal de energia: padrões de vibração e frequência.');
+        localStorage.setItem('archetype:curandeiro', 'Arquétipo do Curandeiro: sabedoria ancestral e cura.');
+        localStorage.setItem('template:persona', 'Template para criação de personas com atributos e história.');
+
+        localStorage.setItem('__baulite_seeded__', '1');
+      }
+
+      // ========== EVENT LISTENERS ==========
+      function bindEvents() {
+        $('#baulite-lsClose', root).addEventListener('click', closeModal);
+        modalDiv.addEventListener('click', (e) => {
+          if (e.target === modalDiv) closeModal();
+        });
+        window.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && modalDiv.classList.contains('open')) closeModal();
+        });
+
+        $('#baulite-lsRescan', root).addEventListener('click', () => {
+          renderAll();
+          if (window.__refreshExplorer) window.__refreshExplorer();
+        });
+        $('#baulite-lsExport', root).addEventListener('click', exportLS);
+        $('#baulite-lsImportFile', root).addEventListener('change', (e) => {
+          const f = e.target.files?.[0];
+          if (f) importLS(f);
+          e.target.value = '';
+        });
+        $('#baulite-lsClearDisabled', root).addEventListener('click', clearDisabled);
+
+        window.addEventListener('storage', (e) => {
+          renderAll();
+          if (window.__refreshExplorer) window.__refreshExplorer();
+        });
+      }
+
+      // ========== EXECUÇÃO ==========
+      seedData();
+      renderApp();
+      bindEvents();
+
+      console.log('🎒 Baú Lite embarcado! Clique no botão flutuante para abrir.');
+    })();
+  </script>
+
+</body>
+</html>
