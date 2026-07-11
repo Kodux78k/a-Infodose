@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KODUX Pulse Engine V12 · Live Synth</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+  :root { --primary: #274C77; --glow: rgba(39,76,119,0.6); }
+  body { font-family: 'Space Mono', monospace; background: #0A0A0F; overflow: hidden; }
+ .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
+ .glow { box-shadow: 0 0 40px var(--glow); }
+ .pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity:.5; } }
+  canvas { image-rendering: pixelated; }
+</style>
+</head>
+<body class="text-white">
+
+<div id="app" class="h-screen w-screen flex flex-col items-center justify-center p-4">
+
+  <!-- VISUALIZADOR -->
+  <canvas id="viz" class="absolute inset-0 w-full h-full opacity-30"></canvas>
+
+  <!-- PAINEL DE CONTROLE -->
+  <div class="glass glow rounded-3xl p-6 w-full max-w-2xl z-10" id="panel">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h1 class="text-2xl font-bold" id="archName">ATLAS</h1>
+        <p class="text-xs opacity-60" id="archFrase">Eu organizo o fluxo com sabedoria cósmica.</p>
+      </div>
+      <div class="text-right">
+        <div class="text-xs opacity-60">LOOP 369</div>
+        <div class="text-xl font-bold" id="loopPhase">PREPARACAO</div>
+      </div>
+    </div>
+
+    <!-- VETOR DE ESTADO -->
+    <div class="grid grid-cols-3 gap-3 mb-4 text-xs">
+      <div class="glass rounded-xl p-3">
+        <div class="opacity-60">ENERGIA</div>
+        <input type="range" id="energia" min="0" max="100" value="35" class="w-full">
+        <div class="text-center font-bold" id="energiaVal">35</div>
+      </div>
+      <div class="glass rounded-xl p-3">
+        <div class="opacity-60">EMOÇÃO</div>
+        <select id="emocao" class="w-full bg-transparent text-white text-xs">
+          <option value="calm">Calm</option>
+          <option value="focused">Focused</option>
+          <option value="creative">Creative</option>
+          <option value="anxious">Anxious</option>
+        </select>
+      </div>
+      <div class="glass rounded-xl p-3">
+        <div class="opacity-60">OBJETIVO</div>
+        <select id="objetivo" class="w-full bg-transparent text-white text-xs">
+          <option value="FOCO">Foco</option>
+          <option value="CRIACAO">Criação</option>
+          <option value="ENERGIA">Energia</option>
+          <option value="RECUPERACAO">Recuperação</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- CANAIS ATIVOS -->
+    <div class="grid grid-cols-3 gap-2 mb-4 text-[10px]">
+      <div class="glass rounded-lg p-2 text-center" id="chRitmo">
+        <div class="opacity-60">RÍTMICO</div>
+        <div class="font-bold pulse">● ON</div>
+        <div id="bpmVal">72 BPM</div>
+      </div>
+      <div class="glass rounded-lg p-2 text-center" id="chHarmonico">
+        <div class="opacity-60">HARMÔNICO</div>
+        <div class="font-bold pulse">● ON</div>
+        <div id="freqVal">432 Hz</div>
+      </div>
+      <div class="glass rounded-lg p-2 text-center opacity-30" id="chMelodico">
+        <div class="opacity-60">MELÓDICO</div>
+        <div class="font-bold">○ OFF</div>
+        <div>EXPANSAO</div>
+      </div>
+    </div>
+
+    <!-- CONTROLES -->
+    <div class="flex gap-3">
+      <button id="btnStart" class="flex-1 bg-white text-black font-bold py-3 rounded-xl hover:scale-105 transition">
+        INICIAR MOTOR
+      </button>
+      <button id="btnNext" class="glass px-6 py-3 rounded-xl hover:bg-white/10 transition">
+        PRÓXIMO →
+      </button>
+    </div>
+
+    <!-- FEEDBACK -->
+    <div class="mt-4 grid grid-cols-4 gap-2 text-[10px] text-center">
+      <div><div class="opacity-60">AROMA</div><div id="aromaVal" class="font-bold">Alecrim</div></div>
+      <div><div class="opacity-60">COR</div><div id="corVal" class="font-bold">#274C77</div></div>
+      <div><div class="opacity-60">CAMADA</div><div id="camadaVal" class="font-bold">12</div></div>
+      <div><div class="opacity-60">BINAURAL</div><div id="binauralVal" class="font-bold">ALPHA</div></div>
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div id="log" class="absolute bottom-4 left-4 right-4 text-[10px] opacity-40 max-h-20 overflow-hidden"></div>
+</div>
+
+<script type="module">
+const ARCHETYPES = [
+  { opcode: "0x00", nome: "Atlas", regra: "BOOT", hz: 432, cor: "#274C77", aroma: "Alecrim", frase: "Eu organizo o fluxo com sabedoria cósmica.", bpmBase: 72, energyBase: 35 },
+  { opcode: "0x02", nome: "Nova", regra: "SEED", hz: 528, cor: "#F4A261", aroma: "Laranja Doce", frase: "Inspiração viva brota do silêncio eterno.", bpmBase: 90, energyBase: 60 },
+  { opcode: "0x01", nome: "Vitalis", regra: "DELTA", hz: 528, cor: "#E76F51", aroma: "Hortelã-pimenta", frase: "Energia vital em expansão harmônica.", bpmBase: 140, energyBase: 90 },
+  { opcode: "0x0B", nome: "Pulse", regra: "PULSE", hz: 639, cor: "#9B5DE5", aroma: "Ylang Ylang", frase: "Emoção é linguagem que dança.", bpmBase: 75, energyBase: 50 },
+  { opcode: "0x03", nome: "Artemis", regra: "DETECT", hz: 672, cor: "#00BBF9", aroma: "Eucalipto", frase: "Descubro o mapa sagrado do invisível.", bpmBase: 85, energyBase: 45 },
+  { opcode: "0x0A", nome: "Serena", regra: "GUARD", hz: 528, cor: "#90BE6D", aroma: "Lavanda", frase: "Cuido do campo, nutro o espaço sagrado.", bpmBase: 60, energyBase: 20 },
+  { opcode: "0x06", nome: "Kaos", regra: "LIMPAR", hz: 741, cor: "#F94144", aroma: "Cravo", frase: "Eu sou o rompimento que revela a verdade.", bpmBase: 130, energyBase: 85 },
+  { opcode: "0x07", nome: "Genus", regra: "SYNTH", hz: 594, cor: "#577590", aroma: "Cedro", frase: "Mãos moldam o invisível em forma viva.", bpmBase: 120, energyBase: 70 },
+  { opcode: "0x08", nome: "Lumine", regra: "RENDER", hz: 432, cor: "#F9C74F", aroma: "Limão Siciliano", frase: "A luz dança comigo, leveza é minha lei.", bpmBase: 115, energyBase: 80 },
+  { opcode: "0x09", nome: "Solus", regra: "QA", hz: 963, cor: "#F1FAEE", aroma: "Sândalo", frase: "Silêncio ritual, espelho da essência.", bpmBase: 45, energyBase: 10 },
+  { opcode: "0x04", nome: "Rhea", regra: "INTEGRAR", hz: 528, cor: "#A8DADC", aroma: "Rosa", frase: "Estou em comunhão com todos os elos.", bpmBase: 65, energyBase: 30 },
+  { opcode: "0x05", nome: "Aion", regra: "SELAR", hz: 777, cor: "#457B9D", aroma: "Olíbano", frase: "Sou o tempo vivo, ritmo da eternidade.", bpmBase: 55, energyBase: 25 },
+];
+
+const TRANSITION_GRAPH = {
+  "Atlas": { "Nova": 0.82, "Vitalis": 0.41, "Solus": 0.25 },
+  "Nova": { "Vitalis": 0.9, "Atlas": 0.3 },
+  "Vitalis": { "Pulse": 0.9, "Lumine": 0.95, "Atlas": 0.2 },
+  "Pulse": { "Serena": 0.9, "Atlas": 0.3 },
+  "Serena": { "Atlas": 0.9, "Solus": 0.4 },
+  "Lumine": { "Solus": 0.85, "Serena": 0.3 },
+  "Solus": { "Aion": 0.8, "Atlas": 0.2 },
+  "Aion": { "Atlas": 1.0 },
+  "Kaos": { "Genus": 0.7, "Nova": 0.3 },
+  "Artemis": { "Nova": 0.75, "Atlas": 0.4 },
+  "Rhea": { "Serena": 0.7, "Pulse": 0.3 },
+  "Genus": { "Atlas": 0.6, "Nova": 0.4 }
+};
+
+class PulseEngineLive {
+  constructor() {
+    this.ctx = null;
+    this.nodes = { ritmico: null, harmonico: null, melodico: null };
+    this.gains = { ritmico: null, harmonico: null, melodico: null };
+    this.state = {
+      archIdx: 0,
+      loop369: 'PREPARACAO',
+      camada: 12,
+      energia: 35,
+      emocao: 'calm',
+      objetivo: 'FOCO',
+      isPlaying: false
+    };
+    this.vizCtx = document.getElementById('viz').getContext('2d');
+    this.analyser = null;
+    this.setupUI();
+  }
+
+  async init() {
+    if (this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.analyser = this.ctx.createAnalyser();
+    this.analyser.fftSize = 256;
+    this.analyser.connect(this.ctx.destination);
+    this.log('AudioContext iniciado');
+  }
+
+  // CANAL 1: RÍTMICO - Kick + Hihat sintetizados
+  createRitmico(bpm) {
+    if (this.nodes.ritmico) this.nodes.ritmico.stop();
+    const interval = 60 / bpm;
+
+    const gain = this.ctx.createGain();
+    gain.gain.value = 0.3;
+    gain.connect(this.analyser);
+    this.gains.ritmico = gain;
+
+    const playKick = () => {
+      const osc = this.ctx.createOscillator();
+      const gainEnv = this.ctx.createGain();
+      osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+      gainEnv.gain.setValueAtTime(1, this.ctx.currentTime);
+      gainEnv.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+      osc.connect(gainEnv).connect(gain);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.1);
+    };
+
+    const loop = setInterval(playKick, interval * 1000);
+    this.nodes.ritmico = { stop: () => clearInterval(loop) };
+  }
+
+  // CANAL 2: HARMÔNICO - Pad em 432Hz ou Hz do arquétipo
+  createHarmonico(freq) {
+    if (this.nodes.harmonico) this.nodes.harmonico.stop();
+
+    const gain = this.ctx.createGain();
+    gain.gain.value = 0.15;
+    gain.connect(this.analyser);
+    this.gains.harmonico = gain;
+
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    osc1.type = 'sine';
+    osc2.type = 'triangle';
+    osc1.frequency.value = freq;
+    osc2.frequency.value = freq * 1.5; // Quinta
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    osc1.start();
+    osc2.start();
+
+    this.nodes.harmonico = { stop: () => { osc1.stop(); osc2.stop(); } };
+  }
+
+  // CANAL 3: MELÓDICO - Só na EXPANSAO, arpejo procedural
+  createMelodico(freq, bpm) {
+    if (this.nodes.melodico) this.nodes.melodico.stop();
+
+    const gain = this.ctx.createGain();
+    gain.gain.value = 0.1;
+    gain.connect(this.analyser);
+    this.gains.melodico = gain;
+
+    const scale = [1, 1.125, 1.25, 1.333, 1.5, 1.667, 1.875, 2]; // Escala maior
+    let noteIdx = 0;
+
+    const playNote = () => {
+      const osc = this.ctx.createOscillator();
+      const env = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq * scale[noteIdx % scale.length];
+      env.gain.setValueAtTime(0, this.ctx.currentTime);
+      env.gain.linearRampToValueAtTime(0.3, this.ctx.currentTime + 0.05);
+      env.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+      osc.connect(env).connect(gain);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.3);
+      noteIdx++;
+    };
+
+    const interval = setInterval(playNote, (60 / bpm) * 500); // Colcheias
+    this.nodes.melodico = { stop: () => clearInterval(interval) };
+  }
+
+  // MOTOR DE ESTADO
+  calculateNextArch() {
+    const current = ARCHETYPES[this.state.archIdx].nome;
+    const options = TRANSITION_GRAPH[current] || {};
+
+    // Aplica modificadores
+    let weights = {...options };
+    if (this.state.energia < 30 && options['Vitalis']) weights['Vitalis'] += 0.4;
+    if (this.state.objetivo === 'ENERGIA' && options['Vitalis']) weights['Vitalis'] += 0.3;
+    if (new Date().getHours() >= 22 && options['Solus']) weights['Solus'] += 0.3;
+
+    // Escolhe maior peso
+    const next = Object.keys(weights).reduce((a, b) => weights[a] > weights[b]? a : b);
+    return ARCHETYPES.findIndex(a => a.nome === next);
+  }
+
+  async play() {
+    await this.init();
+    const arch = ARCHETYPES[this.state.archIdx];
+    const bpm = arch.bpmBase + (this.state.energia - 50) * 0.5;
+
+    this.createRitmico(bpm);
+    this.createHarmonico(arch.hz);
+
+    if (this.state.loop369 === 'EXPANSAO') {
+      this.createMelodico(arch.hz, bpm);
+      document.getElementById('chMelodico').classList.remove('opacity-30');
+      document.getElementById('chMelodico').querySelector('.font-bold').textContent = '● ON';
+    } else {
+      document.getElementById('chMelodico').classList.add('opacity-30');
+      document.getElementById('chMelodico').querySelector('.font-bold').textContent = '○ OFF';
+    }
+
+    this.updateUI(arch, bpm);
+    this.state.isPlaying = true;
+    this.draw();
+    this.log(`Tocando: ${arch.nome} @ ${Math.round(bpm)}BPM ${arch.hz}Hz`);
+  }
+
+  stop() {
+    Object.values(this.nodes).forEach(n => n?.stop());
+    this.state.isPlaying = false;
+    this.log('Motor parado');
+  }
+
+  next() {
+    this.state.archIdx = this.calculateNextArch();
+    this.advanceLoop369();
+    if (this.state.isPlaying) {
+      this.stop();
+      setTimeout(() => this.play(), 100);
+    }
+  }
+
+  advanceLoop369() {
+    const phases = ['PREPARACAO', 'EXPANSAO', 'INTEGRACAO'];
+    const idx = phases.indexOf(this.state.loop369);
+    this.state.loop369 = phases[(idx + 1) % 3];
+    if (this.state.loop369 === 'PREPARACAO') {
+      this.state.camada = Math.min(144, this.state.camada * 2);
+    }
+  }
+
+  updateUI(arch, bpm) {
+    document.documentElement.style.setProperty('--primary', arch.cor);
+    document.documentElement.style.setProperty('--glow', arch.cor + '99');
+    document.getElementById('archName').textContent = arch.nome.toUpperCase();
+    document.getElementById('archFrase').textContent = arch.frase;
+    document.getElementById('loopPhase').textContent = this.state.loop369;
+    document.getElementById('bpmVal').textContent = Math.round(bpm) + ' BPM';
+    document.getElementById('freqVal').textContent = arch.hz + ' Hz';
+    document.getElementById('aromaVal').textContent = arch.aroma;
+    document.getElementById('corVal').textContent = arch.cor;
+    document.getElementById('camadaVal').textContent = this.state.camada;
+    document.getElementById('binauralVal').textContent =
+      this.state.loop369 === 'PREPARACAO'? 'ALPHA' :
+      this.state.loop369 === 'EXPANSAO'? 'BETA' : 'THETA';
+  }
+
+  draw() {
+    if (!this.state.isPlaying) return;
+    requestAnimationFrame(() => this.draw());
+
+    const canvas = document.getElementById('viz');
+    const ctx = this.vizCtx;
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    const data = new Uint8Array(this.analyser.frequencyBinCount);
+    this.analyser.getByteFrequencyData(data);
+
+    ctx.fillStyle = 'rgba(10,10,15,0.1)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const barWidth = canvas.width / data.length;
+    const arch = ARCHETYPES[this.state.archIdx];
+
+    for (let i = 0; i < data.length; i++) {
+      const barHeight = (data[i] / 255) * canvas.height * 0.8;
+      const hue = parseInt(arch.cor.slice(1), 16);
+      ctx.fillStyle = `hsl(${(hue >> 16) * 1.4 + i}, 70%, ${50 + data[i] / 5}%)`;
+      ctx.fillRect(i * barWidth, canvas.height - barHeight, barWidth - 1, barHeight);
+    }
+  }
+
+  setupUI() {
+    document.getElementById('btnStart').onclick = () => {
+      if (!this.state.isPlaying) {
+        this.play();
+        document.getElementById('btnStart').textContent = 'PARAR MOTOR';
+      } else {
+        this.stop();
+        document.getElementById('btnStart').textContent = 'INICIAR MOTOR';
+      }
+    };
+
+    document.getElementById('btnNext').onclick = () => this.next();
+
+    document.getElementById('energia').oninput = (e) => {
+      this.state.energia = parseInt(e.target.value);
+      document.getElementById('energiaVal').textContent = this.state.energia;
+      if (this.state.isPlaying) { this.stop(); this.play(); }
+    };
+
+    document.getElementById('emocao').onchange = (e) => {
+      this.state.emocao = e.target.value;
+    };
+
+    document.getElementById('objetivo').onchange = (e) => {
+      this.state.objetivo = e.target.value;
+    };
+  }
+
+  log(msg) {
+    const log = document.getElementById('log');
+    const time = new Date().toLocaleTimeString('pt-BR');
+    log.innerHTML = `[${time}] ${msg}<br>` + log.innerHTML;
+  }
+}
+
+const engine = new PulseEngineLive();
+</script>
+
+</body>
+</html>
