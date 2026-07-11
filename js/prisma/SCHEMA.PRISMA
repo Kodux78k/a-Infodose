@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+enum Loop369 {
+  PREPARACAO
+  EXPANSAO
+  INTEGRACAO
+}
+
+model Archetype {
+  id String @id @default(cuid())
+  opcode String @unique
+  nome String @unique
+  regra String
+  rung Int
+  hz Int
+  essencia String
+  frase String
+  cor String
+  aroma String
+  ambiente String
+  leitmotiv String
+
+  tracks Track[]
+  fromTransitions Transition[] @relation("FromArchetype")
+  toTransitions Transition[] @relation("ToArchetype")
+
+  @@map("cadial_archetypes")
+}
+
+model Track {
+  id String @id @default(cuid())
+  archetypeId String
+  archetype Archetype @relation(fields: [archetypeId], references: [id])
+
+  title String
+  url String @unique
+  duration Int
+  bpm Int
+  energy Int
+  mood String
+  aroma String
+  color String
+  frequency Int
+  tags String[]
+  intensity Int
+  phase Loop369?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  fromTransitions Transition[] @relation("FromTrack")
+  toTransitions Transition[] @relation("ToTrack")
+
+  @@index([archetypeId, mood, energy])
+  @@map("tracks")
+}
+
+model Transition {
+  id String @id @default(cuid())
+
+  fromArchetypeId String
+  fromArchetype Archetype @relation("FromArchetype", fields: [fromArchetypeId], references: [id])
+  toArchetypeId String
+  toArchetype Archetype @relation("ToArchetype", fields: [toArchetypeId], references: [id])
+
+  fromTrackId String?
+  fromTrack Track? @relation("FromTrack", fields: [fromTrackId], references: [id])
+  toTrackId String?
+  toTrack Track? @relation("ToTrack", fields: [toTrackId], references: [id])
+
+  trigger String
+  crossfadeMs Int @default(3000)
+  bpmShift Int
+  energyShift Int
+  transitionSound String?
+  priority Int @default(0)
+
+  lastUsed DateTime?
+  useCount Int @default(0)
+
+  @@unique([fromArchetypeId, toArchetypeId, trigger])
+  @@map("transitions")
+}
+
+model UserState {
+  id String @id @default(cuid())
+  userId String @unique
+
+  currentArchetypeId String
+  energia Int
+  emocao String
+  bpmAtual Int?
+  hrv Float?
+
+  loop369 Loop369 @default(PREPARACAO)
+  camada144 Int @default(12)
+  contador369 Int @default(0)
+  tempoDeUsoMin Int @default(0)
+  horario DateTime @default(now())
+  objetivo String @default("foco")
+
+  sessionId String @default(cuid())
+  sessionStartAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@map("user_states")
+}
+
+model PlayEvent {
+  id String @id @default(cuid())
+  userId String
+  sessionId String
+  trackId String
+  archetypeId String
+
+  startedAt DateTime @default(now())
+  endedAt DateTime?
+  completed Boolean @default(false)
+
+  trigger String
+  fromTrackId String?
+
+  @@index([userId, startedAt])
+  @@map("play_events")
+}
