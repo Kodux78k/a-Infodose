@@ -42,8 +42,8 @@ window.KBLX_PROFILE = CONFIG.profile;
 // (a sequência remota 7-9 vive em KOBLLUX_MODULES_0/main/).
 const BOOT_MANIFEST = {
     css: [
-        "main-S0.css",
-        "78DevOs.css"
+        "main-S0.css"
+     //   "78DevOs.css"
     ],
     sequence79: [
         "KBllX_ASCII_BOOT.js",
