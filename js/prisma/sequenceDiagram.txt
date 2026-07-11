@@ -1,0 +1,23 @@
+sequenceDiagram
+    participant U as Usuário
+    participant APP as App Vitalis
+    participant GW as Gateway V12
+    participant V as Vitalis API
+    participant LLM as Momentum-Biohacker
+    participant FIT as Fitbit API
+    participant DB as TimescaleDB
+    participant MET as Posthog
+
+    U->>APP: Abre app manhã
+    APP->>GW: GET /vitalis/rotina?user=123
+    GW->>V: Roteia p/ 0x01 DELTA
+    V->>FIT: GET sono + HRV últimas 24h
+    FIT-->>V: HRV=45, Sono=6h
+    V->>LLM: "HRV baixo, gerar protocolo biohacker"
+    LLM-->>V: "Respiração 4-7-8 + banho frio 2min"
+    V->>DB: INSERT rotina_dia
+    V->>APP: Rotina + Push Notification
+    APP->>U: Notificação: "Hora do banho frio ⚡"
+    U->>APP: Marca como feito
+    APP->>MET: event: biohack_completed
+    MET->>META: Atualiza KPI: Aderência = 87%
