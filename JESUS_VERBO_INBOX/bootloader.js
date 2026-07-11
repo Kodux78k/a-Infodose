@@ -19,7 +19,7 @@ import { initBodyThemeSync } from 'https://www.infodose.com.br/KOBLLUX_MODULAR_0
 export const DEFAULT_MANIFEST = {
     css: [
         'https://fonts.googleapis.com/css2?family=Inter:wght@200;400;500;600;800&family=JetBrains+Mono:wght@400;700&display=swap',
-        'https://www.infodose.com.br/css/main-fusion.css'
+        'https://www.infodose.com.br/css/main.css'
     ],
     externalScripts: [
         { src: 'https://unpkg.com/lucide@latest', id: 'JS_0' },
