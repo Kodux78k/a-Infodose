@@ -1,0 +1,138 @@
+// schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+model Archetype {
+  id String @id @default(cuid())
+  opcode String @unique // 0x00, 0x02, etc
+  nome String @unique // Atlas, Nova...
+  regra String // BOOT, SEED, DELTA...
+  rung Int // 1-12
+  hz Int // 432, 528, etc
+  essencia String // "Planejador — ordem"
+  frase String // "Eu organizo o fluxo..."
+  cor String // #274C77
+  aroma String // Alecrim
+  ambiente String // chuva leve, floresta
+  leitmotiv String // URL do tema principal
+
+  tracks Track[]
+  transitions Transition[] @relation("FromArchetype")
+  targets Transition[] @relation("ToArchetype")
+
+  @@map("cadial_archetypes")
+}
+
+model Track {
+  id String @id @default(cuid())
+  archetypeId String
+  archetype Archetype @relation(fields: [archetypeId], references: [id])
+
+  // Metadados musicais
+  title String
+  url String // /media/atlas/focus01.mp3
+  duration Int // segundos
+  bpm Int
+  energy Int // 0-100
+  mood String // focus, create, workout, emotion
+
+  // Metadados sinestésicos
+  aroma String // Alecrim, Lavanda
+  color String // #274C77
+  frequency Int // 432, 528, 639
+  tags String[] // ["cinematográfico", "instrumental"]
+
+  // Metadados de transição
+  intensity Int // 0-100 pra calcular crossfade
+  phase Loop369? // PREPARACAO, EXPANSAO, INTEGRACAO
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  fromTransitions Transition[] @relation("FromTrack")
+  toTransitions Transition[] @relation("ToTrack")
+
+  @@index([archetypeId, mood, energy])
+  @@map("tracks")
+}
+
+model Transition {
+  id String @id @default(cuid())
+
+  fromArchetypeId String
+  fromArchetype Archetype @relation("FromArchetype", fields: [fromArchetypeId], references: [id])
+  toArchetypeId String
+  toArchetype Archetype @relation("ToArchetype", fields: [toArchetypeId], references: [id])
+
+  fromTrackId String?
+  fromTrack Track? @relation("FromTrack", fields: [fromTrackId], references: [id])
+  toTrackId String?
+  toTrack Track? @relation("ToTrack", fields: [toTrackId], references: [id])
+
+  // Regras de transição
+  trigger String // "foco_baixo", "energia_caiu", "objetivo_concluido"
+  crossfadeMs Int @default(3000)
+  bpmShift Int // delta de BPM permitido: -10 a +10
+  energyShift Int // delta de energia: -20 a +20
+
+  // Sons de transição entre arquétipos
+  transitionSound String? // /media/transitions/atlas_to_nova.mp3
+
+  priority Int @default(0) // 0-100, maior = preferida
+
+  @@unique([fromArchetypeId, toArchetypeId, trigger])
+  @@map("transitions")
+}
+
+model UserState {
+  id String @id @default(cuid())
+  userId String @unique
+
+  // Estado atual detectado
+  currentArchetypeId String
+  energia Int // 0-100
+  humor String // "focado", "disperso", "ansioso"
+  objetivo String // "estudar", "treinar", "relaxar"
+  horario DateTime
+
+  // Loop 369
+  loopPhase Loop369 @default(PREPARACAO)
+  loopStartAt DateTime @default(now())
+
+  // Última música
+  currentTrackId String?
+
+  updatedAt DateTime @updatedAt
+
+  @@map("user_states")
+}
+
+model PlayEvent {
+  id String @id @default(cuid())
+  userId String
+  trackId String
+  archetypeId String
+
+  startedAt DateTime @default(now())
+  endedAt DateTime?
+  completed Boolean @default(false)
+
+  // Contexto da reprodução
+  trigger String // "auto", "manual", "transition"
+  fromTrackId String?
+
+  @@index([userId, startedAt])
+  @@map("play_events")
+}
+
+enum Loop369 {
+  PREPARACAO // 3 - BPM baixo, intensidade baixa
+  EXPANSAO // 6 - BPM sobe, intensidade sobe
+  INTEGRACAO // 9 - BPM estabiliza, intensidade integra
+}
