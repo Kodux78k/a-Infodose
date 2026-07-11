@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KOBLLUX · Motor 3·6·9 Gestor Monolítico</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+  :root {
+    --neon-cyan: #00f2ff; --neon-purple: #bd00ff; --neon-gold: #ffd700;
+    --bg-dark: #0A0A0F; --bg-glass: rgba(255,255,255,0.05);
+  }
+    * { box-sizing: border-box; }
+  body {
+    font-family: 'Space Mono', monospace;
+    background: var(--bg-dark);
+    color: #fff; margin: 0; padding: 20px;
+  }
+ .glass {
+    background: var(--bg-glass);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+  }
+ .btn {
+    padding: 10px 20px; border-radius: 12px; border: none;
+    font-weight: 700; cursor: pointer; transition: all 0.2s;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+ .btn-primary { background: var(--neon-cyan); color: #000; }
+ .btn-sec { background: rgba(255,255,255,0.1); color: #fff; }
+ .btn-danger { background: #c44; color: #fff; }
+ .btn:hover { transform: scale(1.05); }
+ .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  input, select, textarea {
+    background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2);
+    color: #fff; padding: 10px; border-radius: 10px; width: 100%;
+    font-family: inherit;
+  }
+ .tab-btn {
+    padding: 12px 24px; background: transparent; border: none;
+    color: rgba(255,255,255,0.6); cursor: pointer; border-bottom: 2px solid transparent;
+  }
+ .tab-btn.active {
+    color: var(--neon-cyan); border-bottom-color: var(--neon-cyan);
+  }
+ .tab-content { display: none; }
+ .tab-content.active { display: block; }
+ .para-block {
+    padding: 16px; margin: 12px 0; border-left: 3px solid;
+    background: rgba(255,255,255,0.03); border-radius: 8px;
+    animation: fadeIn 0.4s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } }
+ .arch-tag {
+    display: inline-block; padding: 4px 12px; border: 1px solid;
+    border-radius: 20px; font-size: 0.75rem; font-weight: 700;
+    margin-bottom: 8px;
+  }
+ .toast {
+    position: fixed; bottom: 20px; right: 20px;
+    background: var(--neon-cyan); color: #000;
+    padding: 12px 20px; border-radius: 12px; font-weight: 700;
+    z-index: 10000; animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn { from { transform: translateX(400px); } }
+ .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+    display: none; align-items: center; justify-content: center;
+    z-index: 9999; backdrop-filter: blur(10px);
+  }
+ .modal-content {
+    width: 90%; max-width: 800px; max-height: 85vh;
+    display: flex; flex-direction: column;
+  }
+ .session-item {
+    display: flex; gap: 12px; padding: 12px; margin: 8px 0;
+    background: rgba(255,255,255,0.03); border-radius: 12px;
+    border: 1px solid transparent;
+  }
+ .session-item.selected {
+    background: rgba(0,242,255,0.1); border-color: var(--neon-cyan);
+  }
+ .import-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px; margin: 8px 0; background: rgba(255,255,255,0.03);
+    border-radius: 8px; font-size: 0.85rem;
+  }
+ .badge {
+    padding: 2px 8px; border-radius: 6px; font-size: 0.7rem;
+    background: var(--neon-purple); color: #fff;
+  }
+ .badge.css { background: #264de4; }
+ .badge.js { background: #f7df1e; color: #000; }
+ .accordion-header {
+    padding: 16px; cursor: pointer; display: flex;
+    justify-content: space-between; align-items: center;
+  }
+ .accordion.is-collapsed.collapsible-body { height: 0; overflow: hidden; }
+ .collapsible-body { transition: height 0.3s ease; }
+ .indicator svg { transition: transform 0.3s; }
+ .accordion.is-open.indicator svg { transform: rotate(180deg); }
+</style>
+</head>
+<body>
+
+<div class="max-w-6xl mx-auto">
+  <!-- HEADER -->
+  <div class="glass p-6 mb-6">
+    <h1 class="text-3xl font-bold mb-2">
+      <i data-lucide="atom"></i> KOBLLUX MOTOR 3·6·9
+    </h1>
+    <p class="opacity-60">Gestor Monolítico · Fractais + Imports + Downloads</p>
+    <div id="statusBar" class="text-sm mt-2 opacity-80">Sistema em repouso · Matrix Pronta</div>
+  </div>
+
+  <!-- TABS -->
+  <div class="glass mb-6">
+    <div class="flex border-b border-white/10">
+      <button class="tab-btn active" data-tab="gerador">
+        <i data-lucide="zap"></i> Gerador
+      </button>
+      <button class="tab-btn" data-tab="sessao">
+        <i data-lucide="download-cloud"></i> Sessão <span id="sessionBadge">0</span>
+      </button>
+      <button class="tab-btn" data-tab="imports">
+        <i data-lucide="package"></i> Imports
+      </button>
+      <button class="tab-btn" data-tab="config">
+        <i data-lucide="settings"></i> Config
+      </button>
+    </div>
+
+    <!-- TAB: GERADOR -->
+    <div id="tab-gerador" class="tab-content active p-6">
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- INPUT -->
+        <div>
+          <h3 class="font-bold mb-3">1. Texto Fonte</h3>
+          <textarea id="inputText" rows="8" placeholder="Cole seu texto aqui..."></textarea>
+
+          <h3 class="font-bold mt-4 mb-3">2. Arquétipo Inicial</h3>
+          <select id="startArch">
+            <option value="atlas">Atlas (Usuário/Núcleo)</option>
+          </select>
+
+          <label class="flex items-center gap-2 mt-4">
+            <input type="checkbox" id="cycleMode">
+            <span>Modo Ciclo 3·6·9</span>
+          </label>
+
+          <div class="flex gap-2 mt-4">
+            <button id="genBtn" class="btn btn-primary flex-1">
+              <i data-lucide="play"></i> Gerar Fractais
+            </button>
+            <button id="clearBtn" class="btn btn-sec">
+              <i data-lucide="trash"></i> Limpar
+            </button>
+          </div>
+
+          <!-- CONTROLES MOTOR -->
+          <div class="mt-6 p-4 glass rounded-xl">
+            <h4 class="font-bold mb-3 text-sm">Motor 3·6·9</h4>
+            <div class="grid grid-cols-3 gap-2 mb-3">
+              <button class="btn btn-sec" data-engine="3">+3</button>
+              <button class="btn btn-sec" data-engine="6">+6</button>
+              <button class="btn btn-sec" data-engine="9">+9</button>
+            </div>
+            <div class="grid grid-cols-2 gap-2 mb-3">
+              <button id="reverseToggle" class="btn btn-sec text-xs">Reverse: OFF</button>
+              <button id="cycle3697" class="btn btn-sec text-xs">3-6-9-7: OFF</button>
+            </div>
+            <div class="flex gap-2">
+              <button class="btn btn-sec flex-1" data-jump="1">+1</button>
+              <button class="btn btn-sec flex-1" data-jump="2">+2</button>
+              <button class="btn btn-sec flex-1" data-jump="7">+7</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- OUTPUT -->
+        <div>
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="font-bold">3. Fractais Gerados</h3>
+            <div class="flex gap-2">
+              <button id="copyBtn" class="btn btn-sec">
+                <i data-lucide="copy"></i>
+              </button>
+              <button id="downloadBtn" class="btn btn-sec">
+                <i data-lucide="download"></i>
+              </button>
+            </div>
+          <div id="outputContainer" class="glass p-4 rounded-xl min-h-[400px]">
+            <div class="empty-state text-center opacity-50 py-20">
+              Sistema reiniciado. Aguardando novos dados.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: SESSÃO -->
+    <div id="tab-sessao" class="tab-content p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold">Fractais da Sessão Atual</h3>
+        <div class="flex gap-2">
+          <button id="selectAllSessionBtn" class="btn btn-sec">Selecionar Todos</button>
+          <button id="clearSessionBtn" class="btn btn-danger">Limpar Sessão</button>
+        </div>
+      </div>
+      <div id="sessionList" class="max-h-[500px] overflow-y-auto"></div>
+      <div class="flex gap-2 mt-4">
+        <button id="downloadZipBtn" class="btn btn-primary flex-1">
+          <i data-lucide="package"></i> Baixar Selecionados (.zip)
+        </button>
+        <button id="downloadTxtBtn" class="btn btn-sec flex-1">
+          <i data-lucide="file-text"></i> Exportar Tudo (.txt)
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB: IMPORTS -->
+    <div id="tab-imports" class="tab-content p-6">
+      <h3 class="font-bold mb-4">Imports CSS/JS Ativos na Página</h3>
+      <div id="importsList"></div>
+      <button id="refreshImportsBtn" class="btn btn-sec mt-4">
+        <i data-lucide="refresh-cw"></i> Atualizar Lista
+      </button>
+      <button id="exportImportsBtn" class="btn btn-primary mt-4">
+        <i data-lucide="download"></i> Exportar Lista
+      </button>
+    </div>
+
+    <!-- TAB: CONFIG -->
+    <div id="tab-config" class="tab-content p-6">
+      <h3 class="font-bold mb-4">Configurações do Cofre</h3>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <label class="block mb-2">Nome da Chave</label>
+          <input id="keyNameInput" placeholder="OpenRouter API">
+        </div>
+        <div>
+          <label class="block mb-2">Token</label>
+          <input id="keyTokenInput" type="password" placeholder="sk-...">
+        </div>
+        <div class="md:col-span-2">
+          <label class="block mb-2">Webhook (Opcional)</label>
+          <input id="keyWebhookInput" placeholder="https://...">
+        </div>
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button id="addKeyBtn" class="btn btn-primary">
+          <i data-lucide="plus"></i> Adicionar Chave
+        </button>
+        <button id="testWebhookBtn" class="btn btn-sec">
+          <i data-lucide="send"></i> Testar Webhook
+        </button>
+      </div>
+
+      <h4 class="font-bold mt-6 mb-3">Chaves Salvas</h4>
+      <div id="keyList"></div>
+
+      <div class="mt-6 p-4 glass rounded-xl">
+        <div class="flex justify-between items-center">
+          <div>
+            <div class="font-bold">Status do Cofre</div>
+            <div id="vaultStatusText" class="text-sm opacity-70">Cofre Aberto (Sem senha)</div>
+          </div>
+          <button id="lockVaultBtn" class="btn btn-sec">CRIAR SENHA</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VAULT -->
+<div id="vaultModal" class="modal-overlay">
+  <div class="modal-content glass p-6" style="max-width: 400px;">
+    <h3 class="font-bold mb-4">Destrancar Cofre</h3>
+    <input id="vaultPassInput" type="password" placeholder="Senha do cofre" class="mb-4">
+    <div class="flex gap-2">
+      <button id="vaultUnlockBtn" class="btn btn-primary flex-1">Destrancar</button>
+      <button id="vaultCancelBtn" class="btn btn-sec flex-1">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+// =========================================
+// KOBLLUX MONOLÍTICO · CORE ENGINE
+// =========================================
+
+lucide.createIcons();
+
+// 1. ACORDEÃO
+function makeCollapsible(node) {
+  if (!node || node.dataset.accordionInit) return;
+  node.dataset.accordionInit = "true";
+  const header = node.querySelector('.accordion-header');
+  const body = node.querySelector('.collapsible-body');
+  if (!header ||!body) return;
+  if (!header.querySelector('.indicator')) {
+    const indicator = document.createElement('span');
+    indicator.className = 'indicator';
+    indicator.innerHTML = '<svg width="20" height="20" viewBox="0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+    header.appendChild(indicator);
+  }
+  if (!node.classList.contains('is-collapsed') &&!node.classList.contains('is-open')) node.classList.add('is-open');
+  if (node.classList.contains('is-collapsed')) body.style.height = '0px';
+  header.addEventListener('click', (e) => {
+    if (['input', 'select', 'button', 'textarea'].includes(e.target.tagName.toLowerCase())) return;
+    const isCollapsed = node.classList.contains('is-collapsed');
+    if (isCollapsed) {
+      node.classList.remove('is-collapsed'); node.classList.add('is-open');
+      body.style.height = body.scrollHeight + 'px';
+      body.addEventListener('transitionend', function handler(ev) {
+        if (ev.propertyName === 'height') {
+          body.style.height = 'auto';
+          body.removeEventListener('transitionend', handler);
+        }
+      });
+    } else {
+      body.style.height = body.scrollHeight + 'px';
+      void body.offsetHeight;
+      node.classList.remove('is-open'); node.classList.add('is-collapsed');
+      body.style.height = '0px';
+    }
+  });
+}
+
+// 2. ARQUÉTIPOS BASE
+const di_userNameRaw = localStorage.getItem("di_userName") || "";
+const userKey = di_userNameRaw.trim().toLowerCase();
+const displayUserName = di_userNameRaw.trim() || "User";
+
+let ARCHETYPES_BASE = [
+  "atlas", "nova", "vitalis", "pulse", "kaos", "kodux", "lumine",
+  "aion", "kobllux", "artemis", "serena", "genus", "solus",
+  "rhea", "uno", "dual", "trinity", "infodose", "horus", "bllue"
+];
+
+if (userKey &&!ARCHETYPES_BASE.includes(userKey)) {
+  ARCHETYPES_BASE.push(userKey);
+}
+
+const ARCHETYPES = [...ARCHETYPES_BASE];
+const ARCH_NAMES = {
+  atlas: "Atlas", nova: "Nova", vitalis: "Vitalis", pulse: "Pulse",
+  kaos: "Kaos", kodux: "Kodux", lumine: "Lumine", aion: "Aion",
+  kobllux: "Kobllux", artemis: "Artemis", serena: "Serena", genus: "Genus",
+  solus: "Solus", rhea: "Rhea", uno: "Uno", dual: "Dual",
+  trinity: "Trinity", infodose: "Infodose", horus: "Horus", bllue: "Bllue"
+};
+if (userKey) ARCH_NAMES[userKey] = di_userNameRaw.trim();
+
+// 3. MOTOR 3·6·9
+let di_engineStep = parseInt(localStorage.getItem('kobllux_engine_step') || '0', 10);
+let di_reverse = localStorage.getItem('kobllux_reverse_mode') === 'true';
+let di_jump = parseInt(localStorage.getItem('kobllux_jump_step') || '0', 10);
+let di_use3697 = localStorage.getItem('kobllux_cycle_3697') === 'true';
+
+function saveEngineState() {
+  localStorage.setItem('kobllux_engine_step', String(di_engineStep));
+  localStorage.setItem('kobllux_reverse_mode', String(di_reverse));
+  localStorage.setItem('kobllux_jump_step', String(di_jump));
+  localStorage.setItem('kobllux_cycle_3697', String(di_use3697));
+}
+
+function di_getSequence(startIndex, length) {
+  const total = ARCHETYPES.length;
+  const sequence = [];
+  let currentIndex = ((startIndex % total) + total) % total;
+  const pattern = di_use3697? [3, 6, 9, 7] : [di_engineStep];
+  for (let i = 0; i < length; i++) {
+    sequence.push(ARCHETYPES[currentIndex]);
+    let step = pattern[i % pattern.length];
+    if (di_reverse) step *= -1;
+    step += di_jump;
+    currentIndex = (currentIndex + step) % total;
+    if (currentIndex < 0) currentIndex += total;
+  }
+  return sequence;
+}
+
+// 4. DOM & STATE
+const dom = {
+  input: document.getElementById('inputText'),
+  output: document.getElementById('outputContainer'),
+  genBtn: document.getElementById('genBtn'),
+  archSelect: document.getElementById('startArch'),
+  cycleCheck: document.getElementById('cycleMode'),
+  statusBar: document.getElementById('statusBar'),
+  toastContainer: document.getElementById('toast-container')
+};
+
+const SESSION_STORAGE_KEY = 'kobllux_session_files';
+let SESSION_FILES = JSON.parse(localStorage.getItem(SESSION_STORAGE_KEY) || '[]');
+
+// 5. CRYPTO VAULT
+const CRYPTO = {
+  algo: { name: 'AES-GCM', length: 256 },
+  pbkdf2: { name: 'PBKDF2', hash: 'SHA-256', iterations: 100000 },
+  async getKey(password, salt) {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey({...this.pbkdf2, salt: salt }, keyMaterial, this.algo, false, ["encrypt", "decrypt"]);
+  },
+  async encrypt(data, password) {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await this.getKey(password, salt);
+    const encoded = new TextEncoder().encode(JSON.stringify(data));
+    const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, encoded);
+    return JSON.stringify({ s: Array.from(salt), iv: Array.from(iv), d: Array.from(new Uint8Array(encrypted)) });
+  }
+};
+
+let STATE = { keys: [], user: 'Convidado', isEncrypted: false };
+let SESSION_PASSWORD = null;
+
+// 6. TOAST
+function showToast(message, isError = false) {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+  if (isError) toast.style.background = "#c44";
+  dom.toastContainer.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// 7. GERAR FRACTAIS
+function generateFractals() {
+  const text = dom.input.value.trim();
+  if (!text) {
+    showToast("Texto de entrada vazio.", true);
+    return;
+  }
+
+  const sentences = text.replace(/\n+/g, ' ').match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
+  const startArchName = dom.archSelect.value;
+  const startIdx = ARCHETYPES.indexOf(startArchName);
+  const isCycleMode = document.getElementById('cycleMode').checked;
+  const sequence = isCycleMode? di_getSequence(startIdx, sentences.length) : [ARCHETYPES[startIdx]];
+
+  dom.output.innerHTML = '';
+  let resultTextForExport = "";
+
+  sentences.forEach((sentence, i) => {
+    const currentArchName = isCycleMode? sequence[i] : ARCHETYPES[startIdx];
+    const block = document.createElement('div');
+    block.className = 'para-block';
+    block.style.animationDelay = `${i * 0.1}s`;
+    block.style.borderLeftColor = `var(--arch-${currentArchName}, #00f2ff)`;
+
+    const displayArchName = ARCH_NAMES[currentArchName] || currentArchName;
+    block.innerHTML = `
+      <div class="arch-tag" style="border-color: var(--arch-${currentArchName}, #00f2ff)">
+        ${displayArchName} · Δ
+      </div>
+      <div>${escapeHtml(sentence)}</div>
+    `;
+    dom.output.appendChild(block);
+    resultTextForExport += `${displayArchName.toUpperCase()} — ${sentence}\n\n`;
+
+    // Salva na sessão
+    saveFractalToSession(currentArchName, sentence);
+  });
+
+  localStorage.setItem('kobllux_last_result', resultTextForExport.trim());
+  dom.statusBar.textContent = `Opcode 0x0B · Motor 3·6·9 · ${sentences.length} Fractal(s) Gerado(s)`;
+  showToast(`Integração concluída | Motor: +${di_engineStep}`);
+  updateSessionBadge();
+}
+
+function saveFractalToSession(archName, sentence) {
+  const file = {
+    id: `fractal_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
+    arch: archName,
+    archDisplay: ARCH_NAMES[archName] || archName,
+    content: sentence,
+    timestamp: Date.now(),
+    date: new Date().toLocaleString('pt-BR'),
+    selected: false
+  };
+  SESSION_FILES.unshift(file);
+  localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(SESSION_FILES));
+}
+
+// 8. GESTÃO DE SESSÃO
+function renderSessionList() {
+  const list = document.getElementById('sessionList');
+  if (!list) return;
+
+  list.innerHTML = '';
+  if (SESSION_FILES.length === 0) {
+    list.innerHTML = '<div class="text-center opacity-50 py-10">Nenhum fractal gerado ainda.</div>';
+    return;
+  }
+
+  SESSION_FILES.forEach(file => {
+    const item = document.createElement('div');
+    item.className = `session-item ${file.selected? 'selected' : ''}`;
+    item.innerHTML = `
+      <label class="flex items-center gap-2">
+        <input type="checkbox" ${file.selected? 'checked' : ''} data-id="${file.id}">
+      </label>
+      <div class="flex-1 min-w-0">
+        <div class="font-bold text-sm" style="color: var(--arch-${file.arch})">
+          ${file.archDisplay} · Δ
+        </div>
+        <div class="text-xs opacity-80 truncate">${escapeHtml(file.content.slice(0, 100))}...</div>
+        <div class="text-xs opacity-50 mt-1">${file.date}</div>
+      </div>
+      <button class="btn btn-sec" onclick="copySessionFile('${file.id}')">
+        <i data-lucide="copy" style="width:14px"></i>
+      </button>
+    `;
+    item.querySelector('input').onchange = (e) => {
+      file.selected = e.target.checked;
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(SESSION_FILES));
+      item.classList.toggle('selected', file.selected);
+    };
+    list.appendChild(item);
+  });
+  lucide.createIcons();
+}
+
+window.copySessionFile = async (id) => {
+  const file = SESSION_FILES.find(f => f.id === id);
+  if (!file) return;
+  await navigator.clipboard.writeText(file.content);
+  showToast('Fractal copiado', 'success');
+};
+
+document.getElementById('selectAllSessionBtn').onclick = () => {
+  const allSelected = SESSION_FILES.every(f => f.selected);
+  SESSION_FILES.forEach(f => f.selected =!allSelected);
+  localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(SESSION_FILES));
+  renderSessionList();
+};
+
+document.getElementById('clearSessionBtn').onclick = () => {
+  if (!confirm('Apagar todos os fractais desta sessão?')) return;
+  SESSION_FILES = [];
+  localStorage.removeItem(SESSION_STORAGE_KEY);
+  renderSessionList();
+  updateSessionBadge();
+  showToast('Sessão limpa', 'success');
+};
+
+document.getElementById('downloadZipBtn').onclick = async () => {
+  const selected = SESSION_FILES.filter(f => f.selected);
+  if (selected.length === 0) {
+    showToa
