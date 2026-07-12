@@ -1,3 +1,4 @@
+// schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,29 +8,23 @@ datasource db {
   url = env("DATABASE_URL")
 }
 
-enum Loop369 {
-  PREPARACAO
-  EXPANSAO
-  INTEGRACAO
-}
-
 model Archetype {
   id String @id @default(cuid())
-  opcode String @unique
-  nome String @unique
-  regra String
-  rung Int
-  hz Int
-  essencia String
-  frase String
-  cor String
-  aroma String
-  ambiente String
-  leitmotiv String
+  opcode String @unique // 0x00, 0x02, etc
+  nome String @unique // Atlas, Nova...
+  regra String // BOOT, SEED, DELTA...
+  rung Int // 1-12
+  hz Int // 432, 528, etc
+  essencia String // "Planejador — ordem"
+  frase String // "Eu organizo o fluxo..."
+  cor String // #274C77
+  aroma String // Alecrim
+  ambiente String // chuva leve, floresta
+  leitmotiv String // URL do tema principal
 
   tracks Track[]
-  fromTransitions Transition[] @relation("FromArchetype")
-  toTransitions Transition[] @relation("ToArchetype")
+  transitions Transition[] @relation("FromArchetype")
+  targets Transition[] @relation("ToArchetype")
 
   @@map("cadial_archetypes")
 }
@@ -39,18 +34,23 @@ model Track {
   archetypeId String
   archetype Archetype @relation(fields: [archetypeId], references: [id])
 
+  // Metadados musicais
   title String
-  url String @unique
-  duration Int
+  url String // /media/atlas/focus01.mp3
+  duration Int // segundos
   bpm Int
-  energy Int
-  mood String
-  aroma String
-  color String
-  frequency Int
-  tags String[]
-  intensity Int
-  phase Loop369?
+  energy Int // 0-100
+  mood String // focus, create, workout, emotion
+
+  // Metadados sinestésicos
+  aroma String // Alecrim, Lavanda
+  color String // #274C77
+  frequency Int // 432, 528, 639
+  tags String[] // ["cinematográfico", "instrumental"]
+
+  // Metadados de transição
+  intensity Int // 0-100 pra calcular crossfade
+  phase Loop369? // PREPARACAO, EXPANSAO, INTEGRACAO
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -75,15 +75,16 @@ model Transition {
   toTrackId String?
   toTrack Track? @relation("ToTrack", fields: [toTrackId], references: [id])
 
-  trigger String
+  // Regras de transição
+  trigger String // "foco_baixo", "energia_caiu", "objetivo_concluido"
   crossfadeMs Int @default(3000)
-  bpmShift Int
-  energyShift Int
-  transitionSound String?
-  priority Int @default(0)
+  bpmShift Int // delta de BPM permitido: -10 a +10
+  energyShift Int // delta de energia: -20 a +20
 
-  lastUsed DateTime?
-  useCount Int @default(0)
+  // Sons de transição entre arquétipos
+  transitionSound String? // /media/transitions/atlas_to_nova.mp3
+
+  priority Int @default(0) // 0-100, maior = preferida
 
   @@unique([fromArchetypeId, toArchetypeId, trigger])
   @@map("transitions")
@@ -93,21 +94,19 @@ model UserState {
   id String @id @default(cuid())
   userId String @unique
 
+  // Estado atual detectado
   currentArchetypeId String
-  energia Int
-  emocao String
-  bpmAtual Int?
-  hrv Float?
+  energia Int // 0-100
+  humor String // "focado", "disperso", "ansioso"
+  objetivo String // "estudar", "treinar", "relaxar"
+  horario DateTime
 
-  loop369 Loop369 @default(PREPARACAO)
-  camada144 Int @default(12)
-  contador369 Int @default(0)
-  tempoDeUsoMin Int @default(0)
-  horario DateTime @default(now())
-  objetivo String @default("foco")
+  // Loop 369
+  loopPhase Loop369 @default(PREPARACAO)
+  loopStartAt DateTime @default(now())
 
-  sessionId String @default(cuid())
-  sessionStartAt DateTime @default(now())
+  // Última música
+  currentTrackId String?
 
   updatedAt DateTime @updatedAt
 
@@ -117,7 +116,6 @@ model UserState {
 model PlayEvent {
   id String @id @default(cuid())
   userId String
-  sessionId String
   trackId String
   archetypeId String
 
@@ -125,9 +123,16 @@ model PlayEvent {
   endedAt DateTime?
   completed Boolean @default(false)
 
-  trigger String
+  // Contexto da reprodução
+  trigger String // "auto", "manual", "transition"
   fromTrackId String?
 
   @@index([userId, startedAt])
   @@map("play_events")
+}
+
+enum Loop369 {
+  PREPARACAO // 3 - BPM baixo, intensidade baixa
+  EXPANSAO // 6 - BPM sobe, intensidade sobe
+  INTEGRACAO // 9 - BPM estabiliza, intensidade integra
 }
