@@ -33,8 +33,8 @@
   const CFG = {
     // URL primária do JSON de arquétipos (altere conforme necessário)
     remoteUrl: localStorage.getItem('kxat_arch_url') ||
-      'https://www.infodose.com.br/js/modules/archetypes.json',
-
+    //  'https://www.infodose.com.br/js/modules/archetypes.json',
+      'https://www.infodose.com.br/js/modules/kobllux_archetypes.json',
     // Chave localStorage para cache do JSON
     cacheKey: 'kxat_arch_cache',
 
