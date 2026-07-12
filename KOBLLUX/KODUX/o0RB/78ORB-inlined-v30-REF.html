@@ -1,0 +1,571 @@
+<script src="https://infodose.com.br/js/prisma/o0rbo.js"></script>
+<div id="orb" class="orb-kdx"></div>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>OrbEngine Demo</title>
+  <!-- Carrega o motor -->
+  <script src="orb-engine.js" data-auto-init="true"></script>
+</head>
+<body>
+  <!-- Renderização automática via classe -->
+  <div class="Orb" data-name="KODUX" data-size="87"></div>
+  <div class="orb-avatar" data-name="NOVA" data-size="64" data-speaking="true"></div>
+
+  <!-- Renderização manual -->
+  <div id="meu-orb"></div>
+
+  <!-- Sincronização de nome -->
+  <input id="inputUser" placeholder="Digite seu nome" />
+
+<script> (function(global) {
+  'use strict';
+
+  // ============================================================
+  //  CONFIGURAÇÃO PADRÃO
+  // ============================================================
+  const DEFAULT_CONFIG = {
+    autoInjectCSS: true,
+    autoObserve: true,
+    selectors: [
+      '.Orb',
+      '.orb',
+      '[class*="orb"]',
+      '[class*="Orb"]',
+      '.orb-avatar',
+      '.avatar-orb'
+    ],
+    defaults: {
+      name: 'DUAL',
+      size: 64,
+      speaking: false
+    },
+    storage: {
+      name: 'di_userName'
+    },
+    debug: false
+  };
+
+  // ============================================================
+  //  ESTADO INTERNO
+  // ============================================================
+  let config = { ...DEFAULT_CONFIG };
+  let cssInjected = false;
+  let observer = null;
+
+  // ============================================================
+  //  UTILITÁRIOS
+  // ============================================================
+  function log(...args) {
+    if (config.debug) console.log('[OrbEngine]', ...args);
+  }
+
+  function safeName(name) {
+    return (name || '').trim() || config.defaults.name;
+  }
+
+  function seed(name) {
+    return [...name].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  }
+
+  function compute(name) {
+    const s = seed(name);
+    return {
+      name,
+      seed: s,
+      h1: s % 360,
+      h2: (s * 37) % 360
+    };
+  }
+
+  function getElementOption(el, key, fallback) {
+    if (el.dataset && el.dataset[key] !== undefined) {
+      const val = el.dataset[key];
+      if (key === 'size') return parseInt(val, 10) || fallback;
+      if (key === 'speaking') return val === 'true' || val === '1';
+      return val;
+    }
+    return fallback;
+  }
+
+  // ============================================================
+  //  INJEÇÃO DE CSS
+  // ============================================================
+  function injectStyles() {
+    if (!config.autoInjectCSS) return;
+    if (cssInjected) return;
+    if (document.getElementById('dual-orb-styles')) {
+      cssInjected = true;
+      return;
+    }
+
+    const style = document.createElement('style');
+    style.id = 'dual-orb-styles';
+    style.innerHTML = `
+      @keyframes orbBreathe {
+        0%, 100% { transform: translateZ(0) scale(1); opacity:.82; filter: brightness(1); }
+        50% { transform: translateZ(0) scale(1.08); opacity: 1; filter: brightness(1.22); }
+      }
+      @keyframes orbSpin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      @keyframes orbPulse {
+        0% { transform: scale(.78); opacity:.55; }
+        100% { transform: scale(1.28); opacity: 0; }
+      }
+      @keyframes orbFloat {
+        0%, 100% { transform: translateY(0px) rotateX(0deg) rotateY(0deg); }
+        50% { transform: translateY(-2px) rotateX(10deg) rotateY(-10deg); }
+      }
+
+      .dual-orb-wrap {
+        --orb-speed: 4s;
+        --orb-spin-speed: 12s;
+        --orb-pulse-speed: 2.2s;
+        position: relative;
+        display: inline-grid;
+        place-items: center;
+        width: var(--orb-size, 64px);
+        aspect-ratio: 1;
+        perspective: 900px;
+        transform-style: preserve-3d;
+        user-select: none;
+        cursor: pointer;
+        transition: transform .28s cubic-bezier(.175,.885,.32,1.275);
+      }
+      .dual-orb-wrap:active { transform: scale(.94); }
+      .dual-orb-wrap:hover { transform: scale(1.03); }
+
+      .dual-orb-svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+        opacity: .78;
+        filter: brightness(.72) saturate(1.08);
+        transform: translateZ(0);
+      }
+
+      .dual-orb-shell {
+        position: absolute;
+        inset: 10%;
+        display: grid;
+        place-items: center;
+        transform-style: preserve-3d;
+        animation: orbFloat 6s ease-in-out infinite;
+        pointer-events: none;
+      }
+
+      .dual-orb-halo {
+        position: absolute;
+        inset: -24%;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(120,227,255,.24), rgba(185,120,255,.06) 42%, transparent 70%);
+        filter: blur(18px);
+        opacity: .9;
+        animation: orbPulse var(--orb-pulse-speed) ease-in-out infinite;
+        transform: translateZ(-18px);
+      }
+
+      .dual-orb-core {
+        position: relative;
+        width: 42%;
+        height: 42%;
+        border-radius: 50%;
+        transform-style: preserve-3d;
+        transform: translateZ(18px);
+        background:
+          radial-gradient(circle at 30% 28%, rgba(255,255,255,.95) 0%, rgba(255,255,255,.32) 8%, rgba(255,255,255,0) 26%),
+          radial-gradient(circle at 70% 72%, var(--orb-primary, #78e3ff) 0%, var(--orb-secondary, #b978ff) 74%);
+        box-shadow:
+          0 0 16px rgba(120,227,255,.55),
+          0 0 34px rgba(120,227,255,.25),
+          inset -10px -12px 20px rgba(0,0,0,.38),
+          inset 10px 10px 18px rgba(255,255,255,.12);
+        animation: orbSpin var(--orb-spin-speed) linear infinite;
+      }
+      .dual-orb-core::before {
+        content: "";
+        position: absolute;
+        inset: -42%;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255,255,255,.16), transparent 66%);
+        filter: blur(10px);
+        opacity: .75;
+      }
+      .dual-orb-core::after {
+        content: "";
+        position: absolute;
+        inset: 12%;
+        border-radius: 50%;
+        background: radial-gradient(circle at 35% 35%, rgba(255,255,255,.65), transparent 58%);
+        opacity: .55;
+        mix-blend-mode: screen;
+      }
+
+      .dual-orb-wrap.speaking .dual-orb-core {
+        animation: orbSpin 2s linear infinite, orbBreathe .55s ease-in-out infinite alternate;
+      }
+      .dual-orb-wrap.speaking .dual-orb-halo {
+        animation: orbPulse .85s ease-in-out infinite;
+      }
+
+      .dual-orb-wrap:hover .dual-orb-core {
+        box-shadow:
+          0 0 20px rgba(120,227,255,.7),
+          0 0 42px rgba(120,227,255,.36),
+          inset -10px -12px 20px rgba(0,0,0,.34),
+          inset 10px 10px 18px rgba(255,255,255,.14);
+      }
+    `;
+    document.head.appendChild(style);
+    cssInjected = true;
+    log('CSS injetado');
+  }
+
+  // ============================================================
+  //  GERADOR DE AVATAR (HTML e SVG)
+  // ============================================================
+  function makeOrbAvatar(name, size, speaking) {
+    injectStyles();
+
+    const safe = safeName(name);
+    const seedVal = seed(safe);
+    const h1 = seedVal % 360;
+    const h2 = (seedVal * 37) % 360;
+    const uid = Math.random().toString(36).slice(2, 7);
+    const gradId = `orb_${seedVal.toString(36)}_${uid}`;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'dual-orb-wrap';
+    if (speaking) wrap.classList.add('speaking');
+    wrap.style.setProperty('--orb-size', size + 'px');
+    wrap.style.setProperty('--orb-primary', `hsl(${h1},100%,62%)`);
+    wrap.style.setProperty('--orb-secondary', `hsl(${h2},92%,48%)`);
+    wrap.setAttribute('aria-label', safe);
+    wrap.setAttribute('role', 'img');
+
+    // SVG
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'dual-orb-svg');
+    svg.setAttribute('viewBox', '0 0 100 100');
+    svg.setAttribute('aria-hidden', 'true');
+
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    const coreGrad = document.createElementNS('http://www.w3.org/2000/svg', 'radialGradient');
+    coreGrad.setAttribute('id', `${gradId}_core`);
+    coreGrad.setAttribute('cx', '50%');
+    coreGrad.setAttribute('cy', '50%');
+    coreGrad.setAttribute('r', '50%');
+    coreGrad.innerHTML = `
+      <stop offset="0%" stop-color="hsl(${h1},100%,66%)" stop-opacity="1"/>
+      <stop offset="55%" stop-color="hsl(${h2},92%,46%)" stop-opacity=".9"/>
+      <stop offset="100%" stop-color="hsl(${h2},100%,12%)" stop-opacity="0"/>
+    `;
+    defs.appendChild(coreGrad);
+
+    const ringGrad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+    ringGrad.setAttribute('id', `${gradId}_ring`);
+    ringGrad.setAttribute('x1', '0%');
+    ringGrad.setAttribute('y1', '0%');
+    ringGrad.setAttribute('x2', '100%');
+    ringGrad.setAttribute('y2', '100%');
+    ringGrad.innerHTML = `
+      <stop offset="0%" stop-color="hsl(${h1},100%,76%)"/>
+      <stop offset="100%" stop-color="hsl(${h2},100%,58%)"/>
+    `;
+    defs.appendChild(ringGrad);
+    svg.appendChild(defs);
+
+    // círculos
+    const circles = [
+      { cx: 50, cy: 50, r: 46, fill: '#05070c' },
+      { cx: 50, cy: 50, r: 40, fill: `url(#${gradId}_core)`, opacity: '.28' },
+      { cx: 50, cy: 50, r: 38, fill: 'none', stroke: `url(#${gradId}_ring)`, 'stroke-width': '1' },
+      { cx: 50, cy: 50, r: 46, fill: 'none', stroke: `url(#${gradId}_ring)`, 'stroke-width': '2.5',
+        'stroke-dasharray': '70 20 10 30', 'stroke-linecap': 'round', opacity: '.86' },
+      { cx: 50, cy: 50, r: 8, fill: '#ffffff', opacity: '.22', filter: 'blur(2px)' },
+      { cx: 50, cy: 50, r: 3, fill: '#ffffff', opacity: '.85' }
+    ];
+    circles.forEach(attrs => {
+      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      for (const [k, v] of Object.entries(attrs)) {
+        c.setAttribute(k, v);
+      }
+      svg.appendChild(c);
+    });
+
+    wrap.appendChild(svg);
+
+    // Shell, halo, core
+    const shell = document.createElement('div');
+    shell.className = 'dual-orb-shell';
+    const halo = document.createElement('div');
+    halo.className = 'dual-orb-halo';
+    const core = document.createElement('div');
+    core.className = 'dual-orb-core';
+    shell.appendChild(halo);
+    shell.appendChild(core);
+    wrap.appendChild(shell);
+
+    return wrap.outerHTML;
+  }
+
+  function extractOrbSVG(html) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const svg = doc.querySelector('.dual-orb-svg');
+    if (!svg) return null;
+
+    const wrap = doc.querySelector('.dual-orb-wrap');
+    const style = wrap.getAttribute('style');
+    const size = style.match(/--orb-size:(\d+)px/)?.[1] || '64';
+
+    svg.setAttribute('width', size);
+    svg.setAttribute('height', size);
+    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+    return new XMLSerializer().serializeToString(svg);
+  }
+
+  // ============================================================
+  //  RENDERIZAÇÃO
+  // ============================================================
+  function renderElement(el, options) {
+    if (!el) return;
+    const name = options.name || getElementOption(el, 'name', config.defaults.name);
+    const size = options.size || getElementOption(el, 'size', config.defaults.size);
+    const speaking = options.speaking !== undefined ? options.speaking : getElementOption(el, 'speaking', config.defaults.speaking);
+
+    const html = makeOrbAvatar(name, size, speaking);
+    el.innerHTML = html;
+    log('Renderizado em', el, { name, size, speaking });
+  }
+
+  function render(selector, options = {}) {
+    const els = typeof selector === 'string' ? document.querySelectorAll(selector) : (selector.nodeType ? [selector] : selector);
+    if (!els || els.length === 0) {
+      log('Nenhum elemento encontrado para', selector);
+      return;
+    }
+    els.forEach(el => renderElement(el, options));
+  }
+
+  function scan() {
+    log('Scanning DOM...');
+    config.selectors.forEach(sel => {
+      document.querySelectorAll(sel).forEach(el => {
+        // Evita renderizar duas vezes no mesmo elemento
+        if (el.dataset.orbRendered) return;
+        renderElement(el);
+        el.dataset.orbRendered = 'true';
+      });
+    });
+  }
+
+  // ============================================================
+  //  OBSERVAÇÃO DE MUDANÇAS NO DOM
+  // ============================================================
+  function observe() {
+    if (!config.autoObserve) return;
+    if (observer) {
+      observer.disconnect();
+      observer = null;
+    }
+
+    observer = new MutationObserver((mutations) => {
+      let needsScan = false;
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList') {
+          for (const node of mutation.addedNodes) {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              // verifica se o próprio nó ou seus descendentes correspondem aos seletores
+              if (config.selectors.some(sel => node.matches(sel) || node.querySelector(sel))) {
+                needsScan = true;
+                break;
+              }
+            }
+          }
+        }
+        if (needsScan) break;
+      }
+      if (needsScan) scan();
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+    log('MutationObserver ativo');
+  }
+
+  // ============================================================
+  //  SINCRONIZAÇÃO COM LOCALSTORAGE E INPUTS
+  // ============================================================
+  function syncName(name) {
+    const safe = safeName(name);
+    localStorage.setItem(config.storage.name, safe);
+
+    // Atualiza variáveis CSS root
+    const d = compute(safe);
+    const root = document.documentElement;
+    root.style.setProperty('--kob-voice-primary', `hsl(${d.h1} 100% 55%)`);
+    root.style.setProperty('--kob-voice-secondary', `hsl(${d.h2} 90% 45%)`);
+    root.dataset.diName = safe;
+    root.dataset.arch = safe;
+
+    // Atualiza elementos com atributos específicos (ex: labels)
+    document.querySelectorAll('[data-orb-sync]').forEach(el => {
+      const attr = el.dataset.orbSync;
+      if (attr === 'text') el.textContent = safe;
+      // outros casos podem ser adicionados
+    });
+
+    // Re-renderiza todos os orbs que estão usando o nome padrão ou sem nome específico
+    // Para simplificar, podemos re-scanear, mas isso pode ser pesado.
+    // Vamos apenas atualizar elementos com data-name vazio ou que não tenham data-name.
+    document.querySelectorAll('.dual-orb-wrap').forEach(wrap => {
+      const parent = wrap.parentElement;
+      if (!parent) return;
+      // Se o elemento pai tem data-name definido, não sobrescrevemos
+      if (parent.dataset.name && parent.dataset.name !== '') return;
+      // Se o pai não tem data-name, ou tem vazio, atualizamos com o novo nome
+      const size = parseInt(parent.style.getPropertyValue('--orb-size')) || config.defaults.size;
+      const speaking = parent.classList.contains('speaking');
+      parent.innerHTML = makeOrbAvatar(safe, size, speaking);
+      parent.dataset.orbRendered = 'true';
+    });
+
+    log('Nome sincronizado:', safe);
+    // Dispara evento para outros ouvintes
+    document.dispatchEvent(new CustomEvent('orb:name:sync', { detail: { name: safe } }));
+  }
+
+  // ============================================================
+  //  API PÚBLICA
+  // ============================================================
+  const OrbEngine = {
+    config,
+
+    init(opts = {}) {
+      Object.assign(config, opts);
+      if (config.autoInjectCSS) injectStyles();
+      if (config.autoObserve) {
+        // Aguarda o DOM estar pronto
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', () => {
+            scan();
+            observe();
+          });
+        } else {
+          scan();
+          observe();
+        }
+      }
+      // Vincula inputs se existirem
+      this._bindInputs();
+      log('Inicializado com configuração', config);
+      return this;
+    },
+
+    render(selector, options) {
+      render(selector, options);
+      return this;
+    },
+
+    scan() {
+      scan();
+      return this;
+    },
+
+    observe() {
+      observe();
+      return this;
+    },
+
+    syncName(name) {
+      syncName(name);
+      return this;
+    },
+
+    html(name, size, speaking) {
+      return makeOrbAvatar(name, size, speaking);
+    },
+
+    svg(name, size) {
+      const html = makeOrbAvatar(name, size, false);
+      return extractOrbSVG(html);
+    },
+
+    // Método para buscar o nome atual
+    getName() {
+      return localStorage.getItem(config.storage.name) || config.defaults.name;
+    },
+
+    // Bind automático de inputs (para compatibilidade)
+    _bindInputs() {
+      const inputs = document.querySelectorAll('#inputUser, #infodoseNameInput');
+      if (inputs.length === 0) return;
+      const currentName = this.getName();
+      inputs.forEach(inp => {
+        if (!inp.value) inp.value = currentName;
+        inp.addEventListener('input', () => {
+          this.syncName(inp.value);
+        });
+        inp.addEventListener('change', () => {
+          this.syncName(inp.value);
+        });
+      });
+      // Sincroniza o valor se houver mudança externa
+      document.addEventListener('storage', (e) => {
+        if (e.key === config.storage.name) {
+          const newVal = e.newValue;
+          inputs.forEach(inp => {
+            if (inp.value !== newVal) inp.value = newVal;
+          });
+          syncName(newVal);
+        }
+      });
+    }
+  };
+
+  // ============================================================
+  //  EXPORTAÇÃO
+  // ============================================================
+  global.Orb = OrbEngine;
+  global.OrbEngine = OrbEngine;
+
+  // Inicialização automática se houver atributo data-auto-init
+  if (document.currentScript && document.currentScript.dataset.autoInit !== 'false') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => OrbEngine.init());
+    } else {
+      OrbEngine.init();
+    }
+  }
+
+})(typeof window !== 'undefined' ? window : this);
+</script>
+
+  <script>
+    // Inicialização customizada (opcional)
+    Orb.init({
+      defaults: { name: 'ATLAS', size: 72 },
+      selectors: ['.Orb', '.orb-avatar', '#meu-orb'] // adiciona seletor por ID
+    });
+
+    // Renderiza manualmente
+    Orb.render('#meu-orb', { name: 'SERENA', size: 96 });
+
+    // Sincroniza nome (atualiza todos os orbs sem data-name fixo)
+    document.getElementById('inputUser').addEventListener('input', (e) => {
+      Orb.syncName(e.target.value);
+    });
+
+    // Obtém SVG
+    const svgString = Orb.svg('LUMINE', 128);
+    console.log(svgString);
+  </script>
+</body>
+</html>
