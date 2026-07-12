@@ -8,6 +8,11 @@
 
 # LINKS KOBLLUX
 
+## INDEX TESTE
+
+B∆SE: https://www.infodose.com.br/oiDual/BLLUE/index.teste.html
+
+
 ---
 
 ## *.CSS*
@@ -50,6 +55,39 @@
 <!-- ARQUÉTIPOS FULL COM META + HEXAGRAMA -->
 <script src="https://www.infodose.com.br/oiDual/BLLUE/json/kobllux_archetypes[FULL].json"></script>
 ```
+
+---
+
+## *.JS*
+
+```copy
+<!-- VOZ + THEME ORACULAR -->
+<script src="https://www.infodose.com.br/oiDual/BLLUE/js/kobllux_voice_theme.js"></script>
+```
+
+---
+
+## *.SVG*
+
+---
+
+```copy
+<!-- PALETA VÓRTICE CIANO + MAGENTA -->
+<link rel="preload" as="image" href="https://www.infodose.com.br/oiDual/BLLUE/svg/paleta_afina_kobllux.svg">
+```
+
+---
+
+## 📋 BLOCO ÚNICO PRA COPY
+
+---
+
+```copy
+<!-- KOBLLUX v13 HEAD -->
+<link rel="stylesheet" href="https://www.infodose.com.br/oiDual/BLLUE/css/theme.kobllux[FULL].css">
+<script src="https://www.infodose.com.br/oiDual/BLLUE/json/kobllux_archetypes[FULL].json"></script>
+<script src="https://www.infodose.com.br/oiDual/BLLUE/js/kobllux_voice_theme.js"></script>
+```JS*
 
 ---
 
