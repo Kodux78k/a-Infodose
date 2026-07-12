@@ -136,6 +136,32 @@ function injectOrbStyles() {
         inset -10px -12px 20px rgba(0,0,0,.34),
         inset 10px 10px 18px rgba(255,255,255,.14);
     }
+    /* Orb */
+ .orb {      
+ background: radial-gradient(circle at 30% 30%, var(--grad-a, #78e7ff), transparent 78%),
+                  radial-gradient(circle at 70% 70%, var(--kob-voice-secondary, #00f2ff), var(--orb-secondary, #3b82f6));
+      box-shadow: 0 0 18px var(--kob-voice-primary), 0 0 36px rgba(120,227,255,0.4);
+      animation: orbSpin var(--orb-speed) linear infinite;
+      width: 100%; height: 100%; border-radius: 50%; display: grid; place-items: center;
+
+      width: 56px; height: 56px; 
+
+    }
+    .orb-core {
+
+      min-width: 100%; min-height: 100%; 
+border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, var(--orb-accent, #78e7ff), transparent 78%),
+                  radial-gradient(circle at 70% 70%, var(--kob-voice-primary, #00f2ff), var(--orb-secondary, #3b82f6));
+      box-shadow: 0 0 18px var(--kob-voice-secondary), 0 0 36px rgba(120,227,255,0.4);
+      animation: orbSpin var(--orb-speed) linear infinite;
+
+      width: 56px; height: 56px; 
+
+    }
+    @keyframes orbSpin { to { transform: rotate(360deg); } }
+    @keyframes orbPulse { from { transform: scale(1); } to { transform: scale(1.15); } }
+
   `;
   document.head.appendChild(style);
 }
