@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KODUX ORB ENGINE · Demo Modular</title>
+<style>
+  :root {
+    --cyan: #00f2ff;
+    --purple: #bd00ff;
+    --dark: #0A0A0F;
+    --glass: rgba(255,255,255,0.05);
+    --border: rgba(255,255,255,0.1);
+    --text: #ffffff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; word-wrap: break-word; overflow-wrap: break-word; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--dark);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+    min-height: 100vh;
+    padding: 32px 16px;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  p.subtitle {
+    opacity: .7;
+    font-size: .9rem;
+    margin-bottom: 24px;
+  }
+
+  .glass {
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .orb-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .orb-row > div { text-align: center; }
+  .orb-row span { display: block; font-size: .7rem; opacity: .6; margin-top: 8px; }
+
+  input, button {
+    font-family: inherit;
+    font-size: .875rem;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    max-width: 100%;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  button {
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    color: #000;
+    font-weight: 700;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  @media (min-width: 480px) {
+    button { width: auto; }
+  }
+
+  #symbolBarHost {
+    background: #000;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>KODUX ORB ENGINE · Demo Modular</h1>
+  <p class="subtitle">Este HTML não tem o engine copiado dentro dele — ele importa <code>./kodux-orb-engine.js</code> como ES Module. Mantenha os dois arquivos na mesma pasta.</p>
+
+  <div class="glass">
+    <div class="orb-row" id="orbGallery"></div>
+  </div>
+
+  <div class="glass">
+    <label for="orbNameInput" style="display:block;font-weight:700;font-size:.85rem;margin-bottom:8px;">Gerar orb por nome</label>
+    <input type="text" id="orbNameInput" placeholder="Ex: KODUX, PULSE, NOVA...">
+    <button id="generateBtn">Gerar Orb</button>
+  </div>
+
+  <div class="glass">
+    <label style="display:block;font-weight:700;font-size:.85rem;margin-bottom:8px;">Symbol Bar (gerada via KoduxOrb.makeSymbolBar)</label>
+    <div id="symbolBarHost"></div>
+  </div>
+</div>
+
+<script type="module">
+  import { KoduxOrb } from './kodux-orb-engine.js';
+
+  const gallery = document.getElementById('orbGallery');
+  const nameInput = document.getElementById('orbNameInput');
+  const generateBtn = document.getElementById('generateBtn');
+  const symbolBarHost = document.getElementById('symbolBarHost');
+
+  // Galeria inicial
+  ['KODUX', 'PULSE', 'NOVA'].forEach(name => {
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `${KoduxOrb.makeOrbHTML(name, 72)}<span>${name}</span>`;
+    gallery.appendChild(wrap);
+    KoduxOrb.Memory.add(`orb-${name}`, wrap);
+  });
+
+  // Gera orb novo a partir do nome digitado, controlado pelo KoduxMemory
+  generateBtn.addEventListener('click', () => {
+    const name = nameInput.value.trim() || 'DUAL';
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `${KoduxOrb.makeOrbHTML(name, 72)}<span>${name}</span>`;
+    gallery.appendChild(wrap);
+    KoduxOrb.Memory.add(`orb-${name}-${Date.now()}`, wrap);
+  });
+
+  // Symbol Bar dinâmico: 3 mini-orbs viram ícones clicáveis
+  const symbols = ['HOME', 'ORB', 'ASCII'].map(name => ({
+    name,
+    svg: KoduxOrb.makeInlineSVG(name, 24),
+    url: '#'
+  }));
+  symbolBarHost.innerHTML = KoduxOrb.makeSymbolBar(symbols);
+</script>
+
+</body>
+</html>
