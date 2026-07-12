@@ -107,7 +107,7 @@ border-radius: 50%;
   <div id="particles-js"><canvas class="particles-js-canvas-el"></canvas></div>
 
 <section style="min-height:100vh">
-  <div id="snap-zone"></div>
+  <div id="snap-zones"></div>
  <div class="infodose">dual.<strong>Infodose</strong></div>
 </section>
 
@@ -126,13 +126,7 @@ border-radius: 50%;
 
 <div class="blob blob-1"></div><div class="blob blob-2"></div>
 
-    <div class="symbol-toolbar">
-      <div class="orb-container">
-        <button id="orbBtn" class="orb" aria-label="Toggle System">
-          <div class="orb-core"></div>
-        </button>
-      </div>
-    </div>
+
     
 
     <!-- Menu toggle -->
@@ -159,6 +153,13 @@ border-radius: 50%;
         </div>
       </div>
     </button>
+        <div class="symbol-toolbar">
+      <div class="orb-container">
+        <button id="orbBtn" class="orb" aria-label="Toggle System">
+          <div class="orb-core"></div>
+        </button>
+      </div>
+    </div>
     <div class="hud-info" id="hudStatus">KOBLLUX · ORB NEXUS</div>
   </div>
   <!-- ── Arch Overlay ──────────────────────────────────────── -->
