@@ -1065,7 +1065,7 @@ if(window.KOBLLUX.speakText){
 (async () => {
   try {
     const ARCHETYPES_JSON = await fetch(
-      "https://www.infodose.com.br/js/modules/archetypes.json"
+      "https://www.infodose.com.br/js/modules/kobllux_archetypes.json"
     ).then(r => r.json());
 
     const select = document.getElementById("startArch");
