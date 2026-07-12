@@ -143,6 +143,13 @@ border-radius: 50%;
     <div class="symbol-wrap">
       <button class="symbol-button" id="tts-stop" title="Parar" data-action="back">■</button>
     </div>
+            <div class="symbol-toolbar">
+      <div class="orb-container">
+        <button id="orbBtn" class="orb" aria-label="Toggle System">
+          <div class="orb-core"></div>
+        </button>
+      </div>
+    </div>
     <!-- Arquétipo -->
     <button class="symbol-button" id="btn-arch" title="Trocar Arquétipo de Voz">
       <div class="orb-microphone-container">
@@ -153,13 +160,7 @@ border-radius: 50%;
         </div>
       </div>
     </button>
-        <div class="symbol-toolbar">
-      <div class="orb-container">
-        <button id="orbBtn" class="orb" aria-label="Toggle System">
-          <div class="orb-core"></div>
-        </button>
-      </div>
-    </div>
+
     <div class="hud-info" id="hudStatus">KOBLLUX · ORB NEXUS</div>
   </div>
   <!-- ── Arch Overlay ──────────────────────────────────────── -->
