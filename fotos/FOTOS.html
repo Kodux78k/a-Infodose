@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+
+<title>Grid PNG 5x5</title>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+-webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+height:100%;
+background:#0b0b0b;
+font-family:system-ui,sans-serif;
+overflow:hidden;
+color:white;
+}
+
+body{
+display:flex;
+flex-direction:column;
+}
+
+header{
+padding:18px;
+display:flex;
+justify-content:center;
+gap:12px;
+}
+
+button{
+border:none;
+padding:14px 22px;
+border-radius:14px;
+background:#fff;
+color:#000;
+font-weight:bold;
+font-size:15px;
+cursor:pointer;
+}
+
+#board{
+flex:1;
+padding:12px;
+display:grid;
+grid-template-columns:repeat(5,1fr);
+grid-template-rows:repeat(5,1fr);
+gap:8px;
+}
+
+.cell{
+background:#1b1b1b;
+border-radius:14px;
+overflow:hidden;
+display:flex;
+align-items:center;
+justify-content:center;
+border:1px solid #2d2d2d;
+position:relative;
+cursor:pointer;
+}
+
+.cell span{
+font-size:34px;
+opacity:.25;
+}
+
+.cell img{
+width:100%;
+height:100%;
+object-fit:cover;
+display:block;
+}
+
+footer{
+padding:14px;
+display:flex;
+justify-content:center;
+}
+</style>
+</head>
+<body>
+
+<header>
+<button id="uploadBtn">
+Adicionar Foto
+</button>
+</header>
+
+<div id="board"></div>
+
+<footer>
+<button id="downloadBtn">
+Baixar PNG
+</button>
+</footer>
+
+<input
+type="file"
+id="picker"
+accept="image/*"
+hidden>
+
+<script>
+
+const board=document.getElementById("board");
+const picker=document.getElementById("picker");
+
+let currentCell=null;
+
+for(let i=0;i<25;i++){
+
+const cell=document.createElement("div");
+cell.className="cell";
+cell.innerHTML="<span>+</span>";
+
+cell.onclick=()=>{
+currentCell=cell;
+picker.click();
+};
+
+board.appendChild(cell);
+
+}
+
+document.getElementById("uploadBtn").onclick=()=>{
+
+const empty=[...document.querySelectorAll(".cell")]
+.find(c=>!c.querySelector("img"));
+
+currentCell=empty||document.querySelector(".cell");
+
+picker.click();
+
+};
+
+picker.onchange=e=>{
+
+const file=e.target.files[0];
+if(!file)return;
+
+const reader=new FileReader();
+
+reader.onload=function(ev){
+
+currentCell.innerHTML="";
+
+const img=document.createElement("img");
+img.src=ev.target.result;
+
+currentCell.appendChild(img);
+
+};
+
+reader.readAsDataURL(file);
+
+picker.value="";
+
+};
+
+document.getElementById("downloadBtn").onclick=()=>{
+
+html2canvas(board,{
+backgroundColor:"#0b0b0b",
+scale:2
+}).then(canvas=>{
+
+const link=document.createElement("a");
+
+link.download="meu-grid.png";
+link.href=canvas.toDataURL("image/png");
+link.click();
+
+});
+
+};
+
+</script>
+
+</body>
+</html>
