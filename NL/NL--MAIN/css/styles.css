@@ -1,0 +1,256 @@
+/* ----- RESET & BASE ----- */
+* {
+  margin: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --ink: #8a7f75;
+  --accent: #d4af37;
+  --shadow: rgba(138, 127, 117, 0.15);
+  --card-width: min(90vw, 400px);
+}
+
+html, body {
+  margin: 0;
+  overflow: hidden;
+  height: 100%;
+  background: #000;
+  font-family: 'Cormorant Garamond', serif;
+}
+
+/* ----- CONTAINER PRINCIPAL (vídeo + cartão) ----- */
+#scene {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+  transform-origin: center center;
+  will-change: transform;
+  transition: transform 0.1s ease-out;
+}
+
+/* ----- VÍDEO DE FUNDO (ocupa toda a tela) ----- */
+#bgVideo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.7) saturate(1.2);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ----- CARTÃO (centralizado sobre o vídeo) ----- */
+.invitation {
+  width: var(--card-width);
+  aspect-ratio: 3 / 4;
+  position: relative;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  pointer-events: auto;    /* captura toques para o gesto */
+  touch-action: none;
+  z-index: 1;
+}
+
+/* SHIMMER DOURADO (sutil) */
+.invitation::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg,
+      transparent 30%,
+      rgba(212, 175, 55, 0.03) 48%,
+      rgba(212, 175, 55, 0.06) 50%,
+      rgba(212, 175, 55, 0.03) 52%,
+      transparent 70%);
+  background-size: 200% 100%;
+  animation: shimmer 8s ease-in-out infinite;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 0;
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ----- LOGO ----- */
+.logo-nl {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 10px;
+  background-image: url('https://infodose.com.br/NL/img/NL_[2].png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  filter: drop-shadow(0 4px 12px var(--shadow));
+  animation: embossLogo 6s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
+}
+@keyframes embossLogo {
+  0%, 100% {
+    filter: drop-shadow(0 4px 12px var(--shadow)) brightness(1);
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 8px 24px rgba(212, 175, 55, 0.4)) brightness(1.05);
+    transform: scale(1.03);
+  }
+}
+
+/* ----- TEXTO CENTRAL ----- */
+.content-text {
+  text-align: center;
+  color: var(--ink);
+  padding: 10px 0;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+.save {
+  font-size: 0.75rem;
+  letter-spacing: 0.3em;
+  margin-bottom: 2rem;
+  font-weight: 300;
+  color: rgba(138, 127, 117, 0.9);
+}
+.names {
+  font-family: 'Italiana', serif;
+  font-size: 2.5rem;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  color: #4a3f38;
+}
+.date {
+  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+  color: rgba(138, 127, 117, 0.85);
+}
+.place {
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  opacity: 0.7;
+  color: rgba(138, 127, 117, 0.7);
+}
+
+/* ----- CHECKLIST (mantido) ----- */
+.btn-checklist {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(5, 7, 12, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  padding: 12px 20px;
+  border-radius: 40px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.2s, background 0.2s;
+}
+.btn-checklist:active { transform: scale(0.94); background: rgba(5, 7, 12, 0.95); }
+.btn-checklist .icon { font-size: 1.2rem; }
+
+.checklist-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 7, 12, 0.7);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  padding: 20px;
+}
+.checklist-overlay.active { opacity: 1; pointer-events: auto; }
+
+.checklist-panel {
+  background: rgba(248, 246, 242, 0.98);
+  border-radius: 24px;
+  padding: 32px 28px 28px;
+  max-width: 420px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  color: var(--ink);
+  font-family: 'Cormorant Garamond', serif;
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+  transform: scale(0.95) translateY(12px);
+  transition: transform 0.35s ease;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+}
+.checklist-overlay.active .checklist-panel { transform: scale(1) translateY(0); }
+.checklist-panel::-webkit-scrollbar { width: 4px; }
+.checklist-panel::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
+.checklist-panel h2 { font-family: 'Italiana', serif; font-size: 1.8rem; font-weight: 400; text-align: center; margin-bottom: 0.2rem; color: var(--ink); letter-spacing: 0.05em; }
+.checklist-panel .sub { text-align: center; font-size: 0.9rem; opacity: 0.7; margin-bottom: 1.5rem; letter-spacing: 0.1em; }
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(138, 127, 117, 0.15);
+  font-size: 1.05rem;
+}
+.checklist-item:last-child { border-bottom: none; }
+.checklist-item input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+.checklist-item label { flex: 1; cursor: pointer; padding: 4px 0; line-height: 1.3; }
+.checklist-item .emoji { font-size: 1.2rem; margin-right: 4px; }
+
+.checklist-close {
+  display: block;
+  width: 100%;
+  margin-top: 24px;
+  padding: 12px;
+  background: var(--accent);
+  border: none;
+  border-radius: 40px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  letter-spacing: 0.05em;
+}
+.checklist-close:active { background: #b8942a; transform: scale(0.97); }
+
+/* ----- RESPONSIVIDADE ----- */
+@media (max-width: 480px) {
+  .logo-nl { width: 100px; height: 100px; }
+  .btn-checklist { bottom: 16px; right: 16px; padding: 10px 16px; font-size: 0.9rem; }
+  .checklist-panel { padding: 24px 20px 20px; }
+  .checklist-panel h2 { font-size: 1.5rem; }
+  .checklist-item { font-size: 0.95rem; gap: 12px; }
+  :root { --card-width: min(95vw, 360px); }
+}
+@media (max-width: 380px) {
+  .logo-nl { width: 80px; height: 80px; }
+  .names { font-size: 2rem; }
+  .btn-checklist { padding: 8px 14px; font-size: 0.8rem; bottom: 12px; right: 12px; }
+}
