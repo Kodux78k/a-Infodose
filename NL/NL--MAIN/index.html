@@ -5,7 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
   <title>Nicole & Luca · Save The Date</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Italiana&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css" />
+  
+  <!-- Estilos do convite -->
+  <link rel="stylesheet" href="https://infodose.com.br/NL/NL--MAIN/css/styles.css" />
+  
+  <!-- Estilos do player -->
+  <link rel="stylesheet" href="https://infodose.com.br/NL/NL--MAIN/player/css/styles.css" />
+
+  <!-- CDNs necessários para o player -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script src="https://w.soundcloud.com/player/api.js"></script>
 </head>
 <body>
 
@@ -16,6 +26,8 @@
     <video id="bgVideo" autoplay loop muted playsinline>
       <source src="https://infodose.com.br/NL/img/palmeiras_loop_perfeito.mp4" type="video/mp4">
     </video>
+
+
 
     <!-- CARTÃO (logo e texto) -->
     <div class="invitation" id="card">
@@ -42,26 +54,198 @@
     <div class="checklist-panel">
       <h2>✦ Lista de Serviços ✦</h2>
       <div class="sub">Marque os itens já reservados</div>
-      <!-- itens... -->
+      <!-- itens do checklist (copiados do original) -->
+      <div class="checklist-item">
+        <input type="checkbox" id="hotel" />
+        <label for="hotel"><span class="emoji">🏨</span> Hotel / Pousada</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="cabeleireiro" />
+        <label for="cabeleireiro"><span class="emoji">💇‍♀️</span> Cabeleireiro</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="maquiagem" />
+        <label for="maquiagem"><span class="emoji">💄</span> Maquiagem</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="transporte" />
+        <label for="transporte"><span class="emoji">🚗</span> Transporte (vans / carros)</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="fotografo" />
+        <label for="fotografo"><span class="emoji">📸</span> Fotógrafo / Vídeo</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="decoracao" />
+        <label for="decoracao"><span class="emoji">🌿</span> Decoração / Flores</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="musica" />
+        <label for="musica"><span class="emoji">🎵</span> Música / DJ</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="cerimonial" />
+        <label for="cerimonial"><span class="emoji">🤵</span> Cerimonial / Assessoria</label>
+      </div>
       <button class="checklist-close" id="btnCloseChecklist">Fechar</button>
     </div>
   </div>
 
-  <script src="js/db.js"></script>
-  <script src="js/gesture.js"></script>
-  <script src="js/checklist.js"></script>
+  <!-- ========== PLAYER (containers e widget) ========== -->
+  
+  <!-- Containers invisíveis para mídia -->
+  <div id="bodyPlayer" data-mode="player" class="min-h-screen w-full flex items-center justify-center relative overflow-hidden">
+    <div id="yt-container" class="absolute -left-[9999px]"></div>
+    <div id="sc-container" class="absolute -left-[9999px]"></div>
+    <audio id="local-audio" crossorigin="anonymous"></audio>
+  </div>
 
+  <!-- Widget flutuante -->
+  <div id="kodux-widget" data-idle-target class="state-ball" style="right: 20px; bottom: 100px;">
+    <!-- content-ball (ícone) -->
+    <div id="content-ball" class="w-full h-full flex items-center justify-center text-[var(--primary)]">
+      <i class="ph-fill ph-vinyl-record animate-spin" style="animation-duration: 4s; font-size: 28px; line-height: 1; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px;"></i>
+    </div>
 
+    <!-- content-preview -->
+    <div id="content-preview" class="hidden-content w-full h-full flex items-center px-3 gap-3">
+      <img id="prev-cover" src="https://picsum.photos/100" class="w-12 h-12 rounded-full object-cover border border-[var(--primary)] shadow-lg preview-clickable cursor-pointer transition-transform hover:scale-105" onclick="openFullFromPreview(event)">
+      <div class="flex-1 overflow-hidden preview-clickable cursor-pointer" onclick="openFullFromPreview(event)">
+        <h4 id="prev-title" class="text-[11px] font-bold text-white truncate glow-text">Kodux System</h4>
+        <p id="prev-artist" class="text-[9px] text-[var(--muted)] truncate">Aguardando...</p>
+      </div>
+      <button onclick="togglePlay(event)" class="text-white hover:text-[var(--primary)] transition z-10">
+        <i id="prev-play-icon" class="ph-fill ph-play-circle text-4xl"></i>
+      </button>
+    </div>
 
- 
-  <!-- PLAYER (opcional – descomente se for usar) -->
-  <!-- 
-  <div id="bodyPlayer" data-mode="player" ...> ... </div>
-  <script src="player/js/db.js"></script>
-  <script src="player/js/archetypes.js"></script>
-  <script src="player/js/player.js"></script>
-  <script src="player/js/idle.js"></script>
-  <script> document.addEventListener('DOMContentLoaded', initKoduxPlayer); </script>
-  -->
+    <!-- content-footer -->
+    <div id="content-footer" class="hidden-content w-full h-full flex flex-col relative">
+      <div class="absolute top-0 left-0 w-full h-1 bg-white/5 cursor-pointer" id="footer-progress-click">
+        <div id="footer-progress-bar" class="h-full bg-[var(--primary)] w-0 shadow-[0_0_10px_var(--primary)]"></div>
+      </div>
+      <div class="drag-header flex-1 flex items-center px-6 gap-4">
+        <img id="foot-cover" src="https://picsum.photos/100" class="w-14 h-14 rounded-xl object-cover shadow-xl border border-white/10">
+        <div class="flex-1 overflow-hidden cursor-pointer" onclick="updateWidgetState('full')">
+          <h4 id="foot-title" class="text-sm font-bold text-white truncate">Kodux System</h4>
+          <p id="foot-artist" class="text-xs text-[var(--muted)] truncate">Aguardando...</p>
+        </div>
+        <div class="flex items-center justify-center gap-6">
+          <button onclick="playPrev(event)" class="text-[var(--muted)] hover:text-white"><i class="ph-fill ph-skip-back text-2xl"></i></button>
+          <button onclick="togglePlay(event)" class="text-white hover:scale-110 transition"><i id="foot-play-icon" class="ph-fill ph-play-circle text-5xl"></i></button>
+          <button onclick="playNext(event)" class="text-[var(--muted)] hover:text-white"><i class="ph-fill ph-skip-forward text-2xl"></i></button>
+          <button onclick="collapseToBall(event)" class="text-[var(--muted)] ml-2"><i class="ph ph-minus-circle text-2xl"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- content-full -->
+    <div id="content-full" class="hidden-content flex flex-col w-full h-full relative">
+      <div class="drag-header w-full p-5 flex justify-between items-center bg-white/5 border-b border-white/5">
+        <div class="flex items-center gap-3">
+          <i class="ph-fill ph-lightning text-[var(--primary)] text-xl"></i>
+          <span class="text-sm font-black tracking-widest glow-text">ORÁCULO DUAL</span>
+        </div>
+        <button onclick="collapseToBall(event)" class="text-[var(--muted)] hover:text-white p-2 bg-white/5 rounded-lg">
+          <i class="ph ph-caret-down-bold"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-5 pb-36 soft-scroll">
+        <div class="mb-4">
+          <div class="flex items-center gap-2 overflow-x-auto pb-2 soft-scroll" id="playlist-tabs"></div>
+        </div>
+
+        <div class="flex gap-2 mb-4">
+          <div class="flex-1 relative">
+            <i class="ph ph-link absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]"></i>
+            <input type="text" id="link-input" placeholder="YouTube ou SoundCloud link" class="glass-input w-full rounded-xl pl-10 pr-4 py-3 text-xs">
+          </div>
+          <select id="destination-select" class="glass-select rounded-xl px-3 text-xs min-w-[135px]">
+            <option value="all">Todas</option>
+          </select>
+          <button onclick="addLink()" class="btn-primary px-4 rounded-xl shadow-lg">
+            <i class="ph ph-plus-bold"></i>
+          </button>
+        </div>
+
+        <div class="flex gap-2 mb-4 items-center">
+          <div class="flex-1 relative">
+            <i class="ph ph-folder-simple absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]"></i>
+            <input type="text" id="new-playlist-input" placeholder="Criar nova playlist" class="glass-input w-full rounded-xl pl-10 pr-4 py-3 text-xs">
+          </div>
+          <button onclick="createPlaylist()" class="btn-primary px-4 rounded-xl shadow-lg">
+            <i class="ph ph-folder-plus"></i>
+          </button>
+        </div>
+
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h3 class="text-sm font-bold text-white">Playlists carregadas</h3>
+            <p class="text-[10px] text-[var(--muted)]">Toque para trocar de grupo, criar, remover ou organizar.</p>
+          </div>
+        </div>
+
+        <div id="playlist-container" class="flex flex-col gap-3"></div>
+      </div>
+
+      <div class="absolute bottom-0 left-0 w-full bg-black/80 backdrop-blur-xl border-t border-[var(--primary)] p-6">
+        <input type="range" id="main-progress" min="0" max="100" value="0" class="w-full mb-4">
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex items-center gap-4 overflow-hidden">
+            <img id="main-cover" src="https://picsum.photos/100" class="w-14 h-14 rounded-xl border border-white/20 object-cover">
+            <div class="overflow-hidden">
+              <h4 id="main-title" class="text-sm font-bold text-white truncate">Oráculo</h4>
+              <p id="main-artist" class="text-[10px] text-[var(--muted)] truncate">Sistema KODUX v2.5</p>
+            </div>
+          </div>
+          <div class="flex items-center justify-center gap-6 shrink-0">
+            <button onclick="playPrev()" class="text-white text-2xl"><i class="ph-fill ph-skip-back"></i></button>
+            <button onclick="togglePlay()" class="w-14 h-14 rounded-full bg-[var(--primary)] text-black flex items-center justify-center shadow-[0_0_20px_var(--primary)]">
+              <i id="main-play-icon" class="ph-fill ph-play text-3xl"></i>
+            </button>
+            <button onclick="playNext()" class="text-white text-2xl"><i class="ph-fill ph-skip-forward"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SCRIPTS ========== -->
+  
+  <!-- Módulos do convite (checklist + gesto) -->
+
+  <script src="https://infodose.com.br/NL/NL--MAIN/js/db.js"></script> 
+
+<!-- checklist DB (KOBLLUX_DB) -->
+  <script src="https://infodose.com.br/NL/NL--MAIN/js/gesture.js"></script>
+
+  <script src="https://infodose.com.br/NL/NL--MAIN/js/checklist.js"></script>
+
+<!-- usa KOBLLUX_DB -->
+
+  <!-- Módulos do player (com nomes exclusivos) -->
+
+  <script src="https://infodose.com.br/NL/NL--MAIN/player/js/db.js"></script>  
+
+<!-- KOBLLUX_PLAYER_DB -->
+
+  <script src="https://infodose.com.br/NL/NL--MAIN/player/js/archetypes.js"></script>
+
+  <script src="https://infodose.com.br/NL/NL--MAIN/player/js/player.js"></script>   
+
+<!-- usa KOBLLUX_PLAYER_DB -->
+
+  <script src="https://infodose.com.br/NL/NL--MAIN/player/js/idle.js"></script>
+
+  <!-- Inicialização do player -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof initKoduxPlayer === 'function') {
+        initKoduxPlayer();
+      }
+    });
+  </script>
+
 </body>
 </html>
