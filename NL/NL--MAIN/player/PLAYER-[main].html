@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0c14">
+  <title>KODUX | Player + Widget</title>
+  
+  <!-- Seus scripts (mantidos) -->
+
+  <script src="https://w.soundcloud.com/player/api.js"></script>
+  <link rel="stylesheet" href="https://infodose.com.br/NL/NL--MAIN/player/css/styles.css">
+
+  
+</head>
+<body>
+
+  <div id="bodyPlayer" data-mode="player">
+    
+    <!-- Background Decorativo -->
+    <div class="bg-overlay"></div>
+
+    <!-- Contêineres Ocultos (APIs) -->
+    <div id="yt-container" class="off-screen"></div>
+    <div id="sc-container" class="off-screen"></div>
+    <audio id="local-audio" crossorigin="anonymous"></audio>
+
+    <!-- WIDGET PRINCIPAL -->
+    <div id="kodux-widget" data-idle-target class="state-ball" style="position: absolute; right: 20px; bottom: 100px;">
+      
+      <!-- ESTADO: BALL -->
+      <div id="content-ball">
+        <span class="svg-icon svg-icon-vinyl spin" style="width:28px; height:28px;"></span>
+      </div>
+
+      <!-- ESTADO: PREVIEW -->
+      <div id="content-preview" class="hidden-content">
+        <img id="prev-cover" class="cover-sm hover-scale transition-transform preview-clickable" onclick="openFullFromPreview(event)">
+        <div class="track-info-preview preview-clickable" onclick="openFullFromPreview(event)">
+          <h4 id="prev-title" class="track-title-sm text-truncate glow-text">Kodux System</h4>
+          <p id="prev-artist" class="track-artist-sm text-truncate">Aguardando...</p>
+        </div>
+        <button onclick="togglePlay(event)" class="btn-play-preview transition-base">
+          <span id="prev-play-icon" class="svg-icon svg-icon-play icon-4xl"></span>
+        </button>
+      </div>
+
+      <!-- ESTADO: FOOTER -->
+      <div id="content-footer" class="hidden-content">
+        <div class="progress-click-area" id="footer-progress-click">
+          <div id="footer-progress-bar" class="progress-bar-fill"></div>
+        </div>
+
+        <div class="footer-drag-header drag-header">
+          <img id="foot-cover" src="https://picsum.photos/100" class="cover-md">
+          <div class="track-info-footer" onclick="updateWidgetState('full')">
+            <h4 id="foot-title" class="track-title-md text-truncate">Kodux System</h4>
+            <p id="foot-artist" class="track-artist-md text-truncate">Aguardando...</p>
+          </div>
+          <div class="controls-footer">
+            <button onclick="playPrev(event)" class="btn-ctrl transition-base"><span class="svg-icon svg-icon-skip-back icon-md"></span></button>
+            <button onclick="togglePlay(event)" class="btn-play-main hover-scale-lg transition-transform"><span id="foot-play-icon" class="svg-icon svg-icon-play" style="width:2.5rem; height:2.5rem;"></span></button>
+            <button onclick="playNext(event)" class="btn-ctrl transition-base"><span class="svg-icon svg-icon-skip-forward icon-md"></span></button>
+            <button onclick="collapseToBall(event)" class="btn-ctrl transition-base" style="margin-left: 0.5rem;"><span class="svg-icon svg-icon-minus-circle icon-md"></span></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ESTADO: FULL -->
+      <div id="content-full" class="hidden-content">
+        
+        <div class="full-header drag-header">
+          <div class="header-title glow-text">
+            <span class="svg-icon svg-icon-lightning" style="width:1.25rem; height:1.25rem; color:var(--primary);"></span>
+            <span>ORÁCULO DUAL</span>
+          </div>
+          <button onclick="collapseToBall(event)" class="btn-collapse transition-base">
+            <span class="svg-icon svg-icon-caret-down icon-md"></span>
+          </button>
+        </div>
+
+        <div class="full-scroll-area soft-scroll">
+          <div class="tabs-container soft-scroll" id="playlist-tabs"></div>
+
+          <div class="input-group">
+            <div class="input-wrapper">
+              <span class="svg-icon svg-icon-link input-icon icon-sm"></span>
+              <input type="text" id="link-input" placeholder="YouTube ou SoundCloud link" class="glass-input custom-input">
+            </div>
+            <select id="destination-select" class="glass-select custom-select">
+              <option value="all">Todas</option>
+            </select>
+            <button onclick="addLink()" class="btn-primary btn-action">
+              <span class="svg-icon svg-icon-plus icon-md"></span>
+            </button>
+          </div>
+
+          <div class="input-group">
+            <div class="input-wrapper">
+              <span class="svg-icon svg-icon-folder input-icon icon-sm"></span>
+              <input type="text" id="new-playlist-input" placeholder="Criar nova playlist" class="glass-input custom-input">
+            </div>
+            <button onclick="createPlaylist()" class="btn-primary btn-action">
+              <span class="svg-icon svg-icon-folder-plus icon-md"></span>
+            </button>
+          </div>
+
+          <div class="playlist-header">
+            <div>
+              <h3>Playlists carregadas</h3>
+              <p>Toque para trocar de grupo, criar, remover ou organizar.</p>
+            </div>
+          </div>
+
+          <div id="playlist-container" class="playlists-list"></div>
+        </div>
+
+        <div class="full-bottom-dock">
+          <input type="range" id="main-progress" min="0" max="100" value="0" class="main-range">
+          
+          <div class="dock-controls">
+            <div class="dock-track-info">
+              <img id="main-cover" src="https://picsum.photos/100" class="cover-md">
+              <div class="info-text">
+                <h4 id="main-title" class="track-title-md text-truncate">Oráculo</h4>
+                <p id="main-artist" class="track-artist-sm text-truncate">Sistema KODUX v2.5</p>
+              </div>
+            </div>
+            
+            <div class="dock-actions">
+              <button onclick="playPrev()" class="transition-base"><span class="svg-icon svg-icon-skip-back icon-md"></span></button>
+              <button onclick="togglePlay()" class="btn-play-circle transition-transform hover-scale">
+                <span id="main-play-icon" class="svg-icon svg-icon-play" style="width:2rem; height:2rem;"></span>
+              </button>
+              <button onclick="playNext()" class="transition-base"><span class="svg-icon svg-icon-skip-forward icon-md"></span></button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SEUS SCRIPTS (mantidos exatamente como estavam) -->
+  <script src="https://www.infodose.com.br/NL/NL--MAIN/player/js/db.js"></script>
+  <script src="https://www.infodose.com.br/NL/NL--MAIN/player/js/archetypes.js"></script>
+  <script src="https://www.infodose.com.br/NL/NL--MAIN/player/js/player.js"></script>
+  <script src="https://www.infodose.com.br/NL/NL--MAIN/player/js/idle.js"></script>
+
+  <!-- INICIALIZAÇÃO (idêntica à sua) -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof initKoduxPlayer === 'function') {
+        initKoduxPlayer();
+      }
+    });
+  </script>
+
+  
+<!-- <script src="https://kodux78k.github.io/oiDual--Y-/M0D/diHome/js/modules/inline-0B.js"></script> -->
+
+</body>
+</html>
