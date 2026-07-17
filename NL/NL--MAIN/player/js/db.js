@@ -1,5 +1,8 @@
-const DB_NAME = "kodux-ss-db-v3";
-const LEGACY_DB = "kodux-ss-db-v2";
+//====================================================
+// https://www.infodose.com.br/NL/NL--MAIN/player/js/db.js
+//====================================================
+
+const DB_NAME = "di_kodux-ss-db-v3";
 
 function uid(prefix = "trk") {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
@@ -156,39 +159,52 @@ function ensureSystemPlaylists(db, arquetypes) {
   return db;
 }
 
-function migrateLegacyIfNeeded(arquetypes) {
+function initDB(arquetypes, preloaded) {
   const rawV3 = localStorage.getItem(DB_NAME);
+  let db;
+
   if (rawV3) {
     try {
-      const parsed = JSON.parse(rawV3);
-      parsed.library = (parsed.library || []).map(normalizeTrack);
-      parsed.playlists = (parsed.playlists || []).map(p => ({
+      db = JSON.parse(rawV3);
+      db.library = (db.library || []).map(normalizeTrack);
+      db.playlists = (db.playlists || []).map(p => ({
         ...p,
         trackIds: Array.isArray(p.trackIds) ? p.trackIds.slice() : []
       }));
-      return ensureSystemPlaylists(parsed, arquetypes);
-    } catch (e) {}
+      db = ensureSystemPlaylists(db, arquetypes);
+
+      // Sincroniza forçadamente o preLoaded atualizado para não ficar preso em cache antigo
+      const libraryUrls = new Set(db.library.map(t => normalizeUrl(t.url)));
+      (preloaded || []).forEach(pTrack => {
+        const normTrack = normalizeTrack(pTrack);
+        if (!libraryUrls.has(normTrack.url)) {
+          db.library.push(normTrack);
+        } else {
+          // Atualiza dados caso o nome/artista tenham mudado no arquivo preLoaded.js
+          const existing = db.library.find(t => normalizeUrl(t.url) === normTrack.url);
+          if (existing) {
+            existing.name = normTrack.name;
+            existing.artist = normTrack.artist;
+            existing.cover = normTrack.cover;
+          }
+        }
+      });
+    } catch (e) {
+      db = createDefaultDB(arquetypes, preloaded);
+      db = ensureSystemPlaylists(db, arquetypes);
+    }
+  } else {
+    db = createDefaultDB(arquetypes, preloaded);
+    db = ensureSystemPlaylists(db, arquetypes);
   }
 
-  const legacy = localStorage.getItem(LEGACY_DB);
-  if (legacy) {
-    try {
-      const parsed = JSON.parse(legacy);
-      if (Array.isArray(parsed)) {
-        const db = createDefaultDB(arquetypes, parsed);
-        saveDB(db);
-        localStorage.removeItem(LEGACY_DB);
-        return db;
-      }
-    } catch (e) {}
-  }
-  const db = createDefaultDB(arquetypes);
-  return ensureSystemPlaylists(db, arquetypes);
+  saveDB(db);
+  return db;
 }
 
 window.KOBLLUX_DB = {
-  init: function(arquetypes) {
-    const db = migrateLegacyIfNeeded(arquetypes);
+  init: function(arquetypes, preloaded) {
+    const db = initDB(arquetypes, preloaded);
     saveDB(db);
     return db;
   },
