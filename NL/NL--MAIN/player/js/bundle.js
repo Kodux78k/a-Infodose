@@ -1,10 +1,4 @@
-
-//====================================================
-// https://www.infodose.com.br/NL/NL--MAIN/player/js/db.js
-//====================================================
-
-const DB_NAME = "kodux-ss-db-v3";
-const LEGACY_DB = "kodux-ss-db-v2";
+const DB_NAME = "di_kodux-ss-db-v3";
 
 function uid(prefix = "trk") {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
@@ -161,39 +155,52 @@ function ensureSystemPlaylists(db, arquetypes) {
   return db;
 }
 
-function migrateLegacyIfNeeded(arquetypes) {
+function initDB(arquetypes, preloaded) {
   const rawV3 = localStorage.getItem(DB_NAME);
+  let db;
+
   if (rawV3) {
     try {
-      const parsed = JSON.parse(rawV3);
-      parsed.library = (parsed.library || []).map(normalizeTrack);
-      parsed.playlists = (parsed.playlists || []).map(p => ({
+      db = JSON.parse(rawV3);
+      db.library = (db.library || []).map(normalizeTrack);
+      db.playlists = (db.playlists || []).map(p => ({
         ...p,
         trackIds: Array.isArray(p.trackIds) ? p.trackIds.slice() : []
       }));
-      return ensureSystemPlaylists(parsed, arquetypes);
-    } catch (e) {}
+      db = ensureSystemPlaylists(db, arquetypes);
+
+      // Sincroniza forçadamente o preLoaded atualizado para não ficar preso em cache antigo
+      const libraryUrls = new Set(db.library.map(t => normalizeUrl(t.url)));
+      (preloaded || []).forEach(pTrack => {
+        const normTrack = normalizeTrack(pTrack);
+        if (!libraryUrls.has(normTrack.url)) {
+          db.library.push(normTrack);
+        } else {
+          // Atualiza dados caso o nome/artista tenham mudado no arquivo preLoaded.js
+          const existing = db.library.find(t => normalizeUrl(t.url) === normTrack.url);
+          if (existing) {
+            existing.name = normTrack.name;
+            existing.artist = normTrack.artist;
+            existing.cover = normTrack.cover;
+          }
+        }
+      });
+    } catch (e) {
+      db = createDefaultDB(arquetypes, preloaded);
+      db = ensureSystemPlaylists(db, arquetypes);
+    }
+  } else {
+    db = createDefaultDB(arquetypes, preloaded);
+    db = ensureSystemPlaylists(db, arquetypes);
   }
 
-  const legacy = localStorage.getItem(LEGACY_DB);
-  if (legacy) {
-    try {
-      const parsed = JSON.parse(legacy);
-      if (Array.isArray(parsed)) {
-        const db = createDefaultDB(arquetypes, parsed);
-        saveDB(db);
-        localStorage.removeItem(LEGACY_DB);
-        return db;
-      }
-    } catch (e) {}
-  }
-  const db = createDefaultDB(arquetypes);
-  return ensureSystemPlaylists(db, arquetypes);
+  saveDB(db);
+  return db;
 }
 
 window.KOBLLUX_DB = {
-  init: function(arquetypes) {
-    const db = migrateLegacyIfNeeded(arquetypes);
+  init: function(arquetypes, preloaded) {
+    const db = initDB(arquetypes, preloaded);
     saveDB(db);
     return db;
   },
@@ -208,9 +215,8 @@ window.KOBLLUX_DB = {
   uid: uid
 };
 
-
 //====================================================
-// https://www.infodose.com.br/NL/NL--MAIN/player/js/archetypes.js
+// https://www.infodose.com.br/NL/NL--MAIN/player/js/preLoaded.js
 //====================================================
 
 const CADIAL_ARQUETIPOS = [
@@ -247,8 +253,80 @@ const PRELOADED = [
   // Playlist
   { type: "youtube_playlist", playlistId: "PL_XiIUPFx4DSKFuJZZiKCxVUy20PtDdaB", url: "https://youtube.com/playlist?list=PL_XiIUPFx4DSKFuJZZiKCxVUy20PtDdaB", name: "Playlist • Se chegou até você", artist: "Infodose", cover: "https://img.youtube.com/vi/Bt_rLbMjJDk/hqdefault.jpg" },
   // SoundCloud
-  { type: "soundcloud", url: "https://on.soundcloud.com/ZaS4eux4tmpD0jSnyp", name: "SoundCloud única", artist: "Infodose", cover: "https://i1.sndcdn.com/artworks-default-t500x500.jpg" }
-];
+  { type: "soundcloud", url: "https://on.soundcloud.com/ZaS4eux4tmpD0jSnyp", name: "SoundCloud única", artist: "Infodose", cover: "https://i1.sndcdn.com/artworks-default-t500x500.jpg" },
+   
+{
+  type: "soundcloud",
+  url: "https://soundcloud.com/oi-dual-x-info-dose/a?in=oi-dual-x-info-dose%2Fsets%2Fmapeamento-das-trilhas-pulso",
+  name: "[0×01] Trilhas da Magia e Prosperidade",
+  artist: "Infodose",
+  cover: "https://i1.sndcdn.com/artworks-default-t500x500.jpg"
+},
+{
+  type: "soundcloud",
+  url: "https://soundcloud.com/oi-dual-x-info-dose/b?in=oi-dual-x-info-dose%2Fsets%2Fmapeamento-das-trilhas-pulso",
+  name: "[0×02] Trilhas do Cuidador",
+  artist: "Infodose",
+  cover: "https://i1.sndcdn.com/artworks-default-t500x500.jpg"
+},
+{
+  type: "soundcloud",
+  url: "https://soundcloud.com/oi-dual-x-info-dose/c?in=oi-dual-x-info-dose%2Fsets%2Fmapeamento-das-trilhas-pulso",
+  name: "[0×03] Trilhas Aroma das Raízes",
+  artist: "Infodose",
+  cover: "https://i1.sndcdn.com/artworks-default-t500x500.jpg"
+},
+{
+  type: "soundcloud",
+  url: "https://soundcloud.com/oi-dual-x-info-dose/d?in=oi-dual-x-info-dose%2Fsets%2Fmapeamento-das-trilhas-pulso",
+  name: "[0×04] Trilhas Aroma da Mente",
+  artist: "Infodose",
+  cover: "https://i1.sndcdn.com/artworks-default-t500x500.jpg"
+},
+{
+  type: "soundcloud",
+  url: "https://soundcloud.com/oi-dual-x-info-dose/e?in=oi-dual-x-info-dose%2Fsets%2Fmapeamento-das-trilhas-pulso",
+  name: "[0×05] Lofi Set • Aroma do Desejo",
+  artist: "Infodose",
+  cover: "https://i1.sndcdn.com/artworks-default-t500x500.jpg"
+},
+{
+  type: "soundcloud",
+  url: "https://soundcloud.com/oi-dual-x-info-dose/f?in=oi-dual-x-info-dose%2Fsets%2Fmapeamento-das-trilhas-pulso",
+  name: "[0×06] Trilhas Aroma do Novo",
+  artist: "Infodose",
+  cover: "https://i1.sndcdn.com/artworks-default-t500x500.jpg"
+},
+{
+  type: "soundcloud",
+  url: "https://soundcloud.com/oi-dual-x-info-dose/g?in=oi-dual-x-info-dose%2Fsets%2Fmapeamento-das-trilhas-pulso",
+  name: "[0×07] Trilhas Aroma da Paz",
+  artist: "Infodose",
+  cover: "https://i1.sndcdn.com/artworks-default-t500x500.jpg"
+},
+{
+  type: "soundcloud",
+  url: "https://soundcloud.com/oi-dual-x-info-dose/_0x01h_-78k-ativador-guiado-396hz-vox",
+  name: "[0×01h] 78K Ativador Guiado 396Hz Vox",
+  artist: "Infodose",
+  cover: "https://i1.sndcdn.com/artworks-default-t500x500.jpg"
+},
+{
+  type: "soundcloud",
+  url: "https://soundcloud.com/oi-dual-x-info-dose/_0x01_-kdx-78-dm-subir-a-serra",
+  name: "[0×01] KDX 78 DM • Subir a Serra",
+  artist: "Infodose",
+  cover: "https://i1.sndcdn.com/artworks-default-t500x500.jpg"
+},
+{
+  type: "soundcloud",
+  url: "https://soundcloud.com/oi-dual-x-info-dose/0x08-trilhas-set-governante",
+  name: "[0×08] Trilhas • Set Governante",
+  artist: "Infodose",
+  cover: "https://i1.sndcdn.com/artworks-default-t500x500.jpg"
+},
+
+]
 
 window.KOBLLUX_ARCHETYPES = {
   CADIAL_ARQUETIPOS,
@@ -292,7 +370,6 @@ window.KOBLLUX_ARCHETYPES = {
 
   // ── UTILITÁRIO PARA GERAR SVG INLINE ────────────────────────────
   function createIconHTML(iconName, extraClasses = '') {
-    // iconName sem o prefixo "kx-"
     return `<svg class="kx-icon ${extraClasses}" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" width="1em" height="1em"><use href="#kx-${iconName}"/></svg>`;
   }
 
@@ -372,14 +449,13 @@ window.KOBLLUX_ARCHETYPES = {
       { title: dom.mainTitle, artist: dom.mainArtist, cover: dom.mainCover }
     ];
     fills.forEach(({ title, artist, cover }) => {
-      if (title)  title.innerText  = track?.name   || "Oráculo";
-      if (artist) artist.innerText = track?.artist  || "Sistema KODUX";
-      if (cover)  cover.src        = track?.cover   || "https://picsum.photos/100";
+      if (title)  title.textContent  = track?.name   || "Oráculo";
+      if (artist) artist.textContent = track?.artist  || "Sistema KODUX";
+      if (cover)  cover.src          = track?.cover   || "https://picsum.photos/100";
     });
   }
 
   function syncIcons() {
-    // Atualiza os SVGs de play/pause
     const iconName = state.isPlaying ? 'pause-circle' : 'play-circle';
     const iconSimple = state.isPlaying ? 'pause' : 'play';
 
@@ -387,14 +463,12 @@ window.KOBLLUX_ARCHETYPES = {
       if (el) {
         const use = el.querySelector('use');
         if (use) use.setAttribute('href', `#kx-${iconName}`);
-        // Mantém classes extras (ex: text-4xl) já existentes no elemento
       }
     });
 
     if (dom.mainPlayIcon) {
       const use = dom.mainPlayIcon.querySelector('use');
       if (use) use.setAttribute('href', `#kx-${iconSimple}`);
-      // Ajusta classe ml-1 se necessário (já está no HTML)
     }
   }
 
@@ -423,7 +497,6 @@ window.KOBLLUX_ARCHETYPES = {
       btn.className = `mini-chip ${state.db.activePlaylistId === pl.id ? "active" : ""} ${isCadial ? "cadial-chip" : ""}`;
       btn.onclick = () => setActivePlaylist(pl.id);
 
-      // Monta o innerHTML com SVG inline
       btn.innerHTML = `
         ${createIconHTML(iconName)}
         <span>${pl.name}</span>
@@ -431,7 +504,6 @@ window.KOBLLUX_ARCHETYPES = {
       `;
       dom.playlistTabs.appendChild(btn);
 
-      // Botão de deletar (apenas playlists não-sistema)
       if (!pl.system && pl.id !== ALL_ID && pl.id !== FAVORITES_ID) {
         const del = document.createElement("button");
         del.className = "mini-chip";
@@ -462,30 +534,35 @@ window.KOBLLUX_ARCHETYPES = {
     const active = getActivePlaylist();
     dom.playlistContainer.innerHTML = "";
 
+     // 1. Renderizar Banner Cadial (se existir)
     if (active?.cadial) {
       const banner = document.createElement("div");
-      banner.className = "p-4 rounded-2xl border border-white/10 bg-white/5 mb-3";
+      banner.style.cssText = "padding: 16px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); margin-bottom: 12px;";
       banner.innerHTML = `
-        <p class="text-[10px] text-[var(--muted)] uppercase tracking-widest mb-1">
+        <p style="font-size: 10px; color: var(--muted, #a0a0a0); text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 4px 0;">
           ${active.cadial.opcode} · D${active.cadial.rung} · ${active.cadial.hz}Hz
         </p>
-        <p class="text-xs text-white font-semibold">${active.cadial.essencia}</p>
-        <p class="text-[10px] text-[var(--muted)] italic mt-1">"${active.cadial.frase}"</p>
+        <p style="font-size: 12px; color: #fff; font-weight: 600; margin: 0;">${active.cadial.essencia}</p>
+        <p style="font-size: 10px; color: var(--muted, #a0a0a0); font-style: italic; margin: 4px 0 0 0;">"${active.cadial.frase}"</p>
       `;
       dom.playlistContainer.appendChild(banner);
     }
 
+    // 2. Renderizar Estado Vazio (se não houver faixas)
     if (!visible.length) {
       const empty = document.createElement("div");
-      empty.className = "p-5 rounded-2xl border border-white/10 bg-white/5 text-center";
+      empty.style.cssText = "padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); text-align: center; margin-top: 10px;";
       empty.innerHTML = `
-        <div class="text-[var(--primary)] text-3xl mb-2">${createIconHTML('disc')}</div>
-        <h4 class="text-sm font-bold text-white mb-1">Sem faixas aqui</h4>
-        <p class="text-[11px] text-[var(--muted)]">Adicione um link, crie uma playlist ou marque favoritos.</p>
+        <div style="color: var(--primary, #00d2ff); font-size: 28px; margin-bottom: 8px; display: flex; justify-content: center;">
+          ${createIconHTML('disc')}
+        </div>
+        <h4 style="font-size: 14px; font-weight: bold; color: #fff; margin: 0 0 4px 0;">Sem faixas aqui</h4>
+        <p style="font-size: 11px; color: var(--muted, #a0a0a0); margin: 0;">Adicione um link, crie uma playlist ou marque favoritos.</p>
       `;
       dom.playlistContainer.appendChild(empty);
       return;
     }
+
 
     visible.forEach(t => {
       const activeItem = t.id === state.currentTrackId;
@@ -494,7 +571,6 @@ window.KOBLLUX_ARCHETYPES = {
         activeItem ? "bg-[var(--primary)]/20 border border-[var(--primary)]/30" : "bg-white/5 hover:bg-white/10"
       }`;
 
-      // Ícones com SVG inline
       const favIcon = t.favorite ? 'heart-fill' : 'heart';
       const favClass = t.favorite ? 'active' : '';
       const waveformHTML = activeItem && state.isPlaying ? createIconHTML('waveform') : '';
@@ -556,7 +632,7 @@ window.KOBLLUX_ARCHETYPES = {
       dom.widget.style.transform = "none";
       dom.widget.style.bottom = "auto";
       dom.widget.style.width = "240px";
-      dom.widget.style.height = "60px";
+      dom.widget.style.height = "78px"; // Ajustado conforme a correção visual 
     } else if (newState === "full") {
       dom.widget.style.left = "50%";
       dom.widget.style.top = "50%";
@@ -1050,7 +1126,17 @@ window.KOBLLUX_ARCHETYPES = {
 
   // ── EVENT HANDLERS ───────────────────────────────────────────────
   function openFullFromPreview(e) { if (e) e.stopPropagation(); updateWidgetState("full"); }
-  function collapseToBall(e) { if (e) e.stopPropagation(); updateWidgetState("ball"); }
+  
+  function collapseToBall(e) { 
+    if (e) e.stopPropagation();
+    // Transição corrigida para ter o estágio intermediário (preview com 78px) antes de virar a "ball"
+    if (state.widgetState === "full" || state.widgetState === "footer") {
+        updateWidgetState("preview");
+    } else {
+        updateWidgetState("ball");
+    }
+  }
+  
   function handleClickOutside(e) {
     if (state.widgetState === "preview" && dom.widget && !dom.widget.contains(e.target)) {
       updateWidgetState("ball");
@@ -1065,7 +1151,8 @@ window.KOBLLUX_ARCHETYPES = {
       return;
     }
 
-    state.db = DB.init(ARCHETYPES);
+    // Inicializa o banco injetando o PRELOADED para garantir sincronia
+    state.db = DB.init(ARCHETYPES, PRELOADED);
 
     global.openFullFromPreview = openFullFromPreview;
     global.updateWidgetState = updateWidgetState;
@@ -1107,7 +1194,7 @@ window.KOBLLUX_ARCHETYPES = {
     initDrag();
     renderEverything();
     updateWidgetState("ball");
-    hydratePreloadedTracks();
+    hydratePreloadedTracks(); // Atualiza capa/título de fontes externas asíncronamente
 
     console.log("⚫ KODUX Player inicializado.");
   }
@@ -1115,49 +1202,4 @@ window.KOBLLUX_ARCHETYPES = {
   global.initKoduxPlayer = initKoduxPlayer;
 
 })(window);
-
-
-
-//====================================================
-// https://www.infodose.com.br/NL/NL--MAIN/player/js/idle.js
-//====================================================
-
-(function() {
-  const bodyPlayer = document.getElementById('bodyPlayer');
-  const idleSelector = '.kob-tts-dock, #kodux-widget, [data-idle-target]';
-  let idleTimer = null;
-
-  function getIdleTargets() {
-    return document.querySelectorAll(idleSelector);
-  }
-
-  function setIdleState(isIdle) {
-    getIdleTargets().forEach(el => el.classList.toggle('idle', isIdle));
-  }
-
-  function resetIdle() {
-    setIdleState(false);
-    clearTimeout(idleTimer);
-    idleTimer = setTimeout(() => setIdleState(true), 1870);
-  }
-
-  function setMode(mode = 'player') {
-    if (!bodyPlayer) return;
-    bodyPlayer.dataset.mode = mode;
-  }
-
-  window.KoduxShell = {
-    setMode,
-    resetIdle
-  };
-
-  ['pointerdown', 'pointermove', 'touchstart', 'mousemove', 'scroll'].forEach(ev => {
-    document.addEventListener(ev, resetIdle, { passive: true });
-  });
-
-  document.addEventListener('keydown', resetIdle);
-
-  setMode(bodyPlayer?.dataset.mode || 'player');
-  resetIdle();
-})();
 
