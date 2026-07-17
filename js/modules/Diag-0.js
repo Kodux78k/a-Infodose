@@ -1,5 +1,5 @@
  // Simulando uso normal da página
-        localStorage.setItem('user_session', 'mobile_token_999');
+      /*  localStorage.setItem('user_session', 'mobile_token_999');
         document.cookie = "theme=dark; path=/";
         document.getElementById('btn-test').addEventListener('click', () => {
             console.log('Ação Mobile disparada!', { platform: navigator.userAgent });
@@ -9,7 +9,7 @@
         document.getElementById('btn-fetch').addEventListener('click', () => {
             fetch('https://infodose.com.br').then(r => r.json()).then(d => console.log('Fetch OK', d));
         });
-  
+  */
 
     
     (function(){
