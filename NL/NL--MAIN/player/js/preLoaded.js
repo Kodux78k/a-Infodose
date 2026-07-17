@@ -32,8 +32,10 @@ const PRELOADED = [
   // Playlist
   { type: "youtube_playlist", playlistId: "PL_XiIUPFx4DSKFuJZZiKCxVUy20PtDdaB", url: "https://youtube.com/playlist?list=PL_XiIUPFx4DSKFuJZZiKCxVUy20PtDdaB", name: "Playlist • Se chegou até você", artist: "Infodose", cover: "https://img.youtube.com/vi/Bt_rLbMjJDk/hqdefault.jpg" },
   // SoundCloud
-  { type: "soundcloud", url: "https://on.soundcloud.com/ZaS4eux4tmpD0jSnyp", name: "SoundCloud única", artist: "Infodose", cover: "https://i1.sndcdn.com/artworks-default-t500x500.jpg" }
-    { id:1, type:"soundcloud", name:"[0×01]_Trilhas_da_Magia_e_Prosperidade", url:"https://soundcloud.com/oi-dual-x-info-dose/a?in=oi-dual-x-info-dose%2Fsets%2Fmapeamento-das-trilhas-pulso" },
+  { type: "soundcloud", url: "https://on.soundcloud.com/ZaS4eux4tmpD0jSnyp", name: "SoundCloud única", artist: "Infodose", cover: "https://i1.sndcdn.com/artworks-default-t500x500.jpg" },
+   
+  //precisa deixar na base do soundcloud 
+   { id:1, type:"soundcloud", name:"[0×01]_Trilhas_da_Magia_e_Prosperidade", url:"https://on.soundcloud.com/oi-dual-x-info-dose/a?in=oi-dual-x-info-dose%2Fsets%2Fmapeamento-das-trilhas-pulso" },
     { id:2, type:"soundcloud", name:"[0×02]_Trilhas_do_Cuidador", url:"https://soundcloud.com/oi-dual-x-info-dose/b?in=oi-dual-x-info-dose%2Fsets%2Fmapeamento-das-trilhas-pulso" },
     { id:3, type:"soundcloud", name:"[0×03]_Trilhas_Aroma_Das_Raizes", url:"https://soundcloud.com/oi-dual-x-info-dose/c?in=oi-dual-x-info-dose%2Fsets%2Fmapeamento-das-trilhas-pulso" },
     { id:4, type:"soundcloud", name:"[0×04]_Trilhas_Aroma_da_Mente · ATLAS (594Hz)", url:"https://soundcloud.com/oi-dual-x-info-dose/d?in=oi-dual-x-info-dose%2Fsets%2Fmapeamento-das-trilhas-pulso" },
@@ -42,7 +44,7 @@ const PRELOADED = [
     { id:7, type:"soundcloud", name:"[0×07]_Trilhas_Aroma_da_Paz_Set · SERENA (528Hz) + JESUS (963Hz)", url:"https://soundcloud.com/oi-dual-x-info-dose/g?in=oi-dual-x-info-dose%2Fsets%2Fmapeamento-das-trilhas-pulso" },
     { id:8, type:"soundcloud", name:"[_0×01h_]_78K_Ativador_Guiado_396Hz_Vox", url:"https://soundcloud.com/oi-dual-x-info-dose/_0x01h_-78k-ativador-guiado-396hz-vox" },
     { id:9, type:"soundcloud", name:"[_0×01_]_KDX_78_Dm_SUBIR_A_SERRA", url:"https://soundcloud.com/oi-dual-x-info-dose/_0x01_-kdx-78-dm-subir-a-serra" },
-    { id:10, type:"soundcloud", name:"[0×08]_Trilhas - Set governante", url:"https://soundcloud.com/oi-dual-x-info-dose/0x08-trilhas-set-governante" }
+    { id:10, type:"soundcloud", name:"[0×08]_Trilhas - Set governante", url:"https://soundcloud.com/oi-dual-x-info-dose/0x08-trilhas-set-governante" },
 ]
 
 
