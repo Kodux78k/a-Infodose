@@ -214,24 +214,31 @@ function reconstructAndDownload() {
     const jsExternal = document.getElementById('code-js-external').value;
 
     // Montagem estruturada limpa, reinjetando os escopos em locais adequados e sem redundâncias
-    const finalHTML = `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    ${headContent}
-    ${cssExternal}
-    <style>
-${cssInternal}
-    </style>
-</head>
-<body>
-    ${bodyContent}
-    ${jsExternal}
-    <script>
-${jsInternal}
-    </script>
-</body>
-</html>`;
+const out = document.implementation.createHTMLDocument("");
 
+out.head.innerHTML = headContent;
+
+if (cssExternal.trim())
+    out.head.insertAdjacentHTML("beforeend", cssExternal);
+
+if (cssInternal.trim()) {
+    const style = out.createElement("style");
+    style.textContent = cssInternal;
+    out.head.appendChild(style);
+}
+
+out.body.innerHTML = bodyContent;
+
+if (jsExternal.trim())
+    out.body.insertAdjacentHTML("beforeend", jsExternal);
+
+if (jsInternal.trim()) {
+    const script = out.createElement("script");
+    script.textContent = jsInternal;
+    out.body.appendChild(script);
+}
+
+const finalHTML = "<!DOCTYPE html>\n" + out.documentElement.outerHTML;
     const blob = new Blob([finalHTML], { type: "text/html" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
