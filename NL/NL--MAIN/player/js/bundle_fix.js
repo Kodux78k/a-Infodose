@@ -530,73 +530,110 @@ window.KOBLLUX_ARCHETYPES = {
     else dom.destinationSelect.value = state.db.activePlaylistId || ALL_ID;
   }
 
-  function renderPlaylist() {
+    function renderPlaylist() {
     if (!dom.playlistContainer) return;
     const visible = getVisibleTracks();
     const active = getActivePlaylist();
     dom.playlistContainer.innerHTML = "";
 
+    // 1. Renderizar Banner Cadial (se existir)
     if (active?.cadial) {
       const banner = document.createElement("div");
-      banner.className = "p-4 rounded-2xl border border-white/10 bg-white/5 mb-3";
+      banner.style.cssText = "padding: 16px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); margin-bottom: 12px;";
       banner.innerHTML = `
-        <p class="text-[10px] text-[var(--muted)] uppercase tracking-widest mb-1">
+        <p style="font-size: 10px; color: var(--muted, #a0a0a0); text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 4px 0;">
           ${active.cadial.opcode} · D${active.cadial.rung} · ${active.cadial.hz}Hz
         </p>
-        <p class="text-xs text-white font-semibold">${active.cadial.essencia}</p>
-        <p class="text-[10px] text-[var(--muted)] italic mt-1">"${active.cadial.frase}"</p>
+        <p style="font-size: 12px; color: #fff; font-weight: 600; margin: 0;">${active.cadial.essencia}</p>
+        <p style="font-size: 10px; color: var(--muted, #a0a0a0); font-style: italic; margin: 4px 0 0 0;">"${active.cadial.frase}"</p>
       `;
       dom.playlistContainer.appendChild(banner);
     }
 
+    // 2. Renderizar Estado Vazio (se não houver faixas)
     if (!visible.length) {
       const empty = document.createElement("div");
-      empty.className = "p-5 rounded-2xl border border-white/10 bg-white/5 text-center";
+      empty.style.cssText = "padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); text-align: center; margin-top: 10px;";
       empty.innerHTML = `
-        <div class="text-[var(--primary)] text-3xl mb-2">${createIconHTML('disc')}</div>
-        <h4 class="text-sm font-bold text-white mb-1">Sem faixas aqui</h4>
-        <p class="text-[11px] text-[var(--muted)]">Adicione um link, crie uma playlist ou marque favoritos.</p>
+        <div style="color: var(--primary, #00d2ff); font-size: 28px; margin-bottom: 8px; display: flex; justify-content: center;">
+          ${createIconHTML('disc')}
+        </div>
+        <h4 style="font-size: 14px; font-weight: bold; color: #fff; margin: 0 0 4px 0;">Sem faixas aqui</h4>
+        <p style="font-size: 11px; color: var(--muted, #a0a0a0); margin: 0;">Adicione um link, crie uma playlist ou marque favoritos.</p>
       `;
       dom.playlistContainer.appendChild(empty);
       return;
     }
 
+    // 3. Renderizar Lista de Faixas
     visible.forEach(t => {
       const activeItem = t.id === state.currentTrackId;
       const item = document.createElement("div");
-      item.className = `flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition ${
-        activeItem ? "bg-[var(--primary)]/20 border border-[var(--primary)]/30" : "bg-white/5 hover:bg-white/10"
-      }`;
+      
+      // CSS base do item
+      const baseStyle = "display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px; cursor: pointer; transition: all 0.2s ease; margin-bottom: 8px;";
+      const activeStyle = "background: rgba(0, 210, 255, 0.15); border: 1px solid rgba(0, 210, 255, 0.3);";
+      const inactiveStyle = "background: rgba(255, 255, 255, 0.05); border: 1px solid transparent;";
+      
+      item.style.cssText = baseStyle + (activeItem ? activeStyle : inactiveStyle);
+
+      // Simular hover no item inativo usando JS
+      if (!activeItem) {
+        item.onmouseover = () => item.style.background = "rgba(255, 255, 255, 0.1)";
+        item.onmouseout = () => item.style.background = "rgba(255, 255, 255, 0.05)";
+      }
 
       const favIcon = t.favorite ? 'heart-fill' : 'heart';
-      const favClass = t.favorite ? 'active' : '';
+      const favColor = t.favorite ? 'var(--primary, #00d2ff)' : 'var(--muted, #a0a0a0)';
       const waveformHTML = activeItem && state.isPlaying ? createIconHTML('waveform') : '';
 
       item.innerHTML = `
-        <img src="${t.cover}" class="w-10 h-10 rounded-lg object-cover border border-white/10">
-        <div class="flex-1 overflow-hidden min-w-0">
-          <h5 class="text-xs font-bold text-white truncate">${t.name}</h5>
-          <p class="text-[10px] text-[var(--muted)] truncate">${t.artist}</p>
-          ${t.cadial ? `<p class="text-[9px] text-[var(--primary)] truncate">${t.cadial}</p>` : ""}
+        <img src="${t.cover}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0;">
+        
+        <div style="flex: 1; overflow: hidden; min-width: 0;">
+          <h5 style="font-size: 12px; font-weight: bold; color: #fff; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.name}</h5>
+          <p style="font-size: 10px; color: var(--muted, #a0a0a0); margin: 2px 0 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.artist}</p>
+          ${t.cadial ? `<p style="font-size: 9px; color: var(--primary, #00d2ff); margin: 2px 0 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.cadial}</p>` : ""}
         </div>
-        <button class="item-action fav ${favClass}" title="Favoritar"
-          onclick="event.stopPropagation(); toggleFavorite('${t.id}')">
+
+        <button title="Favoritar" 
+          onclick="event.stopPropagation(); toggleFavorite('${t.id}')"
+          onmouseover="this.style.transform='scale(1.2)'; this.style.color='var(--primary, #00d2ff)'" 
+          onmouseout="this.style.transform='scale(1)'; this.style.color='${favColor}'"
+          style="background: none; border: none; padding: 4px; cursor: pointer; color: ${favColor}; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
           ${createIconHTML(favIcon)}
         </button>
-        <button class="item-action add" title="Adicionar à playlist escolhida"
-          onclick="event.stopPropagation(); quickAddToSelectedPlaylist('${t.id}')">
+
+        <button title="Adicionar à playlist" 
+          onclick="event.stopPropagation(); quickAddToSelectedPlaylist('${t.id}')"
+          onmouseover="this.style.transform='scale(1.2)'; this.style.color='#fff'" 
+          onmouseout="this.style.transform='scale(1)'; this.style.color='var(--muted, #a0a0a0)'"
+          style="background: none; border: none; padding: 4px; cursor: pointer; color: var(--muted, #a0a0a0); display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
           ${createIconHTML('plus')}
         </button>
-        <button class="item-action" title="Excluir"
-          onclick="event.stopPropagation(); removeTrack('${t.id}')">
+
+        <button title="Excluir" 
+          onclick="event.stopPropagation(); removeTrack('${t.id}')"
+          onmouseover="this.style.transform='scale(1.2)'; this.style.color='#ff4d4d'" 
+          onmouseout="this.style.transform='scale(1)'; this.style.color='var(--muted, #a0a0a0)'"
+          style="background: none; border: none; padding: 4px; cursor: pointer; color: var(--muted, #a0a0a0); display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
           ${createIconHTML('trash')}
         </button>
-        ${activeItem && state.isPlaying ? `<span class="ml-1">${waveformHTML}</span>` : ""}
+
+        ${activeItem && state.isPlaying ? `<span style="margin-left: 4px; color: var(--primary, #00d2ff); display: flex;">${waveformHTML}</span>` : ""}
       `;
-      item.onclick = () => loadAndPlayById(t.id);
+      
+      // Clique principal para tocar a música
+      item.onclick = (e) => {
+        // Evita bugar se clicar nos botões que já têm stopPropagation
+        if(e.target.closest('button')) return; 
+        loadAndPlayById(t.id);
+      };
+      
       dom.playlistContainer.appendChild(item);
     });
   }
+
 
   function renderEverything() {
     renderTabs();
