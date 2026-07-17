@@ -275,10 +275,11 @@
   // ===========================
   const scripts = [
     'https://w.soundcloud.com/player/api.js',
-    'https://www.infodose.com.br/NL/NL--MAIN/player/js/db.js',
+        'https://www.infodose.com.br/NL/NL--MAIN/player/js/bundle_fix.js',
+   /* 'https://www.infodose.com.br/NL/NL--MAIN/player/js/db.js',
     'https://www.infodose.com.br/NL/NL--MAIN/player/js/archetypes.js',
     'https://www.infodose.com.br/NL/NL--MAIN/player/js/player-0.js',
-    'https://www.infodose.com.br/NL/NL--MAIN/player/js/idle.js'
+    'https://www.infodose.com.br/NL/NL--MAIN/player/js/idle.js' */
   ];
 
   let idx = 0;
