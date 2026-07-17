@@ -7,14 +7,11 @@
             document.querySelector('.card').appendChild(p);
         });
         document.getElementById('btn-fetch').addEventListener('click', () => {
-            fetch('https://jsonplaceholder.typicode.com/todos/1').then(r => r.json()).then(d => console.log('Fetch OK', d));
+            fetch('https://infodose.com.br').then(r => r.json()).then(d => console.log('Fetch OK', d));
         });
-    </script>
+  
 
-    <!-- ========================================================================= -->
-    <!-- SCRIPT INJECTOR - LITE DEVTOOLS 7134 PRO MAX (MOBILE FIRST)               -->
-    <!-- ========================================================================= -->
-    <script>
+    
     (function(){
     if(window.__LDT_7134_PRO__) return;
     window.__LDT_7134_PRO__ = 1;
