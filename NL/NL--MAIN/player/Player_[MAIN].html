@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Kodux Player</title>
+  <script src="https://w.soundcloud.com/player/api.js"></script>
+
+
+  <style>
+@import url("https://infodose.com.br/NL/NL--MAIN/player/css/main.css");
+ </style>
+
+</head>
+<body>
+
+  <div id="bodyPlayer" data-mode="player">
+    
+    <!-- Background Decorativo -->
+    <div class="bg-overlay"></div>
+
+    <!-- Contêineres Ocultos (APIs) -->
+    <div id="yt-container" class="off-screen"></div>
+    <div id="sc-container" class="off-screen"></div>
+    <audio id="local-audio" crossorigin="anonymous"></audio>
+
+  <!-- GLOBAL PLAYER -->
+    <div id="global-player" class="v-glass overflow-hidden">
+      <div class="player-window-controls">
+        <button onclick="Player.minimize()" class="btn-win">
+          <svg viewBox="0 0 24 24" class="icon w-3"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <button onclick="Player.stop()" class="btn-win hover-red">
+          <svg viewBox="0 0 24 24" class="icon w-3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="player botao">
+        <div id="player-frame-wrap" class="player-bg"></div>
+        <div id="yt-container" class="yt-overlay"></div>
+      </div>
+    </div>
+
+    <div class="bg-overlay"></div>
+
+    <div id="sc-container" class="off-screen"></div>
+    <audio id="local-audio" crossorigin="anonymous"></audio>
+
+    <!-- KODUX WIDGET -->
+    <div id="kodux-widget" data-idle-target class="state-ball" style="right: 20px; bottom: 100px;">
+      
+      <div id="content-ball">
+        <svg viewBox="0 0 24 24" class="icon icon-fill spin"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.49 0-4.5-2.01-4.5-4.5S9.51 7.5 12 7.5s4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5zm0-5.5c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"/></svg>
+      </div>
+
+      <div id="content-preview" class="hidden-content">
+        <img id="prev-cover" src="https://picsum.photos/100" class="cover-sm hover-scale transition-transform preview-clickable" onclick="openFullFromPreview(event)">
+        <div class="track-info-prev preview-clickable" onclick="openFullFromPreview(event)">
+          <h4 id="prev-title" class="text-title-sm text-truncate glow-text">Kodux System</h4>
+          <p id="prev-artist" class="text-artist-sm text-truncate">Aguardando...</p>
+        </div>
+        <button onclick="togglePlay(event)" class="btn-play-prev transition-base">
+          <svg viewBox="0 0 24 24" class="icon icon-fill icon-4xl" id="prev-play-icon"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+        </button>
+      </div>
+
+      <div id="content-footer" class="hidden-content">
+        <div class="progress-area" id="footer-progress-click">
+          <div id="footer-progress-bar" class="progress-fill"></div>
+        </div>
+
+        <div class="footer-body drag-header">
+          <img id="foot-cover" src="https://picsum.photos/100" class="cover-md">
+          <div class="track-info-foot" onclick="updateWidgetState('full')">
+            <h4 id="foot-title" class="text-title-md text-truncate">Kodux System</h4>
+            <p id="foot-artist" class="text-artist-md text-truncate">Aguardando...</p>
+          </div>
+          <div class="ctrl-group">
+            <button onclick="playPrev(event)" class="btn-ctrl transition-base">
+              <svg viewBox="0 0 24 24" class="icon icon-fill"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+            </button>
+            <button onclick="togglePlay(event)" class="btn-play-main hover-scale-lg transition-transform">
+              <svg viewBox="0 0 24 24" class="icon icon-fill" id="foot-play-icon"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+            </button>
+            <button onclick="playNext(event)" class="btn-ctrl transition-base">
+              <svg viewBox="0 0 24 24" class="icon icon-fill"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+            </button>
+            <button onclick="collapseToBall(event)" class="btn-ctrl transition-base" style="margin-left: 0.5rem;">
+              <svg viewBox="0 0 24 24" class="icon"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="content-full" class="hidden-content">
+        <div class="full-header drag-header">
+          <div class="brand-title glow-text">
+            <svg viewBox="0 0 24 24" class="icon icon-fill"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span>ORÁCULO DUAL</span>
+          </div>
+          <button onclick="collapseToBall(event)" class="btn-collapse transition-base">
+            <svg viewBox="0 0 24 24" class="icon"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+
+        <div class="full-scroll soft-scroll">
+          <div class="mb-sm">
+            <div class="d-flex gap-sm scroll-x pb-xs soft-scroll" id="playlist-tabs"></div>
+          </div>
+
+          <div class="input-row">
+            <div class="input-wrap">
+              <svg viewBox="0 0 24 24" class="icon input-icon"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              <input type="text" id="link-input" placeholder="YouTube ou SoundCloud link" class="glass-input glass-inp">
+            </div>
+            <select id="destination-select" class="glass-select glass-sel">
+              <option value="all">Todas</option>
+            </select>
+            <button onclick="addLink()" class="btn-primary btn-action">
+              <svg viewBox="0 0 24 24" class="icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+
+          <div class="input-row">
+            <div class="input-wrap">
+              <svg viewBox="0 0 24 24" class="icon input-icon"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              <input type="text" id="new-playlist-input" placeholder="Criar nova playlist" class="glass-input glass-inp">
+            </div>
+            <button onclick="createPlaylist()" class="btn-primary btn-action">
+              <svg viewBox="0 0 24 24" class="icon"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+            </button>
+          </div>
+
+          <div class="section-head">
+            <div>
+              <h3>Playlists carregadas</h3>
+              <p>Toque para trocar de grupo, criar, remover ou organizar.</p>
+            </div>
+          </div>
+
+          <div id="playlist-container" class="list-group"></div>
+        </div>
+
+        <div class="bottom-dock">
+          <input type="range" id="main-progress" min="0" max="100" value="0" class="range-bar">
+          <div class="dock-flex">
+            <div class="dock-info">
+              <img id="main-cover" src="https://picsum.photos/100" class="cover-md">
+              <div class="dock-info-txt">
+                <h4 id="main-title" class="text-title-md text-truncate">Oráculo</h4>
+                <p id="main-artist" class="text-artist-sm text-truncate">Sistema KODUX v2.5</p>
+              </div>
+            </div>
+            <div class="dock-ctrls">
+              <button onclick="playPrev()" class="btn-dock-nav transition-base">
+                <svg viewBox="0 0 24 24" class="icon icon-fill"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+              </button>
+              <button onclick="togglePlay()" class="btn-play-circle hover-scale transition-transform">
+                <svg viewBox="0 0 24 24" class="icon icon-fill" id="main-play-icon"><path d="M8 5v14l11-7z"/></svg>
+              </button>
+              <button onclick="playNext()" class="btn-dock-nav transition-base">
+                <svg viewBox="0 0 24 24" class="icon icon-fill"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+ <!-- SEUS SCRIPTS (mantidos exatamente como estavam) -->
+  <script src="https://www.infodose.com.br/NL/NL--MAIN/player/js/db.js"></script>
+  <script src="https://www.infodose.com.br/NL/NL--MAIN/player/js/archetypes.js"></script>
+  <script src="https://www.infodose.com.br/NL/NL--MAIN/player/js/player.js"></script>
+  <script src="https://www.infodose.com.br/NL/NL--MAIN/player/js/idle.js"></script>
+
+  <!-- INICIALIZAÇÃO (idêntica à sua) -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof initKoduxPlayer === 'function') {
+        initKoduxPlayer();
+      }
+    });
+  </script>
+
+
+</body>
+</html>
