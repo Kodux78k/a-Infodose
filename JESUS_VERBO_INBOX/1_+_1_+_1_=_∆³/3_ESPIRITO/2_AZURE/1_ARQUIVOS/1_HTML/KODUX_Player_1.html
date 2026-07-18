@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0c14">
+  <title>KODUX | Player + Widget</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+  <link rel="manifest" href="./manifest.json" />
+  <script src="https://w.soundcloud.com/player/api.js"></script>
+
+  <!-- Importações CSS Preservadas -->
+  <style>
+    @import url("https://infodose.com.br/NL/NL--MAIN/player/css/kob_player.css");
+    @import url("https://kodux78k.github.io/oiDual--Y-/M0D/DBZP/css/ss5.css");
+    @import url("https://kodux78k.github.io/oiDual--Y-/M0D/diHome/css/mainB.css");
+
+    /* KOBLLUX ∆³ · TOKENS E UTILITÁRIOS (Substituindo Tailwind) */
+    :root {
+      --kx-radius: 12px;
+      --kx-radius-sm: 8px;
+      --kx-gap: 12px;
+      --kx-gap-sm: 8px;
+      --kx-surface: rgba(255, 255, 255, 0.05);
+      --kx-surface-hover: rgba(255, 255, 255, 0.1);
+      --kx-glass: rgba(10, 12, 20, 0.85);
+      --kx-text: #ffffff;
+      --kx-muted: rgba(255, 255, 255, 0.6);
+      --kx-accent: #3b82f6;
+      --kx-accent-dim: rgba(59, 130, 246, 0.2);
+    }
+    .kx-flex { display: flex; }
+    .kx-flex-col { flex-direction: column; }
+    .kx-items-center { align-items: center; }
+    .kx-items-end { align-items: flex-end; }
+    .kx-justify-between { justify-content: space-between; }
+    .kx-gap-sm { gap: var(--kx-gap-sm); }
+    .kx-gap-md { gap: var(--kx-gap); }
+    .kx-rounded { border-radius: var(--kx-radius); }
+    .kx-rounded-sm { border-radius: var(--kx-radius-sm); }
+    .kx-overflow-hidden { overflow: hidden; }
+    .kx-bg-surface { background: var(--kx-surface); }
+    .kx-hover-surface:hover { background: var(--kx-surface-hover); }
+    .kx-text-xs { font-size: 0.75rem; }
+    .kx-text-sm { font-size: 0.875rem; }
+    .kx-text-10 { font-size: 10px; }
+    .kx-text-9 { font-size: 9px; }
+    .kx-font-bold { font-weight: 700; }
+    .kx-transition { transition: all 0.2s ease; }    .kx-cursor-pointer { cursor: pointer; }
+    .kx-w-full { width: 100%; }
+    .kx-h-full { height: 100%; }
+    .kx-p-sm { padding: 12px; }
+    .kx-p-md { padding: 16px; }
+    .kx-p-lg { padding: 20px; }
+    .kx-p-xs { padding: 6px; }
+    .kx-mb-xs { margin-bottom: 4px; }
+    .kx-mb-sm { margin-bottom: 8px; }
+    .kx-mb-md { margin-bottom: 16px; }
+    .kx-mt-xs { margin-top: 4px; }
+    .kx-ml-xs { margin-left: 4px; }
+    .kx-w-icon { width: 40px; height: 40px; }
+    .kx-h-icon { width: 40px; height: 40px; }
+    .kx-truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .kx-opacity-muted { opacity: 0.6; }
+    .kx-text-muted { color: var(--kx-muted); }
+    .kx-text-primary { color: var(--kx-text); }
+    .kx-text-accent { color: var(--kx-accent); }
+    .kx-animate-pulse { animation: kx-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    @keyframes kx-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    .kx-card { border-radius: var(--kx-radius); border: 1px solid rgba(255,255,255,0.1); background: var(--kx-surface); }
+    .kx-chip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 20px; background: var(--kx-surface); border: 1px solid transparent; font-size: 0.875rem; color: var(--kx-text); cursor: pointer; transition: all 0.2s; }
+    .kx-chip.kx-active { background: var(--kx-accent-dim); border-color: var(--kx-accent); color: var(--kx-accent); }
+    .kx-btn-icon { background: none; border: none; color: var(--kx-muted); cursor: pointer; padding: 6px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .kx-btn-icon:hover { background: var(--kx-surface-hover); color: var(--kx-text); }
+    .kx-btn-icon.active { color: var(--kx-accent); }
+    .kx-icon-sm svg { width: 16px; height: 16px; }
+    
+    /* Carrossel e Grids Preservados */
+    #dt-infodose-grid, #dt-freq-grid, #dt-cogn-grid, #dt-medi-grid {
+      display: flex; gap: 18px; overflow-x: auto; padding: 8px 4px 14px; scroll-snap-type: x proximity;
+    }
+    #dt-infodose-grid>*, #dt-freq-grid>*, #dt-cogn-grid>*, #dt-medi-grid>* {
+      flex: 0 0 280px; width: 280px; min-width: 280px; max-width: 280px;
+      display: flex; flex-direction: column; border-radius: 18px; overflow: hidden;
+    }
+    #dt-infodose-grid img, #dt-freq-grid img, #dt-cogn-grid img, #dt-medi-grid img {
+      width: 100%; aspect-ratio: 16/9; height: auto; object-fit: cover; display: block;
+    }
+    .text-count { font-size: 28px; font-weight: 700; line-height: 1; }
+    .text-label-sm { opacity: .6; font-size: 12px; }
+  </style>
+</head>
+
+<body>
+  <div id="bodyPlayer" data-mode="player" class="main-wrapper">
+
+    <!-- DUALTUBE · 0x00 · 7 ABAS CARROSSEL -->    <section class="screen-panel layout-padding" id="view-dualtube">
+      <div class="container">
+        <div class="kx-flex kx-justify-between kx-items-end kx-mb-md fade-in">
+          <div>
+            <h2 class="text-title">Stream</h2>
+            <p class="text-subtitle">0x00 · Curadoria de Sinais</p>
+          </div>
+          <div class="text-right">
+            <div class="text-count" id="dt-watched-count">0</div>
+            <div class="text-label-sm">Sincronizados</div>
+          </div>
+        </div>
+
+        <div class="scroll-x kx-mb-md fade-in">
+          <div class="kx-flex kx-gap-sm kx-pb-xs kx-w-max">
+            <button id="dttab-0" onclick="DualTube.setTab(0)" class="kx-pill dt-tab dt-tab-on kx-text-tab">
+              <span class="kx-icon-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg></span> 0x01 · INFODOSE
+            </button>
+            <button id="dttab-1" onclick="DualTube.setTab(1)" class="kx-pill dt-tab kx-text-tab">
+              <span class="kx-icon-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span> 0x02 · MATRIZ NEURAL
+            </button>
+            <button id="dttab-2" onclick="DualTube.setTab(2)" class="kx-pill dt-tab kx-text-tab">
+              <span class="kx-icon-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span> 0x03 · FREQUÊNCIAS
+            </button>
+            <button id="dttab-3" onclick="DualTube.setTab(3)" class="kx-pill dt-tab kx-text-tab">
+              <span class="kx-icon-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg></span> 0x04 · COGNITIVA
+            </button>
+            <button id="dttab-4" onclick="DualTube.setTab(4)" class="kx-pill dt-tab kx-text-tab">
+              <span class="kx-icon-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></span> 0x05 · MEDITAÇÕES
+            </button>
+            <button id="dttab-5" onclick="DualTube.setTab(5)" class="kx-pill dt-tab kx-text-tab">
+              <span class="kx-icon-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg></span> 0x06 · VÍDEOS GIT
+            </button>
+            <button id="dttab-6" onclick="DualTube.setTab(6)" class="kx-pill dt-tab kx-text-tab">
+              <span class="kx-icon-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg></span> 0x07 · PODCASTS
+            </button>
+          </div>
+        </div>
+
+        <div id="dtpanel-0" class="fade-in">
+          <div class="v-glass panel-header">
+            <span class="text-icon-lg">⧉</span>
+            <div>
+              <p class="text-panel-title">Jornal Interdimensional INFODOSE</p>
+              <p class="text-panel-desc">Sinais que atravessam todos os véus · Frequência 672Hz</p>
+            </div>
+          </div>
+          <div id="dt-infodose-grid" class="kx-flex kx-gap-md scroll-x kx-pb-sm snap-x"></div>
+        </div>
+        <div id="dtpanel-1" class="fade-in" style="display:none">
+          <div class="v-glass panel-header">
+            <span class="text-icon-lg">△</span>
+            <div>
+              <p class="text-panel-title">Matriz Neural · 17 Arquétipos</p>
+              <p class="text-panel-desc">Selecione · Alterne abas · Copie prompts</p>
+            </div>
+          </div>
+          <div id="dt-matriz-grid" class="grid-matriz"></div>
+        </div>
+
+        <div id="dtpanel-2" class="fade-in" style="display:none">
+          <div id="dt-freq-grid" class="kx-flex kx-gap-md scroll-x kx-pb-sm snap-x"></div>
+        </div>
+
+        <div id="dtpanel-3" class="fade-in" style="display:none">
+          <div id="dt-cogn-grid" class="kx-flex kx-gap-md scroll-x kx-pb-sm snap-x"></div>
+        </div>
+
+        <div id="dtpanel-4" class="fade-in" style="display:none">
+          <div id="dt-medi-grid" class="kx-flex kx-gap-md scroll-x kx-pb-sm snap-x"></div>
+        </div>
+
+        <div id="dtpanel-5" class="fade-in" style="display:none">
+          <div id="dt-ghv-container">
+            <div class="v-glass gh-form kx-flex kx-gap-sm">
+              <input id="dt-gh-url" placeholder="URL JSON do GitHub..." class="input-gh kx-w-full">
+              <button onclick="DualTube.loadGH()" class="kx-pill btn-gh">Carregar</button>
+            </div>
+            <div id="dt-ghv-grid" class="kx-space-y-6"></div>
+            <p class="helper-text font-mono kx-text-xs kx-text-muted">JSON: {"categories":[{"cat":"...","vids":["ytId","https://...mp4"]}]}</p>
+          </div>
+        </div>
+
+        <div id="dtpanel-6" class="fade-in" style="display:none">
+          <div class="v-glass gh-form kx-flex kx-gap-sm">
+            <input id="dt-pod-url" placeholder="URL JSON de podcasts..." class="input-gh kx-w-full">
+            <button onclick="DualTube.loadPod()" class="kx-pill btn-gh">Carregar</button>
+          </div>
+          <div id="dt-pod-grid" class="kx-flex-col kx-flex kx-gap-sm"></div>
+          <p class="helper-text font-mono kx-text-xs kx-text-muted">JSON: {"podcasts":[{"cat":"...","eps":[{"title":"...","url":"...mp3","cover":"..."}]}]}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- GLOBAL PLAYER -->
+    <div id="global-player" class="v-glass kx-overflow-hidden">
+      <div class="player-window-controls kx-flex kx-gap-sm">
+        <button onclick="Player.minimize()" class="btn-win kx-btn-icon"><span class="kx-icon-sm">${ICONS.minimize}</span></button>
+        <button onclick="Player.stop()" class="btn-win hover-red kx-btn-icon"><span class="kx-icon-sm">${ICONS.close}</span></button>      </div>
+      <div class="player botao">
+        <div id="player-frame-wrap" class="player-bg"></div>
+        <div id="yt-container" class="yt-overlay"></div>
+      </div>
+    </div>
+
+    <div class="bg-overlay"></div>
+    <div id="sc-container" class="off-screen"></div>
+    <audio id="local-audio" crossorigin="anonymous"></audio>
+
+    <!-- KODUX WIDGET -->
+    <div id="kodux-widget" data-idle-target class="state-ball" style="right: 20px; bottom: 100px;">
+      <div id="content-ball">
+        <span class="kx-icon-sm">${ICONS.spiral}</span>
+      </div>
+
+      <div id="content-preview" class="hidden-content kx-flex kx-items-center kx-gap-sm">
+        <img id="prev-cover" src="https://picsum.photos/100" class="cover-sm hover-scale transition-transform preview-clickable" onclick="openFullFromPreview(event)">
+        <div class="track-info-prev preview-clickable kx-flex-1" onclick="openFullFromPreview(event)">
+          <h4 id="prev-title" class="text-title-sm kx-truncate glow-text">Kodux System</h4>
+          <p id="prev-artist" class="text-artist-sm kx-truncate kx-text-muted">Aguardando...</p>
+        </div>
+        <button onclick="togglePlay(event)" class="btn-play-prev transition-base kx-btn-icon">
+          <span id="prev-play-icon" class="kx-icon-sm"></span>
+        </button>
+      </div>
+
+      <div id="content-footer" class="hidden-content">
+        <div class="progress-area" id="footer-progress-click">
+          <div id="footer-progress-bar" class="progress-fill"></div>
+        </div>
+        <div class="footer-body drag-header kx-flex kx-items-center kx-gap-sm">
+          <img id="foot-cover" src="https://picsum.photos/100" class="cover-md">
+          <div class="track-info-foot kx-flex-1" onclick="updateWidgetState('full')">
+            <h4 id="foot-title" class="text-title-md kx-truncate">Kodux System</h4>
+            <p id="foot-artist" class="text-artist-md kx-truncate kx-text-muted">Aguardando...</p>
+          </div>
+          <div class="ctrl-group kx-flex kx-gap-sm">
+            <button onclick="playPrev(event)" class="btn-ctrl transition-base kx-btn-icon"><span class="kx-icon-sm">${ICONS.prev}</span></button>
+            <button onclick="togglePlay(event)" class="btn-play-main hover-scale-lg transition-transform kx-btn-icon"><span id="foot-play-icon" class="kx-icon-sm"></span></button>
+            <button onclick="playNext(event)" class="btn-ctrl transition-base kx-btn-icon"><span class="kx-icon-sm">${ICONS.next}</span></button>
+            <button onclick="collapseToBall(event)" class="btn-ctrl transition-base kx-btn-icon" style="margin-left: 0.5rem;"><span class="kx-icon-sm">${ICONS.minimize}</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div id="content-full" class="hidden-content kx-flex-col kx-h-full">
+        <div class="full-header drag-header kx-flex kx-justify-between kx-items-center">
+          <div class="brand-title glow-text kx-flex kx-items-center kx-gap-sm">            <span class="kx-icon-sm">${ICONS.bolt}</span>
+            <span>ORÁCULO DUAL</span>
+          </div>
+          <button onclick="collapseToBall(event)" class="btn-collapse transition-base kx-btn-icon"><span class="kx-icon-sm">${ICONS.minimize}</span></button>
+        </div>
+
+        <div class="full-scroll soft-scroll kx-flex-1 kx-overflow-hidden">
+          <div class="kx-mb-sm">
+            <div class="kx-flex kx-gap-sm scroll-x kx-pb-xs soft-scroll" id="playlist-tabs"></div>
+          </div>
+
+          <div class="input-row kx-flex kx-gap-sm">
+            <div class="input-wrap kx-flex-1 kx-flex kx-items-center">
+              <span class="input-icon kx-icon-sm kx-text-muted" style="margin-right:8px">${ICONS.search}</span>
+              <input type="text" id="link-input" placeholder="YouTube ou SoundCloud link" class="glass-input glass-inp kx-w-full">
+            </div>
+            <select id="destination-select" class="glass-select glass-sel"></select>
+            <button onclick="addLink()" class="btn-primary btn-action kx-btn-icon"><span class="kx-icon-sm">${ICONS.plus}</span></button>
+          </div>
+
+          <div class="input-row kx-flex kx-gap-sm">
+            <div class="input-wrap kx-flex-1 kx-flex kx-items-center">
+              <span class="input-icon kx-icon-sm kx-text-muted" style="margin-right:8px">${ICONS.folder}</span>
+              <input type="text" id="new-playlist-input" placeholder="Criar nova playlist" class="glass-input glass-inp kx-w-full">
+            </div>
+            <button onclick="createPlaylist()" class="btn-primary btn-action kx-btn-icon"><span class="kx-icon-sm">${ICONS.plus}</span></button>
+        </div>
+
+          <div class="section-head kx-mb-sm">
+            <div>
+              <h3 class="kx-text-sm kx-font-bold">Playlists carregadas</h3>
+              <p class="kx-text-xs kx-text-muted">Toque para trocar de grupo, criar, remover ou organizar.</p>
+            </div>
+          </div>
+
+          <div id="playlist-container" class="list-group kx-flex-col kx-gap-sm"></div>
+        </div>
+
+        <div class="bottom-dock">
+          <input type="range" id="main-progress" min="0" max="100" value="0" class="range-bar kx-w-full">
+          <div class="dock-flex kx-flex kx-justify-between kx-items-center kx-mt-xs">
+            <div class="dock-info kx-flex kx-items-center kx-gap-sm">
+              <img id="main-cover" src="https://picsum.photos/100" class="cover-md">
+              <div class="dock-info-txt">
+                <h4 id="main-title" class="text-title-md kx-truncate">Oráculo</h4>
+                <p id="main-artist" class="text-artist-sm kx-truncate kx-text-muted">Sistema KODUX v2.5</p>
+              </div>
+            </div>
+            <div class="dock-ctrls kx-flex kx-gap-sm">
+              <button onclick="playPrev()" class="btn-dock-nav transition-base kx-btn-icon"><span class="kx-icon-sm">${ICONS.prev}</span></button>              <button onclick="togglePlay()" class="btn-play-circle hover-scale transition-transform kx-btn-icon"><span id="main-play-icon" class="kx-icon-sm"></span></button>
+              <button onclick="playNext()" class="btn-dock-nav transition-base kx-btn-icon"><span class="kx-icon-sm">${ICONS.next}</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/diHome/js/modules/inline-0B.js"></script>
+  <script src="https://www.infodose.com.br/NL/NL--MAIN/player/js/db.js"></script>
+  <script src="https://www.infodose.com.br/NL/NL--MAIN/player/js/archetypes.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof initKoduxPlayer === 'function') initKoduxPlayer();
+    });
+  </script>
+
+  <button id="toggle-dt-btn" onclick="toggleDualTube()" title="Ocultar/Exibir Stream" aria-label="Ocultar/Exibir Stream" style="position:fixed;top:24px;left:24px;z-index:600;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border:none;border-radius:12px;background:rgba(0,0,0,.38);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.72);cursor:pointer;transition:.25s;" onmouseenter="this.style.background='rgba(255,255,255,.08)';this.style.color='#fff';" onmouseleave="this.style.background='rgba(0,0,0,.38)';this.style.color='rgba(255,255,255,.72)';">
+    <svg id="toggle-dt-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="22" height="22" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+      <path id="toggle-dt-path" d="M247.3 124.8C226.5 89.2 181.4 64 128 64S29.5 89.2 8.7 124.8a8 8 0 0 0 0 6.4C29.5 166.8 74.6 192 128 192s98.5-25.2 119.3-60.8a8 8 0 0 0 0-6.4ZM128 168a40 40 0 1 1 40-40 40 40 0 0 1-40 40Z"/>
+    </svg>
+  </button>
+
+  <script>
+    (function(global) {
+      "use strict";
+
+      // ==========================================
+      // 1. ICONS (Biblioteca de Ícones Inline)
+      // ==========================================
+      const ICONS = {
+        play: '<svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M8 5v14l11-7z"/></svg>',
+        pause: '<svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>',
+        trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>',
+        plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+        heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>',
+        heartFill: '<svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>',
+        stack: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6z"/></svg>',
+        spiral: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.49 0-4.5-2.01-4.5-4.5S9.51 7.5 12 7.5s4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5zm0-5.5c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"/></svg>',
+        playlist: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
+        disc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>',
+        waveform: '<svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M2 12h2v-2H2v2zm4 0h2v-4H6v4zm4 0h2v-6h-2v6zm4 0h2v-8h-2v8zm4 0h2v-10h-2v10z"/></svg>',
+        close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+        minimize: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+        prev: '<svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>',
+        next: '<svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>',
+        search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+        bolt: '<svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>',        folder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>'
+      };
+
+      // ==========================================
+      // 2. AJUDANTES (Helpers & Segurança)
+      // ==========================================
+      function escapeHTML(str) {
+        if (typeof str !== 'string') return str;
+        return str.replace(/[&<>"']/g, m => ({'&':'&','<':'<','>':'>','"':'"',"'":'''}[m]));
+      }
+      function safeAttr(str) {
+        if (typeof str !== 'string') return '';
+        return str.replace(/"/g, '"').replace(/'/g, ''');
+      }
+      function uid(prefix = "trk") {
+        return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+      }
+      function normalizeUrl(rawUrl) {
+        return global.KOBLLUX_DB?.normalizeUrl ? global.KOBLLUX_DB.normalizeUrl(rawUrl) : rawUrl;
+      }
+      function extractYouTubeId(rawUrl) {
+        return global.KOBLLUX_DB?.extractYouTubeId ? global.KOBLLUX_DB.extractYouTubeId(rawUrl) : null;
+      }
+      function extractYouTubePlaylistId(rawUrl) {
+        return global.KOBLLUX_DB?.extractYouTubePlaylistId ? global.KOBLLUX_DB.extractYouTubePlaylistId(rawUrl) : null;
+      }
+      function normalizeTrack(track) {
+        return global.KOBLLUX_DB?.normalizeTrack ? global.KOBLLUX_DB.normalizeTrack(track) : track;
+      }
+
+      // ==========================================
+      // 3. CACHE DOM
+      // ==========================================
+      let dom = {};
+      function initDOM() {
+        dom.widget = document.getElementById("kodux-widget");
+        dom.ball = document.getElementById("content-ball");
+        dom.preview = document.getElementById("content-preview");
+        dom.footer = document.getElementById("content-footer");
+        dom.full = document.getElementById("content-full");
+        dom.ytContainer = document.getElementById("yt-container");
+        dom.scContainer = document.getElementById("sc-container");
+        dom.audio = document.getElementById("local-audio");
+        dom.prevCover = document.getElementById("prev-cover");
+        dom.prevTitle = document.getElementById("prev-title");
+        dom.prevArtist = document.getElementById("prev-artist");
+        dom.footCover = document.getElementById("foot-cover");
+        dom.footTitle = document.getElementById("foot-title");
+        dom.footArtist = document.getElementById("foot-artist");
+        dom.mainCover = document.getElementById("main-cover");        dom.mainTitle = document.getElementById("main-title");
+        dom.mainArtist = document.getElementById("main-artist");
+        dom.footerProgress = document.getElementById("footer-progress-bar");
+        dom.mainProgress = document.getElementById("main-progress");
+        dom.playlistTabs = document.getElementById("playlist-tabs");
+        dom.destinationSelect = document.getElementById("destination-select");
+        dom.playlistContainer = document.getElementById("playlist-container");
+        dom.linkInput = document.getElementById("link-input");
+        dom.newPlaylistInput = document.getElementById("new-playlist-input");
+        dom.prevPlayIcon = document.getElementById("prev-play-icon");
+        dom.footPlayIcon = document.getElementById("foot-play-icon");
+        dom.mainPlayIcon = document.getElementById("main-play-icon");
+      }
+
+      // ==========================================
+      // 4. ESTADO
+      // ==========================================
+      const ALL_ID = "all";
+      const FAVORITES_ID = "favorites";
+      let state = {
+        db: null, currentTrackId: null, isPlaying: false, activeEngine: null,
+        ytPlayer: null, scWidget: null, ytReady: false, widgetState: "ball",
+        isDragging: false, currentX: window.innerWidth - 60, currentY: window.innerHeight - 150
+      };
+
+      // ==========================================
+      // 5. MODELOS (DB Wrappers)
+      // ==========================================
+      function getPlaylistById(id) { return state.db.playlists.find(p => p.id === id) || null; }
+      function getActivePlaylist() { return getPlaylistById(state.db.activePlaylistId) || getPlaylistById(ALL_ID); }
+      function getTrackById(id) { return state.db.library.find(t => t.id === id) || null; }
+      function getVisibleTracks() {
+        const active = getActivePlaylist();
+        if (!active || active.id === ALL_ID) return state.db.library.slice();
+        if (active.id === FAVORITES_ID) return state.db.library.filter(t => t.favorite);
+        return (active.trackIds || []).map(getTrackById).filter(Boolean);
+      }
+
+      // ==========================================
+      // 6. COMPONENTES (Renderização Modular)
+      // ==========================================
+      function renderTabs() {
+        if (!dom.playlistTabs) return;
+        dom.playlistTabs.replaceChildren();
+        const ordered = [getPlaylistById(ALL_ID), getPlaylistById(FAVORITES_ID), ...state.db.playlists.filter(p => !p.system && p.id !== ALL_ID && p.id !== FAVORITES_ID)].filter(Boolean);
+        ordered.forEach(pl => {
+          const visibleCount = pl.id === ALL_ID ? state.db.library.length : pl.id === FAVORITES_ID ? state.db.library.filter(t => t.favorite).length : (pl.trackIds || []).length;
+          const btn = document.createElement("button");
+          const isCadial = !!pl.cadial;
+          const icon = pl.id === ALL_ID ? ICONS.stack : pl.id === FAVORITES_ID ? ICONS.heart : isCadial ? ICONS.spiral : ICONS.playlist;          if (isCadial) btn.title = `[${escapeHTML(pl.cadial.opcode)}] ${escapeHTML(pl.cadial.essencia)} · ${escapeHTML(pl.cadial.hz)}Hz`;
+          btn.className = `kx-chip ${state.db.activePlaylistId === pl.id ? "kx-active" : ""} ${isCadial ? "kx-cadial-chip" : ""}`;
+          btn.onclick = () => setActivePlaylist(pl.id);
+          btn.innerHTML = `<span class="kx-icon-sm">${icon}</span><span>${escapeHTML(pl.name)}</span><span class="kx-text-muted">(${visibleCount})</span>`;
+          dom.playlistTabs.appendChild(btn);
+          if (!pl.system && pl.id !== ALL_ID && pl.id !== FAVORITES_ID) {
+            const del = document.createElement("button");
+            del.className = "kx-chip kx-p-xs";
+            del.title = "Remover playlist";
+            del.onclick = (e) => { e.stopPropagation(); deletePlaylist(pl.id); };
+            del.innerHTML = ICONS.trash;
+            dom.playlistTabs.appendChild(del);
+          }
+        });
+      }
+
+      function renderDestinationSelect() {
+        if (!dom.destinationSelect) return;
+        const prev = dom.destinationSelect.value || state.db.activePlaylistId || ALL_ID;
+        const custom = state.db.playlists.filter(p => !p.system && p.id !== ALL_ID && p.id !== FAVORITES_ID);
+        dom.destinationSelect.innerHTML = `<option value="${ALL_ID}">Todas</option><option value="${FAVORITES_ID}">Favoritos</option>` + custom.map(p => `<option value="${safeAttr(p.id)}">${escapeHTML(p.name)}</option>`).join("");
+        if ([ALL_ID, FAVORITES_ID, ...custom.map(p => p.id)].includes(prev)) dom.destinationSelect.value = prev;
+        else dom.destinationSelect.value = state.db.activePlaylistId || ALL_ID;
+      }
+
+      function renderPlaylist() {
+        if (!dom.playlistContainer) return;
+        const visible = getVisibleTracks();
+        const active = getActivePlaylist();
+        dom.playlistContainer.replaceChildren();
+
+        if (active?.cadial) {
+          const banner = document.createElement("div");
+          banner.className = "kx-card kx-p-md kx-mb-md";
+          banner.innerHTML = `<p class="kx-text-10 kx-text-muted kx-uppercase kx-tracking-wide kx-mb-xs">${escapeHTML(active.cadial.opcode)} · D${escapeHTML(active.cadial.rung)} · ${escapeHTML(active.cadial.hz)}Hz</p><p class="kx-text-sm kx-font-bold kx-text-primary">${escapeHTML(active.cadial.essencia)}</p><p class="kx-text-xs kx-text-muted kx-italic kx-mt-xs">"${escapeHTML(active.cadial.frase)}"</p>`;
+          dom.playlistContainer.appendChild(banner);
+        }
+
+        if (!visible.length) {
+          const empty = document.createElement("div");
+          empty.className = "kx-card kx-p-lg kx-text-center";
+          empty.innerHTML = `<div class="kx-text-accent kx-text-3xl kx-mb-sm">${ICONS.disc}</div><h4 class="kx-text-sm kx-font-bold kx-text-primary kx-mb-xs">Sem faixas aqui</h4><p class="kx-text-xs kx-text-muted">Adicione um link, crie uma playlist ou marque favoritos.</p>`;
+          dom.playlistContainer.appendChild(empty);
+          return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        visible.forEach(t => {
+          const activeItem = t.id === state.currentTrackId;
+          const item = document.createElement("div");          item.className = `kx-flex kx-items-center kx-gap-sm kx-p-sm kx-rounded kx-cursor-pointer kx-transition ${activeItem ? "kx-bg-accent/20 kx-border kx-border-accent/30" : "kx-bg-surface kx-hover-surface"}`;
+          
+          const img = document.createElement("img");
+          img.src = escapeHTML(t.cover || "https://picsum.photos/100");
+          img.className = "kx-w-icon kx-h-icon kx-rounded-sm kx-object-cover kx-border kx-border-surface";
+          
+          const info = document.createElement("div");
+          info.className = "kx-flex-1 kx-overflow-hidden kx-min-w-0";
+          info.innerHTML = `<h5 class="kx-text-xs kx-font-bold kx-text-primary kx-truncate">${escapeHTML(t.name)}</h5><p class="kx-text-10 kx-text-muted kx-truncate">${escapeHTML(t.artist)}</p>${t.cadial ? `<p class="kx-text-9 kx-text-accent kx-truncate">${escapeHTML(t.cadial)}</p>` : ""}`;
+
+          const btnFav = document.createElement("button");
+          btnFav.className = `kx-btn-icon kx-item-action fav ${t.favorite ? "active" : ""}`;
+          btnFav.title = "Favoritar";
+          btnFav.innerHTML = t.favorite ? ICONS.heartFill : ICONS.heart;
+          btnFav.onclick = (e) => { e.stopPropagation(); toggleFavorite(t.id); };
+
+          const btnAdd = document.createElement("button");
+          btnAdd.className = "kx-btn-icon kx-item-action add";
+          btnAdd.title = "Adicionar à playlist escolhida";
+          btnAdd.innerHTML = ICONS.plus;
+          btnAdd.onclick = (e) => { e.stopPropagation(); quickAddToSelectedPlaylist(t.id); };
+
+          const btnDel = document.createElement("button");
+          btnDel.className = "kx-btn-icon kx-item-action";
+          btnDel.title = "Excluir";
+          btnDel.innerHTML = ICONS.trash;
+          btnDel.onclick = (e) => { e.stopPropagation(); removeTrack(t.id); };
+
+          item.appendChild(img); item.appendChild(info); item.appendChild(btnFav); item.appendChild(btnAdd); item.appendChild(btnDel);
+          if (activeItem && state.isPlaying) {
+            const wave = document.createElement("span");
+            wave.className = "kx-text-accent kx-animate-pulse kx-ml-xs";
+            wave.innerHTML = ICONS.waveform;
+            item.appendChild(wave);
+          }
+          item.onclick = () => loadAndPlayById(t.id);
+          fragment.appendChild(item);
+        });
+        dom.playlistContainer.appendChild(fragment);
+      }
+
+      // ==========================================
+      // 7. RENDER (Sincronização e Atualização)
+      // ==========================================
+      function syncPreviewAndMain(track) {
+        const fills = [
+          { title: dom.prevTitle, artist: dom.prevArtist, cover: dom.prevCover },
+          { title: dom.footTitle, artist: dom.footArtist, cover: dom.footCover },
+          { title: dom.mainTitle, artist: dom.mainArtist, cover: dom.mainCover }
+        ];        fills.forEach(({ title, artist, cover }) => {
+          if (title) title.innerText = track?.name || "Oráculo";
+          if (artist) artist.innerText = track?.artist || "Sistema KODUX";
+          if (cover) cover.src = escapeHTML(track?.cover || "https://picsum.photos/100");
+        });
+      }
+
+      function syncIcons() {
+        const playIcon = state.isPlaying ? ICONS.pause : ICONS.play;
+        if (dom.prevPlayIcon) dom.prevPlayIcon.innerHTML = playIcon;
+        if (dom.footPlayIcon) dom.footPlayIcon.innerHTML = playIcon;
+        if (dom.mainPlayIcon) dom.mainPlayIcon.innerHTML = playIcon;
+      }
+
+      function renderEverything() {
+        renderTabs();
+        renderDestinationSelect();
+        renderPlaylist();
+        const current = state.currentTrackId ? getTrackById(state.currentTrackId) : null;
+        syncPreviewAndMain(current);
+        syncIcons();
+      }
+
+      function updateWidgetState(newState) {
+        if (!dom.widget) return;
+        state.widgetState = newState;
+        dom.widget.className = `state-${newState}`;
+        const contents = { ball: dom.ball, preview: dom.preview, footer: dom.footer, full: dom.full };
+        Object.values(contents).forEach(el => { if (el) el.classList.add("hidden-content"); });
+        if (contents[newState]) contents[newState].classList.remove("hidden-content");
+
+        if (newState === "ball") {
+          dom.widget.style.left = `${state.currentX}px`; dom.widget.style.top = `${state.currentY}px`;
+          dom.widget.style.transform = "none"; dom.widget.style.bottom = "auto"; dom.widget.style.width = ""; dom.widget.style.height = "";
+        } else if (newState === "preview") {
+          dom.widget.style.left = state.currentX < window.innerWidth/2 ? "10px" : `${window.innerWidth - 250}px`;
+          dom.widget.style.top = `${state.currentY}px`; dom.widget.style.transform = "none"; dom.widget.style.bottom = "auto";
+          dom.widget.style.width = "240px"; dom.widget.style.height = "60px";
+        } else if (newState === "full") {
+          dom.widget.style.left = "50%"; dom.widget.style.top = "50%"; dom.widget.style.transform = "translate(-50%, -50%)";
+          dom.widget.style.bottom = "auto"; dom.widget.style.width = "min(90vw, 600px)"; dom.widget.style.height = "min(80vh, 700px)";
+        } else if (newState === "footer") {
+          dom.widget.style.transform = "none"; dom.widget.style.left = "0"; dom.widget.style.top = "auto";
+          dom.widget.style.bottom = "0"; dom.widget.style.width = "100%"; dom.widget.style.height = "80px";
+        }
+      }
+
+      function initDrag() {
+        if (!dom.widget) return;
+        const handleEls = [dom.ball, ...document.querySelectorAll(".drag-header")].filter(Boolean);        let initialX = 0, initialY = 0, dragStartY = 0;
+        const onStart = (e) => {
+          if (state.widgetState === "full" || e.target.closest("button, input, select, textarea")) return;
+          state.isDragging = false;
+          const touch = e.type === "touchstart" ? e.touches[0] : e;
+          initialX = touch.clientX - state.currentX; initialY = touch.clientY - state.currentY; dragStartY = touch.clientY;
+          dom.widget.style.transition = "none";
+          document.addEventListener("mousemove", onMove); document.addEventListener("mouseup", onEnd);
+          document.addEventListener("touchmove", onMove, { passive: false }); document.addEventListener("touchend", onEnd);
+        };
+        const onMove = (e) => {
+          state.isDragging = true; e.preventDefault();
+          const touch = e.type === "touchmove" ? e.touches[0] : e;
+          state.currentX = touch.clientX - initialX; state.currentY = touch.clientY - initialY;
+          dom.widget.style.left = `${state.currentX}px`; dom.widget.style.top = `${state.currentY}px`;
+        };
+        const onEnd = () => {
+          document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onEnd);
+          document.removeEventListener("touchmove", onMove); document.removeEventListener("touchend", onEnd);
+          dom.widget.style.transition = "";
+          const deltaY = dragStartY - state.currentY;
+          if (deltaY > 50 && state.widgetState === "ball") updateWidgetState("preview");
+          else if (state.currentY > window.innerHeight - 120) updateWidgetState("footer");
+          else if (state.isDragging) updateWidgetState("ball");
+        };
+        handleEls.forEach(h => { h.addEventListener("mousedown", onStart); h.addEventListener("touchstart", onStart); });
+      }
+
+      // ==========================================
+      // 8. JOGADOR (Lógica de Playback)
+      // ==========================================
+      function ensureYTPlayer() {
+        if (state.ytPlayer && state.ytReady) return state.ytPlayer;
+        if (!dom.ytContainer) { console.warn("YT container não encontrado"); return null; }
+        state.ytReady = false;
+        state.ytPlayer = new YT.Player(dom.ytContainer, {
+          height: "100%", width: "100%", videoId: "", playerVars: { autoplay: 0, playsinline: 1, modestbranding: 1, rel: 0 },
+          events: {
+            onReady: (e) => {
+              state.ytReady = true;
+              if (state.pendingTrackId) {
+                const track = getTrackById(state.pendingTrackId);
+                if (track) { loadAndPlayById(state.pendingTrackId); state.pendingTrackId = null; }
+              }
+              syncIcons();
+            },
+            onStateChange: (e) => {
+              if (e.data === YT.PlayerState.ENDED) playNext();
+              state.isPlaying = (e.data === YT.PlayerState.PLAYING);
+              syncIcons();            },
+            onError: (e) => { console.error("YouTube player error:", e); state.ytReady = false; }
+          }
+        });
+        return state.ytPlayer;
+      }
+
+      function playYT(track) {
+        if (!track) return;
+        if (!state.ytReady) { state.pendingTrackId = track.id; if (!state.ytPlayer) ensureYTPlayer(); return; }
+        const player = state.ytPlayer;
+        if (!player) return;
+        try {
+          if (track.type === "youtube_playlist" && track.playlistId) player.loadPlaylist({ list: track.playlistId, index: 0 });
+          else player.loadVideoById(track.id);
+          player.playVideo(); state.isPlaying = true;
+        } catch (e) {
+          console.error("Erro ao carregar vídeo YouTube:", e);
+          state.ytReady = false; state.ytPlayer = null; state.pendingTrackId = track.id; ensureYTPlayer();
+        }
+        syncIcons();
+      }
+
+      function playSC(url) {
+        if (!dom.scContainer) return;
+        dom.scContainer.replaceChildren();
+        const iframe = document.createElement('iframe');
+        iframe.id = 'sc-frame'; iframe.allow = 'autoplay';
+        iframe.style.cssText = 'width:100%;height:100%;border:none;';
+        iframe.src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&auto_play=true&hide_related=true&show_comments=false&show_user=false&show_reposts=false&visual=false`;
+        dom.scContainer.appendChild(iframe);
+        state.scWidget = SC.Widget('sc-frame');
+        state.scWidget.bind(SC.Widget.Events.READY, () => { state.scWidget.play(); state.isPlaying = true; syncIcons(); });
+        state.scWidget.bind(SC.Widget.Events.FINISH, () => playNext());
+        state.scWidget.bind(SC.Widget.Events.PLAY, () => { state.isPlaying = true; syncIcons(); });
+        state.scWidget.bind(SC.Widget.Events.PAUSE, () => { state.isPlaying = false; syncIcons(); });
+        state.scWidget.bind(SC.Widget.Events.ERROR, () => {
+          setTimeout(() => { if (dom.scContainer) { dom.scContainer.replaceChildren(); playSC(url); } }, 1000);
+        });
+      }
+
+      function loadAndPlayById(trackId) {
+        const track = getTrackById(trackId);
+        if (!track) return;
+        state.currentTrackId = trackId; state.activeEngine = track.type;
+        try { dom.audio?.pause(); dom.audio?.removeAttribute('src'); dom.audio?.load(); } catch(e) {}
+        try { if (state.ytPlayer && state.ytPlayer.pauseVideo) state.ytPlayer.pauseVideo(); } catch(e) {}
+        try { if (state.scWidget) { state.scWidget.pause(); if (dom.scContainer) dom.scContainer.replaceChildren(); } } catch(e) {}
+        syncPreviewAndMain(track);
+                if (track.type === "youtube" || track.type === "youtube_playlist") {
+          if (typeof YT === 'undefined' || typeof YT.Player === 'undefined') {
+            setTimeout(() => loadAndPlayById(trackId), 300); return;
+          }
+          ensureYTPlayer(); playYT(track);
+        } else if (track.type === "soundcloud") {
+          playSC(track.url);
+        } else if (track.type === "local") {
+          if (!dom.audio) return;
+          const src = track.blob ? URL.createObjectURL(track.blob) : track.url;
+          dom.audio.src = src;
+          dom.audio.play().catch(() => alert("Clique em Play para iniciar o áudio local (bloqueio do navegador)."));
+          state.isPlaying = true; syncIcons();
+        }
+        renderEverything();
+      }
+
+      function togglePlay(e) {
+        if (e) e.stopPropagation();
+        const visible = getVisibleTracks();
+        if (!visible.length) return;
+        if (!state.currentTrackId) { loadAndPlayById(visible[0].id); return; }
+        const current = getTrackById(state.currentTrackId);
+        if (!current) { loadAndPlayById(visible[0].id); return; }
+
+        if (state.isPlaying) {
+          if (state.activeEngine === "youtube" && state.ytPlayer && state.ytReady) { try { state.ytPlayer.pauseVideo(); } catch(e) {} }
+          else if (state.activeEngine === "soundcloud" && state.scWidget) { state.scWidget.pause(); }
+          else { dom.audio?.pause(); }
+          state.isPlaying = false;
+        } else {
+          if (state.activeEngine === "youtube" && state.ytPlayer && state.ytReady) { try { state.ytPlayer.playVideo(); } catch(e) {} }
+          else if (state.activeEngine === "soundcloud" && state.scWidget) { state.scWidget.play(); }
+          else { dom.audio?.play(); }
+          state.isPlaying = true;
+        }
+        syncIcons();
+      }
+
+      function playNext() {
+        const visible = getVisibleTracks();
+        if (!visible.length) return;
+        const idx = state.currentTrackId ? visible.findIndex(t => t.id === state.currentTrackId) : -1;
+        const next = visible[(idx + 1) % visible.length];
+        if (next) loadAndPlayById(next.id);
+      }
+
+      function playPrev() {
+        const visible = getVisibleTracks();
+        if (!visible.length) return;        const idx = state.currentTrackId ? visible.findIndex(t => t.id === state.currentTrackId) : 0;
+        const prev = visible[(idx - 1 + visible.length) % visible.length];
+        if (prev) loadAndPlayById(prev.id);
+      }
+
+      // ==========================================
+      // 9. GERENCIAMENTO DE PLAYLIST
+      // ==========================================
+      function setActivePlaylist(id) { state.db.activePlaylistId = id; global.KOBLLUX_DB.save(state.db); renderEverything(); }
+      function createPlaylist() {
+        if (!dom.newPlaylistInput) return;
+        const name = dom.newPlaylistInput.value.trim();
+        if (!name) return;
+        if (state.db.playlists.some(p => p.name.toLowerCase() === name.toLowerCase())) return alert("Já existe uma playlist com esse nome.");
+        state.db.playlists.push({ id: uid("pl"), name, system: false, trackIds: [], cadial: null });
+        dom.newPlaylistInput.value = ""; global.KOBLLUX_DB.save(state.db); renderEverything();
+      }
+      function deletePlaylist(playlistId) {
+        const playlist = getPlaylistById(playlistId);
+        if (!playlist || playlist.system) return;
+        if (!confirm(`Remover a playlist "${escapeHTML(playlist.name)}"?`)) return;
+        state.db.playlists = state.db.playlists.filter(p => p.id !== playlistId);
+        if (state.db.activePlaylistId === playlistId) state.db.activePlaylistId = ALL_ID;
+        global.KOBLLUX_DB.save(state.db); renderEverything();
+      }
+      function toggleFavorite(trackId) {
+        const track = getTrackById(trackId);
+        if (!track) return;
+        track.favorite = !track.favorite;
+        global.KOBLLUX_DB.save(state.db); renderEverything();
+      }
+      function addTrackToPlaylist(trackId, playlistId) {
+        const playlist = getPlaylistById(playlistId);
+        const track = getTrackById(trackId);
+        if (!track || !playlist) return;
+        if (playlist.id === ALL_ID) state.db.activePlaylistId = ALL_ID;
+        else if (playlist.id === FAVORITES_ID) { track.favorite = true; state.db.activePlaylistId = FAVORITES_ID; }
+        else { if (!playlist.trackIds.includes(trackId)) playlist.trackIds.unshift(trackId); state.db.activePlaylistId = playlist.id; }
+        global.KOBLLUX_DB.save(state.db); renderEverything();
+      }
+      function quickAddToSelectedPlaylist(trackId) {
+        if (!dom.destinationSelect) return;
+        addTrackToPlaylist(trackId, dom.destinationSelect.value);
+      }
+      function removeTrack(trackId) {
+        const active = getActivePlaylist();
+        const track = getTrackById(trackId);
+        if (!track) return;
+        if (active.id === FAVORITES_ID) track.favorite = false;
+        else if (active.id === ALL_ID) {          state.db.library = state.db.library.filter(t => t.id !== trackId);
+          state.db.playlists.forEach(p => { if (Array.isArray(p.trackIds)) p.trackIds = p.trackIds.filter(id => id !== trackId); });
+          if (state.currentTrackId === trackId) state.currentTrackId = null;
+        } else {
+          active.trackIds = (active.trackIds || []).filter(id => id !== trackId);
+          if (state.currentTrackId === trackId) state.currentTrackId = null;
+        }
+        global.KOBLLUX_DB.save(state.db); renderEverything();
+      }
+      function findExistingTrackByUrl(url, type, id) {
+        if (type === "youtube" && id) return state.db.library.find(t => t.type === "youtube" && t.id === id) || null;
+        if (type === "youtube_playlist" && id) return state.db.library.find(t => t.type === "youtube_playlist" && t.playlistId === id) || null;
+        if (type === "soundcloud") { const norm = normalizeUrl(url); return state.db.library.find(t => t.type === "soundcloud" && normalizeUrl(t.url) === norm) || null; }
+        return state.db.library.find(t => normalizeUrl(t.url) === normalizeUrl(url)) || null;
+      }
+      function normalizeAndInsertToLibrary(track) {
+        const normalized = normalizeTrack(track);
+        const existing = findExistingTrackByUrl(normalized.url, normalized.type, normalized.id || normalized.playlistId);
+        if (existing) {
+          existing.name = normalized.name || existing.name; existing.artist = normalized.artist || existing.artist;
+          existing.cover = normalized.cover || existing.cover; existing.playlistId = normalized.playlistId || existing.playlistId;
+          if (normalized.type === "local" && normalized.blob) existing.blob = normalized.blob;
+          return existing;
+        }
+        state.db.library.unshift(normalized); return normalized;
+      }
+      async function buildTrackFromUrl(url, base = {}) {
+        const cleanUrl = normalizeUrl(url);
+        if (!cleanUrl) throw new Error("Link vazio.");
+        const track = { id: base.id || uid(), type: base.type || "local", url: cleanUrl, name: base.name || "Carregando...", artist: base.artist || "Web", cover: base.cover || "https://picsum.photos/100", blob: base.blob || null, favorite: !!base.favorite, playlistId: base.playlistId || null, cadial: base.cadial || null };
+        const ytId = extractYouTubeId(cleanUrl); const ytListId = extractYouTubePlaylistId(cleanUrl);
+        const isYT = cleanUrl.includes("youtube.com") || cleanUrl.includes("youtu.be") || cleanUrl.includes("youtube-nocookie.com");
+        const isSC = cleanUrl.includes("soundcloud.com") || cleanUrl.includes("on.soundcloud.com");
+        if (isYT) {
+          if (ytListId && !ytId) { track.type = "youtube_playlist"; track.playlistId = ytListId; track.name = base.name || "YouTube Playlist"; track.artist = base.artist || "YouTube"; track.cover = base.cover || "https://picsum.photos/100"; return normalizeTrack(track); }
+          if (!ytId) throw new Error("Link YouTube inválido.");
+          track.type = "youtube"; track.id = ytId; track.cover = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+          try { const res = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(cleanUrl)}`); const data = await res.json(); track.name = data.title || base.name || "YouTube Track"; track.artist = data.author_name || base.artist || "YouTube"; } catch (e) { track.name = base.name || "YouTube Track"; track.artist = base.artist || "YouTube"; }
+        } else if (isSC) {
+          track.type = "soundcloud";
+          try { const res = await fetch(`https://soundcloud.com/oembed?url=${encodeURIComponent(cleanUrl)}&format=json`); const data = await res.json(); track.name = data.title || base.name || "SoundCloud Track"; track.artist = data.author_name || base.artist || "SoundCloud"; track.cover = data.thumbnail_url || base.cover || "https://i1.sndcdn.com/artworks-default-t500x500.jpg"; } catch (e) { track.name = base.name || "SoundCloud Track"; track.artist = base.artist || "SoundCloud"; track.cover = base.cover || "https://i1.sndcdn.com/artworks-default-t500x500.jpg"; }
+        } else { track.type = base.type || "local"; track.name = base.name || cleanUrl.split("/").pop() || "Arquivo local"; track.artist = base.artist || "Local"; }
+        return normalizeTrack(track);
+      }
+      async function hydratePreloadedTracks() {
+        const preloadedUrls = new Set((global.KOBLLUX_ARCHETYPES?.PRELOADED || []).map(t => normalizeUrl(t.url)));
+        let changed = false;
+        for (let i = 0; i < state.db.library.length; i++) {
+          const tr = state.db.library[i];
+          if (!preloadedUrls.has(normalizeUrl(tr.url))) continue;          try { const fresh = await buildTrackFromUrl(tr.url, tr); state.db.library[i] = { ...tr, ...fresh, id: tr.id }; changed = true; } catch (e) {}
+        }
+        if (changed) { global.KOBLLUX_DB.save(state.db); renderEverything(); }
+      }
+      async function addLink() {
+        const input = dom.linkInput; const destination = dom.destinationSelect;
+        if (!input || !destination) return;
+        const url = normalizeUrl(input.value.trim());
+        if (!url) return;
+        let newTrack;
+        try { newTrack = await buildTrackFromUrl(url); } catch (e) { return alert(e.message || "Não consegui ler esse link."); }
+        const inserted = normalizeAndInsertToLibrary(newTrack);
+        if (destination.value === FAVORITES_ID) inserted.favorite = true;
+        else if (destination.value !== ALL_ID) { const playlist = getPlaylistById(destination.value); if (playlist && !playlist.trackIds.includes(inserted.id)) playlist.trackIds.unshift(inserted.id); }
+        input.value = ""; global.KOBLLUX_DB.save(state.db); renderEverything();
+      }
+
+      // ==========================================
+      // 10. EVENTOS
+      // ==========================================
+      function openFullFromPreview(e) { if (e) e.stopPropagation(); updateWidgetState("full"); }
+      function collapseToBall(e) { if (e) e.stopPropagation(); updateWidgetState("ball"); }
+      function handleClickOutside(e) { if (state.widgetState === "preview" && dom.widget && !dom.widget.contains(e.target)) updateWidgetState("ball"); }
+
+      // ==========================================
+      // 11. INIT (Inicialização)
+      // ==========================================
+      function initKoduxPlayer() {
+        initDOM();
+        if (!dom.widget) { console.warn("KODUX Player: widget não encontrado."); return; }
+        state.db = global.KOBLLUX_DB.init(global.KOBLLUX_ARCHETYPES?.CADIAL_ARQUETIPOS || []);
+        global.openFullFromPreview = openFullFromPreview; global.updateWidgetState = updateWidgetState;
+        global.togglePlay = togglePlay; global.playNext = playNext; global.playPrev = playPrev;
+        global.addLink = addLink; global.collapseToBall = collapseToBall; global.toggleFavorite = toggleFavorite;
+        global.removeTrack = removeTrack; global.quickAddToSelectedPlaylist = quickAddToSelectedPlaylist;
+        global.createPlaylist = createPlaylist;
+        global.onYouTubeIframeAPIReady = function() { console.log("YouTube API ready"); };
+        if (typeof YT === 'undefined' || typeof YT.Player === 'undefined') {
+          if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+            const tag = document.createElement("script"); tag.src = "https://www.youtube.com/iframe_api"; document.head.appendChild(tag);
+          }
+        } else { if (typeof global.onYouTubeIframeAPIReady === 'function') global.onYouTubeIframeAPIReady(); }
+        document.addEventListener("mousedown", handleClickOutside); document.addEventListener("touchstart", handleClickOutside);
+        dom.widget.addEventListener("click", (e) => { if (state.isDragging) return; if (state.widgetState === "ball") updateWidgetState("preview"); });
+        initDrag(); renderEverything(); updateWidgetState("ball"); hydratePreloadedTracks();
+        console.log("⚫ KODUX Player inicializado.");
+      }
+      global.initKoduxPlayer = initKoduxPlayer;
+    })(window);
+    (() => {
+      const bodyPlayer = document.getElementById("bodyPlayer");
+      const idleSelector = ".kob-tts-dock,#kodux-widget,[data-idle-target]";
+      let idleTimer = null;
+      function getIdleTargets() { return document.querySelectorAll(idleSelector); }
+      function setIdleState(idle) { getIdleTargets().forEach(el => el.classList.toggle("idle", idle)); }
+      function resetIdle() { setIdleState(false); clearTimeout(idleTimer); idleTimer = setTimeout(() => setIdleState(true), 1870); }
+      function setMode(mode = "player") { if (bodyPlayer) bodyPlayer.dataset.mode = mode; }
+      const EYE = "M247.3 124.8C226.5 89.2 181.4 64 128 64S29.5 89.2 8.7 124.8a8 8 0 0 0 0 6.4C29.5 166.8 74.6 192 128 192s98.5-25.2 119.3-60.8a8 8 0 0 0 0-6.4ZM128 168a40 40 0 1 1 40-40 40 40 0 0 1-40 40Z";
+      const EYE_OFF = "M53.9 34.6 34.6 53.9l34.2 34.2C43.4 103.6 22.6 122.4 8.7 146.4a8 8 0 0 0 0 7.2C29.5 188.8 74.6 214 128 214a122.3 122.3 0 0 0 52.5-11.6l41 41 19.3-19.3ZM128 182c-29.6 0-55.8-13.4-74.5-34 9.3-11.5 21-21 34.2-27.7l20.4 20.4A40 40 0 0 0 148 180a39.4 39.4 0 0 0 12.2-1.9l20.2 20.2A94.5 94.5 0 0 1 128 182Zm119.3-28.4C226.5 118.2 181.4 93 128 93a121.7 121.7 0 0 0-31.7 4.2L183 184c26.5-9.7 49.1-28.4 64.3-53.2a8 8 0 0 0 0-7.2Z";
+      function toggleDualTube() {
+        const panel = document.getElementById("view-dualtube"); const icon = document.getElementById("toggle-dt-path");
+        if (!panel) return;
+        const hidden = panel.classList.toggle("hidden");
+        if (icon) icon.setAttribute("d", hidden ? EYE_OFF : EYE);
+      }
+      window.toggleDualTube = toggleDualTube;
+      window.KoduxShell = { setMode, resetIdle, toggleDualTube };
+      ["pointerdown", "pointermove", "touchstart", "mousemove", "scroll"].forEach(ev => { document.addEventListener(ev, resetIdle, { passive: true }); });
+      document.addEventListener("keydown", resetIdle);
+      document.addEventListener("keydown", e => {
+        if (e.key === "Enter") { const player = document.getElementById("global-player"); if (player) { player.style.display = "block"; player.classList.add("open"); } }
+      });
+      setMode(bodyPlayer?.dataset.mode || "player"); resetIdle();
+    })();
+  </script>
+</body>
+</html>

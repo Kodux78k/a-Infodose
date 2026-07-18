@@ -1,0 +1,381 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+KOBLLUX · INBOX ROUTER V2 · CORRIGIDO
+✅ Erro KeyError 'entradas' resolvido
+✅ Lê e extrai TÍTULO INTERNO: PY · HTML · JS · JSON · MD · PDF · TXT
+✅ Renomeia arquivo: TÍTULO INTERNO = NOME DO ARQUIVO (externo)
+✅ Detecta todos os tipos de código e documento
+Executar DENTRO de: /∆/1_+_1_+_1_=_∆³/00_MINUZ/
+Assinatura: 3×6×9×7 = 1134
+"""
+import os
+import re
+import sys
+import json
+import shutil
+import hashlib
+from datetime import datetime
+from pathlib import Path
+
+# ============================================================
+# 1 · CONFIGURAÇÃO SELADA · CAMINHOS
+# ============================================================
+MINUZ = Path(__file__).resolve().parent
+RAIZ = MINUZ.parent
+AZURE = RAIZ / "3_ESPIRITO" / "2_AZURE"
+CODEX = RAIZ / "3_ESPIRITO" / "1_CODEX"
+PIPE = CODEX / "PIPE"
+PUBLIC = CODEX / "public"
+LOG_FILE = MINUZ / "00_inbox_log.jsonl"
+PENDENTE = MINUZ / "00_PENDENTE"
+PENDENTE.mkdir(exist_ok=True)
+PUBLIC.mkdir(parents=True, exist_ok=True)
+
+# ============================================================
+# 2 · TABELA DE ROTAS EXPANDIDA · TODOS OS TIPOS
+# ============================================================
+TIPOS = {
+    # 📄 2_DOCUMENTOS
+    "txt":  AZURE / "2_DOCUMENTOS" / "1_TXT",
+    "pdf":  AZURE / "2_DOCUMENTOS" / "2_PDF",
+    "md":   AZURE / "2_DOCUMENTOS" / "3_MD",
+    "markdown": AZURE / "2_DOCUMENTOS" / "3_MD",
+    "rtf":  AZURE / "2_DOCUMENTOS" / "3_MD",
+    "doc":  AZURE / "2_DOCUMENTOS" / "2_PDF",
+    "docx": AZURE / "2_DOCUMENTOS" / "2_PDF",
+    # 🌐 1_ARQUIVOS WEB
+    "html": AZURE / "1_ARQUIVOS" / "1_HTML",
+    "htm":  AZURE / "1_ARQUIVOS" / "1_HTML",
+    "css":  AZURE / "1_ARQUIVOS" / "2_BODY",
+    "scss": AZURE / "1_ARQUIVOS" / "2_BODY",
+    "js":   AZURE / "1_ARQUIVOS" / "3_SCRIPTS",
+    "ts":   AZURE / "1_ARQUIVOS" / "3_SCRIPTS",
+    "jsx":  AZURE / "1_ARQUIVOS" / "3_SCRIPTS",
+    "tsx":  AZURE / "1_ARQUIVOS" / "3_SCRIPTS",
+    "vue":  AZURE / "1_ARQUIVOS" / "3_SCRIPTS",
+    # ⚙️ 3_CODIGOS
+    "py":   AZURE / "3_CODIGOS",
+    "sh":   AZURE / "3_CODIGOS",
+    "bash": AZURE / "3_CODIGOS",
+    "json": AZURE / "3_CODIGOS",
+    "yaml": AZURE / "3_CODIGOS",
+    "yml":  AZURE / "3_CODIGOS",
+    "xml":  AZURE / "3_CODIGOS",
+    "csv":  AZURE / "3_CODIGOS",
+    "sql":  AZURE / "3_CODIGOS",
+    # 🖼️ MÍDIA → 1_ARQUIVOS/BODY
+    "png":  AZURE / "1_ARQUIVOS" / "2_BODY",
+    "jpg":  AZURE / "1_ARQUIVOS" / "2_BODY",
+    "jpeg": AZURE / "1_ARQUIVOS" / "2_BODY",
+    "svg":  AZURE / "1_ARQUIVOS" / "2_BODY",
+    "gif":  AZURE / "1_ARQUIVOS" / "2_BODY",
+    "webp": AZURE / "1_ARQUIVOS" / "2_BODY",
+    "mp3":  AZURE / "1_ARQUIVOS" / "2_BODY",
+    "mp4":  AZURE / "1_ARQUIVOS" / "2_BODY",
+}
+
+MIME_PARA_EXT = {
+    "text/plain": "txt", "application/pdf": "pdf", "text/markdown": "md",
+    "text/html": "html", "text/css": "css", "application/javascript": "js",
+    "application/json": "json", "image/png": "png", "image/jpeg": "jpg",
+    "image/svg+xml": "svg", "text/x-python": "py", "text/x-sh": "sh",
+}
+
+CARACTERES_PROIBIDOS = '<>:"/\\|?*' + "'.!@#$%&()+={}[];,"
+
+# ============================================================
+# 🔧 CORREÇÃO DO ERRO: JSON PÚBLICO SEGURO
+# ============================================================
+def carregar_db() -> dict:
+    """NUNCA MAIS QUEBRA: se JSON for quebrado/faltar chave, recria estrutura"""
+    db_path = PUBLIC / "codex_data.json"
+    if not db_path.exists():
+        return {"entradas": [], "ultima_atualizacao": None, "total_entradas": 0}
+    try:
+        dados = json.loads(db_path.read_text(encoding="utf-8"))
+        if not isinstance(dados, dict):
+            dados = {}
+        # GARANTE que as chaves existem
+        dados.setdefault("entradas", [])
+        dados.setdefault("ultima_atualizacao", None)
+        dados.setdefault("total_entradas", len(dados["entradas"]))
+        return dados
+    except (json.JSONDecodeError, OSError):
+        # Arquivo corrompido: faz backup e recria limpo
+        backup = db_path.with_suffix(f".corrompido_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+        shutil.copy(db_path, backup)
+        return {"entradas": [], "ultima_atualizacao": None, "total_entradas": 0, "backup_criado": str(backup.name)}
+
+def atualizar_public(registro: dict):
+    """Função CORRIGIDA — sem KeyError nunca mais"""
+    dados = carregar_db()
+    dados["entradas"].insert(0, registro)
+    dados["ultima_atualizacao"] = datetime.now().isoformat()
+    dados["total_entradas"] = len(dados["entradas"])
+    (PUBLIC / "codex_data.json").write_text(
+        json.dumps(dados, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+# ============================================================
+# 📝 EXTRATOR DE TÍTULO INTERNO · TODAS AS LINGUAGENS
+# ============================================================
+def sanitizar(nome: str) -> str:
+    """Limpa título para ser nome de arquivo válido"""
+    nome = nome.strip()[:80]  # máximo 80 caracteres
+    for c in CARACTERES_PROIBIDOS:
+        nome = nome.replace(c, "")
+    nome = re.sub(r"\s+", "_", nome)  # espaços → underline
+    return nome.strip("_-") or "sem_titulo"
+
+def ler_texto(arquivo: Path, max_bytes: int = 50000) -> str:
+    """Lê início do arquivo como texto, seguro"""
+    try:
+        return arquivo.read_text(encoding="utf-8", errors="ignore")[:max_bytes]
+    except:
+        return ""
+
+def extrair_titulo(arquivo: Path, tipo: str) -> str | None:
+    """
+    EXTRAI TÍTULO REAL DE DENTRO DO ARQUIVO
+    Funciona com: PY · HTML · JS · JSON · MD · PDF · TXT · CSS · XML
+    """
+    texto = ler_texto(arquivo)
+    if not texto:
+        return None
+    t = texto.strip()
+
+    # ─── 1. PYTHON (.py) ───
+    if tipo == "py":
+        # 1º: docstring inicial """...""" ou '''...'''
+        m = re.match(r'^["\']{3}(.*?)["\']{3}', t, re.DOTALL)
+        if m:
+            primeira_linha = m.group(1).strip().splitlines()[0]
+            if primeira_linha:
+                return primeira_linha
+        # 2º: comentário # Título na primeira linha
+        for linha in t.splitlines()[:5]:
+            l = linha.strip()
+            if l.startswith("#") and len(l) > 3:
+                return l.lstrip("# ").strip()
+        # 3º: nome da primeira função/classe
+        m = re.search(r"^(?:def|class)\s+([A-Za-z_][A-Za-z0-9_]*)", t, re.MULTILINE)
+        if m:
+            return m.group(1)
+
+    # ─── 2. HTML (.html/.htm) ───
+    if tipo in ("html", "htm"):
+        m = re.search(r"<title[^>]*>(.*?)</title>", t, re.IGNORECASE | re.DOTALL)
+        if m:
+            return m.group(1).strip()
+        # fallback: <h1>
+        m = re.search(r"<h1[^>]*>(.*?)</h1>", t, re.IGNORECASE | re.DOTALL)
+        if m:
+            return re.sub(r"<[^>]+>", "", m.group(1)).strip()
+
+    # ─── 3. JAVASCRIPT / TYPESCRIPT (.js/.ts/.jsx/.tsx/.vue) ───
+    if tipo in ("js", "ts", "jsx", "tsx", "vue"):
+        # 1º: comentário bloco /* Título */
+        m = re.match(r"^\s*/\*(.*?)\*/", t, re.DOTALL)
+        if m:
+            l = m.group(1).strip().splitlines()[0]
+            if l and not l.startswith("!"):
+                return l
+        # 2º: comentário linha // Título
+        for linha in t.splitlines()[:8]:
+            l = linha.strip()
+            if l.startswith("//") and len(l) > 4:
+                return l.lstrip("/ ").strip()
+        # 3º: primeira função/const exportada
+        m = re.search(r"(?:export\s+)?(?:const|let|var|function|class)\s+([A-Za-z_$][\w$]*)", t)
+        if m:
+            return m.group(1)
+
+    # ─── 4. JSON (.json) ───
+    if tipo == "json":
+        try:
+            d = json.loads(texto)
+            if isinstance(d, dict):
+                for chave in ("title", "name", "nome", "titulo", "id", "description"):
+                    if chave in d and isinstance(d[chave], str) and d[chave].strip():
+                        return d[chave].strip()
+                # pega primeira chave do objeto
+                for k in d.keys():
+                    if isinstance(k, str) and k.strip():
+                        return k.strip()
+        except:
+            pass
+
+    # ─── 5. MARKDOWN (.md) ───
+    if tipo in ("md", "markdown"):
+        for linha in t.splitlines()[:10]:
+            l = linha.strip()
+            if l.startswith("# "):
+                return l[2:].strip()
+            if l.startswith("## "):
+                return l[3:].strip()
+
+    # ─── 6. CSS / SCSS ───
+    if tipo in ("css", "scss"):
+        m = re.match(r"^\s*/\*(.*?)\*/", t, re.DOTALL)
+        if m:
+            return m.group(1).strip().splitlines()[0]
+
+    # ─── 7. PDF ───
+    if tipo == "pdf":
+        try:
+            import subprocess
+            r = subprocess.run(["pdfinfo", str(arquivo)], capture_output=True, text=True, timeout=10)
+            for linha in r.stdout.splitlines():
+                if linha.lower().startswith("title:"):
+                    return linha.split(":", 1)[1].strip()
+        except:
+            pass
+
+    # ─── 8. TXT / FALLBACK GERAL ───
+    for linha in t.splitlines()[:5]:
+        l = linha.strip()
+        if 3 < len(l) < 120 and not l.startswith(("{", "[", "<", "//", "/*", "#", "-", "*")):
+            return l
+
+    return None
+
+# ============================================================
+# 🔄 RENOMEIA ARQUIVO: TÍTULO INTERNO = NOME EXTERNO
+# ============================================================
+def renomear_por_titulo(arquivo: Path, tipo: str) -> tuple[Path, str | None]:
+    """Se achar título dentro, renomeia o arquivo. Retorna (novo_caminho, titulo)"""
+    titulo = extrair_titulo(arquivo, tipo)
+    if not titulo:
+        return arquivo, None
+    nome_limpo = sanitizar(titulo)
+    if not nome_limpo or nome_limpo == arquivo.stem:
+        return arquivo, titulo  # já está certo
+    novo_nome = f"{nome_limpo}.{tipo}"
+    novo_caminho = arquivo.with_name(novo_nome)
+    contador = 1
+    while novo_caminho.exists():
+        novo_caminho = arquivo.with_name(f"{nome_limpo}_{contador}.{tipo}")
+        contador += 1
+    arquivo.rename(novo_caminho)
+    return novo_caminho, titulo
+
+# ============================================================
+# 🔍 DETECÇÃO DE TIPO + ASSINATURA
+# ============================================================
+def detectar_tipo(arquivo: Path) -> str:
+    ext = arquivo.suffix.lower().lstrip(".")
+    try:
+        import magic
+        mime = magic.from_file(str(arquivo), mime=True)
+        if mime in MIME_PARA_EXT:
+            return MIME_PARA_EXT[mime]
+    except ImportError:
+        pass
+    return ext if ext else "desconhecido"
+
+def assinatura(arquivo: Path) -> dict:
+    dados = arquivo.read_bytes()
+    return {
+        "sha256": hashlib.sha256(dados).hexdigest(),
+        "tamanho_bytes": len(dados),
+        "primeiros_16_hex": dados[:16].hex(),
+    }
+
+# ============================================================
+# 🪞 REGRA ESPELHO
+# ============================================================
+def verificar_espelho(arquivo: Path) -> dict | None:
+    nome = arquivo.name.lower()
+    if "mirror" not in nome:
+        return None
+    original = arquivo.parent / nome.replace(".mirror", "").replace("mirror.", "")
+    if not original.exists():
+        return {"status": "espelho_sem_par", "procurado": original.name}
+    script = PIPE / "validate_duplicates.py"
+    if script.exists():
+        try:
+            import subprocess
+            r = subprocess.run(
+                [sys.executable, str(script), str(original), str(arquivo)],
+                capture_output=True, text=True, timeout=60
+            )
+            return {"status": "par_detectado", "original": original.name,
+                    "analise": json.loads(r.stdout) if r.stdout.strip() else {}}
+        except Exception as e:
+            return {"status": "erro_pipe", "erro": str(e)}
+    return {"status": "par_detectado_sem_pipe", "original": original.name}
+
+# ============================================================
+# 🚀 ROTEAMENTO PRINCIPAL
+# ============================================================
+def rotear(item: Path) -> dict:
+    if item.is_dir() or item.name.startswith("00_") or item.suffix == ".py":
+        return {"ignorado": True, "motivo": "sistema"}
+
+    tipo = detectar_tipo(item)
+    # ✅ RENOMEIA ANTES DE MOVER: título interno = nome externo
+    item, titulo_interno = renomear_por_titulo(item, tipo)
+    destino = TIPOS.get(tipo, PENDENTE)
+    destino.mkdir(parents=True, exist_ok=True)
+
+    ass = assinatura(item)
+    espelho = verificar_espelho(item)
+
+    # Move para destino
+    final = destino / item.name
+    if final.exists():
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        final = destino / f"{item.stem}__{ts}{item.suffix}"
+    shutil.move(str(item), str(final))
+
+    registro = {
+        "timestamp": datetime.now().isoformat(),
+        "arquivo_original": item.name,
+        "titulo_interno_extraido": titulo_interno,
+        "tipo_detectado": tipo,
+        "destino": str(final.relative_to(RAIZ)),
+        **ass,
+    }
+    if espelho:
+        registro["espelho"] = espelho
+
+    with open(LOG_FILE, "a", encoding="utf-8") as f:
+        f.write(json.dumps(registro, ensure_ascii=False) + "\n")
+    atualizar_public(registro)
+    return registro
+
+# ============================================================
+# 🏁 MAIN
+# ============================================================
+def main():
+    print(f"⚡ KOBLLUX INBOX ROUTER V2 · ∆³ · CORRIGIDO")
+    print(f"📥 MINUZ:   {MINUZ}")
+    print(f"📤 AZURE:   {AZURE}\n")
+
+    ok, erros, ignorados = 0, 0, 0
+    for item in sorted(MINUZ.iterdir()):
+        if not item.is_file():
+            continue
+        try:
+            r = rotear(item)
+        except Exception as e:
+            erros += 1
+            print(f"❌ ERRO em {item.name}: {e}")
+            continue
+        if r.get("ignorado"):
+            ignorados += 1
+            continue
+        ok += 1
+        tit = f"📝 '{r['titulo_interno_extraido']}'" if r.get("titulo_interno_extraido") else ""
+        tag = "✅" if r["destino"].startswith("3_ESPIRITO") else "⚠️"
+        print(f"{tag} {r['arquivo_original']:45s} [{r['tipo_detectado']:5s}] → {r['destino']} {tit}")
+        if r.get("espelho"):
+            print(f"   🔍 ESPELHO: {r['espelho']['status']}")
+
+    print(f"\n📊 RESUMO: ✅ {ok} · ❌ {erros} · ⏭️  {ignorados}")
+    print(f"🧾 Log: {LOG_FILE.name} · DB: public/codex_data.json")
+    print(f"∆³ ∴ 1134 ∴ concluído")
+
+if __name__ == "__main__":
+    main()
