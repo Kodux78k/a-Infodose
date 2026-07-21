@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Delta Cubo · KOBLLUX · Biblioteca Viva · 1134</title>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css">
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/javascript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/json.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/css.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/bash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/xml.min.js"></script>
+<style>
+  :root{
+    --corpo:#8B5A2B;--mente:#D4A017;--espirito:#2E86AB;
+    --fundo:#0B0F14;--card:#121821;--borda:#1E2633;
+    --texto:#E6EDF3;--muted:#8B98AB;--verde:#10B981;--vermelho:#EF4444;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;overflow-x:hidden}
+  body{
+    background:radial-gradient(1200px 600px at 80% -10%, #1a2540 0%, transparent 60%), var(--fundo);
+    color:var(--texto);font-family:'Inter',system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .quebra{white-space:normal;word-break:break-word;overflow-wrap:anywhere;line-height:1.45}
+  .titulo-item{white-space:normal;word-break:break-word;overflow-wrap:anywhere;line-height:1.35}
+  .container-base{max-width:780px;margin:0 auto;padding:16px;width:100%}
+  .tab-btn.active{background:linear-gradient(135deg,var(--espirito),#1e40af);color:#fff;box-shadow:0 0 18px rgba(46,134,171,.35)}
+  .card{background:var(--card);border:1px solid var(--borda);border-radius:14px;width:100%}
+  .tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.3px;white-space:nowrap}
+  .linha:hover{background:rgba(46,134,171,.08)}
+  .brilho{background:linear-gradient(135deg,var(--mente),#fbbf24);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .pulse{animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  .acao-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;border:1px solid var(--borda);background:rgba(255,255,255,.03);color:var(--muted);cursor:pointer;font-size:14px;transition:all .15s;flex-shrink:0}
+  .acao-btn:hover{background:var(--espirito);color:#fff;border-color:var(--espirito)}
+  .acao-btn.copiar:hover{background:var(--mente);color:#0B0F14;border-color:var(--mente)}
+  .acao-btn.ok{background:var(--verde);border-color:var(--verde);color:#fff}
+
+/* ============================================================
+   MODAL · 100% CORRIGIDO · NADA MAIS FICA VERTICAL
+============================================================ */
+.modal-mascara{
+  position:fixed; inset:0; margin:0; padding:12px;
+  background:rgba(5,8,12,.94); backdrop-filter:blur(8px);
+  z-index:9999; display:none;
+  /* REGRAS QUE BLOQUEIAM QUALQUER TEXTO VERTICAL */
+  writing-mode:horizontal-tb !important;
+  direction:ltr !important;
+  text-orientation:mixed !important;
+}
+.modal-mascara.aberto{display:flex;align-items:center;justify-content:center}
+
+.modal-corpo{
+  width:100%; max-width:1100px;
+  height:calc(100vh - 40px); max-height:900px;
+  min-height:400px;
+  background:var(--card); border:1px solid var(--borda); border-radius:16px;
+  display:flex; flex-direction:column; /* LINHA DE COMANDO: coluna APENAS no corpo todo */
+  overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,.6);
+  /* MAIS BLOQUEIOS DE VERTICAL */
+  writing-mode:horizontal-tb !important;
+  direction:ltr !important;
+}
+
+/* ===== TOPO DO MODAL · SEMPRE FIXO · BOTOES NUNCA SAEM ===== */
+.modal-topo{
+  display:flex !important;
+  flex-direction:row !important;       /* 🔑 NUNCA VIRA COLUNA */
+  flex-wrap:nowrap !important;         /* 🔑 NUNCA QUEBRA LINHA */
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:10px;
+  padding:10px 12px;
+  border-bottom:1px solid var(--borda);
+  flex:0 0 auto !important;            /* 🔑 NUNCA ENCOLHE */
+  min-height:56px; max-height:72px;
+  width:100%;
+  background:var(--card);
+  z-index:10;
+  writing-mode:horizontal-tb !important;
+}
+.modal-titulos{
+  flex:1 1 auto;
+  min-width:0;                       /* 🔑 PERMITE QUEBRA DE LINHA NORMAL */
+  display:flex; flex-direction:column; justify-content:center;
+  writing-mode:horizontal-tb !important;
+  text-align:left !important;
+}
+/* 🔑 AQUI ESTAVA O ERRO DA IMAGEM: AGORA BLOQUEADO */
+.modal-modo{
+  display:block !important;
+  font-size:10px; text-transform:uppercase; letter-spacing:.15em;
+  color:var(--espirito); font-weight:800;
+  line-height:1.2; margin:0 0 3px 0; padding:0;
+  /* BLOQUEIO TOTAL DE TEXTO VERTICAL */
+  writing-mode:horizontal-tb !important;
+  text-orientation:mixed !important;
+  word-break:normal !important;
+  overflow-wrap:normal !important;
+  white-space:nowrap !important;      /* 🔑 MODALIDADE NUNCA QUEBRA */
+  text-align:left !important;
+  width:100%;
+}
+#modal-titulo{
+  display:block !important;
+  font-family:monospace; font-size:13px; font-weight:700;
+  line-height:1.3; margin:0; padding:0;
+  color:var(--texto);
+  /* QUEBRA NORMAL DE LINHA · NUNCA VERTICAL */
+  white-space:normal !important;
+  word-break:break-word !important;
+  overflow-wrap:anywhere !important;
+  writing-mode:horizontal-tb !important;
+  text-orientation:mixed !important;
+  text-align:left !important;
+  max-height:34px; overflow:hidden;
+}
+#modal-sub{
+  display:block !important;
+  font-size:11px; color:var(--muted);
+  line-height:1.2; margin:2px 0 0 0; padding:0;
+  white-space:normal; word-break:break-word;
+  writing-mode:horizontal-tb !important;
+  text-align:left !important;
+}
+.modal-botoes{
+  display:flex !important;
+  flex-direction:row !important;       /* 🔑 BOTOES SEMPRE NA HORIZONTAL */
+  flex-wrap:wrap;
+  align-items:center; justify-content:flex-end;
+  gap:6px;
+  flex:0 0 auto;                       /* 🔑 NUNCA ENCOLHE */
+  min-width:min-content;
+}
+.modal-btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:5px;
+  height:36px; padding:0 10px; border-radius:9px;
+  border:1px solid var(--borda); background:rgba(255,255,255,.04);
+  color:var(--texto); cursor:pointer;
+  font-size:11px; font-weight:700; white-space:nowrap;
+  transition:all .15s;
+  writing-mode:horizontal-tb !important;
+}
+.modal-btn:hover{background:var(--espirito);border-color:var(--espirito);color:#fff}
+.modal-btn.ouro:hover{background:var(--mente);border-color:var(--mente);color:#0B0F14}
+.modal-btn.verde:hover{background:var(--verde);border-color:var(--verde);color:#fff}
+.btn-fechar{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:36px; height:36px; min-width:36px; border-radius:9px;
+  border:1px solid var(--borda); background:rgba(239,68,68,.1);
+  color:var(--vermelho); cursor:pointer;
+  font-size:16px; font-weight:800;
+  flex:0 0 auto;
+}
+.btn-fechar:hover{background:var(--vermelho);color:#fff}
+
+/* ===== CONTEUDO · ABAIXO DO TOPO FIXO ===== */
+.modal-conteudo{
+  flex:1 1 auto;                       /* 🔑 PEGA TODO O RESTO DO ESPAÇO */
+  min-height:0;                        /* 🔑 PERMITE SCROLL CORRETO */
+  overflow:auto !important;
+  padding:12px;
+  background:#0a0f17;
+  width:100%;
+  writing-mode:horizontal-tb !important;
+}
+.modal-conteudo iframe{
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  min-height:500px;
+  border:0; border-radius:10px;
+  background:#fff;
+  margin:0 auto;
+}
+
+/* ===== CODIGO HIGHLIGHT · GARANTE COLORIDO E HORIZONTAL ===== */
+.modal-conteudo pre{
+  margin:0 !important;
+  padding:0 !important;
+  width:100% !important;
+  height:auto !important;
+  writing-mode:horizontal-tb !important;
+  direction:ltr !important;
+  text-align:left !important;
+}
+.modal-conteudo pre code.hljs{
+  display:block !important;
+  width:100% !important;
+  min-height:100% !important;
+  background:#0a0f17 !important;
+  border-radius:10px !important;
+  padding:16px !important;
+  margin:0 !important;
+  font-size:12.5px !important;
+  line-height:1.55 !important;
+  font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+  /* HORIZONTAL · NUNCA VERTICAL */
+  writing-mode:horizontal-tb !important;
+  direction:ltr !important;
+  text-orientation:mixed !important;
+  text-align:left !important;
+  white-space:pre-wrap !important;
+  word-break:break-word !important;
+  overflow-wrap:anywhere !important;
+  color:#ABB2BF !important;          /* cor padrão do atom-one-dark */
+}
+/* Cores fortes garantidas */
+.hljs-keyword{color:#C678DD !important}
+.hljs-string{color:#98C379 !important}
+.hljs-number{color:#D19A66 !important}
+.hljs-function{color:#61AFEF !important}
+.hljs-tag{color:#E06C75 !important}
+.hljs-name{color:#E06C75 !important}
+.hljs-attr{color:#D19A66 !important}
+.hljs-comment{color:#5C6370 !important;font-style:italic}
+
+/* GERAL */
+.item-arquivo{display:flex;align-items:flex-start;gap:10px;padding:12px;border-radius:10px;border:1px solid transparent;width:100%}
+.item-info{flex:1;min-width:0;width:100%}
+.item-acoes{display:flex;gap:6px;flex-shrink:0}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--verde);color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:10000;transition:transform .25s}
+.toast.aparece{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- CABECALHO -->
+<header class="border-b border-[var(--borda)] sticky top-0 z-40 bg-[rgba(11,15,20,.92)] backdrop-blur">
+  <div class="container-base">
+    <div class="flex flex-wrap items-center justify-between gap-3 py-4">
+      <div class="flex items-center gap-3 min-w-0 flex-1">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-black flex-shrink-0"
+             style="background:linear-gradient(135deg,var(--corpo),var(--mente),var(--espirito));color:#0B0F14">
+          &#916;&#179;
+        </div>
+        <div class="min-w-0 flex-1">
+          <h1 class="text-xl font-black tracking-tight quebra">KOBLLUX <span class="brilho">· Biblioteca Viva</span></h1>
+          <p class="text-xs text-[var(--muted)] mt-0.5 quebra">
+            1+1+1 = &#916;&#179; · Assinatura 3&#215;6&#215;9&#215;7 = <span class="font-mono text-[var(--mente)]">1134</span>
+            · <span id="ultima-atualizacao">carregando...</span>
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <span class="tag bg-[var(--verde)]/15 text-[var(--verde)] flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-[var(--verde)] pulse"></span>ONLINE
+        </span>
+        <button onclick="carregarTudo()" class="px-3 py-2 rounded-xl text-sm font-semibold transition hover:scale-105 flex items-center gap-1"
+                style="background:var(--espirito);color:#fff">&#8635; ATUALIZAR</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="container-base pb-20">
+  <section id="cards-status" class="grid grid-cols-2 sm:grid-cols-3 gap-3 my-5"></section>
+  <div class="mb-5">
+    <input id="busca" type="text" placeholder="Buscar em TODA a biblioteca por nome, tipo, pasta..."
+           class="w-full px-4 py-3 rounded-xl bg-[var(--card)] border border-[var(--borda)] focus:border-[var(--espirito)] outline-none transition text-sm quebra">
+  </div>
+  <nav class="flex flex-wrap gap-2 mb-5 border-b border-[var(--borda)] pb-2">
+    <button data-aba="html" class="tab-btn active px-3 py-2 rounded-xl text-sm font-semibold transition">VITRINE HTML</button>
+    <button data-aba="py"   class="tab-btn px-3 py-2 rounded-xl text-sm font-semibold transition hover:bg-white/5">PYTHON</button>
+    <button data-aba="cod"  class="tab-btn px-3 py-2 rounded-xl text-sm font-semibold transition hover:bg-white/5">CODIGOS</button>
+    <button data-aba="doc"  class="tab-btn px-3 py-2 rounded-xl text-sm font-semibold transition hover:bg-white/5">DOCUMENTOS</button>
+    <button data-aba="log"  class="tab-btn px-3 py-2 rounded-xl text-sm font-semibold transition hover:bg-white/5">LOG</button>
+  </nav>
+  <section id="aba-html" class="aba card p-2"><div id="lista-html" class="divide-y divide-[var(--borda)]"></div></section>
+  <section id="aba-py"   class="aba card p-2 hidden"><div id="lista-py"   class="divide-y divide-[var(--borda)]"></div></section>
+  <section id="aba-cod"  class="aba card p-2 hidden"><div id="lista-cod"  class="divide-y divide-[var(--borda)]"></div></section>
+  <section id="aba-doc"  class="aba card p-2 hidden"><div id="lista-doc"  class="divide-y divide-[var(--borda)]"></div></section>
+  <section id="aba-log"  class="aba card p-2 hidden"><div id="lista-log"  class="divide-y divide-[var(--borda)]"></div></section>
+</main>
+
+<!-- MODAL -->
+<div id="modal" class="modal-mascara" role="dialog" aria-modal="true">
+  <div class="modal-corpo">
+    <div class="modal-topo">
+      <div class="modal-titulos">
+        <div id="modal-modo" class="modal-modo">RENDER</div>
+        <div id="modal-titulo">—</div>
+        <div id="modal-sub">—</div>
+      </div>
+      <div id="modal-botoes" class="modal-botoes"></div>
+      <button class="btn-fechar" onclick="fecharModal()" aria-label="Fechar">&#10005;</button>
+    </div>
+    <div id="modal-conteudo" class="modal-conteudo"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast">Copiado</div>
+<footer class="text-center text-xs text-[var(--muted)] py-8 border-t border-[var(--borda)]">
+  &#916;&#179; · KOBLLUX Biblioteca Viva · Assinatura 1134
+</footer>
+
+<script>
+const CAMINHO_MEMORIA = "./3_ESPIRITO/1_CODEX/public/codex_data.json";
+let memoria = { entradas: [] };
+let arquivos = [];
+const modalState = {tipo:null,caminho:null,titulo:null,sub:null,linguagem:null,modo:"render",codigoCarregado:null};
+
+/* ABAS */
+document.querySelectorAll(".tab-btn").forEach(btn => btn.onclick = () => {
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".aba").forEach(a=>a.classList.add("hidden"));
+  btn.classList.add("active");
+  document.getElementById("aba-"+btn.dataset.aba).classList.remove("hidden");
+  aplicarBusca();
+});
+document.getElementById("busca").oninput = aplicarBusca;
+function aplicarBusca(){
+  const q = document.getElementById("busca").value.toLowerCase().trim();
+  document.querySelectorAll(".item-arquivo").forEach(el => {
+    el.style.display = (!q || (el.dataset.texto||"").toLowerCase().includes(q)) ? "" : "none";
+  });
+}
+
+/* UTIL */
+function tagTipo(t){
+  const c = {html:"bg-pink-500/15 text-pink-300",htm:"bg-pink-500/15 text-pink-300",py:"bg-yellow-500/15 text-yellow-300",js:"bg-amber-400/15 text-amber-300",ts:"bg-blue-400/15 text-blue-300",json:"bg-emerald-400/15 text-emerald-300",css:"bg-sky-400/15 text-sky-300",sh:"bg-lime-400/15 text-lime-300",md:"bg-purple-400/15 text-purple-300",txt:"bg-slate-400/15 text-slate-300",pdf:"bg-red-400/15 text-red-300"};
+  return `<span class="tag ${c[t]||'bg-white/10 text-white'}">${String(t).toUpperCase()}</span>`;
+}
+function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("aparece");setTimeout(()=>t.classList.remove("aparece"),1500)}
+function copiarLink(cam){navigator.clipboard.writeText(new URL(cam,window.location.href).href).then(()=>toast("Link copiado"),()=>toast("Erro"))}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]))}
+
+/* MODAL */
+function setModo(t){document.getElementById("modal-modo").textContent = t}
+function setBotoes(h){document.getElementById("modal-botoes").innerHTML = h}
+function abrirModalBase(tipo,titulo,sub,caminho,ling=null){
+  Object.assign(modalState,{tipo,titulo,sub,caminho,linguagem:ling,modo:"render",codigoCarregado:null});
+  document.getElementById("modal-titulo").textContent = titulo;
+  document.getElementById("modal-sub").textContent = sub;
+  document.getElementById("modal").classList.add("aberto");
+  document.body.style.overflow = "hidden";
+}
+function fecharModal(){
+  document.getElementById("modal").classList.remove("aberto");
+  document.body.style.overflow = "";
+  modalState.tipo = null;
+}
+document.getElementById("modal").addEventListener("click",e=>{if(e.target.id==="modal")fecharModal()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")fecharModal()});
+
+async function carregarCodigoAtual(){
+  if(modalState.codigoCarregado) return modalState.codigoCarregado;
+  try{
+    const r = await fetch(modalState.caminho+"?t="+Date.now());
+    modalState.codigoCarregado = r.ok ? await r.text() : "// erro ao carregar";
+  }catch(e){ modalState.codigoCarregado = "// "+String(e.message||e); }
+  return modalState.codigoCarregado;
+}
+
+/* BOTOES DO MODAL */
+function bHtmlFonte(){return `<button class="modal-btn" onclick="trocarHtmlModo()">&#60;/&#62; VER C&#211;DIGO</button>`}
+function bHtmlVoltar(){return `<button class="modal-btn ouro" onclick="trocarHtmlModo()">&#9664; VOLTAR RENDER</button>`}
+function bCopiar(){return `<button class="modal-btn verde" onclick="copiarCodigoModal()">&#9112; COPIAR C&#211;DIGO</button>`}
+
+async function trocarHtmlModo(){
+  if(modalState.modo === "render"){
+    modalState.modo = "codigo";
+    const cod = await carregarCodigoAtual();
+    setModo("CÓDIGO FONTE · HTML");
+    setBotoes(bHtmlVoltar()+bCopiar());
+    document.getElementById("modal-conteudo").innerHTML = `<pre><code class="language-xml">${escapeHtml(cod)}</code></pre>`;
+    hljs.highlightAll();
+  } else {
+    modalState.modo = "render";
+    setModo("RENDER · VISUALIZAÇÃO");
+    setBotoes(bHtmlFonte());
+    document.getElementById("modal-conteudo").innerHTML = `<iframe src="${modalState.caminho}?t=${Date.now()}"></iframe>`;
+  }
+}
+async function copiarCodigoModal(){
+  const cod = await carregarCodigoAtual();
+  navigator.clipboard.writeText(cod).then(()=>{
+    toast("Código copiado");
+    const b = document.querySelector("#modal-botoes .verde");
+    if(b){const o=b.innerHTML;b.innerHTML="&#10003; COPIADO";setTimeout(()=>b.innerHTML=o,1200)}
+  },()=>toast("Erro"));
+}
+
+/* PREVIEWS */
+function previewHtml(d,cam){
+  abrirModalBase("html",d.nome,d.titulo||"HTML",cam);
+  modalState.modo="render";
+  setModo("RENDER · VISUALIZAÇÃO");
+  setBotoes(bHtmlFonte());
+  document.getElementById("modal-conteudo").innerHTML = `<iframe src="${cam}?t=${Date.now()}"></iframe>`;
+}
+async function previewCodigo(d,cam,ling){
+  abrirModalBase("codigo",d.nome,d.titulo||ling.toUpperCase(),cam,ling);
+  setModo("CÓDIGO · "+ling.toUpperCase());
+  setBotoes(bCopiar());
+  document.getElementById("modal-conteudo").innerHTML = `<pre><code class="language-${ling}">carregando...</code></pre>`;
+  const cod = await carregarCodigoAtual();
+  document.querySelector("#modal-conteudo code").textContent = cod;
+  hljs.highlightAll();
+}
+function previewDoc(d,cam){
+  abrirModalBase("doc",d.nome,d.titulo||"Documento",cam);
+  const pdf = String(d.tipo).toLowerCase()==="pdf";
+  setModo(pdf?"DOCUMENTO · PDF":"DOCUMENTO · TEXTO");
+  setBotoes(pdf?"":bCopiar());
+  if(pdf){
+    document.getElementById("modal-conteudo").innerHTML = `<iframe src="${cam}"></iframe>`;
+  } else {
+    fetch(cam+"?t="+Date.now()).then(r=>r.text()).then(txt=>{
+      modalState.codigoCarregado = txt;
+      document.getElementById("modal-conteudo").innerHTML = `<pre style="color:var(--texto);font:13px/1.6 monospace;white-space:pre-wrap;word-break:break-word;margin:0;padding:12px;background:#0a0f17;border-radius:10px">${escapeHtml(txt)}</pre>`;
+    });
+  }
+}
+
+/* ITEM */
+function criarItem(d,fn){
+  const cam = "./"+(d.destino||"");
+  const w = document.createElement("div");
+  w.className = "item-arquivo linha";
+  w.dataset.texto = `${d.nome||""} ${d.tipo||""} ${d.destino||""} ${d.titulo||""}`;
+  w.innerHTML = `
+    <div class="item-info">
+      <div class="titulo-item font-mono text-sm font-semibold">${d.nome||""}</div>
+      <div class="flex flex-wrap items-center gap-2 mt-1.5">
+        ${tagTipo(d.tipo||"txt")}
+        ${d.titulo?`<span class="text-xs text-[var(--mente)] quebra flex-1 min-w-0">${d.titulo}</span>`:""}
+      </div>
+      <div class="text-[11px] text-[var(--muted)] mt-1 quebra">${d.destino||""}</div>
+    </div>
+    <div class="item-acoes">
+      <button class="acao-btn preview">&#9654;</button>
+      <button class="acao-btn copiar">&#9112;</button>
+    </div>`;
+  w.querySelector(".preview").onclick = ()=>fn(d,cam);
+  w.querySelector(".copiar").onclick = e=>{
+    const b=e.currentTarget; copiarLink(cam);
+    b.classList.add("ok");b.innerHTML="&#10003;";
+    setTimeout(()=>{b.classList.remove("ok");b.innerHTML="&#9112;"},1200);
+  };
+  return w;
+}
+
+/* MEMORIA + RENDER */
+async function carregarMemoria(){
+  try{
+    const r = await fetch(CAMINHO_MEMORIA+"?t="+Date.now());
+    if(!r.ok) throw 0;
+    memoria = await r.json();
+    memoria.entradas = memoria.entradas||[];
+    const v = new Map();
+    for(const e of memoria.entradas){
+      const n = e.arquivo_final; if(!n) continue;
+      if(!v.has(n)||(e.timestamp||"")>(v.get(n).timestamp||""))
+        v.set(n,{nome:n,tipo:e.tipo||(n.split(".").pop()||"txt").toLowerCase(),destino:e.destino||"",timestamp:e.timestamp||"",titulo:e.titulo_interno||""});
+    }
+    arquivos = [...v.values()].sort((a,b)=>(b.timestamp||"").localeCompare(a.timestamp||""));
+    document.getElementById("ultima-atualizacao").textContent = memoria.ultima_atualizacao?new Date(memoria.ultima_atualizacao).toLocaleString("pt-BR"):"—";
+    return 1;
+  }catch(e){document.getElementById("ultima-atualizacao").textContent="memória não encontrada";return 0}
+}
+function montarCards(){
+  const t=arquivos.length,c=e=>arquivos.filter(a=>e.includes(String(a.tipo).toLowerCase())).length;
+  const d=[{n:"TOTAL",v:t,cor:"var(--texto)",s:"arquivos"},{n:"HTML",v:c(["html","htm"]),cor:"var(--espirito)",s:"vitrine"},{n:"PY",v:c(["py"]),cor:"var(--mente)",s:"python"},{n:"COD",v:c(["js","ts","jsx","tsx","json","css","sh","sql","xml","yaml","yml"]),cor:"#a78bfa",s:"fontes"},{n:"DOCS",v:c(["md","txt","pdf","rtf"]),cor:"var(--corpo)",s:"documentos"}];
+  document.getElementById("cards-status").innerHTML = d.map(x=>`<div class="card p-3"><div class="text-[10px] font-bold uppercase tracking-wider" style="color:${x.cor}">${x.n}</div><div class="text-2xl font-black mt-0.5">${x.v}</div><div class="text-[11px] text-[var(--muted)]">${x.s}</div></div>`).join("");
+}
+function montarListas(){
+  const L={h:document.getElementById("lista-html"),p:document.getElementById("lista-py"),c:document.getElementById("lista-cod"),d:document.getElementById("lista-doc"),l:document.getElementById("lista-log")};
+  Object.values(L).forEach(e=>e.innerHTML="");
+  const M={js:"javascript",ts:"javascript",json:"json",css:"css",sh:"bash",sql:"sql",xml:"xml",yaml:"yaml",yml:"yaml",jsx:"javascript",tsx:"javascript"};
+  arquivos.forEach(a=>{
+    const t=String(a.tipo).toLowerCase();
+    if(["html","htm"].includes(t)) L.h.appendChild(criarItem(a,previewHtml));
+    else if(t==="py") L.p.appendChild(criarItem(a,(x,c)=>previewCodigo(x,c,"python")));
+    else if(Object.keys(M).includes(t)) L.c.appendChild(criarItem(a,(x,c)=>previewCodigo(x,c,M[t]||"plaintext")));
+    else if(["md","txt","pdf","rtf"].includes(t)) L.d.appendChild(criarItem(a,previewDoc));
+  });
+  const ult=(memoria.entradas||[]).slice(0,40);
+  if(!ult.length) L.l.innerHTML=`<div class="p-4 text-sm text-[var(--muted)] text-center">Sem atividades.</div>`;
+  else ult.forEach(e=>{
+    const t=String(e.tipo||"txt").toLowerCase();
+    const x=document.createElement("div");x.className="p-3 text-sm";
+    x.innerHTML=`<div class="titulo-item font-mono text-xs font-semibold">${e.arquivo_final||"—"}</div>
+      <div class="flex flex-wrap items-center gap-2 mt-1">${tagTipo(t)}
+        <span class="text-[11px] text-[var(--muted)]">${new Date(e.timestamp).toLocaleString("pt-BR")}</span>
+        ${e.titulo_interno?`<span class="text-[11px] text-[var(--mente)] quebra">${e.titulo_interno}</span>`:""}
+        ${e.cristalizado_em?`<span class="tag bg-[var(--verde)]/15 text-[var(--verde)]">CRISTALIZADO</span>`:""}
+        ${e.espelho?`<span class="tag bg-pink-500/15 text-pink-300">ESPELHO</span>`:""}
+      </div><div class="text-[11px] text-[var(--muted)] mt-1 quebra">${e.destino||""}</div>`;
+    L.l.appendChild(x);
+  });
+  for(const k of ["h","p","c","d"]) if(!L[k].children.length) L[k].innerHTML=`<div class="p-5 text-sm text-[var(--muted)] text-center">Nenhum arquivo.</div>`;
+}
+async function carregarTudo(){if(!await carregarMemoria()){arquivos=[];memoria={entradas:[]}}montarCards();montarListas();aplicarBusca()}
+carregarTudo();
+setInterval(carregarTudo,30000);
+</script>
+</body>
+</html>
