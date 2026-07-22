@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orb DevTools · Motor Engine</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background: #0d1117;
+            color: #e6edf3;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 72px;
+            background: #161b22;
+            border-right: 1px solid #30363d;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 0 12px;
+            flex-shrink: 0;
+            overflow-y: auto;
+            gap: 6px;
+        }
+
+        .sidebar .logo {
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+
+        .sidebar .engine-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            color: #8b949e;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .sidebar .engine-btn:hover {
+            background: #21262d;
+            color: #f0f6fc;
+        }
+
+        .sidebar .engine-btn.active {
+            background: #1f2937;
+            color: #58a6ff;
+            box-shadow: inset 0 0 0 1px #58a6ff;
+        }
+
+        .sidebar .engine-btn .badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #f0883e;
+            color: #0d1117;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: 12px;
+            line-height: 14px;
+        }
+
+        .sidebar .engine-btn svg {
+            width: 26px;
+            height: 26px;
+            flex-shrink: 0;
+        }
+
+        /* ===== MAIN ===== */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        /* header */
+        .topbar {
+            padding: 12px 24px;
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .topbar h2 {
+            font-size: 16px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .topbar h2 svg {
+            width: 20px;
+            height: 20px;
+            fill: #58a6ff;
+        }
+
+        .topbar .actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .topbar .actions button {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 4px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .topbar .actions button:hover {
+            background: #30363d;
+        }
+
+        /* content */
+        .content {
+            flex: 1;
+            padding: 20px 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* ===== OVERVIEW CARDS (stats) ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 16px 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: 0.2s;
+        }
+
+        .stat-card:hover {
+            border-color: #58a6ff;
+        }
+
+        .stat-card .icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: #1f2937;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .stat-card .icon svg {
+            width: 24px;
+            height: 24px;
+            fill: #58a6ff;
+        }
+
+        .stat-card .info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-card .info .number {
+            font-size: 22px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .stat-card .info .label {
+            font-size: 12px;
+            color: #8b949e;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        /* ===== SECTION (painel ativo) ===== */
+        .panel {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 20px 24px;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .panel-header h3 {
+            font-size: 16px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-header h3 svg {
+            width: 18px;
+            height: 18px;
+            fill: #58a6ff;
+        }
+
+        .panel-header .filters {
+            display: flex;
+            gap: 8px;
+        }
+
+        .panel-header .filters button {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #8b949e;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .panel-header .filters button.active {
+            background: #1f2937;
+            border-color: #58a6ff;
+            color: #58a6ff;
+        }
+
+        /* ===== CARDS DE FUNÇÃO / CLASSE ===== */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+        }
+
+        .func-card {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 16px 18px;
+            transition: 0.2s;
+        }
+
+        .func-card:hover {
+            border-color: #58a6ff;
+            background: #0f151e;
+        }
+
+        .func-card .name {
+            font-size: 15px;
+            font-weight: 500;
+            color: #f0f6fc;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .func-card .name .type-badge {
+            font-size: 10px;
+            background: #1f2937;
+            color: #8b949e;
+            padding: 0 10px;
+            border-radius: 12px;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+        }
+
+        .func-card .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 20px;
+            font-size: 12px;
+            color: #8b949e;
+            margin: 6px 0 10px;
+        }
+
+        .func-card .meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .func-card .meta svg {
+            width: 14px;
+            height: 14px;
+            fill: #8b949e;
+        }
+
+        .func-card .desc {
+            font-size: 13px;
+            color: #b1bac4;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .func-card .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .func-card .actions button {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 2px 14px;
+            border-radius: 16px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .func-card .actions button:hover {
+            background: #30363d;
+            border-color: #58a6ff;
+        }
+
+        .func-card .actions button svg {
+            width: 13px;
+            height: 13px;
+            fill: currentColor;
+        }
+
+        /* classe especial */
+        .class-card .methods {
+            margin: 8px 0 4px;
+            padding-left: 6px;
+            border-left: 2px solid #30363d;
+        }
+
+        .class-card .methods .method-item {
+            font-size: 12px;
+            color: #8b949e;
+            padding: 2px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .class-card .methods .method-item svg {
+            width: 12px;
+            height: 12px;
+            fill: #58a6ff;
+        }
+
+        /* ===== SVG inline gráficos ===== */
+        .mini-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 30px;
+            margin-top: 4px;
+        }
+
+        .mini-chart .bar {
+            width: 8px;
+            background: #58a6ff;
+            border-radius: 2px 2px 0 0;
+            transition: height 0.3s;
+        }
+
+        .mini-chart .bar.warn {
+            background: #f0883e;
+        }
+
+        .mini-chart .bar.danger {
+            background: #f85149;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 700px) {
+            .sidebar {
+                width: 56px;
+                padding: 10px 0;
+            }
+            .sidebar .engine-btn {
+                width: 40px;
+                height: 40px;
+            }
+            .sidebar .engine-btn svg {
+                width: 20px;
+                height: 20px;
+            }
+            .content {
+                padding: 12px;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            .topbar {
+                padding: 8px 16px;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+        }
+
+        /* scroll */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0d1117;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #484f58;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar">
+        <!-- logo orb -->
+        <div class="logo">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <circle cx="16" cy="16" r="14" stroke="#58a6ff" stroke-width="2"/>
+                <circle cx="16" cy="16" r="8" stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="2 3"/>
+                <circle cx="16" cy="16" r="2" fill="#58a6ff"/>
+            </svg>
+        </div>
+
+        <!-- motores -->
+        <button class="engine-btn active" title="Visão geral">
+            <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+        </button>
+        <button class="engine-btn" title="HTML">
+            <svg viewBox="0 0 24 24"><path d="M5 3l1.5 16.5L12 21l5.5-1.5L19 3H5zm3.5 14.5l-1-11h9.1l-1 11-3.1.8-3-.8z"/></svg>
+            <span class="badge">28</span>
+        </button>
+        <button class="engine-btn" title="Scripts">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            <span class="badge">43</span>
+        </button>
+        <button class="engine-btn" title="HTTP">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            <span class="badge">12</span>
+        </button>
+        <button class="engine-btn" title="Storage">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4V6zm2 2v2h12V8H6zm0 4v2h10v-2H6zm0 4v2h8v-2H6z"/></svg>
+        </button>
+        <button class="engine-btn" title="CSS">
+            <svg viewBox="0 0 24 24"><path d="M5 3l1.5 16.5L12 21l5.5-1.5L19 3H5zm3.5 14.5l-1-11h9.1l-1 11-3.1.8-3-.8z"/></svg>
+            <span class="badge">56</span>
+        </button>
+        <button class="engine-btn" title="Iframes">
+            <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z"/></svg>
+            <span class="badge">2</span>
+        </button>
+        <button class="engine-btn" title="Logger">
+            <svg viewBox="0 0 24 24"><path d="M20 4H4v2h16V4zm0 4H4v2h16V8zm-6 4H4v2h10v-2zm6 4H4v2h16v-2z"/></svg>
+        </button>
+    </aside>
+
+    <!-- ===== MAIN ===== -->
+    <div class="main">
+
+        <!-- topbar -->
+        <header class="topbar">
+            <h2>
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                Orb Engine · Painel de Motores
+            </h2>
+            <div class="actions">
+                <button>🔄 Atualizar</button>
+                <button>⚙️ Configurar</button>
+            </div>
+        </header>
+
+        <!-- content -->
+        <div class="content">
+
+            <!-- stats overview -->
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <div class="icon"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg></div>
+                    <div class="info"><span class="number">8</span><span class="label">Motores</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon"><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6z"/></svg></div>
+                    <div class="info"><span class="number">43</span><span class="label">Funções</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div>
+                    <div class="info"><span class="number">7</span><span class="label">Classes</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg></div>
+                    <div class="info"><span class="number">14</span><span class="label">Req. HTTP</span></div>
+                </div>
+            </section>
+
+            <!-- painel scripts (ativo) -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h3>
+                        <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6z"/></svg>
+                        Motor de Scripts · 43 funções, 7 classes
+                    </h3>
+                    <div class="filters">
+                        <button class="active">Todas</button>
+                        <button>Funções</button>
+                        <button>Classes</button>
+                        <button>Módulos</button>
+                    </div>
+                </div>
+
+                <div class="cards-grid">
+
+                    <!-- card função -->
+                    <div class="func-card">
+                        <div class="name">
+                            injectOrbStyles()
+                            <span class="type-badge">Function</span>
+                        </div>
+                        <div class="meta">
+                            <span><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6z"/></svg> orb.engine.js</span>
+                            <span><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> Linha 102</span>
+                        </div>
+                        <div class="desc">Injeta os estilos do Orb no documento atual.</div>
+                        <div class="actions">
+                            <button><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copiar</button>
+                            <button><svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg> Ir</button>
+                            <button><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg> Editar</button>
+                        </div>
+                    </div>
+
+                    <!-- card função com dependência -->
+                    <div class="func-card">
+                        <div class="name">
+                            generateProceduralHash()
+                            <span class="type-badge">Function</span>
+                        </div>
+                        <div class="meta">
+                            <span><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6z"/></svg> hash.engine.js</span>
+                            <span><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> Dependências: crypto.js</span>
+                        </div>
+                        <div class="desc">Gera um hash procedural baseado em seed.</div>
+                        <div class="actions">
+                            <button><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copiar</button>
+                            <button><svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg> Ir</button>
+                            <button><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg> Editar</button>
+                            <button style="background:#1f2937;border-color:#f0883e;color:#f0883e;"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Executar</button>
+                        </div>
+                    </div>
+
+                    <!-- card classe -->
+                    <div class="func-card class-card">
+                        <div class="name">
+                            OrbGenerator
+                            <span class="type-badge">Class</span>
+                        </div>
+                        <div class="meta">
+                            <span><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6z"/></svg> orb.generator.js</span>
+                            <span><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> Linha 45</span>
+                        </div>
+                        <div class="desc">Gerencia a criação e ciclo de vida de orbes.</div>
+                        <div class="methods">
+                            <div class="method-item"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> render()</div>
+                            <div class="method-item"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> create()</div>
+                            <div class="method-item"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> destroy()</div>
+                        </div>
+                        <div class="actions" style="margin-top:8px;">
+                            <button><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copiar</button>
+                            <button><svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg> Ir</button>
+                            <button><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg> Editar</button>
+                            <button style="background:#1f2937;border-color:#58a6ff;color:#58a6ff;"><svg viewBox="0 0 24 24"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg> Expandir</button>
+                        </div>
+                    </div>
+
+                    <!-- outro card função com gráfico inline SVG -->
+                    <div class="func-card">
+                        <div class="name">
+                            observeDOMChanges()
+                            <span class="type-badge">Function</span>
+                        </div>
+                        <div class="meta">
+                            <span><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6z"/></svg> dom.engine.js</span>
+                            <span><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> Linha 87</span>
+                        </div>
+                        <div class="desc">Observa mutações no DOM usando MutationObserver.</div>
+                        <div class="mini-chart">
+                            <div class="bar" style="height:18px;"></div>
+                            <div class="bar" style="height:24px;"></div>
+                            <div class="bar" style="height:12px;"></div>
+                            <div class="bar warn" style="height:28px;"></div>
+                            <div class="bar" style="height:16px;"></div>
+                            <div class="bar" style="height:22px;"></div>
+                            <div class="bar danger" style="height:8px;"></div>
+                            <div class="bar" style="height:30px;"></div>
+                        </div>
+                        <div class="actions" style="margin-top:4px;">
+                            <button><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copiar</button>
+                            <button><svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg> Ir</button>
+                            <button><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg> Editar</button>
+                        </div>
+                    </div>
+
+                </div><!-- cards-grid -->
+            </div><!-- panel -->
+
+            <!-- rodapé com mais SVG decorativo -->
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:#484f58;border-top:1px solid #21262d;padding-top:12px;margin-top:4px;">
+                <span>⚡ Orb DevTools · 8 motores ativos</span>
+                <span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#484f58"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    Session iframe · sandbox ativo
+                </span>
+            </div>
+
+        </div><!-- content -->
+    </div><!-- main -->
+
+</body>
+</html>
