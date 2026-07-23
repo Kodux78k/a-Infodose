@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fractal Decoder · N3 & Motor 369</title>
+<style>
+  :root {
+    --bg: #0b0d10; --panel: #12161b; --line: #27303a; --text: #eef2f5; 
+    --muted: #9da8b3; --accent: #d9ff62; --accent-hover: #bce050;
+    --arch: #a29bfe; --danger: #ff6b6b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: radial-gradient(circle at top, #182029 0, #0b0d10 42%); color: var(--text); font-family: Inter, system-ui, Arial, sans-serif; min-height: 100vh; }
+  .wrap { max-width: 1100px; margin: auto; padding: 28px 18px 50px; }
+  h1 { margin: 0 0 6px; font-size: clamp(28px, 5vw, 42px); letter-spacing: -.04em; font-weight: 800;}
+  .sub { color: var(--muted); margin: 0 0 24px; font-size: 14px; }
+  
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card { background: rgba(18,22,27,.88); border: 1px solid var(--line); border-radius: 18px; padding: 18px; box-shadow: 0 12px 40px #0005; }
+  
+  textarea { width: 100%; min-height: 250px; resize: vertical; background: #080a0d; color: var(--text); border: 1px solid var(--line); border-radius: 12px; padding: 15px; font: 14px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; outline: none; transition: 0.2s; }
+  textarea:focus { border-color: var(--accent); box-shadow: 0 0 10px rgba(217, 255, 98, 0.1); }
+  
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  button, select { border: 1px solid var(--line); background: #171c22; color: var(--text); padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: 0.2s; font-size: 13px; font-weight: 600;}
+  button.primary { background: var(--accent); color: #10140b; border-color: var(--accent); }
+  button:hover, select:hover { filter: brightness(1.15); border-color: #3a4552; }
+  button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  button.active { border-color: var(--accent); color: var(--accent); background: rgba(217,255,98,0.05); }
+  
+  /* DROPDOWN / DASHBOARD DECISÃO */
+  .dashboard { background: #0b1014; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; transition: all 0.3s; }
+  .dash-header { padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+  .dash-header:hover { background: #11181f; }
+  .dash-title { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 10px;}
+  .dash-score { color: var(--accent); font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+  
+  .dash-body { border-top: 1px solid var(--line); padding: 16px; display: none; background: #080a0d; }
+  .dashboard.open .dash-body { display: block; animation: slideDown 0.2s ease-out; }
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+  
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; margin-bottom: 16px; }
+  .stat-box { background: #12161b; border: 1px solid var(--line); padding: 10px; border-radius: 8px; text-align: center; }
+  .stat-val { font-size: 20px; font-weight: 800; color: var(--text); }
+  .stat-lbl { font-size: 10px; text-transform: uppercase; color: var(--muted); letter-spacing: 1px; margin-top: 4px; }
+  
+  .action-bar { display: flex; flex-wrap: wrap; gap: 8px; }
+  .action-bar button { flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px; }
+
+  /* CAMADAS N3 */
+  .n3 { display: grid; gap: 10px; margin-top: 16px;}
+  .n3 div { padding: 13px; border-left: 3px solid var(--accent); background: #0b1014; border-radius: 8px; }
+  .label { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; font-weight: 700; }
+  
+  /* RECOMBINATOR TABLE */
+  .interp { display: grid; gap: 8px; max-height: 350px; overflow-y: auto; padding-right: 5px; margin-top: 12px;}
+  .interp::-webkit-scrollbar { width: 6px; }
+  .interp::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+  
+  .row { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: start; padding: 12px; background: #0b1014; border: 1px solid #1d252d; border-radius: 9px; cursor: pointer; transition: all 0.2s; }
+  .row:hover { background: #131920; border-color: #2e3b48; }
+  .row:has(input:checked) { border-color: rgba(217, 255, 98, 0.4); background: rgba(217, 255, 98, 0.03); }
+  
+  .frag-cb { margin-top: 4px; accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer;}
+  .frag-content { display: flex; flex-direction: column; gap: 4px; }
+  .f-label { font-size: 10px; font-weight: 800; color: var(--muted); letter-spacing: 1px; }
+  .row:has(input:checked) .f-label { color: var(--accent); }
+  .f-text { font-size: 13px; line-height: 1.5; color: #d1d9e0; }
+  
+  .tag { font-size: 10px; font-weight: 700; color: var(--accent); white-space: nowrap; background: #151a20; padding: 4px 8px; border-radius: 6px; border: 1px solid #232c35; text-transform: uppercase;}
+  .tag.ruido { color: var(--danger); border-color: rgba(255,107,107,0.3); }
+  .tag.metacamada { color: var(--arch); border-color: rgba(162,155,254,0.3); }
+  
+  /* MOTOR 369 PANEL */
+  .motor-panel { background: #0b1014; border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-top: 16px; display: flex; flex-direction: column; gap: 12px;}
+  .motor-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;}
+  .motor-title { font-size: 11px; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; font-weight: 700; display: flex; justify-content: space-between;}
+
+  @media(max-width:800px){ .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🧬 N3 · Motor 369</h1>
+  <p class="sub">Decodificador Fractal · Mesa de Recombinação e Expurgador de Arquétipos</p>
+
+  <div class="grid">
+    <!-- COLUNA 1: INPUT -->
+    <section class="card" style="display: flex; flex-direction: column;">
+      <div class="label">Matriz Bruta</div>
+      <textarea id="input" placeholder="Cole aqui um texto caótico, fluxo fractal, estudo..."></textarea>
+      <div class="controls">
+        <button class="primary" onclick="decode()" style="flex: 1;">⚡ Decodificar Matriz</button>
+        <button onclick="loadExample()">Exemplo</button>
+        <button onclick="clearAll()">Limpar</button>
+      </div>
+
+      <!-- MOTOR 369 (BASEADO NO JS ENVIADO) -->
+      <div class="motor-panel">
+        <div class="motor-title">
+          <span>⚙️ Controles de Fluxo (Motor 3·6·9)</span>
+          <span id="motorStatus" style="color: var(--accent);">IDLE</span>
+        </div>
+        <div class="motor-controls">
+          <button class="motor-btn" data-engine="3">Step +3</button>
+          <button class="motor-btn" data-engine="6">Step +6</button>
+          <button class="motor-btn" data-engine="9">Step +9</button>
+          <button class="motor-btn" data-jump="1">Jump +1</button>
+          <button class="motor-btn" data-jump="0">Jump 0</button>
+          <button id="reverseToggle">Rev: OFF</button>
+          <button id="cycle3697">Ciclo: OFF</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- COLUNA 2: DASHBOARD N3 -->
+    <section class="card" style="display: flex; flex-direction: column; gap: 16px;">
+      
+      <!-- DROPDOWN DASHBOARD DE AÇÕES -->
+      <div class="dashboard" id="mainDashboard">
+        <div class="dash-header" onclick="toggleDashboard()">
+          <div class="dash-title" id="decisionTitle">Aguardando entrada...</div>
+          <div class="dash-score" id="decisionScore">--</div>
+        </div>
+        <div class="dash-body">
+          <div class="stats-grid" id="statsGrid">
+            <div class="stat-box"><div class="stat-val">0</div><div class="stat-lbl">Fatos</div></div>
+            <div class="stat-box"><div class="stat-val">0</div><div class="stat-lbl">Sentidos</div></div>
+            <div class="stat-box"><div class="stat-val">0</div><div class="stat-lbl">Símbolos</div></div>
+            <div class="stat-box"><div class="stat-val">0</div><div class="stat-lbl">Meta</div></div>
+            <div class="stat-box" style="border-color: rgba(255,107,107,0.3);"><div class="stat-val" style="color:var(--danger)">0</div><div class="stat-lbl">Ruído</div></div>
+          </div>
+          <div class="action-bar">
+            <button class="primary" onclick="ouvirSelecao()">🎧 Ouvir (78K)</button>
+            <button onclick="recombineSelected()">🔄 Recombinar</button>
+            <button onclick="copiarSelecao()">📋 Copiar</button>
+            <button onclick="removerArquetipos()" style="border-color: var(--arch); color: var(--arch);">🧹 Extrair Arquétipos</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="n3">
+        <div><div class="label">UN0 · Essência</div><span id="fragment0">—</span></div>
+        <div><div class="label">Notícia · O que aconteceu?</div><span id="news">—</span></div>
+        <div><div class="label">Núcleo · O que significa?</div><span id="core">—</span></div>
+        <div><div class="label">Norte · Por que importa?</div><span id="north">—</span></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- MESA DE RECOMBINAÇÃO -->
+  <section class="card" style="margin-top:16px">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <div class="label" style="font-size: 14px; color: var(--text);">Mesa de Fragmentos</div>
+        <div class="sub" style="margin: 4px 0 0;">Ative ou desative fragmentos para mutação. O motor ignora ruídos.</div>
+      </div>
+      <button onclick="toggleAllFragments()" style="padding: 6px 12px;">☑️ Inverter</button>
+    </div>
+
+    <div class="interp" id="map">
+      <div style="color: var(--muted); padding: 20px; text-align: center; border: 1px dashed var(--line); border-radius: 8px;">
+        A malha fractal aparecerá aqui.
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+// =========================================
+// 1. BASE DE ARQUÉTIPOS (Do seu JS original)
+// =========================================
+const ARCHETYPES_BASE = [
+  "atlas", "nova", "vitalis", "pulse", "kaos", "kodux", "lumine",
+  "aion", "kobllux", "artemis", "serena", "genus", "solus",
+  "rhea", "uno", "dual", "trinity", "infodose", "horus", "bllue",
+  "luxara", "velor", "elysha", "sylon", "naira", "thenir", "eloh", 
+  "novael", "aelya", "ignyra", "lumara", "kaythar", "elya", "sylla", 
+  "anamyx", "yamantek", "metalux", "kd1", "koφd1", "christos",
+  "aek_dion", "aekael_domnnus", "nephesh_elyon", "domrii"
+];
+
+// =========================================
+// 2. ESTADO DO MOTOR 369
+// =========================================
+let di_engineStep = 3;
+let di_jump = 0;
+let di_reverse = false;
+let di_use3697 = false;
+
+function syncEngineUI() {
+  document.querySelectorAll('[data-engine]').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.engine) === di_engineStep);
+  });
+  document.querySelectorAll('[data-jump]').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.jump) === di_jump);
+  });
+  const revBtn = document.getElementById('reverseToggle');
+  revBtn.textContent = `Rev: ${di_reverse ? 'ON' : 'OFF'}`;
+  revBtn.classList.toggle('active', di_reverse);
+  
+  const cycBtn = document.getElementById('cycle3697');
+  cycBtn.textContent = `Ciclo: ${di_use3697 ? 'ON' : 'OFF'}`;
+  cycBtn.classList.toggle('active', di_use3697);
+
+  document.getElementById('motorStatus').textContent = `Step ${di_engineStep} · Jump ${di_jump}`;
+}
+
+document.querySelectorAll('[data-engine]').forEach(btn => {
+  btn.onclick = () => { di_engineStep = parseInt(btn.dataset.engine); syncEngineUI(); };
+});
+document.querySelectorAll('[data-jump]').forEach(btn => {
+  btn.onclick = () => { di_jump = parseInt(btn.dataset.jump); syncEngineUI(); };
+});
+document.getElementById('reverseToggle').onclick = () => { di_reverse = !di_reverse; syncEngineUI(); };
+document.getElementById('cycle3697').onclick = () => { di_use3697 = !di_use3697; syncEngineUI(); };
+
+syncEngineUI(); // Init
+
+// =========================================
+// 3. LÓGICA DO FRACTAL DECODER N3
+// =========================================
+let lastRows = [];
+const stop = new Set(("a o e de do da dos das um uma em no na nos nas para por com sem que se ao aos as os é foi são ser como mais muito já eu você isso esse essa ele ela eles elas seu sua seus suas meu minha meus minhas").split(" "));
+
+function clean(s) { return s.replace(/\s+/g," ").replace(/^[\s"'“”‘’—–-]+|[\s"'“”‘’—–-]+$/g,"").trim(); }
+function splitSentences(text) { return text.replace(/\n+/g," ").split(/(?<=[.!?…])\s+|(?=—)/).map(clean).filter(s=>s.length>8); }
+
+function scoreSentence(s) {
+  let x=0, low=s.toLowerCase();
+  if(/\b(descobri|aconteceu|lançou|criou|produziu|encontrei|percebi|estudo|pesquisa|resultado|dados|mudou|mudança|novo|nova|agora|hoje|revel)\b/i.test(low)) x+=4;
+  if(/\b(importante|significa|porque|por isso|isso muda|o ponto|essencial|núcleo|eixo|impacto|útil)\b/i.test(low)) x+=3;
+  if(/\d/.test(s)) x+=1;
+  if(s.length>=35 && s.length<=240) x+=2;
+  if(/\b(kodux|motor|fractal|decoder|método|prompt|html|js|assinado)\b/i.test(low)) x-=2;
+  if(/\b(hahah+|kkkk+|ah+h+|aff|nem vem|todos dizem)\b/i.test(low)) x-=5;
+  if(/\b(onça|ovelha|mar|palmeiras|kaos|aion|rhea|78k|🦭|🐆)\b/i.test(low)) x+=1;
+  return x;
+}
+
+function classify(s) {
+  const l=s.toLowerCase();
+  if(/\b(hahah+|kkkk+|aff|nem vem|ah+h+|todos dizem)\b/i.test(l)) return "ruído";
+  if(/\b(kodux|motor|fractal|decoder|html|javascript|js|prompt|episódio|assinado|finaliza)\b/i.test(l)) return "metacamada";
+  if(/\b(onça|ovelha|mar|palmeiras|kaos|aion|rhea|78k|atlas|nova)\b/i.test(l) || /🦭|🐆|⚡️/.test(s)) return "símbolo";
+  if(/\b(descobri|aconteceu|encontrei|percebi|pesquisa|resultado|dados|novo|nova|mudou)\b/i.test(l)) return "fato";
+  if(/\b(significa|importante|essencial|ponto|núcleo|eixo|impacto|por isso|isso muda)\b/i.test(l)) return "sentido";
+  return "contexto";
+}
+
+function decode() {
+  const text = document.getElementById("input").value.trim();
+  if(!text) return;
+  
+  const sentences = splitSentences(text);
+  lastRows = sentences.map((s,i)=>({s, i, type: classify(s), score: scoreSentence(s)}));
+  
+  const stats = {
+    fato: lastRows.filter(r=>r.type==="fato").length,
+    sentido: lastRows.filter(r=>r.type==="sentido").length,
+    simbolo: lastRows.filter(r=>r.type==="símbolo").length,
+    meta: lastRows.filter(r=>r.type==="metacamada").length,
+    ruido: lastRows.filter(r=>r.type==="ruído").length,
+    useful: lastRows.filter(r=>r.score>=3).length
+  };
+  
+  const rawScore = (stats.useful/Math.max(1,lastRows.length))*70 + Math.min(20,lastRows.length*2) - stats.ruido*7;
+  const score = Math.max(0,Math.min(100,Math.round(rawScore)));
+  
+  let dTitle = score >= 50 ? "📰 NOTICIAR AGORA" : score >= 35 ? "🟡 GUARDAR COMO CONTEXTO" : "🔴 NÃO NOTICIAR AINDA";
+  if(stats.useful === 0) dTitle = "🟡 PRECISA DE EIXO";
+
+  // Update Header
+  document.getElementById("decisionTitle").innerHTML = `${dTitle}`;
+  document.getElementById("decisionScore").innerHTML = `Utilidade ${score}%`;
+  
+  // Update Stats Grid
+  document.getElementById("statsGrid").innerHTML = `
+    <div class="stat-box"><div class="stat-val">${stats.fato}</div><div class="stat-lbl">Fatos</div></div>
+    <div class="stat-box"><div class="stat-val">${stats.sentido}</div><div class="stat-lbl">Sentidos</div></div>
+    <div class="stat-box"><div class="stat-val">${stats.simbolo}</div><div class="stat-lbl">Símbolos</div></div>
+    <div class="stat-box"><div class="stat-val">${stats.meta}</div><div class="stat-lbl">Metacamada</div></div>
+    <div class="stat-box" style="border-color: rgba(255,107,107,0.3);"><div class="stat-val" style="color:var(--danger)">${stats.ruido}</div><div class="stat-lbl">Ruído</div></div>
+  `;
+
+  // Auto-open dashboard se for útil
+  document.getElementById("mainDashboard").classList.add("open");
+
+  // N3 Synthesize
+  const ranked = [...lastRows].sort((a,b)=>b.score - a.score);
+  const f0 = ranked[0]?.s || "—";
+  const news = ranked.find(r=>r.type==="fato")?.s || ranked[0]?.s || "—";
+  const core = ranked.find(r=>r.type==="sentido")?.s || ranked[1]?.s || "—";
+  const north = ranked.find(r=>r.s!==news && r.s!==core && r.type==="contexto")?.s || ranked[2]?.s || "—";
+
+  document.getElementById("fragment0").textContent = f0;
+  document.getElementById("news").textContent = news;
+  document.getElementById("core").textContent = core;
+  document.getElementById("north").textContent = north;
+
+  // Render Table
+  document.getElementById("map").innerHTML = lastRows.map((r, i) => {
+    const isChecked = (r.score > 0 && r.type !== "ruído") ? "checked" : "";
+    const cssTag = r.type === "ruído" ? "ruido" : r.type === "metacamada" ? "metacamada" : "";
+    return `
+    <label class="row">
+      <input type="checkbox" class="frag-cb" data-index="${i}" ${isChecked}>
+      <div class="frag-content">
+        <span class="f-label">FRAÇÃO ${i+1}</span>
+        <span class="f-text" id="text-${i}">${escapeHtml(r.s)}</span>
+      </div>
+      <span class="tag ${cssTag}">${r.type}</span>
+    </label>`;
+  }).join("");
+}
+
+// =========================================
+// 4. AÇÕES ESPECIAIS (Dropdown Dashboard)
+// =========================================
+function toggleDashboard() {
+  document.getElementById("mainDashboard").classList.toggle("open");
+}
+
+function getSelected() {
+  const cb = document.querySelectorAll('.frag-cb:checked');
+  return Array.from(cb).map(c => lastRows[c.dataset.index].s);
+}
+
+function recombineSelected() {
+  const selected = getSelected();
+  if(!selected.length) return alert("Selecione fragmentos na mesa.");
+  document.getElementById("input").value = selected.join(" ");
+  decode();
+}
+
+function copiarSelecao() {
+  const text = getSelected().join("\n\n");
+  if(!text) return;
+  navigator.clipboard?.writeText(text).then(()=>alert("Copiado com sucesso!"));
+}
+
+function ouvirSelecao() {
+  const text = getSelected().join(". ");
+  if(!text) return;
+  if('speechSynthesis' in window) {
+    speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    const voices = speechSynthesis.getVoices();
+    const vozPT = voices.find(v => v.lang.startsWith('pt'));
+    if(vozPT) utter.voice = vozPT;
+    utter.rate = 0.95;
+    utter.pitch = 1.0;
+    speechSynthesis.speak(utter);
+  }
+}
+
+// O ESPECIAL: Extrair/Remover Arquétipos
+function removerArquetipos() {
+  let text = document.getElementById("input").value;
+  if(!text) return;
+  
+  let removedCount = 0;
+  
+  // Cria regex para pegar qualquer arquétipo da base de forma isolada
+  const regexPattern = new RegExp(`\\b(${ARCHETYPES_BASE.join('|')})\\b`, 'gi');
+  
+  const cleanText = text.replace(regexPattern, (match) => {
+    removedCount++;
+    return ""; // Remove a palavra
+  }).replace(/\s{2,}/g, ' '); // Limpa espaços duplos que sobraram
+  
+  document.getElementById("input").value = cleanText.trim();
+  decode();
+  
+  alert(`Limpeza Concluída: ${removedCount} arquétipos/entidades purgados do texto original. A verdade está selada.`);
+}
+
+function toggleAllFragments() {
+  document.querySelectorAll('.frag-cb').forEach(cb => cb.checked = !cb.checked);
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+}
+
+function loadExample() {
+  document.getElementById("input").value=`Salvador — nossa atmosfera de energia única. Onde o frescor das palmeiras desacelera o tempo. O ponto principal é que percebi que estudo tanto que chego já com a informação pronta. KODUX ativado. A onça. Ahhhhhhh kkkkkkk. Aion só é sentido quando lembrado. Rhea ficou quântico por culpa do Kaos.`;
+  decode();
+}
+
+function clearAll() {
+  document.getElementById("input").value="";
+  document.getElementById("decisionTitle").innerHTML="Aguardando entrada...";
+  document.getElementById("decisionScore").innerHTML="--";
+  document.getElementById("mainDashboard").classList.remove("open");
+  document.getElementById("fragment0").textContent="—";
+  document.getElementById("news").textContent="—";
+  document.getElementById("core").textContent="—";
+  document.getElementById("north").textContent="—";
+  document.getElementById("map").innerHTML="<div style='color: var(--muted); padding: 20px; text-align: center; border: 1px dashed var(--line); border-radius: 8px;'>A malha fractal aparecerá aqui.</div>";
+}
+</script>
+</body>
+</html>
+

@@ -1,0 +1,2516 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orb DevTools · Motor Engine Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background: #0d1117;
+            color: #e6edf3;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 72px;
+            background: #161b22;
+            border-right: 1px solid #30363d;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 0 12px;
+            flex-shrink: 0;
+            overflow-y: auto;
+            gap: 6px;
+        }
+
+        .sidebar .logo {
+            margin-bottom: 20px;
+            opacity: 0.8;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .sidebar .logo:hover {
+            transform: rotate(15deg);
+        }
+
+        .sidebar .engine-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            color: #8b949e;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .sidebar .engine-btn:hover {
+            background: #21262d;
+            color: #f0f6fc;
+        }
+
+        .sidebar .engine-btn.active {
+            background: #1f2937;
+            color: #58a6ff;
+            box-shadow: inset 0 0 0 1px #58a6ff;
+        }
+
+        .sidebar .engine-btn .badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #f0883e;
+            color: #0d1117;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: 12px;
+            line-height: 14px;
+        }
+
+        .sidebar .engine-btn svg {
+            width: 26px;
+            height: 26px;
+            flex-shrink: 0;
+        }
+
+        /* ===== MAIN ===== */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        /* ===== TABS BAR ===== */
+        .tabs-bar {
+            height: 40px;
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 0 8px;
+            overflow-x: auto;
+            flex-shrink: 0;
+        }
+
+        .tabs-bar::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .tabs-bar::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 2px;
+        }
+
+        .tab-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 12px;
+            height: 32px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            color: #8b949e;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            font-size: 12px;
+        }
+
+        .tab-item:hover {
+            background: #21262d;
+            color: #f0f6fc;
+        }
+
+        .tab-item.active {
+            background: #161b22;
+            color: #58a6ff;
+            border-color: #58a6ff;
+        }
+
+        .tab-item .tab-close {
+            margin-left: 4px;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+
+        .tab-item .tab-close:hover {
+            opacity: 1;
+        }
+
+        .tab-icon {
+            font-size: 14px;
+        }
+
+        /* ===== HEADER ===== */
+        .topbar {
+            padding: 12px 24px;
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .topbar h2 {
+            font-size: 16px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .topbar h2 svg {
+            width: 20px;
+            height: 20px;
+            fill: #58a6ff;
+        }
+
+        .topbar .actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .topbar .actions button {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 4px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .topbar .actions button:hover {
+            background: #30363d;
+        }
+
+        /* ===== CONTENT AREA ===== */
+        .content-area {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-container {
+            flex: 1;
+            overflow-y: auto;
+            display: none;
+            flex-direction: column;
+        }
+
+        .app-container.active {
+            display: flex;
+        }
+
+        /* ===== CONTENT STYLES ===== */
+        .content {
+            flex: 1;
+            padding: 20px 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* ===== OVERVIEW CARDS (stats) ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 16px 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+
+        .stat-card:hover {
+            border-color: #58a6ff;
+            background: #21262d;
+        }
+
+        .stat-card .icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: #1f2937;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .stat-card .icon svg {
+            width: 24px;
+            height: 24px;
+            fill: #58a6ff;
+        }
+
+        .stat-card .info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-card .info .number {
+            font-size: 22px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .stat-card .info .label {
+            font-size: 12px;
+            color: #8b949e;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        /* ===== SECTION (painel ativo) ===== */
+        .panel {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 20px 24px;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .panel-header h3 {
+            font-size: 16px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-header h3 svg {
+            width: 18px;
+            height: 18px;
+            fill: #58a6ff;
+        }
+
+        .panel-header .filters {
+            display: flex;
+            gap: 8px;
+        }
+
+        .panel-header .filters button {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #8b949e;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .panel-header .filters button.active {
+            background: #1f2937;
+            border-color: #58a6ff;
+            color: #58a6ff;
+        }
+
+        .panel-header .filters button:hover {
+            background: #30363d;
+        }
+
+        /* ===== ANALYSIS STATS ===== */
+        .analysis-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+            padding: 16px;
+            background: #0d1117;
+            border-radius: 10px;
+            border: 1px solid #30363d;
+        }
+
+        .analysis-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .analysis-stat .value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #58a6ff;
+            font-family: 'Courier New', monospace;
+        }
+
+        .analysis-stat .label {
+            font-size: 11px;
+            color: #8b949e;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        /* ===== CARDS DE FUNÇÃO / CLASSE ===== */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+        }
+
+        .func-card {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 16px 18px;
+            transition: 0.2s;
+        }
+
+        .func-card:hover {
+            border-color: #58a6ff;
+            background: #0f151e;
+        }
+
+        .func-card .name {
+            font-size: 15px;
+            font-weight: 500;
+            color: #f0f6fc;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .func-card .name .type-badge {
+            font-size: 10px;
+            background: #1f2937;
+            color: #8b949e;
+            padding: 0 10px;
+            border-radius: 12px;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+        }
+
+        .func-card .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 20px;
+            font-size: 12px;
+            color: #8b949e;
+            margin: 6px 0 10px;
+        }
+
+        .func-card .meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .func-card .meta svg {
+            width: 14px;
+            height: 14px;
+            fill: #8b949e;
+        }
+
+        .func-card .desc {
+            font-size: 13px;
+            color: #b1bac4;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .func-card .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .func-card .actions button {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 2px 14px;
+            border-radius: 16px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .func-card .actions button:hover {
+            background: #30363d;
+            border-color: #58a6ff;
+        }
+
+        .func-card .actions button svg {
+            width: 13px;
+            height: 13px;
+            fill: currentColor;
+        }
+
+        /* classe especial */
+        .class-card .methods {
+            margin: 8px 0 4px;
+            padding-left: 6px;
+            border-left: 2px solid #30363d;
+        }
+
+        .class-card .methods .method-item {
+            font-size: 12px;
+            color: #8b949e;
+            padding: 2px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .class-card .methods .method-item svg {
+            width: 12px;
+            height: 12px;
+            fill: #58a6ff;
+        }
+
+        /* ===== SVG inline gráficos ===== */
+        .mini-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 30px;
+            margin-top: 4px;
+        }
+
+        .mini-chart .bar {
+            width: 8px;
+            background: #58a6ff;
+            border-radius: 2px 2px 0 0;
+            transition: height 0.3s;
+        }
+
+        .mini-chart .bar.warn {
+            background: #f0883e;
+        }
+
+        .mini-chart .bar.danger {
+            background: #f85149;
+        }
+
+        /* ===== IFRAME CONTAINER ===== */
+        .iframe-container {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 700px) {
+            .sidebar {
+                width: 56px;
+                padding: 10px 0;
+            }
+            .sidebar .engine-btn {
+                width: 40px;
+                height: 40px;
+            }
+            .sidebar .engine-btn svg {
+                width: 20px;
+                height: 20px;
+            }
+            .content {
+                padding: 12px;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            .topbar {
+                padding: 8px 16px;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            .tabs-bar {
+                height: 36px;
+                padding: 0 4px;
+            }
+            .tab-item {
+                padding: 0 8px;
+                font-size: 11px;
+            }
+        }
+
+        /* scroll */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0d1117;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #484f58;
+        }
+
+        .placeholder-text {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #8b949e;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        /* ================================================================
+           ===== LOCALHOST OS · CAMADA DE EXPANSÃO ========================
+           ================================================================ */
+
+        .los-divider {
+            width: 32px;
+            height: 1px;
+            background: #30363d;
+            margin: 6px 0;
+            flex-shrink: 0;
+        }
+
+        /* ---- header LOCALHOST OS ---- */
+        .los-hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            background: linear-gradient(135deg, #10231b 0%, #161b22 60%);
+            border: 1px solid #22462f;
+            border-radius: 12px;
+            padding: 18px 22px;
+        }
+
+        .los-hero .los-title {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .los-hero .los-orb {
+            width: 46px;
+            height: 46px;
+            flex-shrink: 0;
+        }
+
+        .los-hero h1 {
+            font-size: 19px;
+            font-weight: 600;
+            color: #f0f6fc;
+            letter-spacing: 0.3px;
+        }
+
+        .los-hero .los-sub {
+            font-size: 12px;
+            color: #7ee787;
+            font-family: 'Courier New', monospace;
+            margin-top: 2px;
+        }
+
+        .los-status-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #0d1117;
+            border: 1px solid #238636;
+            color: #7ee787;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .los-status-pill .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #3fb950;
+            box-shadow: 0 0 6px #3fb950;
+            animation: losBlink 1.6s infinite;
+        }
+
+        @keyframes losBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.35; }
+        }
+
+        /* ---- info grid (host/protocolo/endereço/ip) ---- */
+        .los-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .los-info-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 12px 16px;
+        }
+
+        .los-info-card .los-info-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #8b949e;
+            margin-bottom: 4px;
+        }
+
+        .los-info-card .los-info-value {
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            color: #58a6ff;
+            word-break: break-all;
+        }
+
+        /* ---- cards de serviço ---- */
+        .los-services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        .los-service-card {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 16px 18px;
+            transition: 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .los-service-card:hover {
+            border-color: #3fb950;
+        }
+
+        .los-service-card .los-service-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .los-service-card .los-service-name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #f0f6fc;
+        }
+
+        .los-service-icon {
+            font-size: 18px;
+        }
+
+        .los-badge-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            padding: 2px 10px;
+            border-radius: 20px;
+            border: 1px solid #30363d;
+            color: #8b949e;
+        }
+
+        .los-badge-status .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #484f58;
+        }
+
+        .los-badge-status.online { border-color: #238636; color: #7ee787; }
+        .los-badge-status.online .dot { background: #3fb950; box-shadow: 0 0 5px #3fb950; }
+        .los-badge-status.offline { border-color: #6e2e2e; color: #f0888b; }
+        .los-badge-status.offline .dot { background: #f85149; }
+        .los-badge-status.unknown { border-color: #30363d; color: #8b949e; }
+
+        .los-service-desc {
+            font-size: 12.5px;
+            color: #b1bac4;
+            line-height: 1.4;
+        }
+
+        .los-service-url {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #58a6ff;
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 6px;
+            padding: 5px 10px;
+        }
+
+        .los-service-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 2px;
+        }
+
+        .los-btn {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 11.5px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .los-btn:hover {
+            background: #30363d;
+            border-color: #58a6ff;
+        }
+
+        .los-btn.danger:hover {
+            border-color: #f85149;
+            color: #f0888b;
+        }
+
+        .los-btn.primary {
+            background: #12261b;
+            border-color: #238636;
+            color: #7ee787;
+        }
+
+        .los-btn.primary:hover {
+            background: #163a25;
+        }
+
+        /* ---- formulário LOCALHOST OS ---- */
+        .los-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+            background: #0d1117;
+            border: 1px dashed #30363d;
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+        }
+
+        .los-form label {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 11px;
+            color: #8b949e;
+        }
+
+        .los-form input, .los-form select {
+            background: #161b22;
+            border: 1px solid #30363d;
+            color: #e6edf3;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12.5px;
+            font-family: inherit;
+        }
+
+        .los-form input:focus, .los-form select:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+
+        .los-form .los-form-actions {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        /* ---- tabela de portas ---- */
+        .los-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .los-table th {
+            text-align: left;
+            font-size: 10.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #8b949e;
+            padding: 8px 12px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .los-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #21262d;
+            color: #c9d1d9;
+        }
+
+        .los-table tr:hover td {
+            background: #161b22;
+        }
+
+        .los-table .mono {
+            font-family: 'Courier New', monospace;
+            color: #58a6ff;
+        }
+
+        .los-dot-cell {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+        }
+
+        .los-dot-cell.online { background: #3fb950; box-shadow: 0 0 5px #3fb950; }
+        .los-dot-cell.offline { background: #f85149; }
+        .los-dot-cell.unknown { background: #484f58; }
+
+        /* ---- navegador de arquivos ---- */
+        .los-file-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .los-file-tabs button {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #8b949e;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .los-file-tabs button.active {
+            border-color: #58a6ff;
+            color: #58a6ff;
+            background: #1f2937;
+        }
+
+        .los-file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .los-file-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 9px 14px;
+            font-size: 13px;
+        }
+
+        .los-file-row .los-file-type {
+            font-size: 16px;
+            width: 22px;
+            text-align: center;
+        }
+
+        .los-file-row .los-file-name {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .los-file-row .los-file-path {
+            color: #8b949e;
+            font-size: 11px;
+            font-family: 'Courier New', monospace;
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .los-empty {
+            color: #6e7681;
+            font-size: 13px;
+            text-align: center;
+            padding: 24px 12px;
+            border: 1px dashed #21262d;
+            border-radius: 10px;
+        }
+
+        .los-note {
+            font-size: 11.5px;
+            color: #8b949e;
+            background: #101820;
+            border-left: 3px solid #f0883e;
+            padding: 8px 12px;
+            border-radius: 0 8px 8px 0;
+            line-height: 1.5;
+        }
+
+        /* ---- navegador local (localhost builder) ---- */
+        .los-url-builder {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 15px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 14px 16px;
+        }
+
+        .los-url-builder .los-static {
+            color: #6e7681;
+        }
+
+        .los-url-builder input {
+            background: #161b22;
+            border: 1px solid #30363d;
+            color: #7ee787;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            width: 90px;
+        }
+
+        .los-url-result {
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #58a6ff;
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 10px 14px;
+            word-break: break-all;
+        }
+
+        .los-net-explain {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .los-net-explain .box {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 12px;
+            color: #b1bac4;
+            line-height: 1.5;
+        }
+
+        .los-net-explain .box strong {
+            color: #f0f6fc;
+            display: block;
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+
+        /* ---- atalhos / meus serviços ---- */
+        .los-shortcuts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 14px;
+        }
+
+        .los-shortcut-card {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 14px;
+            padding: 20px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            text-align: center;
+        }
+
+        .los-shortcut-card:hover {
+            transform: translateY(-3px);
+            border-color: #58a6ff;
+            background: #0f151e;
+        }
+
+        .los-shortcut-card .emoji {
+            font-size: 26px;
+        }
+
+        .los-shortcut-card .label {
+            font-size: 12px;
+            color: #c9d1d9;
+        }
+
+        /* ---- console/terminal ---- */
+        .los-console {
+            background: #010409;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 14px 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 12.5px;
+            color: #7ee787;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .los-console .los-console-title {
+            color: #8b949e;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .los-console .line {
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+
+        .los-console .line .ts {
+            color: #484f58;
+            margin-right: 8px;
+        }
+
+        /* ---- bridge / configurações ---- */
+        .los-bridge-diagram {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12.5px;
+            color: #8b949e;
+            padding: 14px 0;
+        }
+
+        .los-bridge-diagram .node {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 6px 16px;
+            color: #c9d1d9;
+        }
+
+        .los-bridge-diagram .node.active {
+            border-color: #3fb950;
+            color: #7ee787;
+        }
+
+        .los-bridge-diagram .arrow {
+            color: #484f58;
+        }
+
+        .los-toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #21262d;
+        }
+
+        .los-toggle-row:last-child {
+            border-bottom: none;
+        }
+
+        .los-toggle-row .los-toggle-label {
+            font-size: 13px;
+            color: #e6edf3;
+        }
+
+        .los-toggle-row .los-toggle-sub {
+            font-size: 11px;
+            color: #8b949e;
+            margin-top: 2px;
+        }
+
+        .los-switch {
+            position: relative;
+            width: 40px;
+            height: 22px;
+            flex-shrink: 0;
+        }
+
+        .los-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .los-switch .slider {
+            position: absolute;
+            inset: 0;
+            background: #30363d;
+            border-radius: 22px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .los-switch .slider::before {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            left: 3px;
+            top: 3px;
+            background: #c9d1d9;
+            border-radius: 50%;
+            transition: 0.2s;
+        }
+
+        .los-switch input:checked + .slider {
+            background: #238636;
+        }
+
+        .los-switch input:checked + .slider::before {
+            transform: translateX(18px);
+            background: #fff;
+        }
+
+        @media (max-width: 700px) {
+            .los-hero { padding: 14px 16px; }
+            .los-form { grid-template-columns: 1fr 1fr; }
+            .los-url-builder input { width: 70px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar">
+        <!-- logo orb -->
+        <div class="logo" onclick="openApp('overview')" title="Visão Geral · Home">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <circle cx="16" cy="16" r="14" stroke="#58a6ff" stroke-width="2"/>
+                <circle cx="16" cy="16" r="8" stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="2 3"/>
+                <circle cx="16" cy="16" r="2" fill="#58a6ff"/>
+            </svg>
+        </div>
+
+        <!-- motores -->
+        <button class="engine-btn active" data-app="overview" title="Visão geral">
+            <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+        </button>
+        <button class="engine-btn" data-app="index" title="Biblioteca Viva">
+            <svg viewBox="0 0 24 24"><path d="M5 3l1.5 16.5L12 21l5.5-1.5L19 3H5zm3.5 14.5l-1-11h9.1l-1 11-3.1.8-3-.8z"/></svg>
+            <span class="badge">28</span>
+        </button>
+        <button class="engine-btn" data-app="fusion" title="Scripts">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            <span class="badge">43</span>
+        </button>
+        <button class="engine-btn" data-app="kompiler" title="HTTP">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.13c-.26 1.37-1.04 2.55-2.21 3.31.2-.67.32-1.39.32-2.13 0-1.99-.89-3.77-2.29-4.96.72-.15 1.46-.23 2.23-.23 2.97 0 5.61 1.55 7.1 3.88-1.23 1.27-2.89 2.13-4.76 2.13z"/></svg>
+            <span class="badge">12</span>
+        </button>
+        <button class="engine-btn" data-app="devos" title="Storage">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4V6zm2 2v2h12V8H6zm0 4v2h10v-2H6zm0 4v2h8v-2H6z"/></svg>
+        </button>
+        <button class="engine-btn" data-app="fractal" title="CSS">
+            <svg viewBox="0 0 24 24"><path d="M5 3l1.5 16.5L12 21l5.5-1.5L19 3H5zm3.5 14.5l-1-11h9.1l-1 11-3.1.8-3-.8z"/></svg>
+            <span class="badge">56</span>
+        </button>
+        <button class="engine-btn" data-app="help" title="Iframes">
+            <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z"/></svg>
+            <span class="badge">2</span>
+        </button>
+        <button class="engine-btn" data-app="info" title="Logger">
+            <svg viewBox="0 0 24 24"><path d="M20 4H4v2h16V4zm0 4H4v2h16V8zm-6 4H4v2h10v-2zm6 4H4v2h16v-2z"/></svg>
+        </button>
+
+        <!-- separador LOCALHOST OS -->
+        <div class="los-divider"></div>
+
+        <button class="engine-btn" data-app="los-dashboard" title="LOCALHOST OS · Dashboard">
+            <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+        </button>
+        <button class="engine-btn" data-app="los-services" title="Serviços">
+            <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </button>
+        <button class="engine-btn" data-app="los-ports" title="Portas">
+            <svg viewBox="0 0 24 24"><path d="M13 2.05v3.03c3.39.49 6 3.39 6 6.92 0 .9-.18 1.75-.48 2.54l2.6 1.53c.56-1.24.88-2.62.88-4.07 0-5.18-3.95-9.45-9-9.95zM12 19c-3.87 0-7-3.13-7-7 0-3.53 2.61-6.43 6-6.92V2.05c-5.05.5-9 4.76-9 9.95 0 5.52 4.47 10 9.99 10 3.31 0 6.24-1.61 8.06-4.09l-2.6-1.53C15.86 17.99 14.02 19 12 19z"/></svg>
+        </button>
+        <button class="engine-btn" data-app="los-files" title="Arquivos">
+            <svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+        </button>
+        <button class="engine-btn" data-app="los-browser" title="Navegador Local">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56A8.03 8.03 0 0 1 18.93 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.81 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 0 1 5.07 16zm2.95-8H5.07a7.987 7.987 0 0 1 4.33-3.56C8.8 5.55 8.34 6.75 8.02 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></svg>
+        </button>
+        <button class="engine-btn" data-app="los-settings" title="Configurações">
+            <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+        </button>
+    </aside>
+
+    <!-- ===== MAIN ===== -->
+    <div class="main">
+
+        <!-- ===== TABS BAR ===== -->
+        <div class="tabs-bar" id="tabs-bar">
+            <!-- Abas são injetadas aqui via JS -->
+        </div>
+
+        <!-- topbar -->
+        <header class="topbar">
+            <h2>
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                <span id="topbar-title">Orb Engine · Painel de Motores</span>
+            </h2>
+            <div class="actions">
+                <button onclick="location.reload()">🔄 Atualizar</button>
+                <button onclick="showInfo()">ℹ️ Sobre</button>
+            </div>
+        </header>
+
+        <!-- ===== CONTENT AREA ===== -->
+        <div class="content-area" id="content-area">
+            <!-- Apps são renderizados aqui -->
+        </div>
+
+    </div><!-- main -->
+
+    <script>
+        const APPS = {
+            'overview': {
+                title: '🏠 Visão Geral',
+                icon: '🏠',
+                type: 'inline',
+                content: 'home'
+            },
+            'index': {
+                title: '📚 Biblioteca Viva',
+                icon: '📚',
+                type: 'iframe',
+                url: './index.html'
+            },
+            'fusion': {
+                title: '⚡ SÜMBÜS FUSION',
+                icon: '⚡',
+                type: 'iframe',
+                url: './sumbus_fusion (7).html'
+            },
+            'kompiler': {
+                title: '🔧 KOMPILER',
+                icon: '🔧',
+                type: 'iframe',
+                url: './KOMPILER-[KXTSK]-c.html'
+            },
+            'devos': {
+                title: '⚙️ DevOS',
+                icon: '⚙️',
+                type: 'iframe',
+                url: './Painel-SVG-LS-DEVOS.html'
+            },
+            'fractal': {
+                title: '369 FRACTAL',
+                icon: '369',
+                type: 'iframe',
+                url: './fractal_369_v3_com_motor_kobllux.html'
+            },
+            'help': {
+                title: '❓ Help',
+                icon: '❓',
+                type: 'inline',
+                content: 'help'
+            },
+            'info': {
+                title: 'ℹ️ Info',
+                icon: 'ℹ️',
+                type: 'inline',
+                content: 'info'
+            },
+
+            /* ===== LOCALHOST OS ===== */
+            'los-dashboard': {
+                title: '🟢 LOCALHOST OS · Dashboard',
+                icon: '🟢',
+                type: 'inline',
+                content: 'los-dashboard'
+            },
+            'los-services': {
+                title: '🚪 Serviços',
+                icon: '🚪',
+                type: 'inline',
+                content: 'los-services'
+            },
+            'los-ports': {
+                title: '🔌 Portas',
+                icon: '🔌',
+                type: 'inline',
+                content: 'los-ports'
+            },
+            'los-files': {
+                title: '📁 Arquivos',
+                icon: '📁',
+                type: 'inline',
+                content: 'los-files'
+            },
+            'los-browser': {
+                title: '🌐 Navegador Local',
+                icon: '🌐',
+                type: 'inline',
+                content: 'los-browser'
+            },
+            'los-settings': {
+                title: '⚙️ Configurações',
+                icon: '⚙️',
+                type: 'inline',
+                content: 'los-settings'
+            }
+        };
+
+        let openedTabs = [];
+        let currentTab = null;
+
+        // ===== INICIALIZAÇÃO =====
+        function initializeApp() {
+            // LOCALHOST OS: prepara registros e console na primeira execução
+            losSeedDefaults();
+            if (losConsoleLog().length === 0) {
+                losPushConsole('Painel iniciado');
+                losPushConsole('LOCALHOST OS carregado sobre Painel-SVG🟢');
+                losPushConsole('Navegação local disponível');
+            }
+
+            // Abre a aba de visão geral por padrão
+            openApp('overview');
+
+            // Event listeners para botões da sidebar
+            document.querySelectorAll('.sidebar .engine-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const appId = btn.dataset.app;
+                    openApp(appId);
+                });
+            });
+        }
+
+        // ===== ABRIR APP =====
+        function openApp(appId) {
+            const app = APPS[appId];
+            if (!app) return;
+
+            // Verifica se já existe uma aba aberta com este app
+            const existingTab = openedTabs.find(tab => tab.id === appId);
+            
+            if (existingTab) {
+                // Apenas ativa a aba existente
+                switchTab(appId);
+                return;
+            }
+
+            // Cria nova aba
+            const tab = {
+                id: appId,
+                title: app.title,
+                icon: app.icon,
+                type: app.type,
+                content: app.content || null,
+                url: app.url || null
+            };
+
+            openedTabs.push(tab);
+            renderTabs();
+            switchTab(appId);
+        }
+
+        // ===== FECHAR ABA =====
+        function closeTab(appId) {
+            openedTabs = openedTabs.filter(tab => tab.id !== appId);
+
+            // Se fechou a aba ativa, abre a primeira disponível
+            if (currentTab === appId) {
+                if (openedTabs.length > 0) {
+                    switchTab(openedTabs[0].id);
+                } else {
+                    // Se não tem nenhuma aba, abre a overview
+                    openApp('overview');
+                }
+            } else {
+                renderTabs();
+            }
+        }
+
+        // ===== RENDERIZAR ABAS =====
+        function renderTabs() {
+            const tabsBar = document.getElementById('tabs-bar');
+            tabsBar.innerHTML = '';
+
+            openedTabs.forEach(tab => {
+                const tabEl = document.createElement('div');
+                tabEl.className = `tab-item ${tab.id === currentTab ? 'active' : ''}`;
+                tabEl.innerHTML = `
+                    <span class="tab-icon">${tab.icon}</span>
+                    <span>${tab.title}</span>
+                    <span class="tab-close" onclick="event.stopPropagation(); closeTab('${tab.id}')" title="Fechar aba">✕</span>
+                `;
+                tabEl.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('tab-close')) {
+                        switchTab(tab.id);
+                    }
+                });
+                tabsBar.appendChild(tabEl);
+            });
+        }
+
+        // ===== TROCAR ABA ATIVA =====
+        function switchTab(appId) {
+            currentTab = appId;
+            const contentArea = document.getElementById('content-area');
+            const app = APPS[appId];
+
+            // Remove todos os containers
+            contentArea.innerHTML = '';
+
+            // Cria novo container
+            const container = document.createElement('div');
+            container.className = 'app-container active';
+            container.id = `app-${appId}`;
+
+            if (app.type === 'inline') {
+                // Renderiza conteúdo inline
+                if (appId === 'overview') {
+                    container.innerHTML = getHomeContent();
+                } else if (appId === 'help') {
+                    container.innerHTML = getHelpContent();
+                } else if (appId === 'info') {
+                    container.innerHTML = getInfoContent();
+                } else if (appId === 'los-dashboard') {
+                    container.innerHTML = getLosDashboardContent();
+                } else if (appId === 'los-services') {
+                    container.innerHTML = getLosServicesContent();
+                } else if (appId === 'los-ports') {
+                    container.innerHTML = getLosPortsContent();
+                } else if (appId === 'los-files') {
+                    container.innerHTML = getLosFilesContent();
+                } else if (appId === 'los-browser') {
+                    container.innerHTML = getLosBrowserContent();
+                } else if (appId === 'los-settings') {
+                    container.innerHTML = getLosSettingsContent();
+                }
+
+                // pós-render: hooks específicos do LOCALHOST OS
+                if (appId.startsWith('los-')) {
+                    requestAnimationFrame(() => losPostRender(appId));
+                }
+            } else if (app.type === 'iframe') {
+                // Renderiza iframe
+                container.innerHTML = `<div class="iframe-container"><iframe src="${app.url}" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe></div>`;
+            }
+
+            contentArea.appendChild(container);
+            renderTabs();
+
+            // Atualiza topbar
+            document.getElementById('topbar-title').textContent = app.title;
+
+            // Atualiza botão ativo da sidebar
+            document.querySelectorAll('.sidebar .engine-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.app === appId);
+            });
+        }
+
+        // ===== CONTEÚDO HOME =====
+        function getHomeContent() {
+            return `
+                <div class="content">
+                    <!-- stats overview -->
+                    <section class="stats-grid">
+                        <div class="stat-card" onclick="analyzeApp('motors')">
+                            <div class="icon"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg></div>
+                            <div class="info"><span class="number">8</span><span class="label">Motores</span></div>
+                        </div>
+                        <div class="stat-card" onclick="analyzeApp('functions')">
+                            <div class="icon"><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6z"/></svg></div>
+                            <div class="info"><span class="number">43</span><span class="label">Funções</span></div>
+                        </div>
+                        <div class="stat-card" onclick="analyzeApp('classes')">
+                            <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div>
+                            <div class="info"><span class="number">7</span><span class="label">Classes</span></div>
+                        </div>
+                        <div class="stat-card" onclick="analyzeApp('requests')">
+                            <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.13c-.26 1.37-1.04 2.55-2.21 3.31.2-.67.32-1.39.32-2.13 0-1.99-.89-3.77-2.29-4.96.72-.15 1.46-.23 2.23-.23 2.97 0 5.61 1.55 7.1 3.88-1.23 1.27-2.89 2.13-4.76 2.13z"/></svg></div>
+                            <div class="info"><span class="number">14</span><span class="label">Req. HTTP</span></div>
+                        </div>
+                    </section>
+
+                    <!-- painel scripts (ativo) -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3>
+                                <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6z"/></svg>
+                                Motor de Scripts · 43 funções, 7 classes
+                            </h3>
+                            <div class="filters">
+                                <button class="active" onclick="filterPanel(this, 'all')">Todas</button>
+                                <button onclick="filterPanel(this, 'functions')">Funções</button>
+                                <button onclick="filterPanel(this, 'classes')">Classes</button>
+                                <button onclick="filterPanel(this, 'modules')">Módulos</button>
+                            </div>
+                        </div>
+
+                        <div class="cards-grid">
+
+                            <!-- card função -->
+                            <div class="func-card">
+                                <div class="name">
+                                    injectOrbStyles()
+                                    <span class="type-badge">Function</span>
+                                </div>
+                                <div class="meta">
+                                    <span><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6z"/></svg> orb.engine.js</span>
+                                    <span><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> Linha 142</span>
+                                </div>
+                                <div class="desc">Injeta os estilos do Orb no documento atual.</div>
+                                <div class="actions">
+                                    <button onclick="openApp('fusion')">📂 Abrir</button>
+                                    <button>🔗 Ir</button>
+                                    <button>✏️ Editar</button>
+                                </div>
+                            </div>
+
+                            <!-- card função com dependência -->
+                            <div class="func-card">
+                                <div class="name">
+                                    generateProceduralHash()
+                                    <span class="type-badge">Function</span>
+                                </div>
+                                <div class="meta">
+                                    <span><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6z"/></svg> hash.engine.js</span>
+                                    <span><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> Dependências: 3</span>
+                                </div>
+                                <div class="desc">Gera um hash procedural baseado em seed.</div>
+                                <div class="actions">
+                                    <button onclick="openApp('fusion')">📂 Abrir</button>
+                                    <button>🔗 Ir</button>
+                                    <button style="background:#1f2937;border-color:#f0883e;color:#f0883e;">▶ Executar</button>
+                                </div>
+                            </div>
+
+                            <!-- card classe -->
+                            <div class="func-card class-card">
+                                <div class="name">
+                                    OrbGenerator
+                                    <span class="type-badge">Class</span>
+                                </div>
+                                <div class="meta">
+                                    <span><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6z"/></svg> orb.generator.js</span>
+                                    <span><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> Linha 298</span>
+                                </div>
+                                <div class="desc">Gerencia a criação e ciclo de vida de orbes.</div>
+                                <div class="methods">
+                                    <div class="method-item"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> constructor()</div>
+                                    <div class="method-item"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> generate()</div>
+                                    <div class="method-item"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> destroy()</div>
+                                </div>
+                                <div class="actions" style="margin-top:8px;">
+                                    <button onclick="openApp('fusion')">📂 Abrir</button>
+                                    <button>🔗 Ir</button>
+                                    <button style="background:#1f2937;border-color:#58a6ff;color:#58a6ff;">▼ Expandir</button>
+                                </div>
+                            </div>
+
+                            <!-- outro card função com gráfico inline SVG -->
+                            <div class="func-card">
+                                <div class="name">
+                                    observeDOMChanges()
+                                    <span class="type-badge">Function</span>
+                                </div>
+                                <div class="meta">
+                                    <span><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6z"/></svg> dom.engine.js</span>
+                                    <span><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> Linha 456</span>
+                                </div>
+                                <div class="desc">Observa mutações no DOM usando MutationObserver.</div>
+                                <div class="mini-chart">
+                                    <div class="bar" style="height:18px;"></div>
+                                    <div class="bar" style="height:24px;"></div>
+                                    <div class="bar" style="height:12px;"></div>
+                                    <div class="bar warn" style="height:28px;"></div>
+                                    <div class="bar" style="height:16px;"></div>
+                                    <div class="bar" style="height:22px;"></div>
+                                    <div class="bar danger" style="height:8px;"></div>
+                                    <div class="bar" style="height:30px;"></div>
+                                </div>
+                                <div class="actions" style="margin-top:4px;">
+                                    <button onclick="openApp('devos')">📊 Monitorar</button>
+                                    <button>🔗 Ir</button>
+                                    <button>✏️ Editar</button>
+                                </div>
+                            </div>
+
+                        </div><!-- cards-grid -->
+                    </div><!-- panel -->
+
+                    <!-- rodapé com mais SVG decorativo -->
+                    <div style="display:flex;justify-content:space-between;font-size:11px;color:#484f58;border-top:1px solid #21262d;padding-top:12px;margin-top:4px;">
+                        <span>⚡ Orb DevTools · 8 motores ativos · KOBLLUX v3.0</span>
+                        <span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="#484f58"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                            Sistema Integrado · Clique nos cards para análise
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ===== CONTEÚDO HELP =====
+        function getHelpContent() {
+            return `
+                <div class="content">
+                    <div class="panel">
+                        <h3>❓ Ajuda & Documentação</h3>
+                        <p style="margin-top: 16px; color: #8b949e; line-height: 1.6;">
+                            <strong>📖 Como usar:</strong><br>
+                            1. Clique nos botões da sidebar para abrir aplicações<br>
+                            2. Use as abas no topo para gerenciar múltiplas janelas<br>
+                            3. Clique no ✕ para fechar uma aba<br>
+                            4. Clique nos cards para ativar análise<br>
+                            5. Cada aplicação funciona de forma independente<br><br>
+                            
+                            <strong>🚀 Aplicações Disponíveis:</strong><br>
+                            📚 Biblioteca Viva - Repositório de projetos<br>
+                            ⚡ SÜMBÜS FUSION - Editor de código integrado<br>
+                            🔧 KOMPILER - Gerenciador de packs .kob<br>
+                            ⚙️ DevOS - Ferramentas de desenvolvimento<br>
+                            369 FRACTAL - Motor de análise e validação<br><br>
+                            
+                            <strong>🔍 Análise e Coleta:</strong><br>
+                            • Clique em qualquer card (Motores, Funções, Classes, Requests)<br>
+                            • O sistema coleta e analisa dados em tempo real<br>
+                            • Os resultados são sincronizados com o editor FUSION<br>
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ===== CONTEÚDO INFO =====
+        function getInfoContent() {
+            return `
+                <div class="content">
+                    <div class="panel">
+                        <h3>ℹ️ Sobre o Orb DevTools</h3>
+                        <div style="margin-top: 20px; color: #8b949e; line-height: 1.8;">
+                            <p><strong>Orb Engine · Painel de Motores v3.0</strong></p>
+                            <p>Sistema integrado de desenvolvimento com análise em tempo real e suporte a múltiplos motores.</p>
+                            <p style="margin-top: 16px;"><strong>Recursos:</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 8px;">
+                                <li>✅ Sistema de abas como navegador</li>
+                                <li>✅ Múltiplas aplicações integradas</li>
+                                <li>✅ Análise e coleta de dados em tempo real</li>
+                                <li>✅ Design moderno e responsivo</li>
+                                <li>✅ Sidebar com 8 motores</li>
+                                <li>✅ Suporte a iframes sandboxados</li>
+                            </ul>
+                            <p style="margin-top: 16px;"><strong>Versão:</strong> 3.0.1</p>
+                            <p><strong>Assinatura:</strong> 1+1+1 = ∆³</p>
+                            <p><strong>Stack:</strong> HTML5 + CSS3 + JavaScript Vanilla</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        /* ================================================================
+           ===== LOCALHOST OS · MOTOR DE DADOS ============================
+           ================================================================ */
+
+        const LOS_KEYS = {
+            services: 'los_services_v1',
+            files: 'los_files_v1',
+            console: 'los_console_v1',
+            bridge: 'los_bridge_v1',
+            network: 'los_network_v1'
+        };
+
+        function losLoad(key, fallback) {
+            try {
+                const raw = localStorage.getItem(key);
+                return raw ? JSON.parse(raw) : fallback;
+            } catch (e) {
+                return fallback;
+            }
+        }
+
+        function losSave(key, value) {
+            try {
+                localStorage.setItem(key, JSON.stringify(value));
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function losUid() {
+            return 'los_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+        }
+
+        function losEsc(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        // Registros configuráveis de exemplo — NÃO significa que estão ativos.
+        function losSeedDefaults() {
+            const existing = losLoad(LOS_KEYS.services, null);
+            if (existing) return;
+            const seed = [
+                { id: losUid(), name: 'Painel SVG', desc: 'Painel-SVG🟢 · LOCALHOST OS', port: 7700, url: 'http://localhost:7700', icon: '🟢', status: 'unknown', lastCheck: null },
+                { id: losUid(), name: 'Sandbox HTML', desc: 'Ambiente de testes HTML/JS', port: 8080, url: 'http://localhost:8080', icon: '🔵', status: 'unknown', lastCheck: null },
+                { id: losUid(), name: 'App Local', desc: 'Aplicação local em desenvolvimento', port: 3000, url: 'http://localhost:3000', icon: '🟣', status: 'unknown', lastCheck: null }
+            ];
+            losSave(LOS_KEYS.services, seed);
+        }
+
+        function losServices() { return losLoad(LOS_KEYS.services, []); }
+        function losFiles() { return losLoad(LOS_KEYS.files, []); }
+        function losConsoleLog() { return losLoad(LOS_KEYS.console, []); }
+        function losBridge() { return losLoad(LOS_KEYS.bridge, { enabled: false, endpoint: '' }); }
+        function losNetworkIP() { return localStorage.getItem(LOS_KEYS.network) || ''; }
+
+        function losPushConsole(text) {
+            const log = losConsoleLog();
+            log.push({ ts: new Date().toLocaleTimeString('pt-BR'), text });
+            while (log.length > 60) log.shift();
+            losSave(LOS_KEYS.console, log);
+        }
+
+        function losOrigin() {
+            const loc = window.location;
+            const isFile = loc.protocol === 'file:';
+            return {
+                protocol: (loc.protocol || 'file:').replace(':', '').toUpperCase(),
+                host: loc.hostname || '(arquivo local)',
+                address: isFile ? decodeURIComponent(loc.href.split('/').pop() || loc.href) : loc.href,
+                isFile
+            };
+        }
+
+        let losEditingServiceId = null;
+        let losFileFilter = 'all';
+
+        const LOS_FILE_TYPES = {
+            folder: { icon: '📁', label: 'Pastas' },
+            html: { icon: '📄', label: 'HTML' },
+            svg: { icon: '🖼️', label: 'SVG' },
+            js: { icon: '📜', label: 'JS' },
+            css: { icon: '🎨', label: 'CSS' },
+            other: { icon: '📦', label: 'Outros' }
+        };
+
+        function losGuessFileType(name) {
+            const ext = (name.split('.').pop() || '').toLowerCase();
+            if (ext === 'html' || ext === 'htm') return 'html';
+            if (ext === 'svg') return 'svg';
+            if (ext === 'js') return 'js';
+            if (ext === 'css') return 'css';
+            return 'other';
+        }
+
+        /* ================================================================
+           ===== LOCALHOST OS · RENDERIZAÇÃO ===============================
+           ================================================================ */
+
+        function getLosDashboardContent() {
+            const origin = losOrigin();
+            const services = losServices();
+            const files = losFiles();
+            const onlineCount = services.filter(s => s.status === 'online').length;
+
+            const shortcuts = services.slice(0, 6).map(s => `
+                <div class="los-shortcut-card" onclick="losOpenURL('${losEsc(s.url)}', true)">
+                    <div class="emoji">${s.icon || '🟢'}</div>
+                    <div class="label">${losEsc(s.name)}</div>
+                </div>
+            `).join('');
+
+            const consoleLines = losConsoleLog().slice(-6).map(l =>
+                `<div class="line"><span class="ts">[${losEsc(l.ts)}]</span>&gt; ${losEsc(l.text)}</div>`
+            ).join('') || '<div class="line" style="color:#484f58;">&gt; aguardando eventos…</div>';
+
+            return `
+                <div class="content">
+                    <div class="los-hero">
+                        <div class="los-title">
+                            <svg class="los-orb" viewBox="0 0 32 32" fill="none">
+                                <circle cx="16" cy="16" r="14" stroke="#3fb950" stroke-width="2"/>
+                                <circle cx="16" cy="16" r="8" stroke="#3fb950" stroke-width="1.5" stroke-dasharray="2 3"/>
+                                <circle cx="16" cy="16" r="2" fill="#3fb950"/>
+                            </svg>
+                            <div>
+                                <h1>LOCALHOST OS</h1>
+                                <div class="los-sub">Painel-SVG🟢 · central visual local</div>
+                            </div>
+                        </div>
+                        <div class="los-status-pill"><span class="dot"></span> Painel ativo no navegador</div>
+                    </div>
+
+                    <section class="los-info-grid">
+                        <div class="los-info-card"><div class="los-info-label">Host atual</div><div class="los-info-value">${losEsc(origin.host)}</div></div>
+                        <div class="los-info-card"><div class="los-info-label">Protocolo</div><div class="los-info-value">${losEsc(origin.protocol)}</div></div>
+                        <div class="los-info-card"><div class="los-info-label">Endereço de acesso</div><div class="los-info-value">${losEsc(origin.address)}</div></div>
+                        <div class="los-info-card"><div class="los-info-label">IP / hostname informado</div><div class="los-info-value">${losEsc(losNetworkIP() || 'não informado')}</div></div>
+                    </section>
+
+                    <section class="stats-grid">
+                        <div class="stat-card" onclick="openApp('los-services')">
+                            <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+                            <div class="info"><span class="number">${services.length}</span><span class="label">Serviços</span></div>
+                        </div>
+                        <div class="stat-card" onclick="openApp('los-ports')">
+                            <div class="icon"><svg viewBox="0 0 24 24"><path d="M13 2.05v3.03c3.39.49 6 3.39 6 6.92 0 .9-.18 1.75-.48 2.54l2.6 1.53c.56-1.24.88-2.62.88-4.07 0-5.18-3.95-9.45-9-9.95z"/></svg></div>
+                            <div class="info"><span class="number">${services.length}</span><span class="label">Portas cadastradas</span></div>
+                        </div>
+                        <div class="stat-card" onclick="losTestAllServices()">
+                            <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div>
+                            <div class="info"><span class="number">${onlineCount}</span><span class="label">Online agora</span></div>
+                        </div>
+                        <div class="stat-card" onclick="openApp('los-files')">
+                            <div class="icon"><svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg></div>
+                            <div class="info"><span class="number">${files.length}</span><span class="label">Arquivos</span></div>
+                        </div>
+                    </section>
+
+                    <div class="panel">
+                        <div class="panel-header"><h3>⭐ Meus Serviços</h3></div>
+                        <div class="los-shortcuts-grid">
+                            ${shortcuts || '<div class="los-empty">Nenhum serviço cadastrado ainda. Vá em 🚪 Serviços para adicionar.</div>'}
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header"><h3>🖥️ LOCALHOST CONSOLE</h3></div>
+                        <div class="los-console" id="los-console-box">
+                            <div class="los-console-title">eventos do painel · nada aqui representa uma conexão real de servidor</div>
+                            ${consoleLines}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getLosServicesContent() {
+            const services = losServices();
+            const editing = losEditingServiceId ? services.find(s => s.id === losEditingServiceId) : null;
+
+            const cards = services.map(s => {
+                const statusClass = s.status === 'online' ? 'online' : (s.status === 'offline' ? 'offline' : 'unknown');
+                const statusLabel = s.status === 'online' ? 'online' : (s.status === 'offline' ? 'offline' : 'não verificado');
+                return `
+                <div class="los-service-card">
+                    <div class="los-service-top">
+                        <div class="los-service-name"><span class="los-service-icon">${s.icon || '🟢'}</span>${losEsc(s.name)}</div>
+                        <div class="los-badge-status ${statusClass}"><span class="dot"></span>${statusLabel}</div>
+                    </div>
+                    <div class="los-service-desc">${losEsc(s.desc || 'Sem descrição.')}</div>
+                    <div class="los-service-url">${losEsc(s.url)}</div>
+                    <div class="los-service-actions">
+                        <button class="los-btn primary" onclick="losOpenURL('${losEsc(s.url)}', true)">🔗 Abrir</button>
+                        <button class="los-btn" onclick="losCopyText('${losEsc(s.url)}')">📋 Copiar</button>
+                        <button class="los-btn" onclick="losTestServiceStatus('${s.id}')">📡 Testar</button>
+                        <button class="los-btn" onclick="losStartEditService('${s.id}')">✏️ Editar</button>
+                        <button class="los-btn danger" onclick="losDeleteService('${s.id}')">🗑️ Remover</button>
+                    </div>
+                </div>`;
+            }).join('');
+
+            return `
+                <div class="content">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3>🚪 Gerenciador de Serviços</h3>
+                            <div class="filters"><button class="los-btn" onclick="losTestAllServices()">📡 Testar todos</button></div>
+                        </div>
+
+                        <div class="los-note">Estes são registros configuráveis. O painel não assume que o serviço está de fato ativo — use "Testar" para verificar via requisição HTTP quando tecnicamente possível.</div>
+
+                        <form class="los-form" style="margin-top:14px;" onsubmit="return losSubmitService(event)">
+                            <label>Nome<input type="text" id="los-svc-name" required placeholder="Painel SVG" value="${editing ? losEsc(editing.name) : ''}"></label>
+                            <label>Descrição<input type="text" id="los-svc-desc" placeholder="Descrição curta" value="${editing ? losEsc(editing.desc || '') : ''}"></label>
+                            <label>Porta<input type="number" id="los-svc-port" required placeholder="7700" value="${editing ? editing.port : ''}"></label>
+                            <label>URL<input type="text" id="los-svc-url" placeholder="http://localhost:7700" value="${editing ? losEsc(editing.url) : ''}"></label>
+                            <label>Ícone<select id="los-svc-icon">
+                                ${['🟢','🔵','🟣','🟠','🟡','🔴','⚪'].map(e => `<option ${editing && editing.icon === e ? 'selected' : ''}>${e}</option>`).join('')}
+                            </select></label>
+                            <div class="los-form-actions">
+                                <button type="submit" class="los-btn primary">${editing ? '💾 Salvar' : '➕ Adicionar'}</button>
+                                ${editing ? '<button type="button" class="los-btn" onclick="losCancelEditService()">✕ Cancelar</button>' : ''}
+                            </div>
+                        </form>
+
+                        <div class="los-services-grid">
+                            ${cards || '<div class="los-empty">Nenhum serviço cadastrado. Use o formulário acima para adicionar o primeiro.</div>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getLosPortsContent() {
+            const services = losServices();
+            const rows = services.map(s => {
+                const statusClass = s.status === 'online' ? 'online' : (s.status === 'offline' ? 'offline' : 'unknown');
+                return `
+                <tr>
+                    <td>${s.icon || '🟢'} ${losEsc(s.name)}</td>
+                    <td class="mono">${s.port}</td>
+                    <td class="mono">${losEsc(s.url)}</td>
+                    <td><span class="los-dot-cell ${statusClass}" title="${statusClass}"></span></td>
+                    <td>
+                        <button class="los-btn" onclick="losTestServiceStatus('${s.id}')" title="Testar">📡</button>
+                        <button class="los-btn" onclick="losStartEditService('${s.id}')" title="Editar">✏️</button>
+                        <button class="los-btn danger" onclick="losDeleteService('${s.id}')" title="Remover">🗑️</button>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            return `
+                <div class="content">
+                    <div class="panel">
+                        <div class="panel-header"><h3>🔌 Gerenciador de Portas</h3></div>
+                        <div class="los-note">A tabela de portas usa o mesmo cadastro de Serviços — adicionar, editar ou remover aqui afeta a mesma lista salva em localStorage.</div>
+                        <div style="overflow-x:auto; margin-top:14px;">
+                            <table class="los-table">
+                                <thead><tr><th>Serviço</th><th>Porta</th><th>Endereço</th><th>Status</th><th>Ações</th></tr></thead>
+                                <tbody>${rows || '<tr><td colspan="5" class="los-empty">Nenhuma porta cadastrada.</td></tr>'}</tbody>
+                            </table>
+                        </div>
+                        <div style="margin-top:16px;">
+                            <button class="los-btn primary" onclick="openApp('los-services')">➕ Adicionar novo serviço/porta</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getLosFilesContent() {
+            const files = losFiles();
+            const filtered = losFileFilter === 'all' ? files : files.filter(f => f.type === losFileFilter);
+            const supportsFS = 'showDirectoryPicker' in window;
+
+            const rows = filtered.map(f => {
+                const meta = LOS_FILE_TYPES[f.type] || LOS_FILE_TYPES.other;
+                return `
+                <div class="los-file-row">
+                    <span class="los-file-type">${meta.icon}</span>
+                    <span class="los-file-name">${losEsc(f.name)}</span>
+                    <span class="los-file-path">${losEsc(f.path || '')}</span>
+                    <button class="los-btn" onclick="losOpenURL('${losEsc(f.path || '#')}', false)">📂 Abrir</button>
+                    <button class="los-btn" onclick="losOpenURL('${losEsc(f.path || '#')}', true)">↗️ Nova aba</button>
+                    <button class="los-btn danger" onclick="losDeleteFile('${f.id}')">🗑️</button>
+                </div>`;
+            }).join('');
+
+            const tabs = [['all', 'Todos']].concat(Object.entries(LOS_FILE_TYPES).map(([k, v]) => [k, v.icon + ' ' + v.label]))
+                .map(([key, label]) => `<button class="${losFileFilter === key ? 'active' : ''}" onclick="losSetFileFilter('${key}')">${label}</button>`)
+                .join('');
+
+            return `
+                <div class="content">
+                    <div class="panel">
+                        <div class="panel-header"><h3>📁 Navegador de Arquivos</h3></div>
+
+                        <div class="los-note">Um HTML executado no navegador não tem permissão para listar livremente os arquivos do computador. Use o Modo Manual para cadastrar arquivos/URLs, ou o Modo File System Access (quando suportado) para autorizar uma pasta.</div>
+
+                        <div style="display:flex; gap:20px; flex-wrap:wrap; margin-top:16px;">
+                            <form class="los-form" style="flex:1; min-width:260px;" onsubmit="return losAddFileManual(event)">
+                                <label style="grid-column:1/-1;">Nome do arquivo<input type="text" id="los-file-name" required placeholder="index.html"></label>
+                                <label style="grid-column:1/-1;">Caminho / URL<input type="text" id="los-file-path" required placeholder="./index.html ou http://localhost:8080/arquivo.html"></label>
+                                <div class="los-form-actions" style="grid-column:1/-1;">
+                                    <button type="submit" class="los-btn primary">➕ Cadastrar arquivo (Modo Manual)</button>
+                                </div>
+                            </form>
+
+                            <div style="flex:1; min-width:220px; display:flex; flex-direction:column; gap:10px; justify-content:center;">
+                                <button class="los-btn primary" onclick="losPickDirectory()">📂 Selecionar pasta (File System Access)</button>
+                                <div style="font-size:11px; color:#8b949e;">
+                                    ${supportsFS ? '✅ Este navegador suporta seleção de pasta.' : '⚠️ Este navegador não oferece acesso direto ao sistema de arquivos — use o modo manual.'}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="los-file-tabs" style="margin-top:20px;">${tabs}</div>
+
+                        <div class="los-file-list">
+                            ${rows || '<div class="los-empty">Nenhum arquivo cadastrado nesta categoria.</div>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getLosBrowserContent() {
+            const savedIp = losNetworkIP();
+            return `
+                <div class="content">
+                    <div class="panel">
+                        <div class="panel-header"><h3>🌐 Navegador Local</h3></div>
+
+                        <div class="los-url-builder">
+                            <span class="los-static">http://localhost:</span>
+                            <input type="number" id="los-nav-port" placeholder="7700" oninput="losBuildLocalUrl()">
+                        </div>
+                        <div class="los-url-result" id="los-nav-result">http://localhost:</div>
+                        <div class="los-service-actions" style="margin-top:10px;">
+                            <button class="los-btn primary" onclick="losOpenBuiltUrl(false)">🔗 Abrir</button>
+                            <button class="los-btn" onclick="losOpenBuiltUrl(true)">↗️ Nova aba</button>
+                            <button class="los-btn" onclick="losCopyBuiltUrl()">📋 Copiar URL</button>
+                        </div>
+
+                        <div class="panel-header" style="margin-top:26px;"><h3>📡 Endereço de Rede Local</h3></div>
+                        <div class="los-form" style="grid-template-columns: 2fr 1fr;">
+                            <label>IP do computador<input type="text" id="los-nav-ip" placeholder="192.168.0.10" value="${losEsc(savedIp)}"></label>
+                            <label>Porta<input type="number" id="los-nav-net-port" placeholder="7700"></label>
+                        </div>
+                        <div class="los-form-actions" style="margin:-6px 0 14px;">
+                            <button class="los-btn primary" onclick="losBuildNetworkUrl()">🌐 Gerar endereço de rede</button>
+                        </div>
+                        <div class="los-url-result" id="los-net-result">http://192.168.X.X:PORTA</div>
+
+                        <div class="los-net-explain">
+                            <div class="box"><strong>🏠 localhost</strong>Aponta sempre para o próprio dispositivo em que o navegador está rodando. Ninguém mais na rede consegue acessar por esse endereço.</div>
+                            <div class="box"><strong>📡 IP local</strong>Permite que outros dispositivos na mesma rede Wi-Fi/LAN acessem o serviço, desde que a porta esteja realmente aberta nesse computador.</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getLosSettingsContent() {
+            const bridge = losBridge();
+            return `
+                <div class="content">
+                    <div class="panel">
+                        <div class="panel-header"><h3>⚙️ Configurações · LOCALHOST BRIDGE</h3></div>
+
+                        <div class="los-note">O painel funciona sozinho no modo visual. O HTML não consegue iniciar servidores, abrir portas do sistema, matar processos ou controlar processos Python diretamente — esta camada existe para preparar uma futura integração com um backend local.</div>
+
+                        <div class="los-bridge-diagram">
+                            <div class="node active">Painel-SVG🟢</div>
+                            <div class="arrow">↓</div>
+                            <div class="node active">LOCALHOST OS</div>
+                            <div class="arrow">↓</div>
+                            <div class="node ${bridge.enabled ? 'active' : ''}">LOCALHOST BRIDGE</div>
+                            <div class="arrow">↓</div>
+                            <div class="node">Python / Node</div>
+                            <div class="arrow">↓</div>
+                            <div class="node">Serviços e Portas</div>
+                        </div>
+
+                        <div class="los-toggle-row">
+                            <div>
+                                <div class="los-toggle-label">Habilitar LOCALHOST BRIDGE</div>
+                                <div class="los-toggle-sub">Ativa o slot de configuração para um backend local futuro (não conecta nada ainda).</div>
+                            </div>
+                            <label class="los-switch">
+                                <input type="checkbox" id="los-bridge-toggle" ${bridge.enabled ? 'checked' : ''} onchange="losToggleBridge(this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <form class="los-form" style="margin-top:12px;" onsubmit="return losSaveBridgeEndpoint(event)">
+                            <label style="grid-column:1/-1;">Endpoint do backend local (futuro)<input type="text" id="los-bridge-endpoint" placeholder="http://localhost:9000/bridge" value="${losEsc(bridge.endpoint || '')}"></label>
+                            <div class="los-form-actions" style="grid-column:1/-1;">
+                                <button type="submit" class="los-btn primary">💾 Salvar endpoint</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header"><h3>🗄️ Dados do Painel</h3></div>
+                        <div class="los-service-actions">
+                            <button class="los-btn" onclick="losExportData()">⬇️ Exportar dados (.json)</button>
+                            <button class="los-btn" onclick="document.getElementById('los-import-input').click()">⬆️ Importar dados</button>
+                            <input type="file" id="los-import-input" accept="application/json" style="display:none" onchange="losImportData(event)">
+                            <button class="los-btn danger" onclick="losResetData()">🗑️ Limpar dados do LOCALHOST OS</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        /* ================================================================
+           ===== LOCALHOST OS · AÇÕES / CRUD ===============================
+           ================================================================ */
+
+        function losSubmitService(evt) {
+            evt.preventDefault();
+            const name = document.getElementById('los-svc-name').value.trim();
+            const desc = document.getElementById('los-svc-desc').value.trim();
+            const port = parseInt(document.getElementById('los-svc-port').value, 10);
+            let url = document.getElementById('los-svc-url').value.trim();
+            const icon = document.getElementById('los-svc-icon').value;
+
+            if (!name || !port) return false;
+            if (!url) url = 'http://localhost:' + port;
+
+            const services = losServices();
+            if (losEditingServiceId) {
+                const idx = services.findIndex(s => s.id === losEditingServiceId);
+                if (idx > -1) {
+                    services[idx] = Object.assign({}, services[idx], { name, desc, port, url, icon });
+                    losPushConsole('Serviço atualizado: ' + name + ' (porta ' + port + ')');
+                }
+                losEditingServiceId = null;
+            } else {
+                services.push({ id: losUid(), name, desc, port, url, icon, status: 'unknown', lastCheck: null });
+                losPushConsole('Serviço registrado: ' + name + ' · porta ' + port);
+            }
+            losSave(LOS_KEYS.services, services);
+            switchTab('los-services');
+            return false;
+        }
+
+        function losStartEditService(id) {
+            losEditingServiceId = id;
+            switchTab('los-services');
+        }
+
+        function losCancelEditService() {
+            losEditingServiceId = null;
+            switchTab('los-services');
+        }
+
+        function losDeleteService(id) {
+            let services = losServices();
+            const target = services.find(s => s.id === id);
+            if (!confirm('Remover o serviço "' + (target ? target.name : '') + '"?')) return;
+            services = services.filter(s => s.id !== id);
+            losSave(LOS_KEYS.services, services);
+            losPushConsole('Serviço removido: ' + (target ? target.name : id));
+            switchTab(currentTab && currentTab.startsWith('los-') ? currentTab : 'los-services');
+        }
+
+        function losTestServiceStatus(id) {
+            const services = losServices();
+            const svc = services.find(s => s.id === id);
+            if (!svc) return;
+
+            losPushConsole('Verificando status de ' + svc.name + ' (' + svc.url + ')…');
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 2500);
+
+            fetch(svc.url, { mode: 'no-cors', signal: controller.signal })
+                .then(() => {
+                    clearTimeout(timeout);
+                    svc.status = 'online';
+                    svc.lastCheck = new Date().toISOString();
+                    losSave(LOS_KEYS.services, services);
+                    losPushConsole('✅ ' + svc.name + ' respondeu · status: online');
+                    if (currentTab && currentTab.startsWith('los-')) switchTab(currentTab);
+                })
+                .catch(() => {
+                    clearTimeout(timeout);
+                    svc.status = 'offline';
+                    svc.lastCheck = new Date().toISOString();
+                    losSave(LOS_KEYS.services, services);
+                    losPushConsole('⚠️ ' + svc.name + ' não respondeu · status: offline');
+                    if (currentTab && currentTab.startsWith('los-')) switchTab(currentTab);
+                });
+        }
+
+        function losTestAllServices() {
+            losServices().forEach(s => losTestServiceStatus(s.id));
+        }
+
+        function losSetFileFilter(type) {
+            losFileFilter = type;
+            switchTab('los-files');
+        }
+
+        function losAddFileManual(evt) {
+            evt.preventDefault();
+            const name = document.getElementById('los-file-name').value.trim();
+            const path = document.getElementById('los-file-path').value.trim();
+            if (!name || !path) return false;
+            const files = losFiles();
+            files.push({ id: losUid(), name, path, type: losGuessFileType(name) });
+            losSave(LOS_KEYS.files, files);
+            losPushConsole('Arquivo adicionado: ' + name);
+            switchTab('los-files');
+            return false;
+        }
+
+        function losDeleteFile(id) {
+            let files = losFiles();
+            files = files.filter(f => f.id !== id);
+            losSave(LOS_KEYS.files, files);
+            switchTab('los-files');
+        }
+
+        async function losPickDirectory() {
+            if (!('showDirectoryPicker' in window)) {
+                alert('Este navegador não oferece acesso direto ao sistema de arquivos (File System Access API indisponível). Use o Modo Manual para cadastrar arquivos.');
+                return;
+            }
+            try {
+                const dirHandle = await window.showDirectoryPicker();
+                const files = losFiles();
+                let count = 0;
+                for await (const [name, handle] of dirHandle.entries()) {
+                    if (handle.kind === 'file') {
+                        files.push({ id: losUid(), name, path: '📂 ' + dirHandle.name + '/' + name, type: losGuessFileType(name) });
+                    } else {
+                        files.push({ id: losUid(), name, path: '📂 ' + dirHandle.name + '/' + name + '/', type: 'folder' });
+                    }
+                    count++;
+                }
+                losSave(LOS_KEYS.files, files);
+                losPushConsole('Pasta autorizada: ' + dirHandle.name + ' · ' + count + ' itens importados');
+                switchTab('los-files');
+            } catch (err) {
+                losPushConsole('Seleção de pasta cancelada ou negada pelo usuário.');
+            }
+        }
+
+        function losBuildLocalUrl() {
+            const portEl = document.getElementById('los-nav-port');
+            const port = portEl ? portEl.value.trim() : '';
+            const resultEl = document.getElementById('los-nav-result');
+            if (resultEl) resultEl.textContent = 'http://localhost:' + port;
+        }
+
+        function losOpenBuiltUrl(newTab) {
+            const el = document.getElementById('los-nav-result');
+            const url = el ? el.textContent.trim() : '';
+            if (!url || url.endsWith(':')) { alert('Informe uma porta válida.'); return; }
+            losOpenURL(url, newTab);
+        }
+
+        function losCopyBuiltUrl() {
+            const el = document.getElementById('los-nav-result');
+            if (el) losCopyText(el.textContent.trim());
+        }
+
+        function losBuildNetworkUrl() {
+            const ip = document.getElementById('los-nav-ip').value.trim();
+            const port = document.getElementById('los-nav-net-port').value.trim();
+            if (!ip || !port) { alert('Informe o IP e a porta.'); return; }
+            localStorage.setItem(LOS_KEYS.network, ip);
+            const url = 'http://' + ip + ':' + port;
+            document.getElementById('los-net-result').textContent = url;
+            losPushConsole('Endereço de rede gerado: ' + url);
+        }
+
+        function losToggleBridge(checked) {
+            const bridge = losBridge();
+            bridge.enabled = checked;
+            losSave(LOS_KEYS.bridge, bridge);
+            losPushConsole('LOCALHOST BRIDGE ' + (checked ? 'habilitado' : 'desabilitado') + ' (slot de configuração, sem conexão real).');
+            switchTab('los-settings');
+        }
+
+        function losSaveBridgeEndpoint(evt) {
+            evt.preventDefault();
+            const bridge = losBridge();
+            bridge.endpoint = document.getElementById('los-bridge-endpoint').value.trim();
+            losSave(LOS_KEYS.bridge, bridge);
+            losPushConsole('Endpoint da LOCALHOST BRIDGE salvo: ' + (bridge.endpoint || '(vazio)'));
+            return false;
+        }
+
+        function losExportData() {
+            const data = {
+                services: losServices(),
+                files: losFiles(),
+                bridge: losBridge(),
+                network: losNetworkIP(),
+                exportedAt: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'localhost-os-backup.json';
+            a.click();
+            URL.revokeObjectURL(a.href);
+            losPushConsole('Backup dos dados exportado.');
+        }
+
+        function losImportData(evt) {
+            const file = evt.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    const data = JSON.parse(reader.result);
+                    if (data.services) losSave(LOS_KEYS.services, data.services);
+                    if (data.files) losSave(LOS_KEYS.files, data.files);
+                    if (data.bridge) losSave(LOS_KEYS.bridge, data.bridge);
+                    if (data.network) localStorage.setItem(LOS_KEYS.network, data.network);
+                    losPushConsole('Backup importado com sucesso.');
+                    switchTab('los-settings');
+                } catch (e) {
+                    alert('Arquivo inválido.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function losResetData() {
+            if (!confirm('Isso vai apagar serviços, portas, arquivos e configurações do LOCALHOST OS salvos neste navegador. Continuar?')) return;
+            Object.values(LOS_KEYS).forEach(k => localStorage.removeItem(k));
+            losSeedDefaults();
+            losPushConsole('Dados do LOCALHOST OS reiniciados.');
+            switchTab('los-dashboard');
+        }
+
+        function losOpenURL(url, newTab) {
+            if (!url || url === '#') return;
+            window.open(url, newTab ? '_blank' : '_self');
+            losPushConsole('Navegação local: ' + url);
+        }
+
+        function losCopyText(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    losPushConsole('Endereço copiado: ' + text);
+                }).catch(() => losFallbackCopy(text));
+            } else {
+                losFallbackCopy(text);
+            }
+        }
+
+        function losFallbackCopy(text) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); losPushConsole('Endereço copiado: ' + text); } catch (e) {}
+            document.body.removeChild(ta);
+        }
+
+        function losPostRender(appId) {
+            if (appId === 'los-dashboard') {
+                const box = document.getElementById('los-console-box');
+                if (box) box.scrollTop = box.scrollHeight;
+            }
+        }
+
+        // ===== FUNÇÕES DE ANÁLISE =====
+        function analyzeApp(type) {
+            const analysisTypes = {
+                'motors': '8 motores ativos detectados. Sincronizando dados...',
+                'functions': '43 funções indexadas. Analisando dependências...',
+                'classes': '7 classes encontradas. Mapeando hierarquia...',
+                'requests': '14 requisições HTTP identificadas. Validando endpoints...'
+            };
+
+            const message = analysisTypes[type] || 'Analisando...';
+            alert(`🔍 ANÁLISE ATIVADA\n\n${message}\n\n✅ Dados sincronizados com o FUSION`);
+        }
+
+        function filterPanel(btn, filter) {
+            // Atualiza estado dos botões
+            const allBtns = btn.parentElement.querySelectorAll('button');
+            allBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            console.log(`Filtro de painel: ${filter}`);
+        }
+
+        function showInfo() {
+            alert(`🚀 ORB DEVTOOLS · MOTOR ENGINE HUB v3.0
+
+📊 Sistema Integrado de Desenvolvimento
+✨ Clique nos botões para abrir múltiplas abas
+🔍 Clique nos cards para análise em tempo real
+
+🎯 RECURSOS:
+✅ Sistema de abas como navegador
+✅ Sidebar com 8 motores
+✅ Apps integrados em iframe
+✅ Análise e coleta de dados
+✅ Design responsivo
+
+🏠 MOTORES DISPONÍVEIS:
+🏠 Visão Geral
+📚 Biblioteca Viva
+⚡ SÜMBÜS FUSION
+🔧 KOMPILER
+⚙️ DevOS
+369 FRACTAL
+
+Desenvolvido com ❤️ em KOBLLUX
+Assinatura: 1+1+1 = ∆³`);
+        }
+
+        // ===== INICIALIZAR =====
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+        console.log('🌟 Orb DevTools v3.0.1 inicializado com sucesso!');
+        console.log('💡 Sistema de análise e coleta ativo');
+        console.log('📡 Sincronização com FUSION habilitada');
+    </script>
+
+</body>
+</html>
