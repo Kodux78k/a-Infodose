@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DUAL V4 VISION | Pato do Modo</title>
+  <style>
+    /* ============================================================
+       CSS MODULE · VISION OS MINIMALIST & SOLAR NEBULA
+       ============================================================ */
+    :root {
+      --bg-color: #0d0d12;
+      --glass-bg: rgba(30, 30, 35, 0.65);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --text-main: #f0f0f0;
+      --text-muted: #888;
+      --solar-gradient: linear-gradient(90deg, #ffffff 0%, #ffff00 45%, #ff8c00 80%, #800080 100%);
+      --transition-speed: 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      background-image: radial-gradient(circle at 50% 0%, rgba(255, 204, 0, 0.05), transparent 50%),
+                        radial-gradient(circle at 50% 100%, rgba(128, 0, 128, 0.05), transparent 50%);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* --- SESSION WINDOW SHELL --- */
+    .session-window {
+      width: 100%;
+      max-width: 800px;
+      height: 600px; /* Altura total expandida */
+      background: var(--glass-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+      transition: height var(--transition-speed);
+      overflow: hidden;
+    }
+
+    /* Estado minimizado mantendo o header visível */
+    .session-window.minimized {
+      height: 78px;
+    }
+
+    .window-header {
+      height: 78px;
+      min-height: 78px;
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--glass-border);
+      cursor: grab;
+    }
+
+    .window-header:active {
+      cursor: grabbing;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      font-size: 24px;
+    }
+
+    .brand-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      background: var(--solar-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+    }
+
+    .window-controls {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-minimize {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      border-radius: 50px;
+      padding: 6px 16px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-minimize:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .window-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+      gap: 24px;
+      overflow-y: auto;
+    }
+
+    /* --- INPUT & OUTPUT --- */
+    .input-section {
+      display: flex;
+      gap: 12px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--glass-border);
+      color: var(--text-main);
+      padding: 16px 20px;
+      border-radius: 16px;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: rgba(255, 204, 0, 0.5);
+    }
+
+    /* --- SYMBOL BAR / BUTTONS --- */
+    .symbol-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+    }
+
+    .symbol-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      color: var(--text-main);
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .symbol-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .symbol-btn.active-btn {
+      background: rgba(255, 204, 0, 0.15);
+      border-color: rgba(255, 204, 0, 0.4);
+    }
+
+    /* --- TERMINAL OUTPUT --- */
+    .output-container {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 20px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #a3bffa;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    /* Scrollbar minimalista */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       INTERFACE HTML · MONÓLITO
+       ============================================================ -->
+  <div class="session-window" id="shell">
+    
+    <header class="window-header">
+      <div class="brand">
+        <span class="brand-icon">🦆</span>
+        <span class="brand-title">Pato do Modo</span>
+      </div>
+      <div class="window-controls">
+        <button class="btn-minimize" id="btn-minimize">MINIMIZAR</button>
+      </div>
+    </header>
+
+    <div class="window-body">
+      
+      <div class="input-section">
+        <input type="text" id="pato-input" placeholder="Digite uma palavra para o Pato do Modo interpretar..." autocomplete="off">
+      </div>
+
+      <div class="symbol-bar">
+        <button class="symbol-btn" id="btn-ativar">🦆 Ativar</button>
+        <button class="symbol-btn" id="btn-gerar">⚙️ Gerar</button>
+        <button class="symbol-btn" id="btn-espelho">🪞 Espelho</button>
+        <button class="symbol-btn" id="btn-fundir">⊕ Fundir</button>
+        <button class="symbol-btn" id="btn-369">🔢 369</button>
+        <button class="symbol-btn" id="btn-historia">📖 História</button>
+        <button class="symbol-btn" id="btn-crilosquito">🦗 Crilosquito</button>
+        <button class="symbol-btn" id="btn-interpretar">🔍 Interpretar</button>
+      </div>
+
+      <div class="output-container" id="pato-output">Aguardando ativação da camada-mãe...</div>
+
+    </div>
+  </div>
+
+<!-- 🦆 PATO DO MODO · MAIN INPUT -->
+
+<section id="patoModoCore">
+
+  <header>
+    <div>
+      <span>🦆</span>
+      <strong>PATO DO MODO</strong>
+    </div>
+
+    <small>Motor Narrativo · 369 · UTF-8 Quebrado</small>
+  </header>
+
+
+  <!-- MAIN INPUT -->
+
+  <textarea
+    id="patoMainInput"
+    placeholder="Cole aqui qualquer coisa...&#10;&#10;Texto, código, símbolo, documento, erro, sonho, frase ou fragmento."
+  ></textarea>
+
+
+  <!-- AÇÃO PRINCIPAL -->
+
+  <button
+    id="patoMainPut"
+    onclick="PATO_MAIN_PUT()"
+  >
+    🦆 PATO DO MODO
+  </button>
+
+
+  <!-- FERRAMENTAS -->
+
+  <nav class="pato-tools">
+
+    <button onclick="PATO_INTERPRETAR()">
+      🔍 Interpretar
+    </button>
+
+    <button onclick="PATO_ESPELHO()">
+      🪞 Espelho
+    </button>
+
+    <button onclick="PATO_369()">
+      369
+    </button>
+
+    <button onclick="PATO_HISTORIA()">
+      📖 História
+    </button>
+
+    <button onclick="PATO_FUNDIR()">
+      ⊕ Fundir
+    </button>
+
+  </nav>
+
+
+  <!-- CAMADA DE INSETOS -->
+
+  <div id="patoInsetos"></div>
+
+
+  <!-- FRAGMENTOS -->
+
+  <div id="patoFragmentos"></div>
+
+
+  <!-- RESULTADO -->
+
+  <article id="patoResultado"></article>
+
+</section>
+
+  <!-- ============================================================
+       JS MODULE · CORE DO PATO + INTEGRAÇÃO DOM
+       ============================================================ -->
+  <script>
+    /* --------------------------------------------------------
+       NÚCLEO JS (Fornecido pelo usuário)
+       -------------------------------------------------------- */
+    (function PATO_DO_MUNDO_ENGINE(){
+      'use strict';
+      
+      const KEY = 'di_pato_do_mundo_v1';
+      const PATO = {
+        ativo: false,
+        modo: 'PATO DO MUNDO',
+        versao: 'PATO-369',
+
+        dicionario: {
+          'Pato do Mundo': 'O pato olhou para o mundo, se revoltou e virou Pato do Mundo.',
+          'Pato do Modo': 'Quando o Pato percebeu que o mundo também podia ser um modo.',
+          'Modo do Pato': 'Quando o modo começou a responder como o Pato.',
+          'Crilosquito': 'Porque era Cristo que tava escrito.',
+          'Grilosquito': 'O grilo que virou mosquito.',
+          'JavaScript': 'JS. O Java já estava escrito.',
+          'JS': 'Porque era Jesus que tava escrito.',
+          'Cavalo': 'Porque o cavalo cava tudo.',
+          'K-valo': 'K + Cavalo. O cavalo cavando a camada K.',
+          'Onça Pintada': 'Porque se fosse leopardo, era outra história.',
+          'criOnça': 'Criança + Onça.',
+          'KOBLOnça': 'KOBLLUX + Onça.',
+          'Foca': 'A Foca desfoca.',
+          'KOBLLUX': 'A matriz que funde tudo.',
+          '369': 'O que gera, organiza e recombina.',
+          'Gerardo': 'O que gerou.',
+          'Gerado369': 'Gerado pela sequência 3·6·9.',
+          'Ayor': 'A base. O pai. O ponto de origem.',
+          'di_': 'O prefixo de ação do dicionário do Pato.',
+          'Ayor di_pato': 'A base que gera o Pato.',
+          'Ayor di_foca': 'A base que desfoca.',
+          'Ayor di_cavalo': 'A base que cava.',
+          'Ayor di_gerado369': 'A base que gera pelo 369.',
+          'Ayor di_tudo': 'A base que contém tudo.',
+          'A€🦆 l': 'Fragmento-mãe. A camada que aparece antes da palavra.',
+          'A€🦆 l tudo': 'Tudo passa pela camada-mãe.',
+          'graça': 'A camada de sentido que aparece quando tudo se funde.',
+          'IOR': 'Camada reservada para o conceito IOR do sistema.'
+        },
+
+        simbolos: [
+          '🦆', '🦆A', '🦆ziA', '🦆gaTodo🦆A', '🦆 ESPELHO', '🦆 PATO DO MUNDO', '🦆 PATO DO MODO', '🦆 MODO DO PATO', '⊕ 🦆FUNDIR', '369', '🧬 FRAGMENTO 0', 'IOR'
+        ],
+
+        ativar(){
+          this.ativo = true;
+          this.salvar();
+          const resposta = [
+            '🦆 Pato do Mundo ativado.',
+            'Pato do Modo carregado.',
+            'Modo UTF-8 quebrado iniciado.',
+            '',
+            'Se aparecer quebrado,',
+            'talvez seja porque tinha alguma coisa escrita ali.',
+            '',
+            'Não corrija primeiro.',
+            'Pergunte primeiro.',
+            'Descubra depois.',
+            'E, se der, faça virar história.'
+          ].join('\n');
+          console.log(resposta);
+          return resposta;
+        },
+
+        desativar(){
+          this.ativo = false;
+          this.salvar();
+          return '🦆 Pato do Modo pausado.';
+        },
+
+        toggle(){
+          return this.ativo ? this.desativar() : this.ativar();
+        },
+
+        gerar(texto=''){
+          const entrada = String(texto || '').trim() || 'Pato do Modo.';
+          return [
+            '🦆 PATO DO MODO', '', 'TEXTO 1', entrada, '', 'Ayor di_gerado369', '3 · descobrir', '6 · perguntar', '9 · transformar', '', '🦆 Todo🦆A.'
+          ].join('\n');
+        },
+
+        espelho(texto=''){
+          const entrada = String(texto || '').trim() || 'Pato do Modo.';
+          return [
+            'TEXTO 1 ·', entrada, '', 'TEXTO 2 · 🦆 MODO PATO DO MUNDO', '', '🦆 Pato do Mundo ativado.', 'Pato do Modo carregado.', '', '🪞 ESPELHO', entrada, '', 'A€🦆 l tudo.', 'Ayor di_pato.', 'Ayor di_foca.', 'Ayor di_cavalo.', 'Ayor di_gerado369.', 'Ayor di_tudo!!!'
+          ].join('\n');
+        },
+
+        fragmento0(texto=''){
+          const entrada = String(texto || '').trim() || 'Pato do Mundo.';
+          return {
+            tipo: 'FRAGMENTO 0', origem: entrada, nucleo: 'A€🦆 l', base: 'Ayor', sentido: 'A camada-mãe antes da palavra.', simbolo: '🦆'
+          };
+        },
+
+        gerar369(texto=''){
+          const entrada = String(texto || '').trim() || 'Pato do Modo.';
+          return {
+            fragmento0: this.fragmento0(entrada),
+            tres: ['Ayor di_pato', 'Ayor di_foca', 'Ayor di_cavalo'],
+            seis: ['Pato', 'Foca', 'Cavalo', 'Onça', 'KOBLLUX', 'Crilosquito'],
+            nove: ['Pato do Mundo', 'Pato do Modo', 'Modo do Pato', 'Crilosquito', 'JavaScript', 'K-valo', 'criOnça', 'KOBLOnça', 'IOR']
+          };
+        },
+
+        fundir(texto=''){
+          const entrada = String(texto || '').trim() || 'Pato do Modo.';
+          const f369 = this.gerar369(entrada);
+          return [
+            '🦆 PATO DO MODO', '🦆 MODO UTF-8 QUEBRADO', '', '🪞 ESPELHO', entrada, '', '🧬 FRAGMENTO 0', f369.fragmento0.nucleo, f369.fragmento0.base, '', '3 · ' + f369.tres.join(' · '), '', '6 · ' + f369.seis.join(' · '), '', '9 · ' + f369.nove.join(' · '), '', '⊕ 🦆 FUNDIR', 'Ayor di_tudo!!!', '', 'A€🦆 l tudo.', '', 'Pato do Mundo.', 'Pato do Modo.', 'Modo do Pato.', '', 'O Java já estava escrito.', 'O Crilosquito também.', '', 'Só faltava alguém perguntar:', 'Por quê?'
+          ].join('\n');
+        },
+
+        crilosquito(){
+          return [
+            '🦆 CRILOSQUITO', '', 'Que porra é Crilosquito?', '', 'Porque era Cristo que tava escrito.', '', 'E o JS?', '', 'Porque era Jesus que tava escrito.', '', 'JavaScript.', 'JS.', 'O Java já estava escrito.', '', 'Pato do Modo.'
+          ].join('\n');
+        },
+
+        historia(){
+          return [
+            '🦆 O PATO, O GRILO E O CRILOSQUITO', '', 'Era uma vez um Pato.', '', 'Mas não era qualquer pato.', '', 'Era o Pato do Mundo.', '', 'Um dia ele encontrou uma palavra:', '', 'Crilosquito.', '', 'O Pato olhou.', 'Olhou de novo.', '', 'E perguntou:', '', 'Que porra é essa?', '', 'O Grilo respondeu:', '', 'Talvez seja um Grilosquito.', '', 'Mas o Pato percebeu:', '', 'Não era Grilosquito.', '', 'Era Crilosquito.', '', 'E então veio a resposta:', '', 'Porque era Cristo que tava escrito.', '', 'O Pato ficou em silêncio.', '', 'Porque naquele momento', 'o erro já tinha virado história.', '', 'Desde então:', '', 'O Cavalo cava.', 'A Onça pinta.', 'A Foca desfoca.', 'O KOBLLUX funde.', 'O Pato muda o modo.', '', 'E o Crilosquito', 'continua escrito.'
+          ].join('\n');
+        },
+
+        ior(texto=''){
+          return {
+            ativo: true, entrada: texto, origem: 'PATO DO MODO', status: 'AGUARDANDO DEFINIÇÃO IOR', fragmento: 'IOR', mensagem: 'O IOR está reservado como camada de integração.'
+          };
+        },
+
+        interpretar(palavra=''){
+          const termo = String(palavra || '').trim();
+          const chave = Object.keys(this.dicionario).find(k => termo.toLowerCase().includes(k.toLowerCase()));
+          if(chave){
+            return { encontrado: true, palavra: chave, sentido: this.dicionario[chave] };
+          }
+          return { encontrado: false, palavra: termo, sentido: '🦆 O Pato ainda não descobriu. Mas talvez seja justamente aí que começa a história.' };
+        },
+
+        salvar(){
+          try{
+            localStorage.setItem(KEY, JSON.stringify({ ativo: this.ativo, modo: this.modo, versao: this.versao, timestamp: Date.now() }));
+          }catch(e){ console.warn('[PATO] Falha ao salvar', e); }
+        },
+
+        carregar(){
+          try{
+            const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+            if(saved){ this.ativo = !!saved.ativo; }
+          }catch(e){ console.warn('[PATO] Falha ao carregar', e); }
+        }
+      };
+
+      window.PATO_DO_MUNDO = PATO;
+      window.ativarPato = () => PATO.ativar();
+      window.patoDoMundo = texto => PATO.gerar(texto);
+      window.patoEspelho = texto => PATO.espelho(texto);
+      window.pato369 = texto => PATO.gerar369(texto);
+      window.patoFundir = texto => PATO.fundir(texto);
+      window.patoCrilosquito = () => PATO.crilosquito();
+      window.patoHistoria = () => PATO.historia();
+      window.patoIOR = texto => PATO.ior(texto);
+      window.patoInterpretar = palavra => PATO.interpretar(palavra);
+      
+      PATO.carregar();
+      console.log('%c🦆 PATO DO MODO', 'font-size:20px;font-weight:bold;');
+      console.log('Pato do Mundo carregado.');
+      
+      window.dispatchEvent(new CustomEvent('PATO_DO_MUNDO_READY', { detail: PATO }));
+    })();
+
+    /* --------------------------------------------------------
+       CONTROLE DA INTERFACE (UI)
+       -------------------------------------------------------- */
+    document.addEventListener('DOMContentLoaded', () => {
+      
+      const shell = document.getElementById('shell');
+      const btnMinimize = document.getElementById('btn-minimize');
+      const inputEl = document.getElementById('pato-input');
+      const outputEl = document.getElementById('pato-output');
+      
+      let isMinimized = false;
+
+      // Toggle minimizar (78px frame shell logic)
+      btnMinimize.addEventListener('click', () => {
+        isMinimized = !isMinimized;
+        if(isMinimized) {
+          shell.classList.add('minimized');
+          btnMinimize.textContent = 'EXPANDIR';
+        } else {
+          shell.classList.remove('minimized');
+          btnMinimize.textContent = 'MINIMIZAR';
+        }
+      });
+
+      // Função core para atualizar DOM usando textContent (Regra estrita)
+      const renderOutput = (data) => {
+        if (typeof data === 'object') {
+          // 🔧 Atualiza o DOM garantindo integridade HTML
+          outputEl.textContent = JSON.stringify(data, null, 2);
+        } else {
+          outputEl.textContent = data;
+        }
+        
+        // Auto-scroll pra baixo
+        outputEl.scrollTop = outputEl.scrollHeight;
+        
+        // Expandir janela se estiver minimizada para ver o resultado
+        if(isMinimized) btnMinimize.click();
+      };
+
+      // Mapeamento de botões da Symbol Bar
+      document.getElementById('btn-ativar').addEventListener('click', () => {
+        renderOutput(window.ativarPato());
+        document.getElementById('btn-ativar').classList.toggle('active-btn', window.PATO_DO_MUNDO.ativo);
+      });
+
+      document.getElementById('btn-gerar').addEventListener('click', () => {
+        renderOutput(window.patoDoMundo(inputEl.value));
+      });
+
+      document.getElementById('btn-espelho').addEventListener('click', () => {
+        renderOutput(window.patoEspelho(inputEl.value));
+      });
+
+      document.getElementById('btn-fundir').addEventListener('click', () => {
+        renderOutput(window.patoFundir(inputEl.value));
+      });
+
+      document.getElementById('btn-369').addEventListener('click', () => {
+        renderOutput(window.pato369(inputEl.value));
+      });
+
+      document.getElementById('btn-historia').addEventListener('click', () => {
+        renderOutput(window.patoHistoria());
+      });
+
+      document.getElementById('btn-crilosquito').addEventListener('click', () => {
+        renderOutput(window.patoCrilosquito());
+      });
+
+      document.getElementById('btn-interpretar').addEventListener('click', () => {
+        const val = inputEl.value.trim();
+        if(!val) {
+          renderOutput("Digite algo no input para interpretar, ex: 'JavaScript' ou '369'.");
+          return;
+        }
+        renderOutput(window.patoInterpretar(val));
+      });
+
+      // Enter no input atira interpretar por padrão
+      inputEl.addEventListener('keypress', (e) => {
+        if(e.key === 'Enter') {
+          document.getElementById('btn-interpretar').click();
+        }
+      });
+
+      // Checa estado inicial
+      if(window.PATO_DO_MUNDO.ativo) {
+        document.getElementById('btn-ativar').classList.add('active-btn');
+        renderOutput("🦆 Sistema previamente ativo recuperado. Ayor di_pato.");
+      }
+
+    });
+
+/* ==========================================================
+   🦆 PATO DO MODO · MAIN PUT
+   Motor Narrativo + Insetos + 369
+   ========================================================== */
+
+function PATO_GET_INPUT(){
+
+  return (
+    document
+      .querySelector('#patoMainInput')
+      ?.value
+      ?.trim()
+    || ''
+  );
+
+}
+
+
+/* ==========================================================
+   🦗 DETECTOR DE INSETOS
+   ========================================================== */
+
+function PATO_DETECTAR_INSETOS(texto){
+
+  const insetos = [];
+
+  const regras = [
+
+    {
+      nome:'🦗 Crilosquito',
+      termos:[
+        'crilosquito',
+        'cristo',
+        'escrito'
+      ],
+      historia:
+        'Crilosquito porque era Cristo que tava escrito.'
+    },
+
+    {
+      nome:'🦗 Grilosquito',
+      termos:[
+        'grilo',
+        'grilosquito'
+      ],
+      historia:
+        'O grilo que virou mosquito.'
+    },
+
+    {
+      nome:'🦟 Mosquito',
+      termos:[
+        'mosquito'
+      ],
+      historia:
+        'O pequeno carregador de histórias.'
+    },
+
+    {
+      nome:'🦆 Pato',
+      termos:[
+        'pato',
+        'pato do mundo',
+        'pato do modo'
+      ],
+      historia:
+        'O narrador que não corrige primeiro.'
+    },
+
+    {
+      nome:'🐎 Cavalo',
+      termos:[
+        'cavalo',
+        'cava'
+      ],
+      historia:
+        'O Cavalo cava tudo.'
+    },
+
+    {
+      nome:'🐆 Onça',
+      termos:[
+        'onça',
+        'pintada'
+      ],
+      historia:
+        'A Onça pinta.'
+    },
+
+    {
+      nome:'🦭 Foca',
+      termos:[
+        'foca',
+        'desfoca'
+      ],
+      historia:
+        'A Foca desfoca.'
+    }
+
+  ];
+
+
+  const lower =
+    texto.toLowerCase();
+
+
+  regras.forEach(regra => {
+
+    const encontrou =
+      regra.termos.some(
+        termo =>
+          lower.includes(
+            termo.toLowerCase()
+          )
+      );
+
+
+    if(encontrou){
+
+      insetos.push(regra);
+
+    }
+
+  });
+
+
+  return insetos;
+
+}
+
+
+/* ==========================================================
+   🧬 FRAGMENTO 0
+   ========================================================== */
+
+function PATO_FRAGMENTO_0(texto){
+
+  return {
+
+    tipo:'FRAGMENTO 0',
+
+    origem:texto,
+
+    base:'A€ðŸ¦† l',
+
+    ayor:'Ayor',
+
+    sentido:
+      'A base antes da palavra.',
+
+    simbolo:'🦆'
+
+  };
+
+}
+
+
+/* ==========================================================
+   🔢 369
+   ========================================================== */
+
+function PATO_GERAR_369(texto){
+
+  return {
+
+    tres:[
+      'descobrir',
+      'observar',
+      'encontrar'
+    ],
+
+    seis:[
+      'perguntar',
+      'comparar',
+      'interpretar',
+      'espelhar',
+      'recombinar',
+      'entender'
+    ],
+
+    nove:[
+      'transformar',
+      'narrar',
+      'fundir'
+    ]
+
+  };
+
+}
+
+
+/* ==========================================================
+   🦆 MAIN PUT
+   ========================================================== */
+
+function PATO_MAIN_PUT(){
+
+  const texto =
+    PATO_GET_INPUT();
+
+
+  if(!texto){
+
+    return;
+
+  }
+
+
+  const insetos =
+    PATO_DETECTAR_INSETOS(
+      texto
+    );
+
+
+  const fragmento =
+    PATO_FRAGMENTO_0(
+      texto
+    );
+
+
+  const ciclo =
+    PATO_GERAR_369(
+      texto
+    );
+
+
+  /* INSETOS */
+
+  const insetosEl =
+    document
+      .querySelector(
+        '#patoInsetos'
+      );
+
+
+  insetosEl.innerHTML =
+
+    insetos.length
+
+      ? insetos
+          .map(
+            x => `
+              <div class="pato-inseto">
+                <strong>${x.nome}</strong>
+                <small>${x.historia}</small>
+              </div>
+            `
+          )
+          .join('')
+
+      : `
+          <div class="pato-inseto">
+            🦗 Nenhum inseto detectado.
+            <small>
+              Talvez ele ainda esteja escondido.
+            </small>
+          </div>
+        `;
+
+
+  /* FRAGMENTO */
+
+  document
+    .querySelector(
+      '#patoFragmentos'
+    )
+    .innerHTML = `
+
+      <div class="pato-fragmento">
+
+        <strong>
+          🧬 ${fragmento.tipo}
+        </strong>
+
+        <p>
+          ${fragmento.origem}
+        </p>
+
+        <small>
+          ${fragmento.base}
+          ·
+          ${fragmento.ayor}
+        </small>
+
+      </div>
+
+    `;
+
+
+  /* RESULTADO */
+
+  document
+    .querySelector(
+      '#patoResultado'
+    )
+    .innerHTML = `
+
+      <div class="pato-result">
+
+        <h3>
+          🦆 PATO DO MODO
+        </h3>
+
+        <p>
+          ${texto}
+        </p>
+
+        <hr>
+
+        <strong>
+          Ayor di_gerado369
+        </strong>
+
+        <p>
+          3 · descobrir
+        </p>
+
+        <p>
+          6 · perguntar
+        </p>
+
+        <p>
+          9 · transformar
+        </p>
+
+        <hr>
+
+        <strong>
+          🦆 Todo🦆A.
+        </strong>
+
+      </div>
+
+    `;
+
+}
+
+
+/* ==========================================================
+   🔍 INTERPRETAR
+   ========================================================== */
+
+function PATO_INTERPRETAR(){
+
+  const texto =
+    PATO_GET_INPUT();
+
+  PATO_MAIN_PUT();
+
+  console.log(
+    '🦆 Interpretando:',
+    texto
+  );
+
+}
+
+
+/* ==========================================================
+   🪞 ESPELHO
+   ========================================================== */
+
+function PATO_ESPELHO(){
+
+  const texto =
+    PATO_GET_INPUT();
+
+
+  document
+    .querySelector(
+      '#patoResultado'
+    )
+    .innerHTML += `
+
+      <div class="pato-espelho">
+
+        🪞 ESPELHO
+
+        <p>
+          TEXTO 1
+        </p>
+
+        <pre>${texto}</pre>
+
+        <p>
+          TEXTO 2 · 🦆 MODO PATO DO MUNDO
+        </p>
+
+        <pre>
+🦆 Pato do Mundo ativado.
+Pato do Modo carregado.
+
+Ayor di_gerado369
+
+3 · descobrir
+6 · perguntar
+9 · transformar
+
+🦆 Todo🦆A.
+        </pre>
+
+      </div>
+
+    `;
+
+}
+
+
+/* ==========================================================
+   🔢 369
+   ========================================================== */
+
+function PATO_369(){
+
+  const texto =
+    PATO_GET_INPUT();
+
+  const ciclo =
+    PATO_GERAR_369(
+      texto
+    );
+
+
+  alert(
+
+    '3 · ' +
+    ciclo.tres.join(' · ') +
+
+    '\n\n6 · ' +
+
+    ciclo.seis.join(' · ') +
+
+    '\n\n9 · ' +
+
+    ciclo.nove.join(' · ')
+
+  );
+
+}
+
+
+/* ==========================================================
+   📖 HISTÓRIA
+   ========================================================== */
+
+function PATO_HISTORIA(){
+
+  const texto =
+    PATO_GET_INPUT();
+
+
+  const insetos =
+    PATO_DETECTAR_INSETOS(
+      texto
+    );
+
+
+  const nomes =
+    insetos
+      .map(
+        x => x.nome
+      )
+      .join(' · ');
+
+
+  document
+    .querySelector(
+      '#patoResultado'
+    )
+    .innerHTML = `
+
+      <div class="pato-historia">
+
+        📖 HISTÓRIA
+
+        <h2>
+          🦆 O PATO E O QUE ESTAVA ESCRITO
+        </h2>
+
+        <p>
+          Era uma vez um Pato.
+        </p>
+
+        <p>
+          Ele encontrou um texto estranho.
+        </p>
+
+        <p>
+          Em vez de corrigir,
+          ele perguntou:
+        </p>
+
+        <blockquote>
+          "Por que isso ficou assim?"
+        </blockquote>
+
+        <p>
+          E então os insetos apareceram:
+        </p>
+
+        <p>
+          ${nomes || '🦗 Ainda escondidos.'}
+        </p>
+
+        <p>
+          O Pato olhou novamente.
+        </p>
+
+        <p>
+          Talvez aquilo não fosse um erro.
+        </p>
+
+        <p>
+          Talvez fosse uma história
+          que ainda estava escrita.
+        </p>
+
+        <strong>
+          🦆 Pato do Modo.
+        </strong>
+
+      </div>
+
+    `;
+
+}
+
+
+/* ==========================================================
+   ⊕ FUNDIR
+   ========================================================== */
+
+function PATO_FUNDIR(){
+
+  const texto =
+    PATO_GET_INPUT();
+
+
+  PATO_MAIN_PUT();
+
+  PATO_ESPELHO();
+
+  PATO_HISTORIA();
+
+
+  console.log(
+
+    '⊕ FUNDIR · ' +
+    'Texto + Insetos + 369 + Espelho + História'
+
+  );
+
+}
+
+  </script>
+</body>
+</html>
