@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KOBLLUX · Interface</title>
+  <style>
+    /* ===== BASE (inspirado nos estilos do seu sistema) ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background: #0a0a0f;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem;
+    }
+
+    /* ===== PAINEL PRINCIPAL ===== */
+    #kodux-widget {
+      background: rgba(18, 18, 28, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(50, 215, 203, 0.2);
+      border-radius: 2rem;
+      padding: 2rem 2.5rem;
+      max-width: 720px;
+      width: 100%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      transition: all 0.3s ease;
+    }
+
+    /* ===== HEADER ===== */
+    .kx-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid rgba(50, 215, 203, 0.15);
+      padding-bottom: 1rem;
+    }
+
+    .kx-header h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #32d7cb, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .kx-bolt {
+      font-size: 1.8rem;
+      color: #fbbf24;
+      filter: drop-shadow(0 0 8px #fbbf2480);
+    }
+
+    /* ===== ÁREA DE CONTEÚDO ===== */
+    #content-ball {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 1.2rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    #content-preview {
+      min-height: 120px;
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 0.75rem;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 0.8rem;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: #cbd5e1;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    #content-preview:empty::before {
+      content: '📋 Aguardando conteúdo…';
+      color: #64748b;
+      font-style: italic;
+      font-family: inherit;
+    }
+
+    /* ===== BARRA DE AÇÕES ===== */
+    .kx-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 0.5rem;
+    }
+
+    .kx-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.7rem 1.6rem;
+      border: none;
+      border-radius: 3rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      background: rgba(255, 255, 255, 0.06);
+      color: #e2e8f0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      flex: 1 1 auto;
+      justify-content: center;
+      min-width: 140px;
+    }
+
+    .kx-btn:hover {
+      transform: translateY(-2px);
+      background: rgba(50, 215, 203, 0.12);
+      border-color: rgba(50, 215, 203, 0.3);
+      box-shadow: 0 8px 20px -6px rgba(50, 215, 203, 0.2);
+    }
+
+    .kx-btn:active {
+      transform: translateY(0);
+    }
+
+    .kx-btn-upload {
+      background: rgba(168, 85, 247, 0.15);
+      border-color: rgba(168, 85, 247, 0.25);
+    }
+    .kx-btn-upload:hover {
+      background: rgba(168, 85, 247, 0.25);
+      border-color: #a855f7;
+    }
+
+    .kx-btn-paste {
+      background: rgba(50, 215, 203, 0.12);
+      border-color: rgba(50, 215, 203, 0.2);
+    }
+    .kx-btn-paste:hover {
+      background: rgba(50, 215, 203, 0.22);
+      border-color: #32d7cb;
+    }
+
+    .kx-btn-download {
+      background: rgba(251, 191, 36, 0.12);
+      border-color: rgba(251, 191, 36, 0.2);
+    }
+    .kx-btn-download:hover {
+      background: rgba(251, 191, 36, 0.22);
+      border-color: #fbbf24;
+    }
+
+    .kx-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* ===== TOAST (feedback) ===== */
+    .kx-toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(50, 215, 203, 0.2);
+      padding: 0.8rem 2rem;
+      border-radius: 3rem;
+      font-size: 0.9rem;
+      color: #e2e8f0;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+      z-index: 999;
+    }
+    .kx-toast.show {
+      opacity: 1;
+    }
+
+    /* ===== SCROLL ===== */
+    #content-preview::-webkit-scrollbar {
+      width: 5px;
+    }
+    #content-preview::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    #content-preview::-webkit-scrollbar-thumb {
+      background: #32d7cb;
+      border-radius: 10px;
+    }
+
+    /* ===== RESPONSIVO ===== */
+    @media (max-width: 500px) {
+      #kodux-widget {
+        padding: 1.5rem;
+      }
+      .kx-btn {
+        min-width: 100%;
+        flex: 1 1 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="kodux-widget" class="state-idle">
+    <!-- HEADER -->
+    <div class="kx-header">
+      <span class="kx-bolt">⚡</span>
+      <h1>KOBLLUX · HORUS‑1134</h1>
+    </div>
+
+    <!-- ÁREA DE VISUALIZAÇÃO -->
+    <div id="content-ball">
+      <div id="content-preview" contenteditable="false"></div>
+    </div>
+
+    <!-- BOTÕES -->
+    <div class="kx-actions">
+      <!-- Upload (input oculto) -->
+      <input type="file" id="file-input" style="display:none" accept=".txt,.json,.xml,.csv,.js,.css,.html,.md,.log,.ini,.conf" />
+      <button class="kx-btn kx-btn-upload" id="btn-upload">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload
+      </button>
+
+      <button class="kx-btn kx-btn-paste" id="btn-paste">
+        <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/><path d="M9 19v-2"/></svg>
+        Paste from clipboard
+      </button>
+
+      <button class="kx-btn kx-btn-download" id="btn-download">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download
+      </button>
+    </div>
+  </div>
+
+  <!-- TOAST (feedback) -->
+  <div id="toast" class="kx-toast"></div>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // Elementos
+      const preview = document.getElementById('content-preview');
+      const fileInput = document.getElementById('file-input');
+      const btnUpload = document.getElementById('btn-upload');
+      const btnPaste = document.getElementById('btn-paste');
+      const btnDownload = document.getElementById('btn-download');
+      const toast = document.getElementById('toast');
+
+      let currentContent = ''; // armazena o conteúdo atual
+
+      // ===== FUNÇÃO TOAST =====
+      function showToast(msg, duration = 3000) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => toast.classList.remove('show'), duration);
+      }
+
+      // ===== ATUALIZA PREVIEW =====
+      function updatePreview(text) {
+        currentContent = text;
+        preview.textContent = text || '';
+      }
+
+      // ===== 1. UPLOAD =====
+      btnUpload.addEventListener('click', () => fileInput.click());
+
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const text = ev.target.result;
+          updatePreview(text);
+          showToast(`📁 "${file.name}" carregado (${text.length} caracteres)`);
+          fileInput.value = ''; // reset para poder carregar o mesmo arquivo de novo
+        };
+        reader.onerror = () => showToast('❌ Erro ao ler o arquivo', 4000);
+        reader.readAsText(file);
+      });
+
+      // ===== 2. PASTE FROM CLIPBOARD =====
+      btnPaste.addEventListener('click', async () => {
+        try {
+          // Verifica se a API está disponível
+          if (!navigator.clipboard || !navigator.clipboard.readText) {
+            showToast('⚠️ Clipboard API não suportada neste navegador.', 4000);
+            return;
+          }
+          const text = await navigator.clipboard.readText();
+          if (text) {
+            updatePreview(text);
+            showToast(`📋 Texto colado (${text.length} caracteres)`);
+          } else {
+            showToast('📭 Área de transferência vazia', 3000);
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('❌ Falha ao acessar a área de transferência. Permissão negada?', 4000);
+        }
+      });
+
+      // ===== 3. DOWNLOAD =====
+      btnDownload.addEventListener('click', () => {
+        if (!currentContent) {
+          showToast('📭 Nada para baixar – o conteúdo está vazio.', 3000);
+          return;
+        }
+        // Gera um nome de arquivo baseado na data/hora
+        const now = new Date();
+        const stamp =
+          now.getFullYear() +
+          String(now.getMonth() + 1).padStart(2, '0') +
+          String(now.getDate()).padStart(2, '0') + '_' +
+          String(now.getHours()).padStart(2, '0') +
+          String(now.getMinutes()).padStart(2, '0');
+        const filename = `kobllux_${stamp}.txt`;
+
+        const blob = new Blob([currentContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+        showToast(`⬇️ Download iniciado: "${filename}"`, 3000);
+      });
+
+      // ===== (Opcional) Tecla de atalho: Ctrl+V no preview? =====
+      // Não fazemos override para não conflitar com o botão.
+
+      // ===== Inicialização =====
+      updatePreview(''); // placeholder vazio
+      console.log('⚡ KOBLLUX Interface pronta · HORUS‑1134');
+    })();
+  </script>
+
+</body>
+</html>
