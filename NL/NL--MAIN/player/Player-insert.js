@@ -1,0 +1,317 @@
+(function() {
+  'use strict';
+
+  // ===========================
+  // 1. CSS (inline + import)
+  // ===========================
+  const styleEl = document.createElement('style');
+  styleEl.textContent = `
+    @import url("https://infodose.com.br/NL/NL--MAIN/player/css/main.css");
+
+    .kx-icon {
+      display: inline-block;
+      width: 1em;
+      height: 1em;
+      fill: currentColor;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
+    .kx-icon.icon-4xl { font-size: 4.8rem; }
+    .kx-icon.spin { animation: spin 2s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  `;
+  document.head.appendChild(styleEl);
+
+  // ===========================
+  // 2. Estrutura HTML do Player
+  // ===========================
+  const playerHTML = `
+    <div id="bodyPlayer" data-mode="player">
+      <div class="bg-overlay"></div>
+      <div id="yt-container" class="off-screen"></div>
+      <div id="sc-container" class="off-screen"></div>
+      <audio id="local-audio" crossorigin="anonymous"></audio>
+
+      <!-- WIDGET PRINCIPAL -->
+      <div id="kodux-widget" data-idle-target class="state-ball" style="position: absolute; right: 20px; bottom: 100px;">
+
+        <!-- ESTADO: BALL -->
+        <div id="content-ball">
+          <svg class="kx-icon spin" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" width="1em" height="1em">
+            <use href="#kx-vinyl"/>
+          </svg>
+        </div>
+
+        <!-- ESTADO: PREVIEW -->
+        <div id="content-preview" class="hidden-content">
+          <img id="prev-cover" src="https://picsum.photos/100" class="cover-sm hover-scale transition-transform preview-clickable" onclick="openFullFromPreview(event)">
+          <div class="track-info-preview preview-clickable" onclick="openFullFromPreview(event)">
+            <h4 id="prev-title" class="track-title-sm text-truncate glow-text">Kodux System</h4>
+            <p id="prev-artist" class="track-artist-sm text-truncate">Aguardando...</p>
+          </div>
+          <button onclick="togglePlay(event)" class="btn-play-preview transition-base">
+            <svg id="prev-play-icon" class="kx-icon icon-4xl" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" width="1em" height="1em">
+              <use href="#kx-play-circle"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- ESTADO: FOOTER -->
+        <div id="content-footer" class="hidden-content">
+          <div class="progress-click-area" id="footer-progress-click">
+            <div id="footer-progress-bar" class="progress-bar-fill"></div>
+          </div>
+
+          <div class="footer-drag-header drag-header">
+            <img id="foot-cover" src="https://picsum.photos/100" class="cover-md">
+            <div class="track-info-footer" onclick="updateWidgetState('full')">
+              <h4 id="foot-title" class="track-title-md text-truncate">Kodux System</h4>
+              <p id="foot-artist" class="track-artist-md text-truncate">Aguardando...</p>
+            </div>
+            <div class="controls-footer">
+              <button onclick="playPrev(event)" class="btn-ctrl transition-base">
+                <svg class="kx-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" width="1em" height="1em">
+                  <use href="#kx-prev"/>
+                </svg>
+              </button>
+              <button onclick="togglePlay(event)" class="btn-play-main hover-scale-lg transition-transform">
+                <svg id="foot-play-icon" class="kx-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" width="1em" height="1em">
+                  <use href="#kx-play-circle"/>
+                </svg>
+              </button>
+              <button onclick="playNext(event)" class="btn-ctrl transition-base">
+                <svg class="kx-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" width="1em" height="1em">
+                  <use href="#kx-next"/>
+                </svg>
+              </button>
+              <button onclick="collapseToBall(event)" class="btn-ctrl transition-base" style="margin-left: 0.5rem;">
+                <svg class="kx-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" width="1em" height="1em">
+                  <use href="#kx-collapse"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ESTADO: FULL -->
+        <div id="content-full" class="hidden-content">
+
+          <div class="full-header drag-header">
+            <div class="header-title glow-text">
+              <svg class="kx-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" width="1em" height="1em">
+                <use href="#kx-bolt"/>
+              </svg>
+              <span>ORÁCULO DUAL</span>
+            </div>
+            <button onclick="collapseToBall(event)" class="btn-collapse transition-base">
+              <svg class="kx-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" width="1em" height="1em">
+                <use href="#kx-collapse-full"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="full-scroll-area soft-scroll">
+            <div class="tabs-container soft-scroll" id="playlist-tabs"></div>
+
+            <div class="input-group">
+              <div class="input-wrapper">
+                <svg class="kx-icon input-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" width="1em" height="1em">
+                  <use href="#kx-link"/>
+                </svg>
+                <input type="text" id="link-input" placeholder="YouTube ou SoundCloud link" class="glass-input custom-input">
+              </div>
+              <select id="destination-select" class="glass-select custom-select">
+                <option value="all">Todas</option>
+              </select>
+              <button onclick="addLink()" class="btn-primary btn-action">
+                <svg class="kx-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" width="1em" height="1em">
+                  <use href="#kx-plus"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="input-group">
+              <div class="input-wrapper">
+                <svg class="kx-icon input-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" width="1em" height="1em">
+                  <use href="#kx-folder"/>
+                </svg>
+                <input type="text" id="new-playlist-input" placeholder="Criar nova playlist" class="glass-input custom-input">
+              </div>
+              <button onclick="createPlaylist()" class="btn-primary btn-action">
+                <svg class="kx-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" width="1em" height="1em">
+                  <use href="#kx-folder-add"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="playlist-header">
+              <div>
+                <h3>Playlists carregadas</h3>
+                <p>Toque para trocar de grupo, criar, remover ou organizar.</p>
+              </div>
+            </div>
+
+            <div id="playlist-container" class="playlists-list"></div>
+          </div>
+
+          <div class="full-bottom-dock">
+            <input type="range" id="main-progress" min="0" max="100" value="0" class="main-range">
+
+            <div class="dock-controls">
+              <div class="dock-track-info">
+                <img id="main-cover" src="https://picsum.photos/100" class="cover-md">
+                <div class="info-text">
+                  <h4 id="main-title" class="track-title-md text-truncate">Oráculo</h4>
+                  <p id="main-artist" class="track-artist-sm text-truncate">Sistema KODUX v2.5</p>
+                </div>
+              </div>
+
+              <div class="dock-actions">
+                <button onclick="playPrev()" class="transition-base">
+                  <svg class="kx-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" width="1em" height="1em">
+                    <use href="#kx-prev"/>
+                  </svg>
+                </button>
+                <button onclick="togglePlay()" class="btn-play-circle transition-transform hover-scale">
+                  <svg id="main-play-icon" class="kx-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" width="1em" height="1em">
+                    <use href="#kx-play"/>
+                  </svg>
+                </button>
+                <button onclick="playNext()" class="transition-base">
+                  <svg class="kx-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" width="1em" height="1em">
+                    <use href="#kx-next"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  `;
+
+  const playerContainer = document.createElement('div');
+  playerContainer.innerHTML = playerHTML;
+  document.body.appendChild(playerContainer);
+
+  // ===========================
+  // 3. Sprite SVG (todos os ícones)
+  // ===========================
+  const svgSprite = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svgSprite.setAttribute('style', 'display:none;');
+  svgSprite.innerHTML = `
+    <symbol id="kx-vinyl" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-12.5c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5-2.01-4.5-4.5-4.5zm0 7c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+    </symbol>
+    <symbol id="kx-play-circle" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+    </symbol>
+    <symbol id="kx-prev" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M19 18.5L10.5 12 19 5.5v13zM9 5.5v13H5v-13h4z"/>
+    </symbol>
+    <symbol id="kx-next" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M5 5.5l8.5 6.5L5 18.5v-13zM19 5.5v13h-4v-13h4z"/>
+    </symbol>
+    <symbol id="kx-collapse" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/>
+    </symbol>
+    <symbol id="kx-bolt" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M13 2L4 14h6l-3 8 9-12h-6l3-8z"/>
+    </symbol>
+    <symbol id="kx-collapse-full" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 15.5L4 7.5l2-2 6 6 6-6 2 2z"/>
+    </symbol>
+    <symbol id="kx-link" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 6v2.5l-2.5 2.5-2.5-2.5V6c0-2.5 2-4.5 4.5-4.5S16 3.5 16 6v2.5l-2.5 2.5-2.5-2.5V6zM12 18v-2.5l2.5-2.5 2.5 2.5V18c0 2.5-2 4.5-4.5 4.5S7 20.5 7 18v-2.5l2.5-2.5 2.5 2.5V18z"/>
+    </symbol>
+    <symbol id="kx-plus" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+    </symbol>
+    <symbol id="kx-folder" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M4 20h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-7l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2z"/>
+    </symbol>
+    <symbol id="kx-folder-add" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M4 20h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-7l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2zm4-4h2v2h4v-2h2v-4h-2v-2h-4v2H8v4z"/>
+    </symbol>
+    <symbol id="kx-play" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M5 3l14 9-14 9V3z"/>
+    </symbol>
+    <symbol id="kx-stack" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M4 4h16v2H4V4zm0 5h16v2H4V9zm0 5h16v2H4v-2zm0 5h16v2H4v-2z"/>
+    </symbol>
+    <symbol id="kx-heart" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+    </symbol>
+    <symbol id="kx-heart-fill" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+    </symbol>
+    <symbol id="kx-spiral" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/>
+    </symbol>
+    <symbol id="kx-playlist" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M4 6h16v2H4V6zm0 5h10v2H4v-2zm0 5h6v2H4v-2zm13-3.5l6 4.5-6 4.5v-9z"/>
+    </symbol>
+    <symbol id="kx-trash" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+    </symbol>
+    <symbol id="kx-disc" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-12.5c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5-2.01-4.5-4.5-4.5zm0 7c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+    </symbol>
+    <symbol id="kx-waveform" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M3 12h2v12H3zm4-4h2v16H7zm4-4h2v20h-2zm4 4h2v16h-2zm4 4h2v12h-2z"/>
+    </symbol>
+    <symbol id="kx-pause-circle" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+    </symbol>
+    <symbol id="kx-pause" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+    </symbol>
+  `;
+  document.body.appendChild(svgSprite);
+
+  // ===========================
+  // 4. Carregar scripts externos
+  // ===========================
+  const scripts = [
+    'https://w.soundcloud.com/player/api.js',
+    'https://www.infodose.com.br/NL/NL--MAIN/player/js/db.js',
+    'https://www.infodose.com.br/NL/NL--MAIN/player/js/archetypes.js',
+    'https://www.infodose.com.br/NL/NL--MAIN/player/js/player-0.js',
+    'https://www.infodose.com.br/NL/NL--MAIN/player/js/idle.js'
+  ];
+
+  let idx = 0;
+
+  function loadNextScript() {
+    if (idx >= scripts.length) {
+      // Todos carregados – inicializa o player
+      if (typeof initKoduxPlayer === 'function') {
+        initKoduxPlayer();
+      } else {
+        // Fallback: aguarda o DOM e tenta novamente
+        document.addEventListener('DOMContentLoaded', function() {
+          if (typeof initKoduxPlayer === 'function') initKoduxPlayer();
+        });
+      }
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = scripts[idx];
+    script.onload = function() {
+      idx++;
+      loadNextScript();
+    };
+    script.onerror = function() {
+      console.warn('Falha ao carregar:', scripts[idx]);
+      idx++;
+      loadNextScript(); // continua mesmo com erro
+    };
+    document.head.appendChild(script);
+  }
+
+  loadNextScript();
+
+  console.log('🎵 Kodux Player injetado com sucesso!');
+})();
