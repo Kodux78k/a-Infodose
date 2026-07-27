@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b1020" />
+    <title>FRACTAL 369 · ESPAÇO DA MENTE</title>
+    <style>
+        /* ─── BASE (mesclado com o estilo do 78Frames) ─── */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --neon-cyan: #00f2ff;
+            --neon-purple: #bd00ff;
+            --neon-gold: #ffd700;
+            --bg-dark: #0A0A0F;
+            --bg-panel: rgba(15, 15, 20, 0.7);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --text: #ffffff;
+            --text-dim: rgba(255, 255, 255, 0.6);
+            --text-muted: rgba(255, 255, 255, 0.4);
+            --border-subtle: rgba(255, 255, 255, 0.06);
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-mono: 'Space Mono', 'Courier New', monospace;
+            --radius: 14px;
+            --transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;600;700;900&display=swap');
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+            font-family: var(--font-sans);
+            background: var(--bg-dark);
+            color: var(--text);
+            touch-action: manipulation;
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--neon-cyan);
+            border-radius: 10px;
+        }
+
+        /* ─── TOPBAR ─── */
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 100;
+            padding: 10px 16px;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(18px);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            height: 60px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .topbar .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .topbar .brand .orb {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .topbar .brand .orb svg {
+            width: 18px;
+            height: 18px;
+            color: #000;
+        }
+        .topbar h1 {
+            font-size: 16px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple), var(--neon-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+        .topbar .sub {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            opacity: 0.5;
+            font-weight: 600;
+            display: none;
+        }
+        @media(min-width:480px) {
+            .topbar .sub {
+                display: block;
+            }
+        }
+        .topbar .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--neon-cyan);
+            box-shadow: 0 0 12px var(--neon-cyan);
+            flex-shrink: 0;
+            animation: pulse-dot 2.4s ease-in-out infinite;
+        }
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.3;
+                transform: scale(0.7);
+            }
+        }
+        .topbar #user-badge {
+            margin-left: auto;
+            font-size: 11px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 3px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .topbar #user-badge svg {
+            width: 14px;
+            height: 14px;
+            opacity: 0.6;
+        }
+        .topbar #user-badge span {
+            vertical-align: middle;
+            opacity: 0.7;
+        }
+
+        /* ─── MAIN ─── */
+        .main-area {
+            position: fixed;
+            top: 60px;
+            bottom: 68px;
+            left: 0;
+            right: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 8px 10px 12px;
+        }
+        .main-area.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* ─── NAV ─── */
+        nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            background: rgba(10, 10, 15, 0.92);
+            backdrop-filter: blur(18px);
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            padding: 4px 0 env(safe-area-inset-bottom, 6px) 0;
+            height: 68px;
+        }
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 4px 0;
+            cursor: pointer;
+            transition: color 0.2s;
+            color: var(--text-muted);
+            border: none;
+            background: transparent;
+            font-family: var(--font-sans);
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            position: relative;
+        }
+        .nav-item svg {
+            width: 22px;
+            height: 22px;
+            transition: transform 0.2s;
+        }
+        .nav-item.active {
+            color: var(--neon-cyan);
+        }
+        .nav-item.active svg {
+            transform: scale(1.05);
+            filter: drop-shadow(0 0 8px rgba(0, 242, 255, 0.3));
+        }
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 20%;
+            right: 20%;
+            height: 2px;
+            border-radius: 0 0 4px 4px;
+            background: var(--neon-cyan);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .nav-item.active::after {
+            opacity: 1;
+        }
+
+        /* ─── PANELS ─── */
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius);
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        .section-title {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 16px;
+            margin: 0;
+            font-size: 13px;
+            font-weight: 700;
+            background: transparent;
+            color: var(--text);
+            letter-spacing: 0.02em;
+        }
+        .section-title svg {
+            width: 18px;
+            height: 18px;
+            opacity: 0.7;
+            flex-shrink: 0;
+        }
+        .section-title .title-label {
+            flex: 1;
+        }
+        .section-title .chevron {
+            margin-left: auto;
+            opacity: 0.4;
+            transition: transform var(--transition);
+            flex-shrink: 0;
+        }
+        .section-title .chevron svg {
+            width: 16px;
+            height: 16px;
+            display: block;
+        }
+        .panel.collapsed .section-title .chevron {
+            transform: rotate(-90deg);
+        }
+        .panel-collapse {
+            display: grid;
+            grid-template-rows: 1fr;
+            transition: grid-template-rows var(--transition);
+        }
+        .panel.collapsed .panel-collapse {
+            grid-template-rows: 0fr;
+        }
+        .panel-body {
+            overflow: hidden;
+        }
+        .panel-body-inner {
+            padding: 0 16px 16px 16px;
+            opacity: 1;
+            transition: opacity 0.3s ease 0.08s;
+        }
+        .panel.collapsed .panel-body-inner {
+            opacity: 0;
+            transition: opacity 0.2s ease 0s;
+        }
+
+        /* ─── FIELDS ─── */
+        .field {
+            margin-bottom: 12px;
+        }
+        .field label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            opacity: 0.6;
+            margin-bottom: 4px;
+        }
+        .field textarea,
+        .field input,
+        .field select {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 14px;
+            font-family: var(--font-sans);
+            transition: border-color 0.2s;
+            outline: none;
+        }
+        .field textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .field textarea:focus,
+        .field input:focus,
+        .field select:focus {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 0 3px rgba(0, 242, 255, 0.1);
+        }
+        .file-drop {
+            border: 2px dashed var(--border-subtle);
+            border-radius: var(--radius);
+            padding: 12px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.3s, background 0.3s;
+            margin-top: 8px;
+        }
+        .file-drop:hover {
+            border-color: var(--neon-cyan);
+            background: rgba(0, 242, 255, 0.03);
+        }
+        .file-drop span {
+            font-size: 12px;
+            opacity: 0.5;
+        }
+
+        /* ─── BUTTONS ─── */
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: var(--font-sans);
+            border: none;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text);
+            border: 1px solid var(--border-subtle);
+            flex: 1 1 auto;
+            min-width: 80px;
+        }
+        .btn svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-1px);
+        }
+        .btn:active {
+            transform: scale(0.97);
+        }
+        .btn.primary {
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+            color: #000;
+            border-color: transparent;
+        }
+        .btn.primary:hover {
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.25);
+            transform: translateY(-2px);
+        }
+        .btn.gold {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #000;
+            border-color: transparent;
+        }
+        .btn.gold:hover {
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.3);
+            transform: translateY(-2px);
+        }
+        .btn.small {
+            padding: 6px 12px;
+            font-size: 10px;
+            min-width: 50px;
+            flex: 0 0 auto;
+        }
+
+        /* ─── FRACTAL OUTPUT ─── */
+        #out-section {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .fractal-block {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 10px 14px;
+            border-left: 2px solid var(--neon-cyan);
+        }
+        .fractal-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            opacity: 0.7;
+            margin-bottom: 4px;
+            font-family: var(--font-mono);
+        }
+        .fractal-meta .hex {
+            font-weight: 700;
+        }
+        .fractal-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-dim);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .view-toggle {
+            display: flex;
+            gap: 6px;
+            margin: 8px 0;
+        }
+        .view-toggle .btn {
+            flex: 0 1 auto;
+            padding: 6px 14px;
+            font-size: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid transparent;
+            color: var(--text-muted);
+        }
+        .view-toggle .btn.active {
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+            background: rgba(0, 242, 255, 0.08);
+        }
+
+        /* ─── ARCHETYPE PANEL ─── */
+        #arch-panel,
+        #kob-panel {
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 8px;
+            border: 1px solid var(--border-subtle);
+        }
+        .arch-scroll {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+        .arch-pill {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            white-space: nowrap;
+        }
+        .arch-pill:hover {
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .arch-pill.selected {
+            border-width: 2px;
+            background: rgba(0, 242, 255, 0.12);
+        }
+
+        /* ─── LS HINTS ─── */
+        .ls-hints {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        .s-chip {
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 2px 10px;
+            font-size: 9px;
+            font-family: var(--font-mono);
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            transition: 0.2s;
+        }
+        .s-chip:hover {
+            background: rgba(0, 242, 255, 0.12);
+            border-color: var(--neon-cyan);
+            color: var(--text);
+        }
+
+        /* ─── PLAYER DOCK ─── */
+        .play-dock {
+            position: fixed;
+            bottom: 68px;
+            left: 0;
+            width: 100%;
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(18px);
+            border-top: 1px solid var(--border-subtle);
+            padding: 6px 12px env(safe-area-inset-bottom, 8px) 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 500;
+            flex-wrap: wrap;
+            font-size: 12px;
+        }
+        .play-dock .dock-info {
+            flex: 1;
+            min-width: 120px;
+        }
+        .play-dock .dock-info .now {
+            font-weight: 700;
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
+        }
+        .play-dock .dock-info .sub {
+            opacity: 0.5;
+            font-size: 10px;
+        }
+        .play-dock .dock-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .play-dock .dock-controls .btn {
+            padding: 4px 10px;
+            font-size: 18px;
+            line-height: 1;
+            min-width: 36px;
+            background: transparent;
+            border: none;
+            color: var(--text);
+        }
+        .play-dock .dock-controls .btn.playing {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+        }
+        .play-dock .dock-slider {
+            flex: 1;
+            min-width: 60px;
+            height: 4px;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            outline: none;
+        }
+        .play-dock .dock-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--neon-cyan);
+            cursor: pointer;
+        }
+        .play-dock .dock-time {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            opacity: 0.6;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        /* ─── TOAST ─── */
+        .toast-wrap {
+            position: fixed;
+            bottom: 130px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5000;
+            pointer-events: none;
+        }
+        .toast {
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 8px 20px;
+            font-size: 13px;
+            color: var(--text);
+            pointer-events: auto;
+            animation: toastIn 0.3s ease, toastOut 0.3s ease 2.2s forwards;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+        @keyframes toastIn {
+            0% {
+                opacity: 0;
+                transform: translateY(16px) scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        @keyframes toastOut {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-8px) scale(0.95);
+            }
+        }
+
+        /* ─── RESPONSIVO ─── */
+        @media(max-width:480px) {
+            .topbar h1 {
+                font-size: 14px;
+            }
+            .nav-item {
+                font-size: 8px;
+            }
+            .nav-item svg {
+                width: 20px;
+                height: 20px;
+            }
+            .play-dock .dock-info .now {
+                max-width: 100px;
+                font-size: 12px;
+            }
+            .play-dock .dock-info .sub {
+                display: none;
+            }
+        }
+        @media(min-width:768px) {
+            .main-area {
+                padding: 12px 20px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOPBAR -->
+    <header class="topbar" id="main-header" title="Clique para minimizar/expandir">
+        <div class="brand">
+            <div class="orb">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v4M12 22v-4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M22 12h-4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                </svg>
+            </div>
+            <div>
+                <h1>FRACTAL 369</h1>
+                <span class="sub">ESPAÇO DA MENTE</span>
+            </div>
+        </div>
+        <div class="status-dot"></div>
+        <div id="user-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span id="user-name-display">—</span>
+        </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="main-area" id="main-content">
+
+        <!-- ====== VIEW FRACTAL ====== -->
+        <section id="view-fractal" class="view-section active">
+
+            <div class="panel">
+                <h2 class="section-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                    <span class="title-label">Fusor Fractal 369</span>
+                    <span class="chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+                </h2>
+                <div class="panel-collapse">
+                    <div class="panel-body">
+                        <div class="panel-body-inner">
+
+                            <div class="field">
+                                <label>Texto 1 · Semente</label>
+                                <textarea id="t1" placeholder="Cola tua ideia aqui... ou áudio transcrito..."></textarea>
+                                <div class="file-drop" onclick="document.getElementById('f1').click()">
+                                    <span>📂 Importar .txt ou .html</span>
+                                    <input type="file" id="f1" accept=".txt,.html,.md" hidden />
+                                </div>
+                                <div class="ls-hints" id="ls-hints-1"></div>
+                            </div>
+
+                            <div class="field">
+                                <label>Texto 2 · Espelho</label>
+                                <textarea id="t2" placeholder="Cola outro texto pra fundir..."></textarea>
+                                <div class="file-drop" onclick="document.getElementById('f2').click()">
+                                    <span>📂 Importar .txt ou .html</span>
+                                    <input type="file" id="f2" accept=".txt,.html,.md" hidden />
+                                </div>
+                                <div class="ls-hints" id="ls-hints-2"></div>
+                            </div>
+
+                            <div class="btn-row">
+                                <button class="btn primary" onclick="FractalApp.merge()">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                                    ⊕ FUNDIR FRACTAL
+                                </button>
+                                <button class="btn gold small" onclick="FractalApp.restoreSession()" title="Restaurar última sessão salva">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 2v6H6"/><path d="M4 12a8 8 0 0 1 14.7-4.7"/><path d="M4 22v-6h14"/><path d="M20 12a8 8 0 0 1-14.7 4.7"/></svg>
+                                    Restaurar
+                                </button>
+                            </div>
+
+                            <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;">
+                                <button class="btn small" onclick="FractalApp.toggleTTS()">
+                                    🎛️ Arquétipos
+                                </button>
+                                <button class="btn small" onclick="FractalApp.toggle78K()">
+                                    ⚙️ 78K
+                                </button>
+                                <button class="btn small" onclick="FractalApp.saveTo78K()">
+                                    💾 Salvar Códex
+                                </button>
+                                <button class="btn small" onclick="TTS.play()">
+                                    ▶️ Ouvir
+                                </button>
+                            </div>
+
+                            <!-- ARCH PANEL -->
+                            <div id="arch-panel" style="display:none;flex-direction:column;gap:8px;background:rgba(0,0,0,0.4);border-radius:12px;padding:12px;margin-top:8px;border:1px solid var(--border-subtle);">
+                                <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;opacity:0.6;">
+                                    <span>41 Arquétipos · <span id="arch-badge" style="font-weight:700;color:var(--neon-cyan);border:1px solid var(--neon-cyan);padding:0 8px;border-radius:12px;">◈ KOBLLUX</span></span>
+                                    <span id="arch-rate-info" style="font-family:var(--font-mono);">rate:1.0 pitch:0.5</span>
+                                </div>
+                                <div class="arch-scroll" id="arch-scroll"></div>
+                                <div style="display:flex;gap:6px;justify-content:center;">
+                                    <button class="btn small" onclick="FractalApp.cycleArch()">↻ Próximo</button>
+                                </div>
+                            </div>
+
+                            <!-- 78K PANEL -->
+                            <div id="kob-panel" style="display:none;flex-direction:column;gap:6px;background:rgba(0,0,0,0.4);border-radius:12px;padding:12px;margin-top:8px;border:1px solid var(--border-subtle);">
+                                <div style="display:flex;flex-wrap:wrap;gap:6px;font-size:11px;font-family:var(--font-mono);">
+                                    <span>🔹 Step: <strong id="m-step">—</strong></span>
+                                    <span>🔸 Jump: <strong id="m-jump">—</strong></span>
+                                    <span>🔻 Rev: <strong id="m-rev">—</strong></span>
+                                    <span>🌀 Φ: <strong id="m-phi">—</strong></span>
+                                    <span style="display:flex;gap:4px;">
+                                        <span id="ecl-cruse" style="opacity:0.4;">CRUSE</span>
+                                        <span id="ecl-electra" style="opacity:0.4;">ELECTRA</span>
+                                    </span>
+                                </div>
+                                <div style="font-size:10px;opacity:0.5;border-top:1px solid var(--border-subtle);padding-top:6px;max-height:120px;overflow-y:auto;white-space:pre-wrap;font-family:var(--font-mono);" id="codex-display">—</div>
+                            </div>
+
+                            <!-- ENGINE CONTROLS (compacto) -->
+                            <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;font-size:10px;align-items:center;">
+                                <span style="opacity:0.4;">Engine:</span>
+                                <button class="btn small" data-engine="1" onclick="syncEngineUI()">1</button>
+                                <button class="btn small" data-engine="2" onclick="syncEngineUI()">2</button>
+                                <button class="btn small" data-engine="3" onclick="syncEngineUI()">3</button>
+                                <button class="btn small" id="cycle3697" onclick="syncEngineUI()">3-6-9-7</button>
+                                <button class="btn small" data-jump="0" onclick="syncEngineUI()">J0</button>
+                                <button class="btn small" data-jump="1" onclick="syncEngineUI()">J1</button>
+                                <button class="btn small" id="reverseToggle" onclick="syncEngineUI()">Rev</button>
+                                <button class="btn small" id="eclToggle" onclick="FractalApp.eclToggle()">Φ</button>
+                                <span style="opacity:0.4;margin-left:4px;">Φ: <span id="phi-val">0.50</span></span>
+                            </div>
+
+                            <!-- OUTPUT -->
+                            <div id="out-section">
+                                <div class="view-toggle">
+                                    <button class="btn small active" id="vt-fractal" onclick="FractalApp.setView('fractal')">Blocos</button>
+                                    <button class="btn small" id="vt-full" onclick="FractalApp.setView('full')">Texto</button>
+                                    <button class="btn small" onclick="FractalApp.copy()">📋 Copiar</button>
+                                </div>
+                                <div id="view-fractal" style="display:block;"></div>
+                                <pre id="view-full" style="display:none;background:#05070a;border-radius:10px;padding:14px;font-family:var(--font-mono);font-size:12px;line-height:1.6;white-space:pre-wrap;max-height:300px;overflow-y:auto;border:1px solid var(--border-subtle);color:var(--text-dim);"></pre>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- NAV -->
+    <nav>
+        <button class="nav-item active" data-view="fractal" onclick="App.navigate('fractal', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            <span>Fusor</span>
+        </button>
+    </nav>
+
+    <!-- PLAYER DOCK -->
+    <div class="play-dock" id="play-dock">
+        <div class="dock-info">
+            <div class="now" id="dock-now">FRACTAL 369</div>
+            <div class="sub" id="dock-sub">pronto</div>
+        </div>
+        <div class="dock-controls">
+            <button class="btn" id="dock-pp" title="Play / Pause">▶</button>
+            <button class="btn" onclick="TTS.stop()" title="Stop">⏹</button>
+        </div>
+        <input type="range" class="dock-slider" id="dockSlider" min="0" max="100" value="0" />
+        <div class="dock-time" id="dock-time">0:00</div>
+        <div class="dock-time" id="dock-total" style="opacity:0.3;">0:00</div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast-wrap" id="toast-wrap"></div>
+
+    <script>
+        /* ══════════════════════════════════════════════════════════════════
+           FRACTAL 369 v3 · ENGINE CORR ELACIONADO
+           - 41 arquétipos reais do Motor-novo-78k-codex
+           - di_getSequence() nativa
+           - ECL-1 (Φ campo de fluxo, CRUSE/ELECTRA)
+           - nebula.arch.v1 storage pattern (78NP)
+           - Codex prefix kobllux_ (Motor-novo)
+           - Bottom player dock (78NP)
+           ══════════════════════════════════════════════════════════════════ */
+
+        /* ── 41 ARQUÉTIPOS BASE (Motor-novo-78k-codex) ── */
+        const ARCHETYPES_BASE = [
+            "atlas", "nova", "vitalis", "pulse", "kaos", "kodux", "lumine",
+            "aion", "kobllux", "artemis", "serena", "genus", "solus",
+            "rhea", "uno", "dual", "trinity", "infodose", "horus", "bllue",
+            "velor", "elya", "sylon", "naira", "thenir", "eloh", "novael",
+            "aelya", "ignyra", "lumara", "kaythar", "sylla", "anamyx",
+            "yamantek", "metalux", "kd1", "koφd1", "christos",
+            "aek_dion", "aekael_domnnus", "nephesh_elyon"
+        ];
+
+        const ARCH_NAMES = {
+            atlas: "Atlas",
+            nova: "Nova",
+            vitalis: "Vitalis",
+            pulse: "Pulse",
+            kaos: "Kaos",
+            kodux: "Kodux",
+            lumine: "Lumine",
+            aion: "Aion",
+            kobllux: "Kobllux",
+            artemis: "Artemis",
+            serena: "Serena",
+            genus: "Genus",
+            solus: "Solus",
+            rhea: "Rhea",
+            uno: "Uno",
+            dual: "Dual",
+            trinity: "Trinity",
+            infodose: "Infodose",
+            horus: "Horus",
+            bllue: "Bllue",
+            velor: "Velor",
+            elya: "Elya",
+            sylon: "Sylon",
+            naira: "Naira",
+            thenir: "Thenir",
+            eloh: "Eloh",
+            novael: "Novael",
+            aelya: "Aelya",
+            ignyra: "Ignyra",
+            lumara: "Lumara",
+            kaythar: "Kaythar",
+            sylla: "Sylla",
+            anamyx: "Anamyx",
+            yamantek: "Yamantek",
+            metalux: "Metalux",
+            kd1: "KD1",
+            "koφd1": "KOΦD1",
+            christos: "Christos",
+            aek_dion: "a€K_Dion",
+            aekael_domnnus: "a€Kael DommnuS",
+            nephesh_elyon: "a€Nephesh Elyon"
+        };
+
+        const ARCH_COLORS = {
+            kobllux: "#22D3EE",
+            kodux: "#8B5CF6",
+            atlas: "#F59E0B",
+            nova: "#10B981",
+            kaos: "#F43F5E",
+            genus: "#F59E0B",
+            rhea: "#EC4899",
+            bllue: "#60A5FA",
+            elya: "#A78BFA",
+            aion: "#C084FC",
+            sylon: "#34D399",
+            lumine: "#FCD34D",
+            infodose: "#22D3EE",
+            vitalis: "#10B981",
+            solus: "#F59E0B",
+            horus: "#F59E0B",
+            metalux: "#8B5CF6",
+            artemis: "#6EE7B7",
+            uno: "#60A5FA",
+            dual: "#22D3EE",
+            trinity: "#C084FC",
+            serena: "#EC4899",
+            naira: "#A78BFA",
+            eloh: "#34D399",
+            thenir: "#FB7185",
+            kaythar: "#FCD34D",
+            pulse: "#22D3EE",
+            novael: "#60A5FA",
+            aelya: "#6EE7B7",
+            ignyra: "#FB7185",
+            lumara: "#EC4899",
+            sylla: "#34D399",
+            anamyx: "#6EE7B7",
+            yamantek: "#FCD34D",
+            velor: "#A78BFA",
+            kd1: "#8B5CF6",
+            "koφd1": "#7C3AED",
+            christos: "#C084FC",
+            aek_dion: "#F59E0B",
+            aekael_domnnus: "#F43F5E",
+            nephesh_elyon: "#EC4899"
+        };
+
+        const ARCH_TTS = {
+            kobllux: { rate: .98, pitch: .48 },
+            kodux: { rate: 1.02, pitch: .55 },
+            atlas: { rate: .95, pitch: .40 },
+            nova: { rate: 1.10, pitch: .80 },
+            kaos: { rate: 1.15, pitch: .60 },
+            genus: { rate: 1.00, pitch: .52 },
+            rhea: { rate: .93, pitch: .90 },
+            bllue: { rate: 1.05, pitch: .70 },
+            elya: { rate: .96, pitch: .85 },
+            aion: { rate: .90, pitch: .35 },
+            sylon: { rate: 1.08, pitch: .65 },
+            lumine: { rate: .94, pitch: .78 },
+            infodose: { rate: 1.12, pitch: .58 },
+            vitalis: { rate: 1.06, pitch: .72 },
+            solus: { rate: .88, pitch: .30 },
+            horus: { rate: .92, pitch: .44 },
+            metalux: { rate: 1.00, pitch: .50 },
+            artemis: { rate: 1.04, pitch: .68 },
+            uno: { rate: 1.05, pitch: .70 },
+            dual: { rate: .98, pitch: .52 },
+            trinity: { rate: .94, pitch: .42 },
+            serena: { rate: .96, pitch: .82 },
+            pulse: { rate: 1.10, pitch: .60 },
+            velor: { rate: .91, pitch: .46 },
+        };
+
+        function archTTS(id) { return ARCH_TTS[id] || { rate: 1.00, pitch: .60 } }
+
+        function archColor(id) { return ARCH_COLORS[id] || '#22D3EE' }
+
+        function archName(id) { return ARCH_NAMES[id] || id }
+
+        /* Expose for compat */
+        window.KOBLLUX_ARCHETYPES = ARCHETYPES_BASE;
+
+        /* ── ECL-1 / Campo Φ ── */
+        let di_phi = 0.50;
+        let di_useECL = true;
+
+        function updatePhi(delta) {
+            di_phi = Math.max(0, Math.min(1, di_phi + delta));
+            document.getElementById('phi-fill').style.width = (di_phi * 100) + '%';
+            document.getElementById('phi-val').textContent = di_phi.toFixed(2);
+            const eclBtn = document.getElementById('eclToggle');
+            if (di_phi < .35) {
+                eclBtn.textContent = 'CRUSE';
+                eclBtn.classList.remove('is-active', 'rev');
+            } else if (di_phi > .65) {
+                eclBtn.textContent = 'ELECTRA';
+                eclBtn.classList.add('is-active', 'rev');
+            } else {
+                eclBtn.textContent = 'Φ';
+                eclBtn.classList.toggle('is-active', true);
+                eclBtn.classList.remove('rev');
+            }
+            try { localStorage.setItem('fractal_phi', di_phi.toFixed(2)); } catch {}
+        }
+
+        /* ── MOTOR 78K — ENGINE STATE ── */
+        let di_engineStep = 1;
+        let di_reverse = false;
+        let di_jump = 0;
+        let di_use3697 = false;
+
+        function syncEngineUI() {
+            document.querySelectorAll('[data-engine]').forEach(btn => {
+                btn.classList.toggle('is-active', parseInt(btn.dataset.engine) === di_engineStep);
+            });
+            document.querySelectorAll('[data-jump]').forEach(btn => {
+                btn.classList.toggle('is-active', parseInt(btn.dataset.jump) === di_jump);
+            });
+            const rev = document.getElementById('reverseToggle');
+            rev.textContent = `Rev: ${di_reverse?'ON':'OFF'}`;
+            rev.classList.toggle('is-active', di_reverse);
+            rev.classList.toggle('rev', di_reverse);
+            const cy = document.getElementById('cycle3697');
+            cy.textContent = `3-6-9-7: ${di_use3697?'ON':'OFF'}`;
+            cy.classList.toggle('is-active', di_use3697);
+            try {
+                localStorage.setItem('kobllux_engine_step', di_engineStep);
+                localStorage.setItem('kobllux_jump_step', di_jump);
+                localStorage.setItem('kobllux_reverse_mode', di_reverse);
+                localStorage.setItem('DI_369_cycle', di_use3697);
+            } catch {}
+        }
+
+        document.querySelectorAll('[data-engine]').forEach(btn => {
+            btn.addEventListener('click', () => { di_engineStep = parseInt(btn.dataset.engine);
+                syncEngineUI(); });
+        });
+        document.querySelectorAll('[data-jump]').forEach(btn => {
+            btn.addEventListener('click', () => { di_jump = parseInt(btn.dataset.jump);
+                syncEngineUI(); });
+        });
+        document.getElementById('reverseToggle').addEventListener('click', () => { di_reverse = !di_reverse;
+            syncEngineUI(); });
+        document.getElementById('cycle3697').addEventListener('click', () => { di_use3697 = !di_use3697;
+            syncEngineUI(); });
+        document.getElementById('eclToggle').addEventListener('click', () => {
+            const delta = di_phi < .5 ? .25 : -.25;
+            updatePhi(delta);
+        });
+
+        /* di_getSequence — IDÊNTICO ao Motor-novo-78k-codex */
+        function di_getSequence(startIndex, length) {
+            const total = ARCHETYPES_BASE.length;
+            const sequence = [];
+            let currentIndex = ((startIndex % total) + total) % total;
+            const pattern = di_use3697 ? [3, 6, 9, 7] : [di_engineStep];
+            for (let i = 0; i < length; i++) {
+                sequence.push(ARCHETYPES_BASE[currentIndex]);
+                let step = pattern[i % pattern.length];
+                if (di_reverse) step *= -1;
+                step += di_jump;
+                currentIndex = (currentIndex + step) % total;
+                if (currentIndex < 0) currentIndex += total;
+            }
+            return sequence;
+        }
+
+        /* ── STORAGE (padrão nebula.arch.v1 + kobllux_) ── */
+        function kls(key, val) {
+            try {
+                if (val === undefined) return localStorage.getItem(key);
+                localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+            } catch {}
+        }
+
+        /* ── CURRENT ARCH STATE ── */
+        let currentArch = (() => {
+            try {
+                const saved = JSON.parse(localStorage.getItem('nebula.arch.last') || '{}');
+                return saved?.arch?.id || 'kobllux';
+            } catch { return 'kobllux'; }
+        })();
+
+        /* ── MERGED OUTPUT ── */
+        let mergedText = '';
+        let fractalBlocks = [];
+        let currentView = 'fractal';
+
+        /* ── MERGE ENGINE ── */
+        const FractalApp = {
+
+            merge() {
+                const t1 = document.getElementById('t1').value.trim();
+                const t2 = document.getElementById('t2').value.trim();
+                if (!t1 || !t2) { toast('Cola 2 textos primeiro'); return; }
+
+                const parse = t => (t.replace(/\n+/g, ' ').match(/[^.!?]+[.!?]+|[^.!?]+$/g) || []).map(s => s.trim())
+                    .filter(Boolean);
+                const s1 = parse(t1);
+                const s2 = parse(t2);
+
+                const startIdx = ARCHETYPES_BASE.indexOf(currentArch);
+                const totalSentences = Math.max(s1.length, s2.length);
+
+                const combined = [];
+                for (let i = 0; i < totalSentences; i++) {
+                    const cycle = i % 9;
+                    const useStochastic = di_useECL && Math.random() < di_phi;
+                    if (useStochastic) {
+                        const src = Math.random() < .5 ? s1 : s2;
+                        if (src[i]) combined.push(src[i]);
+                    } else {
+                        if (cycle < 3) {
+                            if (cycle === 0 && s1[i]) combined.push(s1[i]);
+                            else if (cycle === 1 && s2[i]) combined.push(s2[i]);
+                            else if (cycle === 2 && s1[i]) combined.push(s1[i]);
+                            else if (s2[i]) combined.push(s2[i]);
+                        } else if (cycle < 6) {
+                            if (cycle === 3 && s1[i]) combined.push(s1[i]);
+                            else if (cycle === 4 && s2[i]) combined.push(s2[i]);
+                            else if (cycle === 5 && s2[i]) combined.push(s2[i]);
+                            else if (s1[i]) combined.push(s1[i]);
+                        } else {
+                            if (cycle === 6 && s1[i]) combined.push(s1[i]);
+                            else if (cycle === 7 && s2[i]) combined.push(s2[i]);
+                            else if (s1[i]) combined.push(s1[i]);
+                            else if (s2[i]) combined.push(s2[i]);
+                        }
+                    }
+                }
+
+                const sequence = di_getSequence(startIdx < 0 ? 0 : startIdx, combined.length);
+                fractalBlocks = combined.map((text, i) => ({ arch: sequence[i], text }));
+                mergedText = fractalBlocks.map(b => `${archName(b.arch).toUpperCase()} — ${b.text}`).join('\n\n');
+
+                const entropy = combined.length / Math.max(1, totalSentences * 2);
+                updatePhi((entropy - .5) * .12);
+
+                this.renderOutput();
+                this.saveDraft(t1, t2);
+                this.updateDock(`${archName(currentArch).toUpperCase()} · ${combined.length} blocos`,
+                    `Motor 369 · Φ ${di_phi.toFixed(2)}`);
+                toast(`✦ Integrado · ${combined.length} fractais`);
+                document.getElementById('out-section').style.display = 'flex';
+                document.getElementById('out-section').style.flexDirection = 'column';
+                document.getElementById('out-section').style.gap = '12px';
+                document.getElementById('view-fractal').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            },
+
+            renderOutput() {
+                const vf = document.getElementById('view-fractal');
+                const vt = document.getElementById('view-full');
+                vf.innerHTML = fractalBlocks.map(b => `
+              <div class="fractal-block" style="border-left:2px solid ${archColor(b.arch)}22">
+                <div class="fractal-meta">
+                  <span class="hex" style="color:${archColor(b.arch)}">⬡</span>
+                  <span style="color:${archColor(b.arch)}">${archName(b.arch)}</span>
+                  <span>· Δ</span>
+                </div>
+                <div class="fractal-text">${esc(b.text)}</div>
+              </div>
+            `).join('');
+                vt.textContent = mergedText;
+            },
+
+            setView(v) {
+                currentView = v;
+                document.getElementById('view-fractal').style.display = v === 'fractal' ? 'block' : 'none';
+                document.getElementById('view-full').style.display = v === 'full' ? 'block' : 'none';
+                document.getElementById('vt-fractal').classList.toggle('active', v === 'fractal');
+                document.getElementById('vt-full').classList.toggle('active', v === 'full');
+            },
+
+            copy() {
+                if (!mergedText) { toast('Nada fundido ainda'); return; }
+                navigator.clipboard.writeText(mergedText).then(() => toast('📋 Copiado'));
+            },
+
+            toggleTTS() {
+                const panel = document.getElementById('arch-panel');
+                const showing = panel.style.display === 'flex';
+                panel.style.display = showing ? 'none' : 'flex';
+                if (!showing) {
+                    this.buildArchPills();
+                } else {
+                    TTS.stop();
+                }
+            },
+
+            toggle78K() {
+                const panel = document.getElementById('kob-panel');
+                const showing = panel.style.display === 'flex';
+                panel.style.display = showing ? 'none' : 'flex';
+                if (!showing) this.update78KPanel();
+            },
+
+            update78KPanel() {
+                const ls = k => { try { return localStorage.getItem(k) || '—'; } catch { return '—'; } };
+                document.getElementById('m-step').textContent = ls('kobllux_engine_step');
+                document.getElementById('m-jump').textContent = ls('kobllux_jump_step');
+                const rev = ls('kobllux_reverse_mode');
+                document.getElementById('m-rev').textContent = rev === 'true' ? '● ON' : '○ OFF';
+                document.getElementById('m-phi').textContent = ls('fractal_phi') || di_phi.toFixed(2);
+                document.getElementById('codex-display').textContent = mergedText || '—';
+                document.getElementById('ecl-cruse').style.opacity = di_phi < .5 ? '1' : '.4';
+                document.getElementById('ecl-electra').style.opacity = di_phi >= .5 ? '1' : '.4';
+            },
+
+            saveTo78K() {
+                if (!mergedText) { toast('Nada fundido'); return; }
+                const item = { key: 'fractal_ultimo', arch: currentArch, content: mergedText, timestamp: new Date()
+                        .toISOString() };
+                try {
+                    localStorage.setItem('kobllux_last_result', mergedText);
+                    localStorage.setItem('kobllux_DI_copy_last_result', JSON.stringify(item));
+                    localStorage.setItem('fractal_ultimo', mergedText);
+                    localStorage.setItem('DI_copy_last_result', mergedText);
+                    localStorage.setItem('kobllux_draft_input', mergedText);
+                    localStorage.setItem('fractal_arch', currentArch);
+                    localStorage.setItem('fractal_phi', di_phi.toFixed(2));
+                    window.dispatchEvent(new CustomEvent('di:storage', { detail: { key: 'kobllux_last_result',
+                            newValue: mergedText } }));
+                    toast('✦ Salvo no Códex · kobllux_last_result');
+                } catch (e) { toast('Erro: ' + e.message); }
+            },
+
+            saveDraft(t1, t2) {
+                try {
+                    localStorage.setItem('fractal_t1', t1);
+                    localStorage.setItem('fractal_t2', t2);
+                    localStorage.setItem('fractal_ultimo', mergedText);
+                    localStorage.setItem('fractal_arch', currentArch);
+                    localStorage.setItem('fractal_ts', new Date().toISOString());
+                } catch {}
+            },
+
+            // ════════════════════════════════════════════════════════
+            // RESTAURAÇÃO SOB DEMANDA — só quando clicar no botão
+            // ════════════════════════════════════════════════════════
+            restoreSession() {
+                try {
+                    const last = localStorage.getItem('fractal_ultimo');
+                    if (!last) { toast('Nenhuma sessão salva'); return; }
+                    const t1 = localStorage.getItem('fractal_t1') || '';
+                    const t2 = localStorage.getItem('fractal_t2') || '';
+                    const arch = localStorage.getItem('fractal_arch') || 'kobllux';
+                    const phi = parseFloat(localStorage.getItem('fractal_phi') || '0.5');
+                    document.getElementById('t1').value = t1;
+                    document.getElementById('t2').value = t2;
+                    mergedText = last;
+                    fractalBlocks = last.split('\n\n').map(chunk => {
+                        const m = chunk.match(/^([A-ZÀ-Ü€Φ\s_]+?) — (.+)/s);
+                        if (m) {
+                            const id = ARCHETYPES_BASE.find(a => archName(a).toUpperCase() === m[1].trim()) ||
+                                'kobllux';
+                            return { arch: id, text: m[2].trim() };
+                        }
+                        return { arch: 'kobllux', text: chunk };
+                    }).filter(b => b.text);
+                    updatePhi(phi - .50);
+                    this.selectArch(arch);
+                    this.renderOutput();
+                    document.getElementById('out-section').style.display = 'flex';
+                    document.getElementById('out-section').style.flexDirection = 'column';
+                    document.getElementById('out-section').style.gap = '12px';
+                    this.setView('fractal');
+                    this.updateDock(`${archName(arch).toUpperCase()} · restaurado`, `Φ ${di_phi.toFixed(2)} · Motor 78K`);
+                    toast('↺ Sessão restaurada');
+                } catch (e) { toast('Erro ao restaurar: ' + e.message); }
+            },
+
+            // ── Arquétipos ──
+            buildArchPills() {
+                // Carrega a lista de arquétipos: tenta do localStorage, senão usa a base
+                let archList = ARCHETYPES_BASE;
+                try {
+                    const stored = localStorage.getItem('kobllux_archetypes');
+                    if (stored) {
+                        const parsed = JSON.parse(stored);
+                        if (Array.isArray(parsed) && parsed.length) archList = parsed;
+                    }
+                } catch (e) { /* ignora */ }
+
+                const scroll = document.getElementById('arch-scroll');
+                scroll.innerHTML = archList.map(id => {
+                    const sel = id === currentArch;
+                    const col = archColor(id);
+                    return `<div class="arch-pill ${sel?'selected':''}"
+                id="pill-${id}"
+                style="background:${sel?col+'1a':'rgba(0,0,0,.25)'};
+                       border-color:${sel?col+'55':'rgba(255,255,255,.1)'};
+                       color:${sel?col:'rgba(255,255,255,.5)'}"
+                onclick="FractalApp.selectArch('${id}')">
+                ${archName(id)}
+              </div>`;
+                }).join('');
+                this.updateArchRateInfo();
+            },
+
+            selectArch(id) {
+                currentArch = id;
+                document.querySelectorAll('.arch-pill').forEach(p => {
+                    const pid = p.id.replace('pill-', '');
+                    const sel = pid === id;
+                    const col = archColor(pid);
+                    p.classList.toggle('selected', sel);
+                    p.style.background = sel ? col + '1a' : 'rgba(0,0,0,.25)';
+                    p.style.borderColor = sel ? col + '55' : 'rgba(255,255,255,.1)';
+                    p.style.color = sel ? col : 'rgba(255,255,255,.5)';
+                });
+                document.getElementById('arch-badge').textContent = `◈ ${archName(id).toUpperCase()}`;
+                document.getElementById('arch-badge').style.color = archColor(id);
+                document.getElementById('arch-badge').style.borderColor = archColor(id) + '55';
+                this.updateArchRateInfo();
+                try {
+                    const prev = JSON.parse(localStorage.getItem('nebula.arch.last') || '{}');
+                    const payload = { ...prev, archId: id, arch: { ...(prev.arch || {}), id, color: archColor(
+                            id) } };
+                    localStorage.setItem('nebula.arch.last', JSON.stringify(payload));
+                } catch {}
+            },
+
+            updateArchRateInfo() {
+                const t = archTTS(currentArch);
+                document.getElementById('arch-rate-info').textContent = `rate:${t.rate} · pitch:${t.pitch}`;
+                document.getElementById('pb-name').textContent = archName(currentArch).toUpperCase();
+            },
+
+            cycleArch() {
+                const idx = ARCHETYPES_BASE.indexOf(currentArch);
+                const next = ARCHETYPES_BASE[(idx + 1) % ARCHETYPES_BASE.length];
+                this.selectArch(next);
+                toast(`◈ ${archName(next).toUpperCase()}`);
+            },
+
+            updateDock(title, sub) {
+                document.getElementById('dock-now').textContent = title;
+                document.getElementById('dock-sub').textContent = sub;
+            },
+
+            eclToggle() {
+                const delta = di_phi < .5 ? .25 : -.25;
+                updatePhi(delta);
+            }
+        };
+
+        /* ══════════════════════════════════════════════════════════════════
+           🎧 TTS · CORRIGIDO · NUNCA MAIS DÁ ERRO MESMO SEM VOZ NO NAVEGADOR
+           ══════════════════════════════════════════════════════════════════ */
+        const TTS = (() => {
+            const TEM_VOZ = (typeof window !== "undefined") && (typeof window.speechSynthesis !== "undefined");
+            if (!TEM_VOZ) {
+                function no() { toast("🎧 Voz não disponível neste navegador"); }
+                return { play: no, pause: no, resume: no, stop: no, playPause: no, prev: no };
+            }
+
+            let chunks = [],
+                idx = 0,
+                paused = false,
+                startTime = 0,
+                totalEst = 0,
+                progressTimer = null;
+
+            function getVoice(lang) {
+                try {
+                    const voices = speechSynthesis.getVoices();
+                    return voices.find(v => v.lang === lang) ||
+                        voices.find(v => v.lang && v.lang.startsWith((lang || "pt").split("-")[0])) ||
+                        null;
+                } catch (e) { return null; }
+            }
+
+            function chunkText(text, size) {
+                size = size || 220;
+                const sents = String(text || "").match(/[^.!?]+[.!?]*/g) || [text];
+                const out = [];
+                let cur = "";
+                for (let i = 0; i < sents.length; i++) {
+                    if ((cur + sents[i]).length > size) { if (cur) out.push(cur.trim());
+                        cur = sents[i]; } else cur += sents[i];
+                }
+                if (cur.trim()) out.push(cur.trim());
+                return out;
+            }
+
+            function setProgress(pct) {
+                try {
+                    document.getElementById('dockSlider').value = Math.round(pct);
+                } catch (e) {}
+            }
+
+            function fmt(s) { return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+
+            function playChunk(i) {
+                if (i >= chunks.length) { onDone(); return; }
+                try {
+                    const t = archTTS(currentArch);
+                    const u = new SpeechSynthesisUtterance(chunks[i]);
+                    u.lang = 'pt-BR';
+                    u.rate = t.rate || 1;
+                    u.pitch = t.pitch || 0.6;
+                    const v = getVoice('pt-BR');
+                    if (v) try { u.voice = v; } catch (e) {}
+                    u.onend = function() {
+                        idx++;
+                        setProgress(Math.round((idx / Math.max(1, chunks.length)) * 100));
+                        playChunk(idx);
+                    };
+                    u.onerror = function(e) { if (e && e.error !== 'interrupted') console.warn('TTS', e.error); };
+                    speechSynthesis.speak(u);
+                    document.getElementById('dock-pp').textContent = '⏸';
+                    document.body.classList.add('playing');
+                    document.getElementById('dock-pp').classList.add('playing');
+                } catch (e) { toast("TTS erro: " + e.message); }
+            }
+
+            function onDone() {
+                setProgress(100);
+                setTimeout(() => { setProgress(0); }, 1000);
+                document.getElementById('dock-pp').textContent = '▶';
+                document.body.classList.remove('playing');
+                document.getElementById('dock-pp').classList.remove('playing');
+                clearInterval(progressTimer);
+                document.getElementById('dock-time').textContent = '0:00';
+            }
+
+            return {
+                play: function() {
+                    if (!mergedText) { toast('Integra um texto primeiro'); return; }
+                    try { speechSynthesis.cancel(); } catch (e) {}
+                    chunks = chunkText(mergedText);
+                    idx = 0;
+                    paused = false;
+                    startTime = Date.now();
+                    totalEst = Math.round(chunks.join(' ').length / 15);
+                    document.getElementById('dock-total').textContent = fmt(totalEst);
+                    clearInterval(progressTimer);
+                    progressTimer = setInterval(function() {
+                        const elapsed = Math.round((Date.now() - startTime) / 1000);
+                        document.getElementById('dock-time').textContent = fmt(Math.min(elapsed, totalEst));
+                    }, 1000);
+                    playChunk(0);
+                },
+                pause: function() { try { speechSynthesis.pause(); } catch (e) {} paused = true;
+                    clearInterval(progressTimer);
+                    document.getElementById('dock-pp').textContent = '▶'; },
+                resume: function() { try { speechSynthesis.resume(); } catch (e) {} paused = false;
+                    document.getElementById('dock-pp').textContent = '⏸'; },
+                stop: function() {
+                    try { speechSynthesis.cancel(); } catch (e) {}
+                    paused = false;
+                    idx = 0;
+                    clearInterval(progressTimer);
+                    setProgress(0);
+                    document.getElementById('dock-pp').textContent = '▶';
+                    document.body.classList.remove('playing');
+                    document.getElementById('dock-pp').classList.remove('playing');
+                    document.getElementById('dock-time').textContent = '0:00';
+                },
+                playPause: function() {
+                    try {
+                        if (speechSynthesis.speaking && !paused) { this.pause(); } else if (paused) { this
+                            .resume(); } else { this.play(); }
+                    } catch (e) { this.play(); }
+                },
+                prev: function() { if (idx > 0) { idx = Math.max(0, idx - 1);
+                        try { speechSynthesis.cancel(); } catch (e) {}
+                        playChunk(idx); } }
+            };
+        })();
+
+        document.getElementById('dock-pp').addEventListener('click', () => TTS.playPause());
+
+        /* ── FILE IMPORT ── */
+        function setupFile(fId, tId) {
+            document.getElementById(fId).addEventListener('change', e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const r = new FileReader();
+                r.onload = ev => {
+                    let txt = ev.target.result;
+                    if (file.name.endsWith('.html')) { const d = document.createElement('div');
+                        d.innerHTML = txt;
+                        txt = (d.textContent || d.innerText || '').trim(); }
+                    document.getElementById(tId).value = txt;
+                    toast('📂 ' + file.name);
+                };
+                r.readAsText(file);
+                e.target.value = '';
+            });
+        }
+        setupFile('f1', 't1');
+        setupFile('f2', 't2');
+
+        /* ── LS HINT CHIPS ── */
+        function buildHints() {
+            const map1 = ['kobllux_draft_input', 'fractal_t1', 'kobllux_last_result', 'DI_copy_last_result'];
+            const map2 = ['fractal_t2', 'blux_draft_input', 'fractal_ultimo'];
+
+            function renderHints(keys, tid, hid) {
+                const el = document.getElementById(hid);
+                el.innerHTML = '';
+                keys.forEach(k => {
+                    let v;
+                    try { v = localStorage.getItem(k); } catch {}
+                    if (!v) return;
+                    const chip = document.createElement('span');
+                    chip.className = 's-chip';
+                    chip.textContent = '↑ ' + k.replace(/kobllux_|fractal_/g, '').slice(0, 18);
+                    chip.title = v.slice(0, 100);
+                    chip.onclick = () => { document.getElementById(tid).value = v;
+                        toast('↑ ' + k); };
+                    el.appendChild(chip);
+                });
+            }
+            renderHints(map1, 't1', 'ls-hints-1');
+            renderHints(map2, 't2', 'ls-hints-2');
+        }
+
+        /* ── TOAST ── */
+        let _tt;
+
+        function toast(msg) {
+            const el = document.getElementById('toast-wrap');
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.textContent = msg;
+            el.appendChild(t);
+            clearTimeout(_tt);
+            _tt = setTimeout(() => { if (t.parentNode) t.remove(); }, 2800);
+        }
+
+        /* ── ESCAPE ── */
+        function esc(s) {
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        /* ── NAV ── */
+        window.App = {
+            navigate(viewId, btnEl) {
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                if (btnEl) btnEl.classList.add('active');
+                document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+                const target = document.getElementById('view-' + viewId);
+                if (target) target.classList.add('active');
+                document.getElementById('main-content').scrollTop = 0;
+            }
+        };
+
+        /* ── INIT ── */
+        (function init() {
+            syncEngineUI();
+            FractalApp.selectArch(currentArch);
+            buildHints();
+            // NÃO RESTAURA AUTOMATICAMENTE — só via clique no botão "Restaurar"
+            // Apenas atualiza o dock com estado padrão
+            FractalApp.updateDock('FRACTAL 369', 'pronto');
+            // Voice load
+            if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = () => {};
+            window.addEventListener('storage', buildHints);
+            window.addEventListener('di:storage', buildHints);
+        })();
+
+        console.log('%c FRACTAL 369 · ESPAÇO DA MENTE ', 'background:#0A0A0F;color:#00f2ff;font-size:18px;font-weight:bold;padding:8px 16px;border:1px solid #00f2ff;border-radius:8px;');
+        console.log('%c Restauração sob demanda · carregue apenas quando clicar em "Restaurar"', 'color:#bd00ff;font-size:12px;');
+    </script>
+</body>
+</html>

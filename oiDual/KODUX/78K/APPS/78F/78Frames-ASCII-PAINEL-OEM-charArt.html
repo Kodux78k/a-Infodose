@@ -1,0 +1,1042 @@
+<script>
+/* ============================================================
+   78K RENDER CHAR ENGINE — OVERRIDE INJECT v2.0
+   ------------------------------------------------------------
+   Espaço da Mente → Motor Fractal → Lente → Charset → Char Art
+   COLE ESTE SCRIPT ANTES DE </body>
+   
+   NOVIDADES v2.0:
+   ✅ Preview em tempo real (auto-render)
+   ✅ Modo escuro/claro
+   ✅ Exportar como SVG
+   ✅ Histórico de renderizações
+   ✅ Teclas de atalho (Ctrl+Enter para renderizar)
+   ✅ Status detalhado com métricas
+   ✅ Melhor performance
+============================================================ */
+(function () {
+    'use strict';
+
+    /* ============================================================
+       1. CSS INJECT (Melhorado)
+    ============================================================ */
+    const css = `
+    /* 78K RENDER CHAR v2.0 */
+    #render-char-engine {
+        position: relative;
+        margin: 18px 0;
+        padding: 18px;
+        border: 1px solid rgba(0,242,255,.22);
+        border-radius: 18px;
+        background:
+            linear-gradient(
+                135deg,
+                rgba(0,242,255,.055),
+                rgba(189,0,255,.035)
+            ),
+            rgba(5,7,12,.82);
+        box-shadow:
+            0 0 30px rgba(0,242,255,.06),
+            inset 0 0 30px rgba(255,255,255,.015);
+        backdrop-filter: blur(14px);
+        color: #fff;
+        overflow: hidden;
+        transition: all .3s ease;
+    }
+    #render-char-engine.light {
+        background:
+            linear-gradient(
+                135deg,
+                rgba(0,242,255,.08),
+                rgba(189,0,255,.05)
+            ),
+            rgba(245,247,250,.95);
+        color: #1a1a2e;
+        border-color: rgba(0,242,255,.3);
+    }
+    #render-char-engine.light .rc-subtitle,
+    #render-char-engine.light .rc-field label,
+    #render-char-engine.light .rc-api {
+        opacity: .7;
+        color: #1a1a2e;
+    }
+    #render-char-engine.light #render-char-output {
+        background: #f5f7fa;
+        color: #1a1a2e;
+        border-color: rgba(0,0,0,.1);
+    }
+    #render-char-engine.light .rc-field select,
+    #render-char-engine.light .rc-field textarea {
+        background: rgba(255,255,255,.8);
+        border-color: rgba(0,0,0,.1);
+        color: #1a1a2e;
+    }
+    #render-char-engine.light .rc-btn {
+        border-color: rgba(0,0,0,.15);
+        background: rgba(0,0,0,.04);
+        color: #1a1a2e;
+    }
+    #render-char-engine.light .rc-btn:hover {
+        background: rgba(0,0,0,.08);
+        border-color: rgba(0,0,0,.25);
+    }
+    #render-char-engine.light .rc-btn.primary {
+        background: rgba(0,242,255,.15);
+        border-color: rgba(0,242,255,.3);
+    }
+    #render-char-engine.light .rc-status {
+        color: #0066ff;
+    }
+    #render-char-engine::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+            linear-gradient(
+                90deg,
+                transparent,
+                rgba(0,242,255,.04),
+                transparent
+            );
+        animation: renderCharScan 6s linear infinite;
+    }
+    @keyframes renderCharScan {
+        0%   { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    .rc-head {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+    }
+    .rc-head-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .rc-title {
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+    .rc-subtitle {
+        margin-top: 4px;
+        font-size: 10px;
+        opacity: .5;
+    }
+    .rc-status {
+        font-family: monospace;
+        font-size: 10px;
+        color: #00f2ff;
+        white-space: nowrap;
+        padding: 4px 10px;
+        border-radius: 20px;
+        background: rgba(0,242,255,.06);
+        border: 1px solid rgba(0,242,255,.1);
+    }
+    .rc-grid {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+    }
+    .rc-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .rc-field.full {
+        grid-column: 1 / -1;
+    }
+    .rc-field.half {
+        grid-column: span 1;
+    }
+    .rc-field label {
+        font-size: 10px;
+        opacity: .55;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .rc-field select,
+    .rc-field textarea,
+    .rc-field input[type="range"] {
+        width: 100%;
+    }
+    .rc-field select,
+    .rc-field textarea {
+        border: 1px solid rgba(255,255,255,.09);
+        border-radius: 10px;
+        background: rgba(0,0,0,.32);
+        color: inherit;
+        outline: none;
+        transition: .2s ease;
+    }
+    .rc-field select {
+        padding: 10px;
+        cursor: pointer;
+    }
+    .rc-field textarea {
+        min-height: 105px;
+        padding: 11px;
+        resize: vertical;
+        font-family: inherit;
+        line-height: 1.45;
+    }
+    .rc-field select:focus,
+    .rc-field textarea:focus {
+        border-color: rgba(0,242,255,.5);
+        box-shadow: 0 0 0 2px rgba(0,242,255,.06);
+    }
+    .rc-field input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        height: 4px;
+        border-radius: 2px;
+        background: rgba(0,242,255,.2);
+        outline: none;
+        transition: .2s ease;
+    }
+    .rc-field input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #00f2ff;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(0,242,255,.3);
+    }
+    .rc-field input[type="range"]::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #00f2ff;
+        cursor: pointer;
+        border: none;
+    }
+    .rc-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+    }
+    .rc-btn {
+        border: 1px solid rgba(0,242,255,.25);
+        border-radius: 10px;
+        padding: 10px 13px;
+        background: rgba(0,242,255,.06);
+        color: inherit;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 700;
+        transition: .2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .rc-btn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(0,242,255,.65);
+        background: rgba(0,242,255,.12);
+    }
+    .rc-btn:active {
+        transform: scale(.96);
+    }
+    .rc-btn.primary {
+        background: rgba(0,242,255,.14);
+        border-color: rgba(0,242,255,.5);
+    }
+    .rc-btn.gold {
+        border-color: rgba(255,215,0,.35);
+        background: rgba(255,215,0,.07);
+    }
+    .rc-btn.gold:hover {
+        border-color: rgba(255,215,0,.65);
+        background: rgba(255,215,0,.14);
+    }
+    .rc-btn svg {
+        width: 14px;
+        height: 14px;
+        fill: currentColor;
+    }
+    .rc-shortcut {
+        font-size: 8px;
+        opacity: .4;
+        margin-left: 4px;
+    }
+    #render-char-output-wrap {
+        display: none;
+        position: relative;
+        margin-top: 14px;
+        animation: fadeSlide .3s ease;
+    }
+    @keyframes fadeSlide {
+        from { opacity: 0; transform: translateY(-8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    #render-char-output {
+        width: 100%;
+        max-height: 480px;
+        overflow: auto;
+        padding: 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(0,242,255,.14);
+        background: #030507;
+        color: #00f2ff;
+        font-family:
+            "Space Mono",
+            "Courier New",
+            monospace;
+        font-size: 8px;
+        line-height: 1;
+        letter-spacing: 0;
+        white-space: pre;
+        tab-size: 1;
+        user-select: text;
+        position: relative;
+    }
+    #render-char-output .line-numbers {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        padding: 14px 8px;
+        border-right: 1px solid rgba(0,242,255,.05);
+        color: rgba(0,242,255,.15);
+        font-size: 7px;
+        text-align: right;
+        user-select: none;
+        pointer-events: none;
+    }
+    #render-char-output .content {
+        padding-left: 30px;
+    }
+    .rc-metrics {
+        display: flex;
+        gap: 12px;
+        padding: 8px 0;
+        font-size: 9px;
+        opacity: .5;
+        flex-wrap: wrap;
+    }
+    .rc-metrics span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .rc-metrics .highlight {
+        color: #00f2ff;
+        opacity: 1;
+    }
+    .rc-api {
+        margin-top: 14px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: rgba(255,255,255,.025);
+        border: 1px solid rgba(255,255,255,.06);
+        font-family: monospace;
+        font-size: 10px;
+        opacity: .7;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .rc-api strong {
+        color: #00f2ff;
+    }
+    .rc-api .badge {
+        padding: 2px 8px;
+        border-radius: 12px;
+        background: rgba(0,242,255,.08);
+        font-size: 9px;
+    }
+    .rc-history {
+        margin-top: 10px;
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+    .rc-history-item {
+        padding: 2px 8px;
+        border-radius: 12px;
+        background: rgba(0,242,255,.05);
+        border: 1px solid rgba(0,242,255,.08);
+        font-size: 8px;
+        cursor: pointer;
+        transition: .2s ease;
+    }
+    .rc-history-item:hover {
+        background: rgba(0,242,255,.1);
+        border-color: rgba(0,242,255,.2);
+    }
+    .rc-history-item.active {
+        background: rgba(0,242,255,.15);
+        border-color: rgba(0,242,255,.3);
+    }
+    .rc-toggle {
+        position: relative;
+        width: 40px;
+        height: 22px;
+        border-radius: 11px;
+        background: rgba(255,255,255,.1);
+        cursor: pointer;
+        transition: .3s ease;
+        border: none;
+        padding: 2px;
+    }
+    .rc-toggle.active {
+        background: rgba(0,242,255,.2);
+    }
+    .rc-toggle .knob {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #fff;
+        transition: .3s ease;
+    }
+    .rc-toggle.active .knob {
+        transform: translateX(18px);
+        background: #00f2ff;
+    }
+    @media (max-width: 768px) {
+        .rc-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+        .rc-field.half {
+            grid-column: span 1;
+        }
+    }
+    @media (max-width: 600px) {
+        .rc-grid {
+            grid-template-columns: 1fr;
+        }
+        .rc-field.full {
+            grid-column: auto;
+        }
+        .rc-field.half {
+            grid-column: auto;
+        }
+        .rc-status {
+            display: none;
+        }
+        .rc-head {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .rc-head-left {
+            flex-wrap: wrap;
+        }
+        .rc-api {
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+        }
+    }
+    `;
+    const style = document.createElement('style');
+    style.id = 'render-char-engine-css';
+    style.textContent = css;
+    document.head.appendChild(style);
+
+    /* ============================================================
+       2. MOTOR (Melhorado)
+    ============================================================ */
+    const STORAGE_KEYS = [
+        'fractal_ultimo',
+        'fractal_t1',
+        'fractal_t2',
+        'fractal',
+        'motor_fractal',
+        'motor_text',
+        'di_userName',
+        'espaco_da_mente',
+        'ultimo_texto'
+    ];
+
+    const LENSES = {
+        kobllux: ' .,:;KOBLLUXkobllux',
+        kaos: '01',
+        atlas: ' .:-=+*#%@',
+        nova: ' ░▒▓█',
+        custom: ' .oO0@',
+        matrix: ' 01',
+        neon: ' .:;!+*%#@'
+    };
+
+    let renderHistory = [];
+    let isDarkMode = true;
+
+    function cleanText(value) {
+        return String(value || '')
+            .replace(/\u0000/g, '')
+            .replace(/\r\n/g, '\n')
+            .replace(/\r/g, '\n')
+            .trim();
+    }
+
+    function getMotorText() {
+        const globals = [
+            window.motorText,
+            window.MOTOR_TEXT,
+            window.fractalText,
+            window.FRactalText,
+            window.ultimoFractal,
+            window.textoMotor,
+            window.espacoDaMente,
+            window.ESPACO_DA_MENTE
+        ];
+        for (const value of globals) {
+            if (typeof value === 'string' && value.trim()) {
+                return cleanText(value);
+            }
+        }
+        for (const key of STORAGE_KEYS) {
+            const value = localStorage.getItem(key);
+            if (value && value.trim()) {
+                try {
+                    const parsed = JSON.parse(value);
+                    if (typeof parsed === 'string') {
+                        return cleanText(parsed);
+                    }
+                    if (parsed && typeof parsed === 'object') {
+                        const candidates = [
+                            parsed.text,
+                            parsed.content,
+                            parsed.conteudo,
+                            parsed.fractal,
+                            parsed.value,
+                            parsed.prompt,
+                            parsed.motor
+                        ];
+                        for (const item of candidates) {
+                            if (typeof item === 'string' && item.trim()) {
+                                return cleanText(item);
+                            }
+                        }
+                    }
+                } catch (e) {
+                    return cleanText(value);
+                }
+            }
+        }
+        return '';
+    }
+
+    function buildLiveCharset(text) {
+        const chars = Array.from(
+            cleanText(text)
+                .replace(/\s/g, '')
+        );
+        const unique = [...new Set(chars)];
+        if (unique.length >= 2) {
+            return ' ' + unique.join('');
+        }
+        return LENSES.custom;
+    }
+
+    function getCharset(lens, text) {
+        if (lens === 'custom') {
+            return buildLiveCharset(text);
+        }
+        return LENSES[lens] || LENSES.kobllux;
+    }
+
+    function renderText(text, lens = 'kobllux', density = 80) {
+        text = cleanText(text);
+        if (!text) return '';
+
+        density = Math.max(20, Math.min(200, Number(density) || 80));
+        const charset = getCharset(lens, text);
+        const chars = Array.from(charset);
+        const compact = text.replace(/\s+/g, ' ');
+        const rows = Math.max(4, Math.ceil(compact.length / density));
+
+        const output = [];
+        for (let y = 0; y < rows; y++) {
+            let line = '';
+            for (let x = 0; x < density; x++) {
+                const pos = y * density + x;
+                const char = compact[pos % compact.length];
+                const code = char.charCodeAt(0);
+
+                const wave = Math.sin((x + 1) * 0.17 + y * 0.31);
+                const intensity = Math.max(0, Math.min(0.999999,
+                    ((code % 97) / 96) * 0.72 + (wave + 1) * 0.14
+                ));
+
+                if (lens === 'kaos' || lens === 'matrix') {
+                    line += intensity >= 0.5 ? '1' : '0';
+                } else {
+                    const index = Math.floor(intensity * chars.length);
+                    line += chars[Math.min(index, chars.length - 1)] || ' ';
+                }
+            }
+            output.push(line);
+        }
+        return output.join('\n');
+    }
+
+    function getMetrics(text, art) {
+        const lines = art.split('\n').length;
+        const chars = art.replace(/\s/g, '').length;
+        const uniqueChars = new Set(art).size;
+        return {
+            lines,
+            chars,
+            uniqueChars,
+            density: Math.round((chars / (lines || 1))),
+            textLength: text.length
+        };
+    }
+
+    /* ============================================================
+       3. INTERFACE (Melhorada)
+    ============================================================ */
+    function createUI() {
+        if (document.getElementById('render-char-engine')) return;
+
+        const engine = document.createElement('section');
+        engine.id = 'render-char-engine';
+        engine.innerHTML = `
+            <div class="rc-head">
+                <div class="rc-head-left">
+                    <div>
+                        <div class="rc-title">
+                            🧠 78K Render Char v2.0
+                        </div>
+                        <div class="rc-subtitle">
+                            Espaço da Mente → Motor → Lente → Char Art
+                        </div>
+                    </div>
+                    <button class="rc-toggle ${isDarkMode ? 'active' : ''}" id="rc-theme-toggle" title="Alternar tema">
+                        <div class="knob"></div>
+                    </button>
+                </div>
+                <div class="rc-status" id="rc-status">
+                    ⚡ PRONTO
+                </div>
+            </div>
+
+            <div class="rc-grid">
+                <div class="rc-field">
+                    <label>
+                        Fonte
+                    </label>
+                    <select id="rc-source">
+                        <option value="auto">🧠 Auto · Espaço da Mente</option>
+                        <option value="manual">✍️ Manual</option>
+                        <option value="clipboard">📋 Clipboard</option>
+                    </select>
+                </div>
+                <div class="rc-field">
+                    <label>
+                        Lente
+                    </label>
+                    <select id="rc-lens">
+                        <option value="kobllux">KOBLLUX · Assinatura Viva</option>
+                        <option value="kaos">KAOS · Binário</option>
+                        <option value="atlas">ATLAS · Densidade</option>
+                        <option value="nova">NOVA · Blocos</option>
+                        <option value="custom">MOTOR VIVO · Charset</option>
+                        <option value="matrix">MATRIX · Digital</option>
+                        <option value="neon">NEON · Glow</option>
+                    </select>
+                </div>
+                <div class="rc-field">
+                    <label>
+                        Densidade
+                        <span id="rc-density-value">80</span>
+                    </label>
+                    <input id="rc-density" type="range" min="20" max="200" value="80">
+                </div>
+                <div class="rc-field full">
+                    <label>
+                        <span>Espaço da Mente</span>
+                        <span id="rc-char-count" style="font-size:9px;opacity:.4;">0 caracteres</span>
+                    </label>
+                    <textarea id="rc-input" placeholder="O Motor Fractal será conectado automaticamente..."></textarea>
+                </div>
+            </div>
+
+            <div class="rc-actions">
+                <button class="rc-btn primary" id="rc-sync">
+                    🔄 SINCRONIZAR MOTOR
+                </button>
+                <button class="rc-btn" id="rc-render">
+                    ✦ RENDERIZAR
+                    <span class="rc-shortcut">Ctrl+Enter</span>
+                </button>
+                <button class="rc-btn gold" id="rc-copy">
+                    📋 COPIAR
+                </button>
+                <button class="rc-btn" id="rc-export-svg">
+                    🖼️ SVG
+                </button>
+                <button class="rc-btn" id="rc-auto-render">
+                    ⏱️ AUTO
+                </button>
+            </div>
+
+            <div id="render-char-output-wrap">
+                <pre id="render-char-output"></pre>
+                <div class="rc-metrics" id="rc-metrics"></div>
+            </div>
+
+            <div class="rc-history" id="rc-history"></div>
+
+            <div class="rc-api">
+                <span>
+                    <strong>⚡ 78K Render API</strong>
+                    <span class="badge" id="rc-api-status">Processamento local · Stateless</span>
+                </span>
+                <span style="font-size:9px;opacity:.4;">
+                    ${Object.keys(LENSES).join(' · ')}
+                </span>
+            </div>
+        `;
+
+        const target = document.querySelector('main') ||
+            document.querySelector('.content') ||
+            document.body;
+        target.prepend(engine);
+
+        bindEvents();
+        syncMotor();
+        loadHistory();
+    }
+
+    function syncMotor() {
+        const text = getMotorText();
+        const input = document.getElementById('rc-input');
+        const status = document.getElementById('rc-status');
+        const count = document.getElementById('rc-char-count');
+
+        if (!input) return;
+
+        if (text) {
+            input.value = text;
+            status.textContent = '🧠 MOTOR ONLINE · ' + text.length + ' CHARS';
+            if (count) count.textContent = text.length + ' caracteres';
+        } else {
+            status.textContent = '⚠️ MOTOR SEM TEXTO';
+            if (count) count.textContent = '0 caracteres';
+        }
+
+        updateCharCount();
+
+        // Auto-render se ativado
+        const autoBtn = document.getElementById('rc-auto-render');
+        if (autoBtn && autoBtn.classList.contains('active')) {
+            render();
+        }
+    }
+
+    function updateCharCount() {
+        const input = document.getElementById('rc-input');
+        const count = document.getElementById('rc-char-count');
+        if (input && count) {
+            count.textContent = input.value.length + ' caracteres';
+        }
+    }
+
+    function render() {
+        const input = document.getElementById('rc-input');
+        const lens = document.getElementById('rc-lens').value;
+        const density = document.getElementById('rc-density').value;
+        const output = document.getElementById('render-char-output');
+        const wrap = document.getElementById('render-char-output-wrap');
+        const status = document.getElementById('rc-status');
+        const metrics = document.getElementById('rc-metrics');
+
+        const text = input.value;
+        if (!text.trim()) {
+            status.textContent = '⚠️ VAZIO';
+            return;
+        }
+
+        const startTime = performance.now();
+        const art = renderText(text, lens, density);
+        const endTime = performance.now();
+
+        output.textContent = art;
+        wrap.style.display = 'block';
+
+        const m = getMetrics(text, art);
+        metrics.innerHTML = `
+            <span>📏 Linhas: <span class="highlight">${m.lines}</span></span>
+            <span>🔤 Caracteres: <span class="highlight">${m.chars}</span></span>
+            <span>🎯 Densidade: <span class="highlight">${m.density}</span></span>
+            <span>⚡ ${(endTime - startTime).toFixed(1)}ms</span>
+        `;
+
+        status.textContent = `${lens.toUpperCase()} · RENDERIZADO (${m.chars} chars)`;
+
+        // Salva no histórico
+        const entry = {
+            text: text.slice(0, 50) + (text.length > 50 ? '...' : ''),
+            lens,
+            density,
+            timestamp: Date.now()
+        };
+        renderHistory.unshift(entry);
+        if (renderHistory.length > 10) renderHistory.pop();
+        saveHistory();
+        updateHistory();
+
+        document.getElementById('rc-api-status').textContent =
+            `${m.chars} caracteres · ${m.lines} linhas · ${(endTime - startTime).toFixed(0)}ms`;
+    }
+
+    async function copyText() {
+        const output = document.getElementById('render-char-output');
+        const text = output?.textContent || '';
+        if (!text.trim()) {
+            alert('Nada para copiar.');
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(text);
+            const status = document.getElementById('rc-status');
+            status.textContent = '📋 COPIADO!';
+            setTimeout(() => syncMotor(), 1500);
+        } catch (e) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+            alert('✦ Char Art copiado!');
+        }
+    }
+
+    function exportSVG() {
+        const output = document.getElementById('render-char-output');
+        const text = output?.textContent || '';
+        if (!text.trim()) {
+            alert('Renderize algo primeiro.');
+            return;
+        }
+
+        const lines = text.split('\n');
+        const fontSize = 8;
+        const charWidth = fontSize * 0.6;
+        const charHeight = fontSize * 1.2;
+        const width = Math.max(...lines.map(l => l.length)) * charWidth + 20;
+        const height = lines.length * charHeight + 20;
+
+        let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+            <rect width="100%" height="100%" fill="#0a0a12" rx="8"/>
+            <text x="10" y="16" font-family="monospace" font-size="${fontSize}" fill="#00f2ff">`;
+
+        lines.forEach((line, i) => {
+            svgContent += `<tspan x="10" dy="${charHeight}">${escapeXML(line)}</tspan>`;
+        });
+
+        svgContent += `</text></svg>`;
+
+        const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `char-art-${Date.now()}.svg`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function escapeXML(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function toggleAutoRender() {
+        const btn = document.getElementById('rc-auto-render');
+        btn.classList.toggle('active');
+        btn.textContent = btn.classList.contains('active') ? '⏱️ AUTO ON' : '⏱️ AUTO';
+        if (btn.classList.contains('active')) {
+            render();
+        }
+    }
+
+    function toggleTheme() {
+        const engine = document.getElementById('render-char-engine');
+        const toggle = document.getElementById('rc-theme-toggle');
+        isDarkMode = !isDarkMode;
+        engine.classList.toggle('light');
+        toggle.classList.toggle('active');
+    }
+
+    function saveHistory() {
+        try {
+            localStorage.setItem('renderCharHistory', JSON.stringify(renderHistory));
+        } catch (e) { /* ignore */ }
+    }
+
+    function loadHistory() {
+        try {
+            const data = localStorage.getItem('renderCharHistory');
+            if (data) {
+                renderHistory = JSON.parse(data);
+                updateHistory();
+            }
+        } catch (e) { /* ignore */ }
+    }
+
+    function updateHistory() {
+        const container = document.getElementById('rc-history');
+        if (!container) return;
+        container.innerHTML = renderHistory.map((item, index) =>
+            `<span class="rc-history-item ${index === 0 ? 'active' : ''}" data-index="${index}">
+                ${item.lens} · ${item.text}
+            </span>`
+        ).join('');
+
+        container.querySelectorAll('.rc-history-item').forEach(el => {
+            el.onclick = function() {
+                const idx = parseInt(this.dataset.index);
+                const item = renderHistory[idx];
+                if (item) {
+                    document.getElementById('rc-lens').value = item.lens;
+                    document.getElementById('rc-density').value = item.density || 80;
+                    document.getElementById('rc-density-value').textContent = item.density || 80;
+                    // Busca o texto original
+                    const input = document.getElementById('rc-input');
+                    const fullText = localStorage.getItem('fractal_ultimo') || item.text;
+                    input.value = fullText;
+                    render();
+                }
+            };
+        });
+    }
+
+    function bindEvents() {
+        document.getElementById('rc-sync').onclick = syncMotor;
+        document.getElementById('rc-render').onclick = render;
+        document.getElementById('rc-copy').onclick = copyText;
+        document.getElementById('rc-export-svg').onclick = exportSVG;
+        document.getElementById('rc-auto-render').onclick = toggleAutoRender;
+        document.getElementById('rc-theme-toggle').onclick = toggleTheme;
+
+        document.getElementById('rc-input').oninput = function() {
+            updateCharCount();
+            const autoBtn = document.getElementById('rc-auto-render');
+            if (autoBtn && autoBtn.classList.contains('active')) {
+                render();
+            }
+        };
+
+        document.getElementById('rc-density').oninput = function() {
+            document.getElementById('rc-density-value').textContent = this.value;
+        };
+
+        document.getElementById('rc-lens').onchange = function() {
+            const autoBtn = document.getElementById('rc-auto-render');
+            if (autoBtn && autoBtn.classList.contains('active')) {
+                render();
+            }
+        };
+
+        document.getElementById('rc-source').onchange = async function() {
+            if (this.value === 'clipboard') {
+                try {
+                    const text = await navigator.clipboard.readText();
+                    document.getElementById('rc-input').value = text;
+                    updateCharCount();
+                    toast('📋 Conteúdo colado do clipboard');
+                } catch (e) {
+                    toast('⚠️ Erro ao acessar clipboard');
+                }
+                this.value = 'manual';
+            }
+        };
+
+        // Teclas de atalho
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                render();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'c' && e.shiftKey) {
+                e.preventDefault();
+                copyText();
+            }
+        });
+
+        window.addEventListener('storage', function(event) {
+            if (STORAGE_KEYS.includes(event.key)) {
+                syncMotor();
+            }
+        });
+
+        // Toast simples
+        window.toast = function(msg) {
+            const status = document.getElementById('rc-status');
+            const old = status.textContent;
+            status.textContent = '📢 ' + msg;
+            setTimeout(() => {
+                if (status.textContent === '📢 ' + msg) {
+                    status.textContent = old;
+                }
+            }, 2000);
+        };
+    }
+
+    /* ============================================================
+       4. API PÚBLICA
+    ============================================================ */
+    window.KOBLLUXRenderChar = {
+        render: async function(options = {}) {
+            return renderText(
+                options.text || '',
+                options.lens || 'kobllux',
+                options.density || 80
+            );
+        },
+        motor: function() {
+            return getMotorText();
+        },
+        sync: function() {
+            syncMotor();
+        },
+        lenses: Object.keys(LENSES),
+        history: function() {
+            return renderHistory;
+        },
+        version: '2.0'
+    };
+
+    /* ============================================================
+       5. BOOT
+    ============================================================ */
+    function boot() {
+        createUI();
+        // Renderiza automaticamente após 500ms
+        setTimeout(() => {
+            const autoBtn = document.getElementById('rc-auto-render');
+            if (autoBtn) {
+                autoBtn.classList.add('active');
+                autoBtn.textContent = '⏱️ AUTO ON';
+                render();
+            }
+        }, 500);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+    } else {
+        boot();
+    }
+
+})();
+</script>

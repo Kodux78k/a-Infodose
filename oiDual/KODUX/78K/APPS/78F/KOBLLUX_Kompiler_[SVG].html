@@ -1,0 +1,743 @@
+<html lang="pt-BR"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KOBLLUX SVG Kompiler</title>
+    <!-- JSZip via CDN para exportação do ZIP completo, mas o app funciona offline para downloads individuais -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        :root {
+            /* Palette KOBLLUX OS / Solar Nebula / Cyber */
+            --bg-base: #0a0a0f;
+            --bg-surface: rgba(255, 255, 255, 0.03);
+            --bg-surface-active: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --neon-cyan: #00f3ff;
+            --neon-purple: #bc13fe;
+            --solar-start: #ffffff;
+            --solar-mid: #ffff00;
+            --solar-orange: #ffa500;
+            --solar-end: #800080;
+            --text-main: #e2e2e2;
+            --text-muted: #888899;
+            --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none; /* Minimalist app feel */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image: radial-gradient(circle at 50% 0%, rgba(188, 19, 254, 0.15), transparent 50%),
+                              radial-gradient(circle at 50% 100%, rgba(0, 243, 255, 0.1), transparent 50%);
+        }
+
+        /* Títulos com Solar Nebula Gradient */
+        .text-solar {
+            background: linear-gradient(135deg, var(--solar-start) 0%, var(--solar-mid) 50%, var(--solar-orange) 85%, var(--solar-end) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+        }
+
+        /* Glassmorphism Classes */
+        .glass-panel {
+            background: var(--bg-surface);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        /* Header */
+        header {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(10, 10, 15, 0.6);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Main Workspace */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 16px;
+            gap: 16px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            background: rgba(0,0,0,0.2);
+            padding: 6px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--glass-border);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 0;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: var(--bg-surface-active);
+            color: var(--text-main);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Sections */
+        .section {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+            flex: 1;
+        }
+
+        .section.active {
+            display: flex;
+        }
+
+        /* Editor Area */
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            gap: 8px;
+        }
+
+        textarea {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            font-family: monospace;
+            padding: 16px;
+            font-size: 14px;
+            resize: none;
+            outline: none;
+            user-select: text;
+        }
+        
+        textarea:focus {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+        }
+
+        /* Drag & Drop Zone */
+        .drop-zone {
+            border: 2px dashed var(--glass-border);
+            border-radius: var(--radius-md);
+            padding: 32px 16px;
+            text-align: center;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .drop-zone.dragover {
+            border-color: var(--neon-purple);
+            background: rgba(188, 19, 254, 0.1);
+            color: var(--neon-purple);
+        }
+
+        /* Buttons */
+        .action-btn {
+            background: linear-gradient(90deg, rgba(255,255,255,0.05), rgba(255,255,255,0.1));
+            border: 1px solid var(--glass-border);
+            color: #fff;
+            padding: 14px 24px;
+            border-radius: var(--radius-lg);
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-btn.primary {
+            background: rgba(0, 243, 255, 0.1);
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+        }
+
+        .action-btn.primary:active {
+            background: var(--neon-cyan);
+            color: #000;
+        }
+
+        .action-btn.export {
+            background: rgba(188, 19, 254, 0.1);
+            border-color: var(--neon-purple);
+            color: var(--neon-purple);
+        }
+
+        /* Stats Panel */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .stat-card {
+            padding: 16px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Sprite Viewer */
+        #sprite-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 12px;
+            padding: 16px;
+            background: rgba(0,0,0,0.4);
+            border-radius: var(--radius-md);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .sprite-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .sprite-item svg {
+            width: 40px;
+            height: 40px;
+            fill: currentColor;
+            color: var(--neon-cyan);
+        }
+
+        /* Preview Iframe Container */
+        .preview-wrapper {
+            flex: 1;
+            background: #fff; /* White background to see original HTML colors if they rely on it, or transparent */
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            position: relative;
+            border: 1px solid var(--glass-border);
+        }
+        
+        .preview-wrapper iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: var(--bg-base);
+        }
+
+        .preview-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 class="text-solar">KOBLLUX <span style="font-weight:300;">Kompiler</span></h1>
+        <div style="font-size: 10px; color: var(--neon-cyan); border: 1px solid var(--neon-cyan); padding: 4px 8px; border-radius: 12px; background: rgba(0,243,255,0.1);">V1.0 HÍBRIDO</div>
+    </header>
+
+    <main>
+        <div class="tabs">
+            <button class="tab-btn active" data-target="tab-input">Source</button>
+            <button class="tab-btn" data-target="tab-preview">Preview</button>
+            <button class="tab-btn" data-target="tab-sprite">Sprite &amp; Opt</button>
+            <button class="tab-btn" data-target="tab-export">Export</button>
+        </div>
+
+        <!-- TAB: INPUT -->
+        <section id="tab-input" class="section active">
+            <div class="drop-zone glass-panel" id="drop-zone" data-hybrid-svg="true" style="position: relative;"><svg class="drop-zone glass-panel-svg-skin" width="100%" height="100%" preserveAspectRatio="none" style="position: absolute; top: 0px; left: 0px; z-index: 0; pointer-events: none;"><rect width="100%" height="100%" fill="var(--bg-surface, rgba(255,255,255,0.02))" stroke="var(--glass-border, rgba(255,255,255,0.1))" rx="16"></rect></svg><div class="hybrid-content-layer" style="position: relative; z-index: 1;">
+                <p>Drag &amp; Drop HTML/SVG files here<br><span style="font-size: 12px; color: var(--text-muted);">or click to browse</span></p>
+                <input type="file" id="file-input" multiple="" accept=".html,.svg" style="display: none;">
+            </div></div>
+            
+            <div class="editor-container">
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-muted);">
+                    <span id="editor-label">Raw HTML Input</span>
+                    <span id="char-count">0 bytes</span>
+                </div>
+                <textarea id="html-input" placeholder="Cole seu HTML monolítico aqui para iniciar a conversão híbrida..."></textarea>
+            </div>
+
+            <button class="action-btn primary" id="btn-convert">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                Compilar Híbrido SVG
+            </button>
+        </section>
+
+        <!-- TAB: PREVIEW -->
+        <section id="tab-preview" class="section">
+            <div class="preview-controls">
+                <button class="action-btn" id="btn-view-orig" style="flex:1; padding: 8px; font-size: 12px;">Original</button>
+                <button class="action-btn primary" id="btn-view-conv" style="flex:1; padding: 8px; font-size: 12px;">Híbrido SVG</button>
+            </div>
+            <div class="preview-wrapper">
+                <iframe id="preview-frame"></iframe>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card glass-panel" data-hybrid-svg="true" style="position: relative;"><svg class="stat-card glass-panel-svg-skin" width="100%" height="100%" preserveAspectRatio="none" style="position: absolute; top: 0px; left: 0px; z-index: 0; pointer-events: none;"><rect width="100%" height="100%" fill="var(--bg-surface, rgba(255,255,255,0.02))" stroke="var(--glass-border, rgba(255,255,255,0.1))" rx="16"></rect></svg><div class="hybrid-content-layer" style="position: relative; z-index: 1;">
+                    <span class="stat-value text-solar" id="stat-nodes">0</span>
+                    <span class="stat-label">DOM Nodes</span>
+                </div></div>
+                <div class="stat-card glass-panel" data-hybrid-svg="true" style="position: relative;"><svg class="stat-card glass-panel-svg-skin" width="100%" height="100%" preserveAspectRatio="none" style="position: absolute; top: 0px; left: 0px; z-index: 0; pointer-events: none;"><rect width="100%" height="100%" fill="var(--bg-surface, rgba(255,255,255,0.02))" stroke="var(--glass-border, rgba(255,255,255,0.1))" rx="16"></rect></svg><div class="hybrid-content-layer" style="position: relative; z-index: 1;">
+                    <span class="stat-value text-solar" id="stat-svgs">0</span>
+                    <span class="stat-label">SVGs Gerados</span>
+                </div></div>
+            </div>
+        </section>
+
+        <!-- TAB: SPRITE & OPTIMIZER -->
+        <section id="tab-sprite" class="section">
+            <div class="glass-panel" style="padding: 16px; position: relative;" data-hybrid-svg="true"><svg class="glass-panel-svg-skin" width="100%" height="100%" preserveAspectRatio="none" style="position: absolute; top: 0px; left: 0px; z-index: 0; pointer-events: none;"><rect width="100%" height="100%" fill="var(--bg-surface, rgba(255,255,255,0.02))" stroke="var(--glass-border, rgba(255,255,255,0.1))" rx="16"></rect></svg><div class="hybrid-content-layer" style="position: relative; z-index: 1;">
+                <h3 style="font-size: 14px; margin-bottom: 8px; color: var(--neon-purple);">Sprite Generator</h3>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">
+                    Extrai todos os SVGs da interface e converte em um único arquivo sprite.svg usando &lt;symbol&gt; para cache nativo.
+                </p>
+                <button class="action-btn" id="btn-generate-sprite" style="width: 100%; border-color: var(--neon-purple); color: var(--neon-purple);">
+                    Extrair &amp; Gerar Sprite
+                </button>
+            </div></div>
+
+            <div id="sprite-preview" class="glass-panel" style="display: none; position: relative;" data-hybrid-svg="true"><svg class="glass-panel-svg-skin" width="100%" height="100%" preserveAspectRatio="none" style="position: absolute; top: 0px; left: 0px; z-index: 0; pointer-events: none;"><rect width="100%" height="100%" fill="var(--bg-surface, rgba(255,255,255,0.02))" stroke="var(--glass-border, rgba(255,255,255,0.1))" rx="16"></rect></svg><div class="hybrid-content-layer" style="position: relative; z-index: 1;">
+                <!-- Symbols will appear here -->
+            </div></div>
+
+            <textarea id="sprite-output" readonly="" placeholder="Código do Sprite.svg aparecerá aqui..." style="height: 150px; display:none;"></textarea>
+        </section>
+
+        <!-- TAB: EXPORT -->
+        <section id="tab-export" class="section">
+            <div class="glass-panel" style="padding: 20px; display: flex; flex-direction: column; gap: 16px; position: relative;" data-hybrid-svg="true"><svg class="glass-panel-svg-skin" width="100%" height="100%" preserveAspectRatio="none" style="position: absolute; top: 0px; left: 0px; z-index: 0; pointer-events: none;"><rect width="100%" height="100%" fill="var(--bg-surface, rgba(255,255,255,0.02))" stroke="var(--glass-border, rgba(255,255,255,0.1))" rx="16"></rect></svg><div class="hybrid-content-layer" style="position: relative; z-index: 1;">
+                <h2 style="font-size: 16px; text-align: center;" class="text-solar">KOBLLUX Export Engine</h2>
+                
+                <button class="action-btn export" id="btn-dl-html">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
+                    Baixar HTML Convertido
+                </button>
+                
+                <button class="action-btn export" id="btn-dl-sprite">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
+                    Baixar Sprite.svg
+                </button>
+
+                <div style="height: 1px; background: var(--glass-border); margin: 8px 0;"></div>
+
+                <button class="action-btn primary" id="btn-dl-zip">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
+                    Exportar Pacote ZIP Completo
+                </button>
+            </div></div>
+        </section>
+    </main>
+
+    <script>
+        // App State
+        const AppState = {
+            originalHtml: '',
+            convertedHtml: '',
+            spriteSvg: '',
+            stats: { nodes: 0, svgs: 0 }
+        };
+
+        // Cache DOM elements
+        const htmlInput = document.getElementById('html-input');
+        const charCount = document.getElementById('char-count');
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const iframe = document.getElementById('preview-frame');
+        
+        // Restore from LocalStorage (Using user preferred prefix di_)
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedData = localStorage.getItem('di_kompiler_draft');
+            if(savedData) {
+                htmlInput.value = savedData;
+                updateCharCount();
+            }
+        });
+
+        htmlInput.addEventListener('input', () => {
+            updateCharCount();
+            localStorage.setItem('di_kompiler_draft', htmlInput.value);
+            AppState.originalHtml = htmlInput.value;
+        });
+
+        function updateCharCount() {
+            const size = new Blob([htmlInput.value]).size;
+            charCount.textContent = (size / 1024).toFixed(2) + ' KB';
+        }
+
+        // Tabs Logic
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                
+                e.target.classList.add('active');
+                document.getElementById(e.target.dataset.target).classList.add('active');
+            });
+        });
+
+        // Drag & Drop Logic
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFile(e.target.files[0]);
+        });
+
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                htmlInput.value = e.target.result;
+                updateCharCount();
+                AppState.originalHtml = e.target.result;
+                localStorage.setItem('di_kompiler_draft', AppState.originalHtml);
+            };
+            reader.readAsText(file);
+        }
+
+        // --- CORE ENGINE: HTML -> Híbrido SVG ---
+        document.getElementById('btn-convert').addEventListener('click', () => {
+            if (!htmlInput.value.trim()) return alert("Insira o HTML primeiro.");
+            
+            // Show loading state
+            const btn = document.getElementById('btn-convert');
+            const origText = btn.textContent;
+            btn.textContent = "Compilando...";
+            
+            setTimeout(() => {
+                processHybridConversion(htmlInput.value);
+                btn.textContent = origText;
+                
+                // Switch to preview tab
+                document.querySelector('[data-target="tab-preview"]').click();
+                showPreview('converted');
+            }, 500); // Simulate processing time for UX
+        });
+
+        function processHybridConversion(sourceHTML) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(sourceHTML, 'text/html');
+            
+            // Identify visual targets based on common KOBLLUX/Fusion patterns
+            // (fusion-card, ambient-light, moldura, blobs, panels, glass elements)
+            const visualSelectors = [
+                '[class*="card"]', 
+                '[class*="panel"]', 
+                '[class*="blob"]', 
+                '[class*="glass"]',
+                '.ambient-light',
+                '.moldura',
+                '.hud-element'
+            ];
+
+            let svgCount = 0;
+            const nodes = doc.querySelectorAll('*');
+            
+            nodes.forEach(el => {
+                // Skip non-visual logical elements, inputs, buttons, etc.
+                if (['INPUT', 'BUTTON', 'SELECT', 'TEXTAREA', 'FORM', 'SCRIPT', 'STYLE', 'SVG'].includes(el.tagName)) {
+                    return;
+                }
+
+                // Check if element matches our visual heuristics
+                const isVisual = visualSelectors.some(sel => el.matches(sel));
+                
+                if (isVisual && !el.hasAttribute('data-hybrid-svg')) {
+                    // Inject SVG Skin Behind Content
+                    const svgSkin = doc.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    const elClass = el.className || 'generic';
+                    
+                    svgSkin.setAttribute('class', elClass + '-svg-skin');
+                    svgSkin.setAttribute('width', '100%');
+                    svgSkin.setAttribute('height', '100%');
+                    svgSkin.setAttribute('preserveAspectRatio', 'none');
+                    // Ensure it stays behind
+                    svgSkin.style.position = 'absolute';
+                    svgSkin.style.top = '0';
+                    svgSkin.style.left = '0';
+                    svgSkin.style.zIndex = '0';
+                    svgSkin.style.pointerEvents = 'none';
+
+                    // Extract CSS-like attributes to SVG attributes (mocking compilation)
+                    // In a full AST parser, we would map border-radius, background, shadows to SVG rect properties
+                    const rect = doc.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    rect.setAttribute('width', '100%');
+                    rect.setAttribute('height', '100%');
+                    
+                    // Apply generic glass/tech aesthetic to the rect as fallback for hybrid testing
+                    rect.setAttribute('fill', 'var(--bg-surface, rgba(255,255,255,0.02))');
+                    rect.setAttribute('stroke', 'var(--glass-border, rgba(255,255,255,0.1))');
+                    rect.setAttribute('rx', '16'); // Mock radius
+                    
+                    svgSkin.appendChild(rect);
+                    
+                    // Ensure the parent is relative
+                    if (!el.style.position || el.style.position === 'static') {
+                        el.style.position = 'relative';
+                    }
+                    
+                    // Mark so we don't double convert
+                    el.setAttribute('data-hybrid-svg', 'true');
+                    
+                    // Wrap existing inner HTML in a z-index protected div so it sits above SVG
+                    const contentWrapper = doc.createElement('div');
+                    contentWrapper.className = 'hybrid-content-layer';
+                    contentWrapper.style.position = 'relative';
+                    contentWrapper.style.zIndex = '1';
+                    
+                    // Move children
+                    while(el.firstChild) {
+                        contentWrapper.appendChild(el.firstChild);
+                    }
+
+                    el.appendChild(svgSkin);
+                    el.appendChild(contentWrapper);
+
+                    svgCount++;
+                }
+            });
+
+            AppState.convertedHtml = doc.documentElement.outerHTML;
+            AppState.stats.nodes = doc.querySelectorAll('*').length;
+            AppState.stats.svgs = svgCount;
+
+            // Update UI
+            document.getElementById('stat-nodes').textContent = AppState.stats.nodes;
+            document.getElementById('stat-svgs').textContent = AppState.stats.svgs;
+        }
+
+        // Preview Logic
+        document.getElementById('btn-view-orig').addEventListener('click', (e) => {
+            document.getElementById('btn-view-conv').classList.remove('primary');
+            e.target.classList.add('primary');
+            showPreview('original');
+        });
+
+        document.getElementById('btn-view-conv').addEventListener('click', (e) => {
+            document.getElementById('btn-view-orig').classList.remove('primary');
+            e.target.classList.add('primary');
+            showPreview('converted');
+        });
+
+        function showPreview(type) {
+            const html = type === 'original' ? AppState.originalHtml : AppState.convertedHtml;
+            const doc = iframe.contentWindow.document;
+            doc.open();
+            doc.write(html);
+            doc.close();
+            
+            // Inject base styles into iframe for better preview if missing
+            const style = doc.createElement('style');
+            style.textContent = `
+                body { background: #0a0a0f; color: #fff; font-family: sans-serif; padding: 20px; }
+                .hybrid-content-layer { display: flex; flex-direction: column; height: 100%; width: 100%; }
+            `;
+            doc.head.appendChild(style);
+        }
+
+        // --- SPRITE GENERATOR ---
+        document.getElementById('btn-generate-sprite').addEventListener('click', () => {
+            if (!AppState.convertedHtml) return alert("Compile o código primeiro.");
+            
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(AppState.convertedHtml, 'text/html');
+            const svgs = doc.querySelectorAll('svg');
+            
+            if (svgs.length === 0) return alert("Nenhum SVG encontrado na compilação.");
+
+            let spriteDefs = '';
+            let previewHTML = '';
+            
+            svgs.forEach((svg, index) => {
+                const id = 'icon-' + index;
+                // Create Symbol
+                spriteDefs += `<symbol id="${id}" viewBox="${svg.getAttribute('viewBox') || '0 0 100 100'}">`;
+                spriteDefs += svg.innerHTML;
+                spriteDefs += `</symbol>
+`;
+
+                // Add to preview grid
+                previewHTML += `
+                    <div class="sprite-item">
+                        <svg viewBox="${svg.getAttribute('viewBox') || '0 0 100 100'}">${svg.innerHTML}</svg>
+                        <span>#${id}</span>
+                    </div>
+                `;
+            });
+
+            const finalSprite = `<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+<defs>
+${spriteDefs}</defs>
+</svg>`;
+            AppState.spriteSvg = finalSprite;
+
+            // Show UI
+            const previewContainer = document.getElementById('sprite-preview');
+            previewContainer.innerHTML = previewHTML;
+            previewContainer.style.display = 'grid';
+
+            const output = document.getElementById('sprite-output');
+            output.value = finalSprite;
+            output.style.display = 'block';
+        });
+
+        // --- EXPORT LOGIC ---
+        function downloadFile(filename, content, type) {
+            const blob = new Blob([content], { type: type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        document.getElementById('btn-dl-html').addEventListener('click', () => {
+            if(!AppState.convertedHtml) return alert("Compile o HTML primeiro.");
+            downloadFile('index-hybrid.html', AppState.convertedHtml, 'text/html');
+        });
+
+        document.getElementById('btn-dl-sprite').addEventListener('click', () => {
+            if(!AppState.spriteSvg) return alert("Gere o sprite primeiro.");
+            downloadFile('sprite.svg', AppState.spriteSvg, 'image/svg+xml');
+        });
+
+        document.getElementById('btn-dl-zip').addEventListener('click', async () => {
+            if(!AppState.convertedHtml) return alert("Compile o HTML primeiro.");
+            
+            try {
+                if(typeof JSZip === 'undefined') {
+                    alert("A biblioteca JSZip não carregou (offline?). Use os botões de download individual.");
+                    return;
+                }
+                
+                const zip = new JSZip();
+                
+                // Adiciona o HTML
+                zip.file("index.html", AppState.convertedHtml);
+                
+                // Adiciona o Sprite se existir
+                if (AppState.spriteSvg) {
+                    zip.file("assets/sprite.svg", AppState.spriteSvg);
+                }
+
+                // Cria um arquivo CSS base para o ecossistema KOBLLUX baseado na análise
+                const baseCss = `
+/* KOBLLUX OS - Hybrid CSS */
+:root {
+    --bg-base: #0a0a0f;
+    --neon-cyan: #00f3ff;
+    --neon-purple: #bc13fe;
+}
+body { background: var(--bg-base); color: #fff; }
+                `;
+                zip.file("css/kobllux-hybrid.css", baseCss);
+
+                const content = await zip.generateAsync({type:"blob"});
+                const url = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "KOBLLUX_Hybrid_Project.zip";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+            } catch (err) {
+                console.error("Erro no ZIP:", err);
+                alert("Erro ao gerar ZIP. Você pode baixar os arquivos individualmente.");
+            }
+        });
+
+    </script>
+
+
+</body></html>

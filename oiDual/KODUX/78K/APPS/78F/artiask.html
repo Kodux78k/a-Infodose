@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-arch="kodux">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARTIASK · Motor Fractal Evolutivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============ TOKENS ============ */
+  :root{
+    --void:#0A0910;
+    --painel:#141220;
+    --painel-2:#1B1830;
+    --linha:#2C2748;
+    --tinta:#EDE7F6;
+    --tinta-fraca:#9791AE;
+    --ouro:#C9A24B;
+    --ouro-fraco:#8A754A;
+    --violeta:#8C7AE6;
+    --rosa:#E2637A;
+    --verde-ok:#6FCF97;
+
+    /* z-index semântico, convenção KOBLLUX */
+    --z-fundo:0;
+    --z-conteudo:10;
+    --z-ui:20;
+    --z-overlay:30;
+    --z-emergencia:40;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, #1D1738 0%, transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 10%, #14203A 0%, transparent 55%),
+      var(--void);
+    color:var(--tinta);
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  ::selection{background:var(--ouro); color:#1a1420;}
+
+  /* ============ LAYOUT ============ */
+  .campo{
+    max-width:1180px;
+    margin:0 auto;
+    padding:48px 24px 96px;
+    position:relative;
+    z-index:var(--z-conteudo);
+  }
+
+  header.cabecalho{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    margin-bottom:40px;
+    border-bottom:1px solid var(--linha);
+    padding-bottom:28px;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--ouro);
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:clamp(32px,5vw,52px);
+    margin:2px 0 4px;
+    letter-spacing:-0.01em;
+  }
+  h1 em{
+    font-style:italic;
+    color:var(--violeta);
+    font-weight:400;
+  }
+  .subtitulo{
+    color:var(--tinta-fraca);
+    font-size:15px;
+    max-width:640px;
+    line-height:1.55;
+  }
+
+  .grade{
+    display:grid;
+    grid-template-columns:minmax(300px,380px) 1fr;
+    gap:20px;
+  }
+  @media (max-width:880px){
+    .grade{grid-template-columns:1fr;}
+  }
+
+  .painel{
+    background:var(--painel);
+    border:1px solid var(--linha);
+    border-radius:10px;
+    padding:22px;
+  }
+  .painel + .painel{margin-top:20px;}
+
+  .rotulo{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--tinta-fraca);
+    margin-bottom:10px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .rotulo::before{
+    content:'';
+    width:6px;height:6px;border-radius:50%;
+    background:var(--ouro);
+    display:inline-block;
+  }
+
+  textarea{
+    width:100%;
+    min-height:220px;
+    background:var(--void);
+    border:1px solid var(--linha);
+    border-radius:7px;
+    color:var(--tinta);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    line-height:1.6;
+    padding:14px;
+    resize:vertical;
+  }
+  textarea:focus, input:focus, button:focus{
+    outline:2px solid var(--violeta);
+    outline-offset:1px;
+  }
+
+  input[type=text]{
+    width:100%;
+    background:var(--void);
+    border:1px solid var(--linha);
+    border-radius:7px;
+    color:var(--tinta);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    padding:10px 12px;
+  }
+
+  .campo-nome{margin-top:12px;}
+  .campo-nome label{
+    display:block;
+    font-size:11px;
+    color:var(--tinta-fraca);
+    margin-bottom:6px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+
+  .acoes{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:16px;
+  }
+  button{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13px;
+    font-weight:500;
+    padding:10px 16px;
+    border-radius:7px;
+    border:1px solid var(--linha);
+    background:var(--painel-2);
+    color:var(--tinta);
+    cursor:pointer;
+    transition:border-color .15s ease, transform .1s ease;
+  }
+  button:hover{border-color:var(--ouro-fraco);}
+  button:active{transform:scale(.97);}
+  button.primario{
+    background:linear-gradient(180deg, #D7B461, var(--ouro));
+    color:#20170A;
+    border:none;
+    font-weight:600;
+  }
+  button.primario:hover{filter:brightness(1.06);}
+  button:disabled{opacity:.4; cursor:not-allowed;}
+
+  .stat-tira{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(110px,1fr));
+    gap:10px;
+    margin-top:18px;
+  }
+  .stat{
+    background:var(--void);
+    border:1px solid var(--linha);
+    border-radius:7px;
+    padding:10px 12px;
+  }
+  .stat .n{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:18px;
+    color:var(--ouro);
+    font-weight:600;
+  }
+  .stat .l{
+    font-size:10.5px;
+    color:var(--tinta-fraca);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin-top:2px;
+  }
+
+  /* ============ MANDALA ============ */
+  .mandala-cabecalho{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:14px;
+  }
+  .alternador{
+    display:flex;
+    background:var(--void);
+    border:1px solid var(--linha);
+    border-radius:7px;
+    overflow:hidden;
+  }
+  .alternador button{
+    border:none;
+    border-radius:0;
+    background:transparent;
+    padding:7px 14px;
+    font-size:12px;
+  }
+  .alternador button.ativo{
+    background:var(--violeta);
+    color:#0e0c1c;
+    font-weight:600;
+  }
+
+  .mandala-palco{
+    background:radial-gradient(circle at 50% 45%, #1A1730 0%, #0D0B16 75%);
+    border:1px solid var(--linha);
+    border-radius:8px;
+    min-height:420px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    position:relative;
+    overflow:hidden;
+  }
+  .mandala-vazio{
+    color:var(--tinta-fraca);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    text-align:center;
+    max-width:280px;
+    line-height:1.6;
+  }
+  #svgOut{ width:100%; max-width:420px; }
+  #svgOut svg{ width:100%; height:auto; display:block; }
+  #asciiOut{
+    display:none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9.5px;
+    line-height:1.05;
+    color:var(--violeta);
+    white-space:pre;
+    text-shadow:0 0 8px rgba(140,122,230,.35);
+    letter-spacing:1px;
+  }
+
+  .integridade{
+    margin-top:14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    padding:10px 12px;
+    border-radius:7px;
+    border:1px solid var(--linha);
+  }
+  .integridade.ok{border-color:var(--verde-ok); color:var(--verde-ok);}
+  .integridade.falha{border-color:var(--rosa); color:var(--rosa);}
+
+  /* ============ CRISTAIS ============ */
+  .cristais-abas{
+    display:flex;
+    gap:6px;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  .aba{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    padding:7px 13px;
+    border-radius:100px;
+    border:1px solid var(--linha);
+    background:var(--void);
+    color:var(--tinta-fraca);
+    cursor:pointer;
+  }
+  .aba.ativa{
+    border-color:var(--ouro);
+    color:var(--ouro);
+  }
+  .aba .simbolo{margin-right:6px;}
+
+  pre.saida-json{
+    background:var(--void);
+    border:1px solid var(--linha);
+    border-radius:7px;
+    padding:14px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    line-height:1.55;
+    color:var(--tinta-fraca);
+    max-height:320px;
+    overflow:auto;
+    margin:0;
+  }
+  pre.saida-json .k{color:var(--violeta);}
+  pre.saida-json .v{color:var(--tinta);}
+
+  .keywords{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:12px;
+  }
+  .keywords span{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    background:var(--painel-2);
+    border:1px solid var(--linha);
+    padding:4px 9px;
+    border-radius:100px;
+    color:var(--ouro);
+  }
+
+  footer{
+    margin-top:44px;
+    padding-top:20px;
+    border-top:1px solid var(--linha);
+    color:var(--tinta-fraca);
+    font-size:12px;
+    font-family:'IBM Plex Mono', monospace;
+  }
+
+  @media (prefers-reduced-motion:no-preference){
+    .respirar{ animation:respirar 5.5s ease-in-out infinite; }
+    @keyframes respirar{
+      0%,100%{ transform:scale(1); opacity:1; }
+      50%{ transform:scale(1.015); opacity:.94; }
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="campo">
+
+  <header class="cabecalho">
+    <span class="eyebrow">KOBLLUX · Motor 78K</span>
+    <h1>ARTIASK <em>· cristal de conhecimento</em></h1>
+    <p class="subtitulo">Comprime um documento sem perder nenhuma informação e revela sua estrutura como uma mandala — radial, única, gerada a partir da própria árvore de parágrafos e sentenças do texto. Não é ZIP. É geometria semântica.</p>
+  </header>
+
+  <div class="grade">
+
+    <!-- ===== COLUNA ESQUERDA: ENTRADA ===== -->
+    <div>
+      <div class="painel">
+        <div class="rotulo">01 · Documento de origem</div>
+        <textarea id="entradaTexto" spellcheck="false"></textarea>
+
+        <div class="campo-nome">
+          <label for="nomeDoc">Nome do documento (chave localStorage · di_&lt;nome&gt;)</label>
+          <input type="text" id="nomeDoc" value="atlas_document">
+        </div>
+
+        <div class="acoes">
+          <button class="primario" id="btnComprimir">Comprimir → Cristais</button>
+          <button id="btnReconstruir" disabled>Reconstruir &amp; verificar</button>
+        </div>
+        <div class="acoes">
+          <button id="btnExportar" disabled>↓ Exportar JSON</button>
+          <button id="btnImportar">↑ Importar de localStorage</button>
+          <button id="btnDelta" disabled>Cristal Δ (comparar versão salva)</button>
+        </div>
+
+        <div class="stat-tira" id="statTira" style="display:none">
+          <div class="stat"><div class="n" id="statTokens">–</div><div class="l">Tokens</div></div>
+          <div class="stat"><div class="n" id="statDict">–</div><div class="l">Dicionário</div></div>
+          <div class="stat"><div class="n" id="statParagrafos">–</div><div class="l">Parágrafos</div></div>
+          <div class="stat"><div class="n" id="statProfundidade">–</div><div class="l">Profundidade</div></div>
+          <div class="stat"><div class="n" id="statRatio">–</div><div class="l">Compactação</div></div>
+        </div>
+
+        <div id="integridadeCaixa"></div>
+      </div>
+    </div>
+
+    <!-- ===== COLUNA DIREITA: MANDALA + CRISTAIS ===== -->
+    <div>
+      <div class="painel">
+        <div class="mandala-cabecalho">
+          <div class="rotulo" style="margin-bottom:0">02 · Mandala estrutural</div>
+          <div class="alternador">
+            <button id="verSvg" class="ativo">SVG</button>
+            <button id="verAscii">ASCII</button>
+          </div>
+        </div>
+        <div class="mandala-palco">
+          <div class="mandala-vazio" id="mandalaVazio">Cole um documento e comprima.<br>A mandala é desenhada a partir da árvore real de parágrafos → sentenças do seu texto — cada documento gera uma geometria diferente.</div>
+          <div id="svgOut" class="respirar"></div>
+          <pre id="asciiOut"></pre>
+        </div>
+      </div>
+
+      <div class="painel">
+        <div class="rotulo">03 · Cristais</div>
+        <div class="cristais-abas">
+          <button class="aba ativa" data-cristal="core"><span class="simbolo">◇</span>Core</button>
+          <button class="aba" data-cristal="memory"><span class="simbolo">◈</span>Memory</button>
+          <button class="aba" data-cristal="full"><span class="simbolo">⬢</span>Full</button>
+          <button class="aba" data-cristal="delta"><span class="simbolo">⬡</span>Delta</button>
+        </div>
+        <pre class="saida-json" id="saidaCristal">// comprima um documento para ver o cristal Core aqui</pre>
+        <div class="keywords" id="keywordsBox"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    window.KOBLLUX.Artiask · compress · expand · verify · renderASCII · renderSVG · diff · search · stats · export · import
+  </footer>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ======================================================
+     ARTIASK · MOTOR FRACTAL EVOLUTIVO
+     Fusor Dual · Ecossistema 78K
+     - compressão em dicionário (reconstrução 100% exata)
+     - árvore estrutural (parágrafo → sentença) via FNV-1a
+     - layout radial tipo sunburst → mandala real (SVG/ASCII)
+     - checksum SHA-256 do documento inteiro
+  ====================================================== */
+
+  // ---------- FNV-1a (hash rápido, síncrono, determinístico) ----------
+  function fnv1a(str){
+    let h = 0x811c9dc5;
+    for(let i=0;i<str.length;i++){
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 0x01000193);
+    }
+    return (h >>> 0).toString(16).padStart(8,'0');
+  }
+
+  // ---------- SHA-256 (checksum forte, assíncrono, nativo) ----------
+  async function sha256Hex(text){
+    const buffer = new TextEncoder().encode(text);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  // ---------- Tokenização híbrida (preserva espaços e pontuação exatos) ----------
+  function tokenize(text){
+    return text.match(/\s+|[\wÀ-ÿ]+|[^\w\sÀ-ÿ]/gu) || [];
+  }
+
+  // ---------- Árvore de COMPRESSÃO (token-level, para reconstrução exata) ----------
+  function buildCompressionTree(text){
+    const dict = {};
+    const invertedDict = {};
+    let dictIdx = 0;
+    let globalId = 0;
+    const root = { id:'root', children:[] };
+    const paragraphs = text.split(/(\n\s*\n)/);
+
+    for(const para of paragraphs){
+      if(!para.trim()){
+        root.children.push({ id:`node_${globalId++}`, text: para });
+        continue;
+      }
+      const paraNode = { id:`node_${globalId++}`, children:[] };
+      for(const token of tokenize(para)){
+        if(token.trim().length > 1){
+          if(!invertedDict[token]){
+            const key = `@${dictIdx.toString(36)}`;
+            dict[key] = token;
+            invertedDict[token] = key;
+            dictIdx++;
+          }
+          paraNode.children.push({ id:`node_${globalId++}`, key: invertedDict[token] });
+        } else {
+          paraNode.children.push({ id:`node_${globalId++}`, text: token });
+        }
+      }
+      root.children.push(paraNode);
+    }
+    return { root, dict };
+  }
+
+  function expandCompressionTree(root, dict){
+    const traverse = (node) => {
+      if(node.text !== undefined) return node.text;
+      if(node.key !== undefined) return dict[node.key] ?? '';
+      if(node.children) return node.children.map(traverse).join('');
+      return '';
+    };
+    return traverse(root);
+  }
+
+  // ---------- Árvore ESTRUTURAL (parágrafo → sentença, para a mandala) ----------
+  function buildMandalaTree(text){
+    const paragraphs = text.split(/\n\s*\n/).map(p=>p.trim()).filter(Boolean);
+    const root = { id:'root', hash: fnv1a(text || ' '), children: [] };
+    paragraphs.forEach((p, pi) => {
+      const paraNode = { id:`p${pi}`, hash: fnv1a(p), children: [] };
+      const sentences = p.split(/(?<=[.!?…])\s+/).map(s=>s.trim()).filter(Boolean);
+      (sentences.length ? sentences : [p]).forEach((s, si) => {
+        paraNode.children.push({ id:`p${pi}s${si}`, hash: fnv1a(s), weight: s.length, children: [] });
+      });
+      root.children.push(paraNode);
+    });
+    if(root.children.length === 0){
+      root.children.push({ id:'p0', hash: fnv1a(text||' '), children:[{ id:'p0s0', hash: fnv1a(text||' '), weight:(text||'').length, children:[] }] });
+    }
+    return root;
+  }
+
+  function computeMaxDepth(node, d=0){
+    if(!node.children || node.children.length===0) return d;
+    return Math.max(...node.children.map(c => computeMaxDepth(c, d+1)));
+  }
+
+  function leafCount(node){
+    if(!node.children || node.children.length===0) return 1;
+    return node.children.reduce((s,c)=>s+leafCount(c),0);
+  }
+
+  // ---------- Layout radial (sunburst) — coordenadas normalizadas [-1,1] ----------
+  function layoutRadial(node, depth, aStart, aEnd, step, out, edges, parent){
+    const angle = (aStart+aEnd)/2;
+    const r = depth*step;
+    node.x = Math.cos(angle)*r;
+    node.y = Math.sin(angle)*r;
+    node.depth = depth;
+    out.push(node);
+    if(parent) edges.push([parent, node]);
+    if(node.children && node.children.length){
+      const total = node.children.reduce((s,c)=>s+leafCount(c),0) || 1;
+      let a = aStart;
+      for(const c of node.children){
+        const span = (aEnd-aStart) * (leafCount(c)/total);
+        layoutRadial(c, depth+1, a, a+span, step, out, edges, node);
+        a += span;
+      }
+    }
+  }
+
+  // ---------- Índice semântico (keywords) ----------
+  function extractKeywords(dict){
+    const stop = new Set(['que','com','para','uma','como','mais','esse','essa','isso','pelo','pela','são','está','também','onde']);
+    return Object.values(dict)
+      .filter(w => w.length > 4 && !stop.has(w.toLowerCase()))
+      .filter((w,i,arr)=>arr.indexOf(w)===i)
+      .slice(0,12);
+  }
+
+  // ---------- Render ASCII (mandala real, a partir dos nós posicionados) ----------
+  function renderASCII(memory, opts={}){
+    const cols = opts.cols || 63, rows = opts.rows || 33;
+    const cx = Math.floor(cols/2), cy = Math.floor(rows/2);
+    const maxR = Math.min(cx,cy) - 2;
+    const xScale = 2.05; // compensa proporção do caractere monoespaçado
+    const grid = Array.from({length:rows}, () => Array(cols).fill(' '));
+    const put = (gx,gy,ch) => { if(gy>=0&&gy<rows&&gx>=0&&gx<cols) grid[gy][gx]=ch; };
+
+    for(const [p,c] of memory.edges){
+      const steps = 10;
+      for(let i=1;i<steps;i++){
+        const t=i/steps;
+        const gx = Math.round((p.x+(c.x-p.x)*t)*maxR*xScale + cx);
+        const gy = Math.round((p.y+(c.y-p.y)*t)*maxR + cy);
+        if(gy>=0&&gy<rows&&gx>=0&&gx<cols && grid[gy][gx]===' ') grid[gy][gx]='·';
+      }
+    }
+    for(const n of memory.nodesFlat){
+      const gx = Math.round(n.x*maxR*xScale + cx);
+      const gy = Math.round(n.y*maxR + cy);
+      const ch = n.depth===0 ? '❖' : n.depth===1 ? '◆' : n.depth===2 ? '●' : '∙';
+      put(gx,gy,ch);
+    }
+    return grid.map(r=>r.join('')).join('\n');
+  }
+
+  // ---------- Render SVG (mandala real, vetorial) ----------
+  function renderSVG(memory, size=420){
+    const cx=size/2, cy=size/2, maxR=size/2-34;
+    let inner = '';
+    // anéis-guia por profundidade
+    for(let d=1; d<=memory.maxDepth; d++){
+      const r = (d/memory.maxDepth)*maxR;
+      inner += `<circle cx="${cx}" cy="${cy}" r="${r.toFixed(1)}" fill="none" stroke="#2C2748" stroke-width="1" opacity="0.55"/>`;
+    }
+    // ligações
+    for(const [p,c] of memory.edges){
+      inner += `<line x1="${(p.x*maxR+cx).toFixed(1)}" y1="${(p.y*maxR+cy).toFixed(1)}" x2="${(c.x*maxR+cx).toFixed(1)}" y2="${(c.y*maxR+cy).toFixed(1)}" stroke="#8C7AE6" stroke-width="1" opacity="0.4"/>`;
+    }
+    // nós
+    for(const n of memory.nodesFlat){
+      const hue = (parseInt(n.hash.slice(0,2),16)/255)*300;
+      const rad = n.depth===0 ? 8 : n.depth===1 ? 5.4 : n.depth===2 ? 3.6 : 2.3;
+      const px = (n.x*maxR+cx).toFixed(1), py=(n.y*maxR+cy).toFixed(1);
+      inner += `<circle cx="${px}" cy="${py}" r="${rad}" fill="hsl(${hue.toFixed(0)},68%,63%)" stroke="#0A0910" stroke-width="0.6"/>`;
+    }
+    return `<svg viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="${cx}" cy="${cy}" r="${maxR}" fill="none" stroke="#2C2748" stroke-width="1"/>
+      ${inner}
+    </svg>`;
+  }
+
+  // ---------- API PÚBLICA ARTIASK ----------
+  const Artiask = {
+    async compress(text){
+      const compTree = buildCompressionTree(text);
+      const mandalaRoot = buildMandalaTree(text);
+      const maxDepth = computeMaxDepth(mandalaRoot) || 1;
+      const nodesFlat = [], edges = [];
+      layoutRadial(mandalaRoot, 0, 0, Math.PI*2, 1/maxDepth, nodesFlat, edges, null);
+
+      const keywords = extractKeywords(compTree.dict);
+      const checksum = await sha256Hex(text);
+      const compressedSize = JSON.stringify({dict:compTree.dict, tree:compTree.root}).length;
+      const ratio = text.length ? Math.round((1 - compressedSize/text.length) * 100) : 0;
+
+      const memory = { compTree, dict: compTree.dict, mandalaRoot, nodesFlat, edges, maxDepth, keywords };
+      const core = {
+        checksum,
+        tokens: tokenize(text).length,
+        dictSize: Object.keys(compTree.dict).length,
+        paragraphs: mandalaRoot.children.length,
+        sentences: nodesFlat.filter(n=>n.depth===2).length,
+        maxDepth,
+        ratio,
+        keywords
+      };
+      const full = { original: text };
+      return { core, memory, full };
+    },
+
+    expand(memory){
+      return expandCompressionTree(memory.compTree.root, memory.dict);
+    },
+
+    async verify(core, text){
+      const currentHash = await sha256Hex(text);
+      return core && core.checksum === currentHash;
+    },
+
+    renderASCII(memory){ return renderASCII(memory); },
+    renderSVG(memory){ return renderSVG(memory); },
+
+    diff(oldMemory, newMemory){
+      if(!oldMemory) return { changed:true, added: newMemory.mandalaRoot.children.length, removed:0, kept:0, note:'sem versão anterior salva' };
+      const oldHashes = oldMemory.mandalaRoot.children.map(p=>p.hash);
+      const newHashes = newMemory.mandalaRoot.children.map(p=>p.hash);
+      const oldSet = new Set(oldHashes), newSet = new Set(newHashes);
+      const added = newHashes.filter(h=>!oldSet.has(h)).length;
+      const removed = oldHashes.filter(h=>!newSet.has(h)).length;
+      const kept = newHashes.filter(h=>oldSet.has(h)).length;
+      return { changed: added>0||removed>0, added, removed, kept, timestamp: Date.now() };
+    },
+
+    search(memory, term){
+      return memory.keywords.filter(k => k.toLowerCase().includes(String(term).toLowerCase()));
+    },
+
+    stats(memory){
+      return {
+        dictKeys: Object.keys(memory.dict).length,
+        nodes: memory.nodesFlat.length,
+        depth: memory.maxDepth
+      };
+    },
+
+    export(crystals, documentName='default'){
+      const prefix = `di_${documentName}`;
+      localStorage.setItem(`${prefix}_core`, JSON.stringify(crystals.core));
+      localStorage.setItem(`${prefix}_memory`, JSON.stringify(crystals.memory));
+      localStorage.setItem(`${prefix}_full`, JSON.stringify(crystals.full));
+      if(crystals.delta) localStorage.setItem(`${prefix}_delta`, JSON.stringify(crystals.delta));
+    },
+
+    import(documentName='default'){
+      const prefix = `di_${documentName}`;
+      const core = JSON.parse(localStorage.getItem(`${prefix}_core`) || 'null');
+      const memory = JSON.parse(localStorage.getItem(`${prefix}_memory`) || 'null');
+      const full = JSON.parse(localStorage.getItem(`${prefix}_full`) || 'null');
+      const delta = JSON.parse(localStorage.getItem(`${prefix}_delta`) || 'null');
+      return { core, memory, full, delta };
+    }
+  };
+
+  // Ponte KOBLLUX, convenção do ecossistema
+  window.KOBLLUX = window.KOBLLUX || {};
+  window.KOBLLUX.Artiask = Artiask;
+
+  /* ======================================================
+     UI
+  ====================================================== */
+  const $ = (id) => document.getElementById(id);
+
+  const exemplo =
+`A luz cria vida.
+A luz cria conhecimento.
+A luz cria expansão.
+
+Um ponto sem espaço não pode ser localizado. Um espaço sem pontos não pode ser percebido. Entre os dois, a estrutura pulsa e se repete em escalas diferentes, como um fractal que se reconhece em cada parte.
+
+O Motor 369 distribui arquétipos sobre essa estrutura. A luz cria movimento. A luz cria ritmo. Cada fractal carrega o mesmo núcleo, ainda que a superfície mude de forma.
+
+ARTIASK não comprime bytes — comprime repetição de sentido. O documento vira uma árvore: parágrafo, sentença, token. A árvore vira mandala. A mandala é a impressão digital visual do conhecimento.`;
+
+  $('entradaTexto').value = exemplo;
+
+  let lastCristais = null;
+  let modoVista = 'svg';
+  let abaAtiva = 'core';
+
+  function jsonColorido(obj){
+    const txt = JSON.stringify(obj, null, 2);
+    return txt
+      .replace(/"([^"]+)":/g, '<span class="k">"$1"</span>:')
+      .replace(/: "([^"]*)"/g, ': <span class="v">"$1"</span>');
+  }
+
+  function render(){
+    if(!lastCristais) return;
+    const { core, memory, full } = lastCristais;
+
+    $('statTira').style.display = 'grid';
+    $('statTokens').textContent = core.tokens;
+    $('statDict').textContent = core.dictSize;
+    $('statParagrafos').textContent = core.paragraphs;
+    $('statProfundidade').textContent = core.maxDepth;
+    $('statRatio').textContent = core.ratio + '%';
+
+    $('mandalaVazio').style.display = 'none';
+    $('svgOut').innerHTML = Artiask.renderSVG(memory);
+    $('asciiOut').textContent = Artiask.renderASCII(memory);
+
+    $('keywordsBox').innerHTML = core.keywords.map(k=>`<span>${k}</span>`).join('');
+
+    renderCristal();
+    $('btnReconstruir').disabled = false;
+    $('btnExportar').disabled = false;
+    $('btnDelta').disabled = false;
+  }
+
+  function renderCristal(){
+    if(!lastCristais) return;
+    const { core, memory, full } = lastCristais;
+    let obj;
+    if(abaAtiva==='core') obj = core;
+    else if(abaAtiva==='memory') obj = { dictSize: Object.keys(memory.dict).length, dictAmostra: Object.fromEntries(Object.entries(memory.dict).slice(0,10)), nodes: memory.nodesFlat.length, maxDepth: memory.maxDepth, keywords: memory.keywords };
+    else if(abaAtiva==='full') obj = { tamanho: full.original.length + ' caracteres', previa: full.original.slice(0,240) + (full.original.length>240?'…':'') };
+    else obj = lastCristais.delta || { info:'clique em "Cristal Δ" para comparar com a versão salva em localStorage' };
+    $('saidaCristal').innerHTML = jsonColorido(obj);
+  }
+
+  $('btnComprimir').addEventListener('click', async () => {
+    const texto = $('entradaTexto').value;
+    if(!texto.trim()) return;
+    $('btnComprimir').textContent = 'Comprimindo…';
+    $('btnComprimir').disabled = true;
+    try{
+      lastCristais = await Artiask.compress(texto);
+      render();
+    } finally {
+      $('btnComprimir').textContent = 'Comprimir → Cristais';
+      $('btnComprimir').disabled = false;
+    }
+  });
+
+  $('btnReconstruir').addEventListener('click', () => {
+    if(!lastCristais) return;
+    const original = $('entradaTexto').value;
+    const reconstruido = Artiask.expand(lastCristais.memory);
+    const ok = reconstruido === original;
+    const caixa = $('integridadeCaixa');
+    caixa.innerHTML = `<div class="integridade ${ok?'ok':'falha'}">${ok ? '✓ Reconstrução idêntica ao original — 0 bytes perdidos' : `✕ Divergência: original ${original.length} chars, reconstruído ${reconstruido.length} chars`}</div>`;
+  });
+
+  $('btnExportar').addEventListener('click', () => {
+    if(!lastCristais) return;
+    const pacote = {
+      version: '1.0',
+      algorithm: 'ARTIASK',
+      checksum: lastCristais.core.checksum,
+      core: lastCristais.core,
+      memory: lastCristais.memory,
+      full: lastCristais.full
+    };
+    const blob = new Blob([JSON.stringify(pacote, null, 2)], { type:'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${$('nomeDoc').value || 'artiask'}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  $('btnImportar').addEventListener('click', () => {
+    const nome = $('nomeDoc').value || 'default';
+    const dados = Artiask.import(nome);
+    if(!dados.core){
+      $('integridadeCaixa').innerHTML = `<div class="integridade falha">✕ Nenhum cristal salvo em localStorage para "di_${nome}"</div>`;
+      return;
+    }
+    lastCristais = { core: dados.core, memory: dados.memory, full: dados.full, delta: dados.delta };
+    if(dados.full && dados.full.original !== undefined) $('entradaTexto').value = dados.full.original;
+    render();
+  });
+
+  $('btnDelta').addEventListener('click', () => {
+    if(!lastCristais) return;
+    const nome = $('nomeDoc').value || 'default';
+    const anterior = Artiask.import(nome);
+    const delta = Artiask.diff(anterior.memory, lastCristais.memory);
+    lastCristais.delta = delta;
+    Artiask.export(lastCristais, nome);
+    abaAtiva = 'delta';
+    document.querySelectorAll('.aba').forEach(b=>b.classList.toggle('ativa', b.dataset.cristal==='delta'));
+    renderCristal();
+  });
+
+  $('verSvg').addEventListener('click', () => {
+    modoVista='svg';
+    $('verSvg').classList.add('ativo'); $('verAscii').classList.remove('ativo');
+    $('svgOut').style.display='block'; $('asciiOut').style.display='none';
+  });
+  $('verAscii').addEventListener('click', () => {
+    modoVista='ascii';
+    $('verAscii').classList.add('ativo'); $('verSvg').classList.remove('ativo');
+    $('svgOut').style.display='none'; $('asciiOut').style.display='block';
+  });
+
+  document.querySelectorAll('.aba').forEach(btn=>{
+    btn.addEventListener('click', () => {
+      abaAtiva = btn.dataset.cristal;
+      document.querySelectorAll('.aba').forEach(b=>b.classList.remove('ativa'));
+      btn.classList.add('ativa');
+      renderCristal();
+    });
+  });
+
+  // Comprime o exemplo automaticamente ao carregar
+  $('btnComprimir').click();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>KOBLLUX ΔUAL — Hypervisor 3.1 Runtime</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="apple-touch-icon" href="https://kodux78k.github.io/oiDual--Y-/M0D/editor-mix/icons/icon-192.png">
+<link rel="manifest" href="https://kodux78k.github.io/oiDual--Y-/M0D/editor-mix/manifest.webmanifest">
+
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<style>
+:root{
+  --bg-deep:#050811;--primary:#00f5ff;--secondary:#ff4bff;--tertiary:#ffd700;
+  --danger:#ff4b6b;--text-main:#e4ecff;--text-muted:#9aa4c8;
+  --glass-border:rgba(255,255,255,.08);--font-ui:'Montserrat',sans-serif;
+  --font-code:'JetBrains Mono',monospace;--header-h:64px;--dock-h:72px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden}
+body{background:var(--bg-deep);color:var(--text-main);font-family:var(--font-ui);height:100dvh;display:flex;flex-direction:column}
+.nebula-layer{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(circle at 10% 20%,rgba(0,245,255,.08),transparent 40%),radial-gradient(circle at 90% 80%,rgba(255,75,255,.08),transparent 40%)}
+.app-header{height:var(--header-h);flex-shrink:0;background:rgba(5,8,17,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--glass-border);display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:100;gap:12px}
+.brand{font-weight:900;font-size:1.1rem;color:var(--primary)}
+.brand span{font-weight:400;font-size:.7rem;color:var(--text-muted)}
+.trinity-nav{display:flex;background:rgba(255,255,255,.03);border-radius:99px;padding:4px;border:1px solid var(--glass-border);margin-left:auto}
+.t-tab{padding:6px 12px;border-radius:99px;border:none;background:transparent;color:var(--text-muted);font-size:10px;font-weight:700;cursor:pointer;transition:.3s;display:flex;align-items:center;gap:4px}
+.t-tab svg{width:14px;height:14px}.t-tab.active{color:#000}
+.t-tab[data-view=editor].active{background:var(--tertiary)}
+.t-tab[data-view=preview].active{background:var(--primary)}
+.t-tab[data-view=log].active{background:var(--secondary);color:#fff}
+.t-tab[data-view=memory].active{background:#fff;color:#000}
+
+.stage{flex:1;position:relative;overflow:hidden;z-index:10}
+.view{position:absolute;inset:0;display:none;flex-direction:column;background:var(--bg-deep)}
+.view.active{display:flex}
+
+.editor-toolbar{display:flex;gap:8px;padding:8px 12px;background:rgba(0,0,0,.4);border-bottom:1px solid var(--glass-border)}
+.tool-btn{background:rgba(255,255,255,.05);border:1px solid var(--glass-border);color:var(--text-muted);border-radius:6px;width:32px;height:32px;display:flex;justify-content:center;align-items:center;cursor:pointer}
+.tool-btn:disabled{opacity:.2;pointer-events:none}.tool-btn:active{transform:scale(.9)}.tool-btn svg{width:16px;height:16px}
+.editor-frame{flex:1;display:flex;background:rgba(0,0,0,.2);overflow:hidden}
+.gutter{width:45px;background:rgba(0,0,0,.3);border-right:1px solid var(--glass-border);padding:12px 0;text-align:center;font-family:var(--font-code);font-size:12px;color:rgba(255,255,255,.2);overflow:hidden;line-height:1.6}
+.code-area{flex:1;position:relative;overflow:hidden}
+#input-layer{position:absolute;inset:0;padding:12px;font-family:var(--font-code);font-size:13px;line-height:1.6;white-space:pre;border:none;outline:none;overflow:auto;tab-size:2;width:100%;height:100%;background:transparent;color:var(--text-main);caret-color:var(--primary);resize:none}
+
+.preview-toolbar{height:48px;flex-shrink:0;display:flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(5,8,17,.97);border-bottom:1px solid var(--glass-border);z-index:20}
+.preview-toolbar button{width:34px;height:34px;border-radius:8px;border:1px solid var(--glass-border);background:rgba(255,255,255,.05);color:var(--text-main);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.preview-toolbar button:hover,.preview-toolbar button.active{background:rgba(0,245,255,.18);border-color:var(--primary);color:var(--primary)}
+.preview-toolbar button svg{width:17px;height:17px}
+.preview-title{font-family:var(--font-code);font-size:10px;color:var(--primary);font-weight:700;padding:0 6px}
+.preview-spacer{flex:1}
+.preview-size{font-family:var(--font-code);font-size:10px;color:var(--text-muted);min-width:80px;text-align:center}
+.preview-stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:auto;padding:24px;background:radial-gradient(circle at center,rgba(0,245,255,.08),transparent 60%)}
+.preview-frame-wrap{position:relative;flex:none;width:100%;height:100%;transition:width .25s,height .25s,transform .25s}
+.preview-frame-wrap.mobile{width:390px;height:844px}
+.preview-frame-wrap.tablet{width:768px;height:1024px}
+.preview-frame-wrap.desktop{width:1280px;height:720px}
+.preview-frame-wrap.device{border-radius:28px;box-shadow:0 0 0 8px #111,0 20px 60px rgba(0,0,0,.55);overflow:hidden}
+.preview-box{width:100%;height:100%;background:#fff;border:none;display:block}
+.preview-stage.zoom-75 .preview-frame-wrap{transform:scale(.75)}
+.preview-stage.zoom-90 .preview-frame-wrap{transform:scale(.9)}
+.preview-stage.zoom-110 .preview-frame-wrap{transform:scale(1.1)}
+.preview-stage.zoom-125 .preview-frame-wrap{transform:scale(1.25)}
+
+.view.preview-fullscreen{position:fixed!important;inset:0!important;z-index:5000!important;background:#050811}
+.view.preview-fullscreen .preview-toolbar{height:54px}
+.view.preview-minimized{inset:auto 12px 12px auto!important;width:58px!important;height:58px!important;border:1px solid var(--primary);border-radius:16px;overflow:hidden;box-shadow:0 0 30px rgba(0,245,255,.25)}
+.view.preview-minimized .preview-toolbar{height:100%;padding:0;justify-content:center;border:0}
+.view.preview-minimized .preview-title,.view.preview-minimized .preview-size,.view.preview-minimized .preview-toolbar button:not(#preview-restore){display:none}
+.view.preview-minimized #preview-restore{display:flex!important;width:42px;height:42px}
+.view.preview-minimized .preview-stage{display:none}
+#preview-restore{display:none}
+
+.log-area{flex:1;padding:16px;font-family:var(--font-code);font-size:12px;overflow-y:auto;background:#000;color:#0f0}
+.log-entry{margin-bottom:4px;border-bottom:1px solid #111;padding-bottom:2px}.log-error{color:var(--danger)}
+
+.memory-content{flex:1;padding:20px;overflow-y:auto}
+.cdn-card{background:rgba(255,255,255,.03);border:1px solid var(--glass-border);border-radius:12px;padding:12px;margin-bottom:10px;display:flex;flex-direction:column;gap:10px}
+.cdn-card.disabled{opacity:.4}.cdn-url-text{font-family:var(--font-code);font-size:11px;word-break:break-all;color:var(--text-muted)}
+.cdn-ctrls{display:flex;justify-content:flex-end;gap:8px}.cdn-btn{background:rgba(255,255,255,.05);border:none;color:var(--text-main);padding:6px;border-radius:6px;cursor:pointer}
+.add-module-box{display:flex;gap:8px;margin-bottom:20px}.add-module-box input{flex:1;background:rgba(0,0,0,.3);border:1px solid var(--glass-border);border-radius:8px;padding:10px;color:#fff;font-family:var(--font-code);font-size:12px}
+.dock{height:var(--dock-h);flex-shrink:0;background:rgba(5,8,17,.98);border-top:1px solid var(--glass-border);display:flex;align-items:center;padding:0 12px;gap:8px;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.dock-btn{flex:1;height:42px;border-radius:10px;border:1px solid var(--glass-border);background:rgba(255,255,255,.03);color:var(--text-main);font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:.2s;cursor:pointer}
+.dock-btn svg{width:16px;height:16px;margin-bottom:2px}.dock-btn.run{background:rgba(0,245,255,.15);color:var(--primary);border-color:var(--primary)}
+#toaster{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--primary);color:#000;padding:8px 20px;border-radius:20px;font-weight:800;font-size:12px;opacity:0;pointer-events:none;transition:.3s;z-index:10000}
+#toaster.show{opacity:1;transform:translateX(-50%) translateY(-10px)}
+#loader{position:fixed;inset:0;background:var(--bg-deep);display:flex;align-items:center;justify-content:center;z-index:2000}
+.orb{width:50px;height:50px;border:3px solid var(--primary);border-radius:50%;animation:pulse 1.5s infinite}
+@keyframes pulse{0%{transform:scale(.8);opacity:.5}50%{transform:scale(1.1);opacity:1}100%{transform:scale(.8);opacity:.5}}
+@media(max-width:600px){.preview-frame-wrap.tablet{width:768px;height:1024px}.preview-frame-wrap.desktop{width:1280px;height:720px}.preview-stage{padding:18px}.trinity-nav{max-width:70vw}.t-tab{padding:6px 8px}.t-tab svg{display:none}}
+@media(min-width:700px){body{width:500px;margin:0 auto;border-left:1px solid var(--glass-border);border-right:1px solid var(--glass-border)}body.preview-global-fullscreen{width:100%;margin:0;border:0}}
+</style>
+</head>
+
+<body>
+<div id="loader"><div class="orb"></div></div>
+<div class="nebula-layer"></div>
+
+<header class="app-header">
+  <div class="brand">ΔUAL <span>v3.1 RUNTIME</span></div>
+  <div class="trinity-nav">
+    <button class="t-tab active" data-view="editor"><i data-lucide="code"></i> ED</button>
+    <button class="t-tab" data-view="preview"><i data-lucide="eye"></i> VIEW</button>
+    <button class="t-tab" data-view="log"><i data-lucide="terminal"></i> LOG</button>
+    <button class="t-tab" data-view="memory"><i data-lucide="database"></i> RAM</button>
+  </div>
+</header>
+
+<main class="stage">
+<section id="view-editor" class="view active">
+  <div class="editor-toolbar">
+    <button class="tool-btn" id="btn-undo" disabled title="Desfazer"><i data-lucide="undo-2"></i></button>
+    <button class="tool-btn" id="btn-redo" disabled title="Refazer"><i data-lucide="redo-2"></i></button>
+    <div style="flex:1"></div>
+    <button class="tool-btn" id="btn-clear" title="Limpar"><i data-lucide="trash-2"></i></button>
+  </div>
+  <div class="editor-frame">
+    <div class="gutter" id="gutter">1</div>
+    <div class="code-area"><textarea id="input-layer" spellcheck="false" autocapitalize="off" placeholder="<h1>Hello World</h1>"></textarea></div>
+  </div>
+</section>
+
+<section id="view-preview" class="view">
+  <div class="preview-toolbar">
+    <span class="preview-title">ΔUAL RUNTIME</span>
+    <button id="preview-mobile" title="Mobile 390×844"><i data-lucide="smartphone"></i></button>
+    <button id="preview-tablet" title="Tablet 768×1024"><i data-lucide="tablet"></i></button>
+    <button id="preview-desktop" title="Desktop 1280×720"><i data-lucide="monitor"></i></button>
+    <button id="preview-fit" title="Ajustar à tela"><i data-lucide="scan"></i></button>
+    <span class="preview-spacer"></span>
+    <span class="preview-size" id="preview-size">FIT</span>
+    <button id="preview-zoom-out" title="Zoom -"><i data-lucide="zoom-out"></i></button>
+    <button id="preview-zoom-in" title="Zoom +"><i data-lucide="zoom-in"></i></button>
+    <button id="preview-reload" title="Recarregar"><i data-lucide="refresh-cw"></i></button>
+    <button id="preview-fullscreen" title="Tela cheia"><i data-lucide="maximize-2"></i></button>
+    <button id="preview-minimize" title="Minimizar"><i data-lucide="minus"></i></button>
+    <button id="preview-restore" title="Restaurar"><i data-lucide="maximize"></i></button>
+  </div>
+  <div class="preview-stage" id="preview-stage">
+    <div class="preview-frame-wrap" id="preview-frame-wrap">
+      <iframe id="preview-frame" class="preview-box" title="KOBLLUX Runtime Preview"></iframe>
+    </div>
+  </div>
+</section>
+
+<section id="view-log" class="view">
+  <div class="log-area" id="log-display"><div class="log-entry">> Hypervisor Core Online.</div></div>
+</section>
+
+<section id="view-memory" class="view">
+  <div class="memory-content">
+    <h3 style="margin-top:0;color:var(--primary);font-size:14px;">GESTÃO DE MÓDULOS</h3>
+    <div class="add-module-box">
+      <input type="text" id="cdn-input" placeholder="URL da CDN (js/css)...">
+      <button class="dock-btn" id="btn-add-cdn" style="flex:none;width:60px;background:var(--primary);color:#000;">ADD</button>
+    </div>
+    <div id="cdn-list"></div>
+  </div>
+</section>
+</main>
+
+<footer class="dock">
+  <input type="file" id="file-upload" style="display:none" accept=".html,.htm">
+  <button class="dock-btn" id="btn-upload"><i data-lucide="upload"></i>OPEN</button>
+  <button class="dock-btn" id="btn-download"><i data-lucide="download"></i>HTML</button>
+  <button class="dock-btn run" id="btn-run"><i data-lucide="play"></i>RUN</button>
+  <button class="dock-btn" id="btn-save"><i data-lucide="save"></i>SAVE</button>
+</footer>
+
+<div id="toaster">ESTADO ATUALIZADO</div>
+
+<script>
+(function(){
+'use strict';
+
+const UI={
+ input:document.getElementById('input-layer'),
+ gutter:document.getElementById('gutter'),
+ preview:document.getElementById('preview-frame'),
+ previewWrap:document.getElementById('preview-frame-wrap'),
+ previewStage:document.getElementById('preview-stage'),
+ previewView:document.getElementById('view-preview'),
+ previewSize:document.getElementById('preview-size'),
+ log:document.getElementById('log-display'),
+ toaster:document.getElementById('toaster'),
+ cdnList:document.getElementById('cdn-list'),
+ cdnInput:document.getElementById('cdn-input')
+};
+
+let state={html:'',cdns:[]};
+const history={past:[],present:'',future:[]};
+let currentMode='fit';
+let zoomIndex=1;
+const zooms=['zoom-75','zoom-90','fit','zoom-110','zoom-125'];
+
+function toast(msg){
+ UI.toaster.textContent=msg;UI.toaster.classList.add('show');
+ clearTimeout(toast.t);toast.t=setTimeout(()=>UI.toaster.classList.remove('show'),1800);
+}
+function updateGutter(){
+ const n=UI.input.value.split('\n').length;
+ UI.gutter.innerHTML=Array.from({length:n},(_,i)=>i+1).join('<br>');
+}
+function logToUI(msg,type='info'){
+ const d=document.createElement('div');d.className='log-entry '+(type==='error'?'log-error':'');
+ d.textContent='['+new Date().toLocaleTimeString()+'] '+msg;
+ UI.log.appendChild(d);UI.log.scrollTop=UI.log.scrollHeight;
+}
+function saveHistory(val){
+ if(val===history.present)return;
+ if(history.present!==''){history.past.push(history.present);if(history.past.length>50)history.past.shift()}
+ history.present=val;history.future=[];updateHistoryBtns();
+}
+function updateHistoryBtns(){
+ document.getElementById('btn-undo').disabled=!history.past.length;
+ document.getElementById('btn-redo').disabled=!history.future.length;
+}
+document.getElementById('btn-undo').onclick=()=>{
+ if(!history.past.length)return;
+ history.future.push(history.present);history.present=history.past.pop();
+ UI.input.value=history.present;updateGutter();updateHistoryBtns();
+};
+document.getElementById('btn-redo').onclick=()=>{
+ if(!history.future.length)return;
+ history.past.push(history.present);history.present=history.future.pop();
+ UI.input.value=history.present;updateGutter();updateHistoryBtns();
+};
+
+function renderCDNs(){
+ UI.cdnList.innerHTML='';
+ state.cdns.forEach((cdn,i)=>{
+  const card=document.createElement('div');card.className='cdn-card '+(cdn.active?'':'disabled');
+  card.innerHTML=`
+   <div class="cdn-url-text">${escapeHTML(cdn.url)}</div>
+   <div class="cdn-ctrls">
+    <button class="cdn-btn" onclick="window.moveCDN(${i},-1)"><i data-lucide="arrow-up"></i></button>
+    <button class="cdn-btn" onclick="window.moveCDN(${i},1)"><i data-lucide="arrow-down"></i></button>
+    <button class="cdn-btn" onclick="window.toggleCDN(${i})"><i data-lucide="${cdn.active?'eye':'eye-off'}"></i></button>
+    <button class="cdn-btn" onclick="window.deleteCDN(${i})" style="color:var(--danger)"><i data-lucide="trash-2"></i></button>
+   </div>`;
+  UI.cdnList.appendChild(card);
+ });
+ lucide.createIcons();
+}
+function escapeHTML(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+window.toggleCDN=i=>{state.cdns[i].active=!state.cdns[i].active;renderCDNs()};
+window.deleteCDN=i=>{state.cdns.splice(i,1);renderCDNs()};
+window.moveCDN=(i,d)=>{
+ if(i+d<0||i+d>=state.cdns.length)return;
+ [state.cdns[i],state.cdns[i+d]]=[state.cdns[i+d],state.cdns[i]];renderCDNs();
+};
+document.getElementById('btn-add-cdn').onclick=()=>{
+ const url=UI.cdnInput.value.trim();
+ if(!url)return;
+ state.cdns.push({url,active:true});UI.cdnInput.value='';renderCDNs();toast('MÓDULO ADICIONADO');
+};
+
+function buildRuntimeHTML(userHTML){
+ const runtimeCSS=`
+<style id="__DI_RUNTIME_STYLE__">
+#__DI_RUNTIME_BOOT__{position:fixed;inset:0;z-index:2147483646;pointer-events:none}
+</style>`;
+ const bridge=`
+<script id="__DI_RUNTIME_BRIDGE__">
+(function(){
+ const oldLog=console.log;
+ console.log=function(){
+  const msg=[...arguments].map(x=>{try{return typeof x==='object'?JSON.stringify(x):String(x)}catch(e){return String(x)}}).join(' ');
+  parent.postMessage({type:'log',msg},'*');oldLog.apply(console,arguments);
+ };
+ window.onerror=function(m,s,l){parent.postMessage({type:'error',msg:m+' na linha '+l},'*')};
+ window.addEventListener('unhandledrejection',e=>parent.postMessage({type:'error',msg:'Promise: '+(e.reason?.message||e.reason)},'*'));
+})();
+<\/script>`;
+ let out=userHTML;
+ if(/<head[^>]*>/i.test(out))out=out.replace(/<head[^>]*>/i,m=>m+runtimeCSS+bridge);
+ else out=runtimeCSS+bridge+out;
+ return out;
+}
+
+function runCode(){
+ let html=UI.input.value;
+ const tags=state.cdns.filter(c=>c.active).map(c=>
+  c.url.toLowerCase().split('?')[0].endsWith('.css')
+   ? '<link rel="stylesheet" href="'+c.url+'">'
+   : '<script src="'+c.url+'"><\\/script>'
+ ).join('\n');
+ if(/<head[^>]*>/i.test(html))html=html.replace(/<head[^>]*>/i,m=>m+tags);
+ else html=tags+html;
+ UI.preview.srcdoc=buildRuntimeHTML(html);
+ resetPreview();
+ logToUI('Runtime Preview iniciado.');
+ switchTab('preview');
+}
+
+function switchTab(id){
+ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+ document.querySelectorAll('.t-tab').forEach(t=>t.classList.remove('active'));
+ document.getElementById('view-'+id).classList.add('active');
+ document.querySelector('[data-view="'+id+'"]').classList.add('active');
+}
+
+function setViewport(mode){
+ currentMode=mode;
+ UI.previewWrap.classList.remove('mobile','tablet','desktop','device');
+ UI.previewStage.classList.remove('zoom-75','zoom-90','zoom-110','zoom-125');
+ if(mode==='mobile'||mode==='tablet'||mode==='desktop'){
+  UI.previewWrap.classList.add(mode);
+  if(mode!=='desktop')UI.previewWrap.classList.add('device');
+  UI.previewSize.textContent=mode==='mobile'?'390×844':mode==='tablet'?'768×1024':'1280×720';
+ }else{
+  UI.previewSize.textContent='FIT';
+ }
+ document.querySelectorAll('.preview-toolbar button').forEach(b=>b.classList.remove('active'));
+ const btn={mobile:'preview-mobile',tablet:'preview-tablet',desktop:'preview-desktop',fit:'preview-fit'}[mode];
+ if(btn)document.getElementById(btn).classList.add('active');
+}
+function setZoom(dir){
+ if(currentMode!=='fit'&&dir!==0)return;
+ zoomIndex=Math.max(0,Math.min(4,zoomIndex+dir));
+ UI.previewStage.classList.remove('zoom-75','zoom-90','zoom-110','zoom-125');
+ const cls=zooms[zoomIndex];
+ if(cls!=='fit')UI.previewStage.classList.add(cls);
+ UI.previewSize.textContent=cls==='zoom-75'?'75%':cls==='zoom-90'?'90%':cls==='zoom-110'?'110%':cls==='zoom-125'?'125%':'FIT';
+}
+function resetPreview(){setViewport('fit');zoomIndex=2;setZoom(0)}
+function togglePreviewFullscreen(){
+ const v=UI.previewView;
+ if(!v.classList.contains('preview-fullscreen')){
+  v.classList.add('preview-fullscreen');document.body.classList.add('preview-global-fullscreen');
+  document.getElementById('preview-fullscreen').innerHTML='<i data-lucide="minimize-2"></i>';
+ }else{
+  v.classList.remove('preview-fullscreen');document.body.classList.remove('preview-global-fullscreen');
+  document.getElementById('preview-fullscreen').innerHTML='<i data-lucide="maximize-2"></i>';
+ }
+ lucide.createIcons();
+}
+function minimizePreview(){
+ UI.previewView.classList.add('preview-minimized');
+ UI.previewView.classList.remove('preview-fullscreen');
+ document.body.classList.remove('preview-global-fullscreen');
+}
+function restorePreview(){UI.previewView.classList.remove('preview-minimized')}
+
+document.getElementById('preview-mobile').onclick=()=>setViewport('mobile');
+document.getElementById('preview-tablet').onclick=()=>setViewport('tablet');
+document.getElementById('preview-desktop').onclick=()=>setViewport('desktop');
+document.getElementById('preview-fit').onclick=()=>{zoomIndex=2;setViewport('fit');setZoom(0)};
+document.getElementById('preview-zoom-out').onclick=()=>setZoom(-1);
+document.getElementById('preview-zoom-in').onclick=()=>setZoom(1);
+document.getElementById('preview-reload').onclick=()=>{try{UI.preview.contentWindow.location.reload()}catch(e){UI.preview.srcdoc=UI.preview.srcdoc}};
+document.getElementById('preview-fullscreen').onclick=togglePreviewFullscreen;
+document.getElementById('preview-minimize').onclick=minimizePreview;
+document.getElementById('preview-restore').onclick=restorePreview;
+
+window.addEventListener('message',e=>{
+ if(e.data?.type==='log')logToUI(e.data.msg);
+ if(e.data?.type==='error')logToUI(e.data.msg,'error');
+});
+
+UI.input.oninput=()=>{updateGutter();saveHistory(UI.input.value)};
+UI.input.onscroll=()=>{UI.gutter.scrollTop=UI.input.scrollTop};
+UI.input.onkeydown=e=>{
+ if(e.key==='Tab'){
+  e.preventDefault();const s=UI.input.selectionStart;
+  UI.input.value=UI.input.value.substring(0,s)+'  '+UI.input.value.substring(UI.input.selectionEnd);
+  UI.input.selectionEnd=s+2;updateGutter();saveHistory(UI.input.value);
+ }
+};
+document.querySelectorAll('.t-tab').forEach(t=>t.onclick=()=>switchTab(t.dataset.view));
+document.getElementById('btn-run').onclick=runCode;
+document.getElementById('btn-save').onclick=()=>{
+ state.html=UI.input.value;localStorage.setItem('di_kobllux_v31_state',JSON.stringify(state));toast('ESTADO PERSISTIDO');
+};
+document.getElementById('btn-clear').onclick=()=>{
+ if(confirm('Deseja apagar o código?')){UI.input.value='';updateGutter();saveHistory('')}
+};
+document.getElementById('btn-download').onclick=()=>{
+ const blob=new Blob([UI.input.value],{type:'text/html;charset=utf-8'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='kobllux_hypervisor_runtime_'+Date.now()+'.html';a.click();
+ setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+};
+document.getElementById('btn-upload').onclick=()=>document.getElementById('file-upload').click();
+document.getElementById('file-upload').onchange=async e=>{
+ const f=e.target.files[0];if(!f)return;
+ UI.input.value=await f.text();updateGutter();saveHistory(UI.input.value);toast('ARQUIVO CARREGADO');e.target.value='';
+};
+
+window.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&UI.previewView.classList.contains('preview-fullscreen'))togglePreviewFullscreen();
+});
+
+window.onload=()=>{
+ lucide.createIcons();
+ let saved=null;
+ try{saved=JSON.parse(localStorage.getItem('di_kobllux_v31_state')||'null')}catch(e){}
+ if(saved){state={html:saved.html||'',cdns:Array.isArray(saved.cdns)?saved.cdns:[]};UI.input.value=state.html}
+ else UI.input.value=`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Projeto ΔUAL</title>
+<style>
+body{font-family:Arial;margin:0;padding:40px;background:#10131a;color:white;text-align:center}
+h1{color:#00f5ff}
+</style>
+</head>
+<body>
+<h1>Olá do ΔUAL Runtime 🚀</h1>
+<p>Use a barra superior do Preview para testar Mobile, Tablet, Desktop, Zoom e Fullscreen.</p>
+<script>
+console.log("Sistema Pronto.");
+<\/script>
+</body>
+</html>`;
+ history.present=UI.input.value;updateGutter();updateHistoryBtns();renderCDNs();resetPreview();
+ setTimeout(()=>document.getElementById('loader').style.display='none',500);
+};
+})();
+</script>
+</body>
+</html>
