@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>KOBLLUX · UNO — Universal Build Environment</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#05070a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+       
+        /* ===== COMPONENTES ===== */
+        .glass{background:rgba(13,17,23,.85);backdrop-filter:blur(12px)}.glass-top{border-bottom:1px solid #30363d}.glass-bottom{border-top:1px solid #30363d}
+        .view-panel{display:none;flex:1;width:100%;height:100%;overflow-y:auto;position:relative}.view-panel.active{display:flex;flex-direction:column}
+        .btn-cyber{background:transparent;border:1px solid #30363d;color:var(--text-main);border-radius:8px;transition:all .2s ease;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}.btn-cyber:active{transform:scale(.96)}.btn-cyber.primary{border-color:var(--neon-cyan);color:var(--neon-cyan)}.btn-cyber.primary:active{background:rgba(0,255,255,.1)}.btn-cyber.danger{border-color:var(--neon-magenta);color:var(--neon-magenta)}.btn-cyber.warning{border-color:var(--neon-yellow);color:var(--neon-yellow)}
+        .CodeMirror{height:100%!important;font-family:'JetBrains Mono',monospace;font-size:var(--font-size-base);background:var(--bg-dark)!important}
+        #mobileNav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-height) + var(--safe-bottom));padding-bottom:var(--safe-bottom);z-index:100;display:flex;justify-content:space-around;align-items:center}
+        .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-muted);font-size:10px;font-weight:600;text-transform:uppercase;height:100%;cursor:pointer;transition:color .2s}
+        .nav-item svg{margin-bottom:4px;transition:transform .2s}.nav-item.active{color:var(--neon-cyan)}.nav-item.active.runtime{color:var(--neon-magenta)}.nav-item.active svg{transform:translateY(-2px)}
+        #drawer{position:fixed;top:0;left:-100%;width:340px;bottom:0;background:var(--bg-panel);border-right:1px solid #30363d;z-index:1000;transition:left .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;padding-top:var(--safe-top)}
+        #drawer.open{left:0}#drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);z-index:999;opacity:0;pointer-events:none;transition:opacity .3s}#drawer-overlay.open{opacity:1;pointer-events:auto}
+        .accordion-header{background:#161b22;padding:12px;font-weight:600;font-size:13px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #30363d;border-bottom:1px solid #30363d;position:sticky;top:0;z-index:10;cursor:pointer}
+        .card-resource{background:var(--bg-card);border:1px solid #30363d;border-radius:12px;padding:var(--card-p);margin:8px 12px;display:flex;flex-direction:column;gap:8px}
+        #runtime-overlay{position:absolute;bottom:0;left:0;right:0;background:rgba(13,17,23,.95);border-top:1px solid var(--neon-magenta);backdrop-filter:blur(10px);z-index:50;display:flex;flex-direction:column;max-height:40%;transform:translateY(100%);transition:transform .3s}#runtime-overlay.open{transform:translateY(0)}
+        #preview-wrapper{width:100%;height:100%;background:#fff;transition:all .3s;margin:0 auto;position:relative}#sandbox-frame{width:100%;height:100%;border:none}
+        .pulse-dot{width:8px;height:8px;background:var(--neon-magenta);border-radius:50%;box-shadow:0 0 10px var(--neon-magenta);animation:pulse 2s infinite}
+        @keyframes pulse{0%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.2)}100%{opacity:1;transform:scale(1)}}
+        #preview-wrapper.runtime-fullscreen{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;z-index:99999!important;margin:0!important;background:#fff!important}
+        #preview-wrapper.runtime-fullscreen #sandbox-frame{width:100%!important;height:100%!important}
+        #btn-fullscreen.is-active{color:#00ffff;border-color:#00ffff;background:rgba(0,255,255,.12);box-shadow:0 0 15px rgba(0,255,255,.25)}
+        #preview-wrapper:fullscreen{width:100vw!important;height:100vh!important;background:#fff}#preview-wrapper:fullscreen #sandbox-frame{width:100%;height:100%}
+        #preview-wrapper:-webkit-full-screen{width:100vw!important;height:100vh!important}
+        #btn-exit-full{display:none}
+        #preview-wrapper:fullscreen #btn-exit-full,#preview-wrapper:-webkit-full-screen #btn-exit-full,#preview-wrapper.runtime-fullscreen #btn-exit-full{display:flex!important}
+
+       
+        /* ===== SCROLL FIX ===== */
+        .view-panel{height:100vh;overflow-y:auito;-webkit-overflow-scrolling:none}
+        #workspace{min-height:0}
+        #view-editor .flex-1{height:100%}
+        #view-runtime .flex-1{overflow:auto;height:100%}
+        #drawer{overflow-y:auto;height:100%}
+        #drawer .flex-1{overflow-y:auto}
+        #snapshot-list{display:flex;flex-direction:column;gap:8px;max-height:none;overflow-y:visible;padding-right:2px}
+        #snapshot-list::-webkit-scrollbar{width:4px}
+        #snapshot-list::-webkit-scrollbar-track{background:transparent}
+        #snapshot-list::-webkit-scrollbar-thumb{background:#30363d;border-radius:4px}
+    </style> 
+
+<style>
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root{
+  --bg-void:#05070a; --bg-panel:#0b0e14; --bg-card:#11151d; --bg-raised:#161b26;
+  --line:#232938; --line-soft:#1a1f2b;
+  --cyan:#00e5ff; --magenta:#ff2ec4; --amber:#ffb020; --green:#3ddc84; --red:#ff5470;
+  --text:#d7dbe4; --text-dim:#7d8496; --text-faint:#4b5266;
+  --nav-h:58px; --head-h:52px; --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  --mono:'JetBrains Mono','SF Mono',ui-monospace,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Inter',system-ui,sans-serif;
+  --r-sm:6px; --r-md:10px; --r-lg:16px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:var(--bg-void)}
+body{
+  font-family:var(--sans);color:var(--text);
+  padding:var(--safe-t) 0 var(--safe-b) 0;
+  display:flex;flex-direction:column;min-height:100dvh;
+  font-size:14px;
+}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ============================================================
+   ICON SPRITE UTILITY
+   ============================================================ */
+.ic{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:inline-block;vertical-align:middle;flex-shrink:0}
+.ic-lg{width:20px;height:20px}
+.ic-sm{width:13px;height:13px}
+
+/* ============================================================
+   LAYOUT SHELL
+   ============================================================ */
+#uno-root{display:flex;flex-direction:column;flex:1;min-height:0;position:relative}
+
+/* header */
+#uno-head{
+  height:var(--head-h);flex-shrink:0;display:flex;align-items:center;gap:8px;
+  padding:0 10px;background:rgba(11,14,20,.92);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);z-index:40;
+}
+#uno-head .brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);white-space:nowrap}
+#uno-head .brand small{color:var(--text-faint);font-weight:500;letter-spacing:.06em;text-transform:none}
+#uno-head .ws-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);font-family:var(--mono);text-align:center}
+#uno-head .head-actions{display:flex;align-items:center;gap:4px}
+
+/* icon buttons */
+.ibtn{
+  width:34px;height:34px;border-radius:var(--r-sm);border:1px solid var(--line);
+  background:transparent;color:var(--text-dim);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .15s ease;position:relative;flex-shrink:0;
+}
+.ibtn:active{transform:scale(.92)}
+.ibtn:hover{color:var(--text);border-color:#333c50}
+.ibtn.on{color:var(--cyan);border-color:var(--cyan);background:rgba(0,229,255,.08)}
+.ibtn.danger{color:var(--red)}
+.ibtn.danger:hover{border-color:var(--red)}
+.ibtn .dot{position:absolute;top:5px;right:5px;width:6px;height:6px;border-radius:50%;background:var(--magenta);box-shadow:0 0 6px var(--magenta)}
+
+/* main split area */
+#uno-main{flex:1;min-height:0;display:flex;position:relative;overflow:hidden}
+
+/* views (editor / preview / inspector / blocks) */
+.uno-view{display:none;flex:1;min-height:0;flex-direction:column;overflow:hidden}
+.uno-view.active{min-height:100%;display:flex}
+
+/* bottom nav */
+#uno-nav{
+  height:calc(var(--nav-h) + var(--safe-b));padding-bottom:var(--safe-b);flex-shrink:0;
+  display:flex;background:rgba(11,14,20,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);z-index:40;
+}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  color:var(--text-faint);font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  cursor:pointer;transition:color .15s ease;border:none;background:none;font-family:var(--sans);
+}
+.nav-btn .ic{transition:transform .15s ease}
+.nav-btn.active{color:var(--cyan)}
+.nav-btn.active .ic{transform:translateY(-2px)}
+.nav-btn.active.is-runtime{color:var(--magenta)}
+
+/* drawer (file explorer) */
+#uno-drawer{
+  position:fixed;top:0;left:-320px;width:300px;bottom:0;background:var(--bg-panel);
+  border-right:1px solid var(--line);z-index:200;transition:left .28s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;padding-top:var(--safe-t);
+}
+#uno-drawer.open{left:0}
+#uno-drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(2px);z-index:199;opacity:0;pointer-events:none;transition:opacity .28s}
+#uno-drawer-overlay.open{opacity:1;pointer-events:auto}
+.drawer-head{padding:14px 14px 10px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.drawer-head strong{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);flex:1}
+.drawer-actions{display:flex;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line-soft)}
+.drawer-actions .ibtn{width:30px;height:30px}
+#uno-tree{flex:1;overflow-y:auto;padding:8px 0}
+
+.tree-node{display:flex;align-items:center;gap:6px;padding:7px 14px;cursor:pointer;font-size:12.5px;font-family:var(--mono);color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:2px solid transparent}
+.tree-node:hover{background:var(--bg-card);color:var(--text)}
+.tree-node.active{background:rgba(0,229,255,.07);color:var(--cyan);border-left-color:var(--cyan)}
+.tree-node .ic{color:var(--text-faint);flex-shrink:0}
+.tree-node.active .ic{color:var(--cyan)}
+.tree-node .del{margin-left:auto;opacity:0;color:var(--text-faint);flex-shrink:0}
+.tree-node:hover .del{opacity:1}
+.tree-node .del:hover{color:var(--red)}
+.tree-folder{padding:7px 14px 7px 12px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);display:flex;align-items:center;gap:6px;margin-top:6px}
+.tree-empty{padding:30px 20px;text-align:center;color:var(--text-faint);font-size:12px;line-height:1.6}
+
+/* toast */
+#uno-toast{position:fixed;bottom:calc(var(--nav-h) + var(--safe-b) + 14px);left:50%;transform:translateX(-50%);background:rgba(17,21,29,.96);border:1px solid var(--line);color:var(--text);padding:10px 16px;border-radius:999px;font-size:12.5px;z-index:9999;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;backdrop-filter:blur(8px);white-space:nowrap;max-width:88vw;overflow:hidden;text-overflow:ellipsis}
+#uno-toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+
+/* modal */
+.uno-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(3px);z-index:500;display:none;align-items:flex-end;justify-content:center}
+.uno-modal-bg.open{display:flex}
+.uno-modal{background:var(--bg-panel);border:1px solid var(--line);border-radius:var(--r-lg) var(--r-lg) 0 0;width:100%;max-width:480px;padding:18px 18px calc(18px + var(--safe-b));animation:modal-up .22s ease}
+@media(min-width:640px){.uno-modal-bg{align-items:center}.uno-modal{border-radius:var(--r-lg)}}
+@keyframes modal-up{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
+.uno-modal h3{margin:0 0 14px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--cyan);display:flex;align-items:center;gap:8px}
+.uno-field{margin-bottom:12px}
+.uno-field label{display:block;font-size:11px;color:var(--text-dim);margin-bottom:6px}
+.uno-field input,.uno-field select{width:100%;background:var(--bg-card);border:1px solid var(--line);color:var(--text);padding:10px 12px;border-radius:var(--r-sm);font-family:var(--mono);font-size:13px}
+.uno-field input:focus,.uno-field select:focus{outline:none;border-color:var(--cyan)}
+.uno-modal-actions{display:flex;gap:8px;margin-top:16px}
+.btn{flex:1;padding:11px;border-radius:var(--r-sm);border:1px solid var(--line);background:transparent;color:var(--text);font-weight:600;font-size:12.5px;letter-spacing:.03em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
+.btn:active{transform:scale(.97)}
+.btn.primary{border-color:var(--cyan);color:var(--cyan)}
+.btn.primary:hover{background:rgba(0,229,255,.08)}
+.btn.ghost{color:var(--text-dim)}
+
+/* ============================================================
+   EDITOR — textarea + pre overlay, sem CodeMirror
+   ============================================================ */
+.line-numbers{
+  width:44px;flex-shrink:0;background:var(--bg-panel);color:var(--text-faint);
+  font-family:var(--mono);font-size:12.5px;line-height:20px;text-align:right;
+  padding:12px 8px 12px 0;overflow:hidden;user-select:none;border-right:1px solid var(--line-soft);
+}
+.line-numbers div{height:20px}
+#editor-scroll{background:var(--bg-void)}
+#uno-syntax-layer,#uno-editor{
+  position:absolute;inset:0;margin:0;padding:12px 14px;
+  font-family:var(--mono);font-size:12.5px;line-height:20px;
+  white-space:pre;tab-size:2;box-sizing:border-box;
+}
+#uno-syntax-layer{overflow:hidden;pointer-events:none;color:var(--text)}
+#uno-syntax-layer code{white-space:pre;display:block}
+#uno-editor{
+  background:transparent;color:transparent;caret-color:var(--cyan);
+  border:none;outline:none;resize:none;overflow:auto;z-index:1;
+}
+#uno-editor::selection{background:rgba(0,229,255,.25)}
+.tok-comment{color:var(--text-faint);font-style:italic}
+.tok-string{color:var(--green)}
+.tok-tag{color:var(--cyan)}
+.tok-attr{color:var(--amber)}
+.tok-keyword{color:var(--magenta)}
+.tok-number{color:var(--amber)}
+.tok-key{color:var(--cyan)}
+.tok-property{color:#7dd3fc}
+.tok-atrule{color:var(--magenta)}
+.tok-hex{color:var(--amber)}
+.tok-punct{color:var(--text-faint)}
+.tok-heading{color:var(--cyan);font-weight:700}
+.tok-bold{color:var(--text);font-weight:700}
+.tok-italic{color:var(--text-dim);font-style:italic}
+.tok-code{color:var(--green)}
+.tok-link{color:#7dd3fc;text-decoration:underline}
+
+/* log lines */
+.log-line{padding:3px 0;border-bottom:1px solid var(--line-soft);word-break:break-word}
+.log-error{color:var(--red)}.log-warn{color:var(--amber)}.log-sys{color:var(--cyan)}.log-info{color:var(--text-dim)}
+.log-time{color:var(--text-faint);margin-right:8px}
+
+/* block cards */
+.block-card{background:var(--bg-card);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:border-color .15s}
+.block-card:hover{border-color:#333c50}
+.block-card .swatch{width:30px;height:30px;border-radius:8px;flex-shrink:0}
+.block-card .meta{flex:1;min-width:0}
+.block-card .meta b{display:block;font-size:12.5px;color:var(--text)}
+.block-card .meta span{font-size:11px;color:var(--text-faint);font-family:var(--mono)}
+
+/* section labels reused across panels */
+.panel-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--text-faint);padding:40px}
+.panel-empty .ic{width:36px;height:36px;color:var(--line)}
+.panel-empty p{font-size:12.5px;max-width:260px;text-align:center;line-height:1.6;margin:0}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     SVG SPRITE — nenhum ícone externo, tudo inline
+     ============================================================ -->
+<svg hidden aria-hidden="true">
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z"/></symbol>
+  <symbol id="i-folder-open" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2l-1.5 8a2 2 0 0 1-2 1.7H5.3A2 2 0 0 1 3.3 18L3 8z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 2h9l5 5v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6"/></symbol>
+  <symbol id="i-plus-file" viewBox="0 0 24 24"><path d="M6 2h9l5 5v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6"/><path d="M9.5 14h5M12 11.5v5"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="m9 8-4 4 4 4M15 8l4 4-4 4"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><path d="m5 7 5 5-5 5M13 17h6"/></symbol>
+  <symbol id="i-blocks" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M6 4l14 8-14 8V4z"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 3h11l3 3v15a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M8 3v6h7V3M8 21v-7h8v7"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v13m0 0-4.5-4.5M12 16l4.5-4.5M4 20h16"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 21V8m0 0 4.5 4.5M12 8 7.5 12.5M4 4h16"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M8 3H4v4M16 3h4v4M4 16v4h4M20 16v4h-4"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M9 15l6-6M10 6l1-1a4 4 0 0 1 6 6l-1 1M14 18l-1 1a4 4 0 0 1-6-6l1-1"/></symbol>
+  <symbol id="i-orb" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" opacity=".5"/></symbol>
+</svg>
+
+<div id="uno-root">
+  <!-- HEADER -->
+  <header id="uno-head">
+    <button class="ibtn" id="btn-drawer" onclick="App.toggleDrawer()" aria-label="Arquivos"><svg class="ic"><use href="#i-menu"/></svg></button>
+    <div class="brand"><svg class="ic" style="color:var(--magenta)"><use href="#i-orb"/></svg>UNO<small>&nbsp;/ KOBLLUX</small></div>
+    <div class="ws-name" id="ws-name">carregando…</div>
+    <div class="head-actions">
+      <button class="ibtn" id="btn-save" onclick="App.saveActive(true)" aria-label="Salvar"><svg class="ic"><use href="#i-save"/></svg></button>
+      <button class="ibtn" onclick="App.openWorkspace()" aria-label="Abrir pasta"><svg class="ic"><use href="#i-upload"/></svg></button>
+      <button class="ibtn" onclick="App.exportProject()" aria-label="Exportar"><svg class="ic"><use href="#i-download"/></svg></button>
+      <button class="ibtn on" onclick="App.refreshPreview()" aria-label="Rodar"><svg class="ic"><use href="#i-play"/></svg></button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main id="uno-main">
+
+    <!-- EDITOR VIEW -->
+    <section class="uno-view active" id="view-editor">
+      <div id="editor-tabbar" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--bg-panel);flex-shrink:0">
+        <svg class="ic-sm ic" id="editor-file-icon" style="color:var(--text-faint)"><use href="#i-file"/></svg>
+        <span id="editor-file-name" style="font-family:var(--mono);font-size:12px;color:var(--text-dim);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">nenhum arquivo</span>
+        <span id="editor-dirty-dot" style="width:6px;height:6px;border-radius:50%;background:var(--amber);display:none"></span>
+        <button class="ibtn" style="width:28px;height:28px" onclick="UnoEditor.execCommand('find')" aria-label="Buscar"><svg class="ic-sm ic"><use href="#i-search"/></svg></button>
+      </div>
+      <div class="editor-shell" id="editor-shell" style="flex:1;min-height:0;position:relative;display:flex;overflow:hidden">
+        <div class="line-numbers" id="uno-linenums"></div>
+        <div id="editor-scroll" style="flex:1;position:relative;overflow:hidden;min-width:0">
+          <pre id="uno-syntax-layer"><code id="uno-syntax-code"></code></pre>
+          <textarea id="uno-editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></textarea>
+        </div>
+      </div>
+      <div class="panel-empty" id="editor-empty" style="display:none;position:absolute;inset:0;background:var(--bg-void)">
+        <svg class="ic"><use href="#i-file"/></svg>
+        <p>Abra um arquivo pelo menu ☰ ou crie um novo para começar a editar.</p>
+      </div>
+    </section>
+
+    <!-- PREVIEW VIEW -->
+    <section class="uno-view" id="view-preview">
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--bg-panel);flex-shrink:0">
+        <span class="pulse-dot" id="preview-pulse" style="width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)"></span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--text-dim);flex:1">index.html · preview vivo</span>
+        <button class="ibtn" style="width:28px;height:28px" onclick="App.refreshPreview()" aria-label="Atualizar"><svg class="ic-sm ic"><use href="#i-refresh"/></svg></button>
+        <button class="ibtn" style="width:28px;height:28px" id="btn-full-preview" onclick="App.toggleFullscreenPreview()" aria-label="Tela cheia"><svg class="ic-sm ic"><use href="#i-expand"/></svg></button>
+      </div>
+  <div id="preview-wrapper" style="flex:1;min-height:0;background:#fff;position:relative">
+  <!-- BOTÃO SAIR DA TELA CHEIA -->
+  <button
+    id="btn-exit-full"
+    class="ibtn"
+    onclick="App.exitFullscreenPreview()"
+    aria-label="Sair da tela cheia"
+    title="Sair da tela cheia"
+    style="
+      position:absolute;
+      top:14px;
+      right:14px;
+      z-index:999999;
+      width:42px;
+      height:42px;
+      border-radius:12px;
+      background:rgba(5,7,10,.82);
+      color:#00e5ff;
+      border:1px solid rgba(0,229,255,.45);
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+      box-shadow:0 0 20px rgba(0,229,255,.18);
+    "
+  >
+    <svg class="ic">
+      <use href="#i-x"/>
+    </svg>
+  </button>
+  <iframe
+    id="uno-frame"
+    sandbox="allow-scripts allow-same-origin allow-modals allow-forms"
+    style="width:100%;height:100%;border:none"
+  ></iframe>
+</div>
+
+
+    </section>
+
+    <!-- INSPECTOR VIEW (logs) -->
+    <section class="uno-view" id="view-inspector">
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--bg-panel);flex-shrink:0">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--text-dim);flex:1">console · runtime</span>
+        <button class="ibtn" style="width:28px;height:28px" onclick="document.getElementById('uno-logs').innerHTML=''" aria-label="Limpar"><svg class="ic-sm ic"><use href="#i-trash"/></svg></button>
+      </div>
+      <div id="uno-logs" style="flex:1;overflow-y:auto;padding:10px 14px;font-family:var(--mono);font-size:11.5px;line-height:1.7"></div>
+    </section>
+
+    <!-- BLOCKS VIEW -->
+    <section class="uno-view" id="view-blocks">
+      <div style="flex:1;overflow-y:auto;padding:16px 14px 40px">
+        <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);margin-bottom:12px">Componentes reutilizáveis</div>
+        <div id="blocks-list" style="display:flex;flex-direction:column;gap:10px"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- BOTTOM NAV -->
+  <nav id="uno-nav">
+    <button class="nav-btn active" data-view="editor" onclick="App.switchView('editor',this)"><svg class="ic"><use href="#i-code"/></svg>Editor</button>
+    <button class="nav-btn is-runtime" data-view="preview" onclick="App.switchView('preview',this)"><svg class="ic"><use href="#i-eye"/></svg>Preview</button>
+    <button class="nav-btn" data-view="inspector" onclick="App.switchView('inspector',this)"><svg class="ic"><use href="#i-terminal"/></svg>Console</button>
+    <button class="nav-btn" data-view="blocks" onclick="App.switchView('blocks',this)"><svg class="ic"><use href="#i-blocks"/></svg>Blocos</button>
+  </nav>
+</div>
+
+<!-- DRAWER: FILE EXPLORER -->
+<div id="uno-drawer-overlay" onclick="App.toggleDrawer()"></div>
+<aside id="uno-drawer">
+  <div class="drawer-head">
+    <svg class="ic ic-lg" style="color:var(--cyan)"><use href="#i-folder-open"/></svg>
+    <strong>Workspace</strong>
+    <button class="ibtn" style="width:28px;height:28px" onclick="App.toggleDrawer()"><svg class="ic-sm ic"><use href="#i-x"/></svg></button>
+  </div>
+  <div class="drawer-actions">
+    <button class="ibtn" onclick="App.openModal('new-file')" aria-label="Novo arquivo"><svg class="ic"><use href="#i-plus-file"/></svg></button>
+
+<input
+  type="file"
+  id="nexus-folder-input"
+  webkitdirectory
+  directory
+  multiple
+  accept=".html,.htm,.css,.js,.mjs,.json,.svg,.txt,.md"
+  style="display:none"
+  onchange="App.handleNexusFolderUpload(event)"
+>
+
+<button
+  class="ibtn"
+  onclick="App.openNexusFolder()"
+  aria-label="Importar pasta ou múltiplos arquivos"
+>
+  <svg class="ic">
+    <use href="#i-upload"/>
+  </svg>
+</button>
+
+    <button class="ibtn danger" onclick="App.openModal('reset')" aria-label="Limpar workspace"><svg class="ic"><use href="#i-trash"/></svg></button>
+  </div>
+  <div id="uno-tree"></div>
+</aside>
+
+<!-- MODAL: novo arquivo -->
+<div class="uno-modal-bg" id="modal-new-file">
+  <div class="uno-modal">
+    <h3><svg class="ic"><use href="#i-plus-file"/></svg>Novo arquivo</h3>
+    <div class="uno-field">
+      <label>Caminho (ex: components/card.html)</label>
+      <input type="text" id="input-new-path" placeholder="novo-arquivo.js" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="uno-modal-actions">
+      <button class="btn ghost" onclick="App.closeModal('new-file')">Cancelar</button>
+      <button class="btn primary" onclick="App.confirmNewFile()">Criar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: reset workspace -->
+<div class="uno-modal-bg" id="modal-reset">
+  <div class="uno-modal">
+    <h3 style="color:var(--red)"><svg class="ic"><use href="#i-trash"/></svg>Limpar workspace</h3>
+    <p style="font-size:12.5px;color:var(--text-dim);line-height:1.6;margin:0 0 14px">Isso apaga todos os arquivos salvos localmente (IndexedDB) e recomeça do projeto padrão. Não afeta pastas locais já exportadas.</p>
+    <div class="uno-modal-actions">
+      <button class="btn ghost" onclick="App.closeModal('reset')">Cancelar</button>
+      <button class="btn primary" style="border-color:var(--red);color:var(--red)" onclick="App.confirmReset()">Apagar tudo</button>
+    </div>
+  </div>
+</div>
+
+<div id="uno-toast"></div>
+
+<script>
+'use strict';
+/* ============================================================
+   KOBLLUX / UNO — Universal Build Environment
+   Núcleo sem dependências externas: File System Access API +
+   IndexedDB nativo como camada de persistência local.
+   ============================================================ */
+
+// ------------------------------------------------------------
+// IDB — wrapper mínimo sobre IndexedDB nativo (zero libs)
+// ------------------------------------------------------------
+const IDB = {
+  _db: null,
+  DB_NAME: 'kobllux_uno', DB_VERSION: 1, STORE_FILES: 'files', STORE_META: 'meta',
+
+  open() {
+    if (this._db) return Promise.resolve(this._db);
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(this.DB_NAME, this.DB_VERSION);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(this.STORE_FILES)) db.createObjectStore(this.STORE_FILES, { keyPath: 'path' });
+        if (!db.objectStoreNames.contains(this.STORE_META)) db.createObjectStore(this.STORE_META, { keyPath: 'key' });
+      };
+      req.onsuccess = (e) => { this._db = e.target.result; resolve(this._db); };
+      req.onerror = (e) => reject(e.target.error);
+    });
+  },
+  async tx(storeName, mode) {
+    const db = await this.open();
+    return db.transaction(storeName, mode).objectStore(storeName);
+  },
+  async put(storeName, value) {
+    const store = await this.tx(storeName, 'readwrite');
+    return new Promise((res, rej) => { const r = store.put(value); r.onsuccess = () => res(value); r.onerror = () => rej(r.error); });
+  },
+  async get(storeName, key) {
+    const store = await this.tx(storeName, 'readonly');
+    return new Promise((res, rej) => { const r = store.get(key); r.onsuccess = () => res(r.result || null); r.onerror = () => rej(r.error); });
+  },
+  async delete(storeName, key) {
+    const store = await this.tx(storeName, 'readwrite');
+    return new Promise((res, rej) => { const r = store.delete(key); r.onsuccess = () => res(true); r.onerror = () => rej(r.error); });
+  },
+  async getAll(storeName) {
+    const store = await this.tx(storeName, 'readonly');
+    return new Promise((res, rej) => { const r = store.getAll(); r.onsuccess = () => res(r.result || []); r.onerror = () => rej(r.error); });
+  },
+  async clear(storeName) {
+    const store = await this.tx(storeName, 'readwrite');
+    return new Promise((res, rej) => { const r = store.clear(); r.onsuccess = () => res(true); r.onerror = () => rej(r.error); });
+  }
+};
+
+// ------------------------------------------------------------
+// UNO — API interna de abstração de workspace.
+// O resto do sistema nunca fala com IndexedDB ou FS Access API
+// diretamente: só chama UNO.readFile / UNO.writeFile / etc.
+// Isso é o ponto de encaixe para futuros adapters (Postgres,
+// WebDAV, S3...) sem tocar em Editor/Renderer/UI.
+// ------------------------------------------------------------
+const DEFAULT_PROJECT = {
+  'index.html': `<!DOCTYPE html>\n<html lang="pt-BR">\n<head>\n<meta charset="utf-8">\n<title>Novo Projeto UNO</title>\n<link rel="stylesheet" href="style.css">\n</head>\n<body>\n<div id="app">\n  <h1>UNO Ready</h1>\n  <p>Edite os arquivos pelo explorer e veja o preview atualizar.</p>\n</div>\n<script src="app.js"><\/script>\n</body>\n</html>\n`,
+  'style.css': `body{\n  margin:0;\n  min-height:100vh;\n  display:flex;\n  align-items:center;\n  justify-content:center;\n  background:#05070a;\n  color:#d7dbe4;\n  font-family:system-ui,sans-serif;\n}\n#app{ text-align:center; }\nh1{ color:#00e5ff; }\n`,
+  'app.js': `console.log('UNO runtime ativo');\n\nwindow.KOBLLUX = window.KOBLLUX || {};\nKOBLLUX.hello = () => console.log('Hello from app.js');\nKOBLLUX.hello();\n`,
+  'data/config.json': `{\n  "project": "novo-projeto",\n  "version": "0.1.0"\n}\n`,
+  'README.md': `# Novo Projeto UNO\n\nCriado no **KOBLLUX / UNO Universal Build Environment**.\n\n- \`index.html\` — entrada\n- \`style.css\` — estilos\n- \`app.js\` — lógica\n- \`data/config.json\` — dados\n`
+};
+
+const UNO = {
+  dirHandle: null,          // File System Access API handle (se disponível e concedido nesta sessão)
+  supportsFS: 'showDirectoryPicker' in window,
+
+  async init() {
+    await IDB.open();
+    const all = await IDB.getAll(IDB.STORE_FILES);
+    if (all.length === 0) {
+      for (const path in DEFAULT_PROJECT) {
+        await IDB.put(IDB.STORE_FILES, { path, content: DEFAULT_PROJECT[path], updatedAt: Date.now() });
+      }
+      await IDB.put(IDB.STORE_META, { key: 'workspaceName', value: 'novo-projeto' });
+    }
+  },
+
+  async getWorkspaceName() {
+    const m = await IDB.get(IDB.STORE_META, 'workspaceName');
+    return (m && m.value) || 'novo-projeto';
+  },
+  async setWorkspaceName(name) {
+    await IDB.put(IDB.STORE_META, { key: 'workspaceName', value: name });
+  },
+
+  async list(prefix = '') {
+    const all = await IDB.getAll(IDB.STORE_FILES);
+    return all
+      .filter(f => f.path.startsWith(prefix))
+      .map(f => f.path)
+      .sort();
+  },
+
+  async readFile(path) {
+    const rec = await IDB.get(IDB.STORE_FILES, path);
+    return rec ? rec.content : null;
+  },
+
+  async writeFile(path, content) {
+    await IDB.put(IDB.STORE_FILES, { path, content, updatedAt: Date.now() });
+    return true;
+  },
+
+  async createFile(path, content = '') {
+    const existing = await IDB.get(IDB.STORE_FILES, path);
+    if (existing) throw new Error('Arquivo já existe: ' + path);
+    await IDB.put(IDB.STORE_FILES, { path, content, updatedAt: Date.now() });
+    return true;
+  },
+
+  async delete(path) {
+    await IDB.delete(IDB.STORE_FILES, path);
+    return true;
+  },
+
+  async clearAll() {
+    await IDB.clear(IDB.STORE_FILES);
+  },
+
+  async getAllFiles() {
+    const all = await IDB.getAll(IDB.STORE_FILES);
+    const map = {};
+    all.forEach(f => map[f.path] = f.content);
+    return map;
+  },
+
+  // -- adapters de sincronização --------------------------------
+  // Local FS: importa uma pasta local inteira para dentro do workspace
+  // (IndexedDB continua sendo a camada de trabalho — a pasta local
+  // funciona como import/export, não como fonte de verdade viva).
+  async importLocalFolder() {
+    if (!this.supportsFS) throw new Error('File System Access API indisponível neste navegador.');
+    const handle = await window.showDirectoryPicker();
+    this.dirHandle = handle;
+    await this.clearAll();
+    const collected = {};
+    await this._walkDir(handle, '', collected);
+    for (const path in collected) {
+      await IDB.put(IDB.STORE_FILES, { path, content: collected[path], updatedAt: Date.now() });
+    }
+    await this.setWorkspaceName(handle.name);
+    return Object.keys(collected).length;
+  },
+
+  async _walkDir(dirHandle, prefix, out) {
+    const TEXT_EXT = /\.(html|htm|css|js|mjs|json|svg|txt|md)$/i;
+    for await (const [name, entry] of dirHandle.entries()) {
+      const path = prefix ? `${prefix}/${name}` : name;
+      if (entry.kind === 'directory') {
+        await this._walkDir(entry, path, out);
+      } else if (entry.kind === 'file' && TEXT_EXT.test(name)) {
+        const file = await entry.getFile();
+        out[path] = await file.text();
+      }
+    }
+  },
+
+  // Exporta o projeto inteiro: se ainda houver um dirHandle vivo
+  // desta sessão, escreve direto nele; senão, baixa arquivo a arquivo.
+  async exportProject() {
+    const files = await this.getAllFiles();
+    const paths = Object.keys(files);
+    if (this.dirHandle) {
+      for (const path of paths) {
+        await this._writeIntoHandle(this.dirHandle, path, files[path]);
+      }
+      return { mode: 'fs', count: paths.length };
+    }
+    for (const path of paths) {
+      const blob = new Blob([files[path]], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = path.replace(/\//g, '__');
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      await new Promise(r => setTimeout(r, 120));
+    }
+    return { mode: 'download', count: paths.length };
+  },
+
+  async _writeIntoHandle(rootHandle, path, content) {
+    const parts = path.split('/');
+    const fileName = parts.pop();
+    let dir = rootHandle;
+    for (const part of parts) {
+      dir = await dir.getDirectoryHandle(part, { create: true });
+    }
+    const fileHandle = await dir.getFileHandle(fileName, { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(content);
+    await writable.close();
+  }
+};
+// ------------------------------------------------------------
+// TOKENIZER — syntax highlighting próprio, regex-based, sem libs.
+// Cada linguagem é uma lista ordenada de {re, cls}. Constrói uma
+// única regex combinada e varre o texto uma vez.
+// ------------------------------------------------------------
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function buildTokenizer(specs) {
+  const pattern = specs.map(s => '(' + s.re.source + ')').join('|');
+  const master = new RegExp(pattern, 'g');
+  return function (text) {
+    let out = '';
+    let last = 0;
+    let m;
+    master.lastIndex = 0;
+    while ((m = master.exec(text))) {
+      if (m.index > last) out += escapeHtml(text.slice(last, m.index));
+      for (let i = 0; i < specs.length; i++) {
+        if (m[i + 1] !== undefined) {
+          out += '<span class="' + specs[i].cls + '">' + escapeHtml(m[i + 1]) + '</span>';
+          break;
+        }
+      }
+      last = master.lastIndex;
+      if (m[0] === '') master.lastIndex++; // evita loop infinito em match vazio
+    }
+    if (last < text.length) out += escapeHtml(text.slice(last));
+    return out;
+  };
+}
+
+const TOKENIZERS = {
+  html: buildTokenizer([
+    { re: /<!--[\s\S]*?-->/, cls: 'tok-comment' },
+    { re: /<!DOCTYPE[^>]*>/i, cls: 'tok-keyword' },
+    { re: /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/, cls: 'tok-string' },
+    { re: /<\/?[a-zA-Z][\w:-]*/, cls: 'tok-tag' },
+    { re: /[\w-]+(?==)/, cls: 'tok-attr' },
+    { re: /\/?>/, cls: 'tok-tag' }
+  ]),
+  css: buildTokenizer([
+    { re: /\/\*[\s\S]*?\*\//, cls: 'tok-comment' },
+    { re: /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/, cls: 'tok-string' },
+    { re: /@[a-zA-Z-]+/, cls: 'tok-atrule' },
+    { re: /#[0-9a-fA-F]{3,8}\b/, cls: 'tok-hex' },
+    { re: /[a-zA-Z-]+(?=\s*:)/, cls: 'tok-property' },
+    { re: /-?\b\d+\.?\d*(px|em|rem|%|vh|vw|s|ms|deg|fr)?\b/, cls: 'tok-number' },
+    { re: /[{}();:,]/, cls: 'tok-punct' }
+  ]),
+  js: buildTokenizer([
+    { re: /\/\/.*$|\/\*[\s\S]*?\*\//m, cls: 'tok-comment' },
+    { re: /`(?:[^`\\]|\\.)*`|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/, cls: 'tok-string' },
+    { re: /\b(const|let|var|function|return|if|else|for|while|switch|case|break|continue|class|extends|new|this|typeof|instanceof|in|of|try|catch|finally|throw|async|await|import|export|default|from|null|undefined|true|false|void|delete|yield|static|get|set|super|do)\b/, cls: 'tok-keyword' },
+    { re: /\b0x[0-9a-fA-F]+\b|\b\d+\.?\d*\b/, cls: 'tok-number' }
+  ]),
+  json: buildTokenizer([
+    { re: /"(?:[^"\\]|\\.)*"(?=\s*:)/, cls: 'tok-key' },
+    { re: /"(?:[^"\\]|\\.)*"/, cls: 'tok-string' },
+    { re: /\b(true|false|null)\b/, cls: 'tok-keyword' },
+    { re: /-?\b\d+\.?\d*\b/, cls: 'tok-number' },
+    { re: /[{}\[\],:]/, cls: 'tok-punct' }
+  ]),
+  md: buildTokenizer([
+    { re: /^#{1,6}[^\n]*$/m, cls: 'tok-heading' },
+    { re: /`[^`\n]+`/, cls: 'tok-code' },
+    { re: /\[[^\]]*\]\([^)]*\)/, cls: 'tok-link' },
+    { re: /\*\*[^*\n]+\*\*/, cls: 'tok-bold' },
+    { re: /\*[^*\n]+\*/, cls: 'tok-italic' }
+  ]),
+  svg: null, // reaproveita 'html'
+  txt: buildTokenizer([])
+};
+TOKENIZERS.svg = TOKENIZERS.html;
+TOKENIZERS.xml = TOKENIZERS.html;
+
+function langForPath(path) {
+  const ext = (path.split('.').pop() || '').toLowerCase();
+  if (ext === 'html' || ext === 'htm') return 'html';
+  if (ext === 'css') return 'css';
+  if (ext === 'js' || ext === 'mjs') return 'js';
+  if (ext === 'json') return 'json';
+  if (ext === 'md') return 'md';
+  if (ext === 'svg') return 'svg';
+  return 'txt';
+}
+
+// ------------------------------------------------------------
+// UnoEditor — textarea (camada de edição, transparente) +
+// <pre><code> (camada visual, colorida) sobrepostos e com
+// scroll sincronizado. API compatível com o antigo State.editor
+// do DevOS v3 (getValue/setValue/on/execCommand) para facilitar
+// a migração do restante do sistema.
+// ------------------------------------------------------------
+const UnoEditor = {
+  ta: null, syntax: null, lineNums: null,
+  lang: 'html',
+  _listeners: {},
+  _highlightTimer: null,
+
+  init() {
+    this.ta = document.getElementById('uno-editor');
+    this.syntax = document.getElementById('uno-syntax-code');
+    this.lineNums = document.getElementById('uno-linenums');
+
+    this.ta.addEventListener('input', () => {
+      this._scheduleHighlight();
+      this._emit('change');
+    });
+    this.ta.addEventListener('scroll', () => this._syncScroll());
+    this.ta.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = this.ta.selectionStart, end = this.ta.selectionEnd;
+        this.ta.value = this.ta.value.slice(0, start) + '  ' + this.ta.value.slice(end);
+        this.ta.selectionStart = this.ta.selectionEnd = start + 2;
+        this._scheduleHighlight();
+        this._emit('change');
+      }
+    });
+  },
+
+  setLanguage(lang) { this.lang = TOKENIZERS[lang] ? lang : 'txt'; },
+
+  getValue() { return this.ta.value; },
+
+  setValue(v) {
+    this.ta.value = v;
+    this._highlightNow();
+    this._updateLineNumbers();
+  },
+
+  on(evt, cb) { (this._listeners[evt] = this._listeners[evt] || []).push(cb); },
+  _emit(evt) { (this._listeners[evt] || []).forEach(cb => cb()); },
+
+  execCommand(cmd) {
+    if (cmd === 'find') {
+      const term = prompt('Buscar no arquivo atual:');
+      if (!term) return;
+      const idx = this.ta.value.indexOf(term, this.ta.selectionEnd || 0);
+      const found = idx >= 0 ? idx : this.ta.value.indexOf(term);
+      if (found >= 0) {
+        this.ta.focus();
+        this.ta.selectionStart = found;
+        this.ta.selectionEnd = found + term.length;
+        this._syncScroll();
+      } else {
+        App.toast('Não encontrado: "' + term + '"');
+      }
+    }
+  },
+
+  _scheduleHighlight() {
+    clearTimeout(this._highlightTimer);
+    this._highlightTimer = setTimeout(() => this._highlightNow(), 220);
+  },
+
+  _highlightNow() {
+    const tokenize = TOKENIZERS[this.lang] || TOKENIZERS.txt;
+    const raw = this.ta.value;
+    this.syntax.innerHTML = tokenize(raw) + '\n';
+    this._updateLineNumbers();
+  },
+
+  _updateLineNumbers() {
+    const lines = this.ta.value.split('\n').length;
+    let html = '';
+    for (let i = 1; i <= lines; i++) html += '<div>' + i + '</div>';
+    this.lineNums.innerHTML = html;
+  },
+
+  _syncScroll() {
+    // pre e textarea são absolutos e do mesmo tamanho; sincroniza
+    // via scrollTop/scrollLeft internos, não via scroll do container.
+    this.syntax.parentElement.scrollTop = this.ta.scrollTop;
+    this.syntax.parentElement.scrollLeft = this.ta.scrollLeft;
+    this.lineNums.scrollTop = this.ta.scrollTop;
+  }
+};
+
+// ------------------------------------------------------------
+// BRIDGE — injetado no <head> do documento renderizado no iframe.
+// Captura console.log/warn/error e clique (reservado p/ modo
+// cirurgia futuro) e reporta pro shell via postMessage.
+// ------------------------------------------------------------
+const BridgeScript = `
+<script id="kobllux-uno-bridge">
+(function(){
+  window.__UNO_BRIDGE__ = true;
+  const post = (msg) => window.parent.postMessage(Object.assign({ __uno: true }, msg), '*');
+  ['log','warn','error','info'].forEach((level) => {
+    const orig = console[level];
+    console[level] = function(...args){
+      try { post({ type:'LOG', level, data: args.map(a => {
+        try { return typeof a === 'object' ? JSON.stringify(a) : String(a); }
+        catch(e){ return String(a); }
+      }).join(' ') }); } catch(e){}
+      orig.apply(console, args);
+    };
+  });
+  window.addEventListener('error', (e) => {
+    post({ type:'LOG', level:'error', data: (e.message||'Erro') + ' @ ' + (e.filename||'') + ':' + (e.lineno||'') });
+  });
+  window.addEventListener('load', () => post({ type:'LOG', level:'info', data:'UNO Bridge ativo.' }));
+})();
+<\/script>
+`;
+
+// ------------------------------------------------------------
+// Renderer — monta HTML+CSS+JS+assets em um único srcdoc.
+// Faz "bundle" simples: qualquer <link rel=stylesheet href=X> ou
+// <script src=X> cujo X exista no workspace é inlinado, porque um
+// srcdoc de iframe não enxerga o sistema de arquivos local.
+// ------------------------------------------------------------
+const Renderer = {
+  async render(files, entryPath) {
+    entryPath = entryPath || 'index.html';
+    let html = files[entryPath];
+    if (html === undefined) {
+      return this._errorDoc('Arquivo de entrada "' + entryPath + '" não encontrado no workspace.');
+    }
+
+    const resolve = (basePath, relPath) => {
+      if (/^https?:\/\//i.test(relPath) || relPath.startsWith('//')) return null; // externo, não mexe
+      const baseDir = basePath.includes('/') ? basePath.slice(0, basePath.lastIndexOf('/') + 1) : '';
+      let combined = (baseDir + relPath).replace(/^\.\//, '');
+      // resolve "../"
+      const parts = [];
+      combined.split('/').forEach(seg => {
+        if (seg === '..') parts.pop(); else if (seg !== '.') parts.push(seg);
+      });
+      return parts.join('/');
+    };
+
+    html = html.replace(/<link[^>]+rel=["']stylesheet["'][^>]*href=["']([^"']+)["'][^>]*>/gi, (match, href) => {
+      const resolved = resolve(entryPath, href);
+      if (resolved && files[resolved] !== undefined) {
+        return '<style data-uno-inlined="' + resolved + '">\n' + files[resolved] + '\n</style>';
+      }
+      return match; // CDN externo ou não encontrado: mantém como está
+    });
+
+    html = html.replace(/<script([^>]*)\ssrc=["']([^"']+)["']([^>]*)><\/script>/gi, (match, pre, src, post) => {
+      const resolved = resolve(entryPath, src);
+      if (resolved && files[resolved] !== undefined) {
+        return '<script data-uno-inlined="' + resolved + '">\n' + files[resolved] + '\n<\/script>';
+      }
+      return match;
+    });
+
+    if (/<head[^>]*>/i.test(html)) {
+      html = html.replace(/<head([^>]*)>/i, '<head$1>' + BridgeScript);
+    } else {
+      html = BridgeScript + html;
+    }
+    return html;
+  },
+
+  _errorDoc(msg) {
+    return '<!DOCTYPE html><html><body style="background:#05070a;color:#ff5470;font-family:monospace;padding:24px">' +
+      '<h3>⚠ Preview indisponível</h3><p>' + msg.replace(/</g, '&lt;') + '</p></body></html>';
+  }
+};
+
+// ------------------------------------------------------------
+// Runtime — logs do console injetados via Bridge/postMessage.
+// ------------------------------------------------------------
+const Runtime = {
+  init() {
+    window.addEventListener('message', (e) => {
+      const msg = e.data;
+      if (!msg || !msg.__uno || msg.type !== 'LOG') return;
+      this.appendLog(msg.level, msg.data);
+    });
+  },
+  appendLog(level, text) {
+    const container = document.getElementById('uno-logs');
+    if (!container) return;
+    const cls = { error: 'log-error', warn: 'log-warn', sys: 'log-sys', info: 'log-info' }[level] || 'log-info';
+    const time = new Date().toLocaleTimeString('pt-BR');
+    const div = document.createElement('div');
+    div.className = 'log-line ' + cls;
+    div.innerHTML = '<span class="log-time">' + time + '</span>' + escapeHtml(String(text));
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+  }
+};
+
+// ------------------------------------------------------------
+// App — orquestra UI, workspace, editor e preview.
+// ------------------------------------------------------------
+const App = {
+async exitFullscreenPreview() {
+    const wrapper = document.getElementById('preview-wrapper');
+    const btn = document.getElementById('btn-full-preview');
+
+    if (!wrapper) return;
+
+    try {
+        if (document.fullscreenElement) {
+            await document.exitFullscreen();
+        } else if (document.webkitFullscreenElement) {
+            document.webkitExitFullscreen?.();
+        }
+    } catch (err) {
+        console.warn('Erro ao sair do fullscreen:', err);
+    }
+
+    // Remove também o fullscreen visual/fallback
+    wrapper.classList.remove('runtime-fullscreen');
+
+    if (btn) {
+        btn.classList.remove('is-active');
+    }
+
+    this.toast('Fullscreen encerrado');
+},
+
+// ============================================================
+// FILE SYSTEM NEXUS
+// Desktop  → File System Access API
+// iPhone   → input webkitdirectory / múltiplos arquivos
+// ============================================================
+
+openNexusFolder() {
+
+    // 1. Chrome / Edge / navegadores com File System Access API
+    if (UNO.supportsFS) {
+        this.openWorkspace();
+        return;
+    }
+
+    // 2. iPhone / Safari / fallback
+    const input = document.getElementById('nexus-folder-input');
+
+    if (!input) {
+        this.toast('⚠️ Seletor Nexus indisponível');
+        return;
+    }
+
+    input.value = '';
+    input.click();
+},
+
+async handleNexusFolderUpload(event) {
+
+    const input = event.target;
+    const files = Array.from(input.files || []);
+
+    if (!files.length) {
+        this.toast('Nenhum arquivo selecionado');
+        return;
+    }
+
+    this.toast('📦 Importando ' + files.length + ' arquivos…');
+
+    try {
+
+        // Limpa workspace atual
+        await UNO.clearAll();
+
+        let imported = 0;
+
+        for (const file of files) {
+
+            // Caminho relativo fornecido pelo Safari/Chrome
+            let relativePath = file.webkitRelativePath;
+
+            // Fallback caso o navegador não forneça
+            if (!relativePath) {
+                relativePath = 'NEXUS_UPLOAD/' + file.name;
+            }
+
+            // Remove o nome da pasta raiz escolhida
+            // Ex:
+            // MeuProjeto/index.html
+            // vira:
+            // index.html
+            const parts = relativePath.split('/');
+
+            if (parts.length > 1) {
+                parts.shift();
+            }
+
+            const path = parts.join('/');
+
+            // Só importa arquivos de texto conhecidos
+            const TEXT_EXT =
+                /\.(html|htm|css|js|mjs|json|svg|txt|md)$/i;
+
+            if (!TEXT_EXT.test(path)) {
+                continue;
+            }
+
+            const content = await file.text();
+
+            await IDB.put(
+                IDB.STORE_FILES,
+                {
+                    path,
+                    content,
+                    updatedAt: Date.now()
+                }
+            );
+
+            imported++;
+        }
+
+        // Nome lógico do workspace
+        await UNO.setWorkspaceName(
+            files[0]?.webkitRelativePath
+                ? files[0].webkitRelativePath.split('/')[0]
+                : 'NEXUS_UPLOAD'
+        );
+
+        document.getElementById('ws-name').textContent =
+            await UNO.getWorkspaceName();
+
+        this.activePath = null;
+
+        await this.renderTree();
+
+        const paths = await UNO.list();
+
+        if (paths.includes('index.html')) {
+            await this.openFile('index.html');
+        } else if (paths.length) {
+            await this.openFile(paths[0]);
+        }
+
+        this.toast(
+            '🧬 Nexus: ' +
+            imported +
+            ' arquivos importados'
+        );
+
+        await this.refreshPreview();
+
+    } catch (err) {
+
+        console.error('Nexus Upload:', err);
+
+        this.toast(
+            '⚠️ Erro ao importar: ' +
+            (err.message || 'falha desconhecida')
+        );
+
+    } finally {
+
+        input.value = '';
+
+    }
+},
+
+  activePath: null,
+  dirty: false,
+  saveTimer: null,
+
+  async init() {
+    await UNO.init();
+    Runtime.init();
+    UnoEditor.init();
+
+    document.getElementById('ws-name').textContent = await UNO.getWorkspaceName();
+
+    UnoEditor.on('change', () => {
+      this.dirty = true;
+      document.getElementById('editor-dirty-dot').style.display = 'block';
+      clearTimeout(this.saveTimer);
+      this.saveTimer = setTimeout(() => this.saveActive(false), 900);
+    });
+
+    await this.renderTree();
+    const paths = await UNO.list();
+    if (paths.includes('index.html')) await this.openFile('index.html');
+    else if (paths.length) await this.openFile(paths[0]);
+
+    this.renderBlocks();
+    setTimeout(() => this.refreshPreview(), 400);
+  },
+
+  toast(msg) {
+    const t = document.getElementById('uno-toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+  },
+
+  // ---------- navegação ----------
+  switchView(name, el) {
+    document.querySelectorAll('.uno-view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    if (name === 'preview') this.refreshPreview();
+  },
+
+  toggleDrawer() {
+    document.getElementById('uno-drawer').classList.toggle('open');
+    document.getElementById('uno-drawer-overlay').classList.toggle('open');
+  },
+
+  // ---------- explorer / árvore de arquivos ----------
+  async renderTree() {
+    const paths = await UNO.list();
+    const tree = document.getElementById('uno-tree');
+    if (paths.length === 0) {
+      tree.innerHTML = '<div class="tree-empty">Workspace vazio.<br>Crie um arquivo ou importe uma pasta local.</div>';
+      return;
+    }
+    // agrupa por pasta de primeiro nível
+    const groups = {};
+    paths.forEach(p => {
+      const idx = p.indexOf('/');
+      const folder = idx >= 0 ? p.slice(0, idx) : '';
+      (groups[folder] = groups[folder] || []).push(p);
+    });
+    let html = '';
+    const renderFile = (p) => {
+      const name = p.split('/').pop();
+      const active = p === this.activePath ? ' active' : '';
+      return '<div class="tree-node' + active + '" onclick="App.openFile(\'' + p.replace(/'/g, "\\'") + '\')">' +
+        '<svg class="ic ic-sm"><use href="#i-file"/></svg>' +
+        '<span style="flex:1;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(name) + '</span>' +
+        '<svg class="ic ic-sm del" onclick="event.stopPropagation();App.deleteFile(\'' + p.replace(/'/g, "\\'") + '\')"><use href="#i-x"/></svg>' +
+        '</div>';
+    };
+    if (groups['']) groups[''].forEach(p => html += renderFile(p));
+    Object.keys(groups).filter(g => g !== '').sort().forEach(folder => {
+      html += '<div class="tree-folder"><svg class="ic ic-sm"><use href="#i-folder"/></svg>' + escapeHtml(folder) + '/</div>';
+      groups[folder].forEach(p => html += renderFile(p));
+    });
+    tree.innerHTML = html;
+  },
+
+  async openFile(path) {
+    if (this.activePath && this.dirty) await this.saveActive(false);
+    this.activePath = path;
+    const content = await UNO.readFile(path);
+    UnoEditor.setLanguage(langForPath(path));
+    UnoEditor.setValue(content === null ? '' : content);
+    document.getElementById('editor-file-name').textContent = path;
+    document.getElementById('editor-dirty-dot').style.display = 'none';
+    this.dirty = false;
+    this.renderTree();
+    const editorNav = document.querySelector('.nav-btn[data-view="editor"]');
+    if (editorNav) this.switchView('editor', editorNav);
+    if (window.innerWidth < 900) this.toggleDrawer();
+  },
+
+  async saveActive(showToast) {
+    if (!this.activePath) return;
+    await UNO.writeFile(this.activePath, UnoEditor.getValue());
+    this.dirty = false;
+    document.getElementById('editor-dirty-dot').style.display = 'none';
+    if (showToast) this.toast('💾 ' + this.activePath + ' salvo');
+  },
+
+  async deleteFile(path) {
+    if (!confirm('Apagar "' + path + '"?')) return;
+    await UNO.delete(path);
+    if (this.activePath === path) {
+      this.activePath = null;
+      UnoEditor.setValue('');
+      document.getElementById('editor-file-name').textContent = 'nenhum arquivo';
+    }
+    await this.renderTree();
+    this.toast('🗑 Arquivo removido');
+  },
+
+  // ---------- modais ----------
+  openModal(id) { document.getElementById('modal-' + id).classList.add('open'); },
+  closeModal(id) { document.getElementById('modal-' + id).classList.remove('open'); },
+
+  async confirmNewFile() {
+    const input = document.getElementById('input-new-path');
+    const path = input.value.trim().replace(/^\/+/, '');
+    if (!path) return this.toast('Informe um caminho válido.');
+    try {
+      await UNO.createFile(path, '');
+      input.value = '';
+      this.closeModal('new-file');
+      await this.renderTree();
+      await this.openFile(path);
+      this.toast('✅ ' + path + ' criado');
+    } catch (e) {
+      this.toast('⚠️ ' + e.message);
+    }
+  },
+
+  async confirmReset() {
+    await UNO.clearAll();
+    UNO.dirHandle = null;
+    await UNO.init(); // já vazio -> resemeia DEFAULT_PROJECT
+    this.activePath = null;
+    document.getElementById('ws-name').textContent = await UNO.getWorkspaceName();
+    await this.renderTree();
+    const paths = await UNO.list();
+    if (paths.includes('index.html')) await this.openFile('index.html');
+    this.closeModal('reset');
+    this.toast('♻️ Workspace reiniciado');
+  },
+
+  // ---------- workspace local (File System Access API) ----------
+  async openWorkspace() {
+    if (!UNO.supportsFS) {
+      this.toast('⚠️ Este navegador não suporta File System Access API.');
+      return;
+    }
+    try {
+      const count = await UNO.importLocalFolder();
+      document.getElementById('ws-name').textContent = await UNO.getWorkspaceName();
+      this.activePath = null;
+      await this.renderTree();
+      const paths = await UNO.list();
+      if (paths.includes('index.html')) await this.openFile('index.html');
+      else if (paths.length) await this.openFile(paths[0]);
+      this.toast('📂 ' + count + ' arquivos importados');
+      this.refreshPreview();
+    } catch (e) {
+      if (e.name !== 'AbortError') this.toast('⚠️ ' + e.message);
+    }
+  },
+
+  async exportProject() {
+    this.toast('📦 Exportando projeto…');
+    const result = await UNO.exportProject();
+    this.toast(result.mode === 'fs'
+      ? '✅ ' + result.count + ' arquivos escritos na pasta local'
+      : '✅ ' + result.count + ' arquivos baixados');
+  },
+
+// ---------- preview / renderer ----------
+async refreshPreview() {
+    if (this.activePath) await this.saveActive(false);
+    const files = await UNO.getAllFiles();
+    const html = await Renderer.render(files, 'index.html');
+    document.getElementById('uno-logs').innerHTML = '';
+    document.getElementById('uno-frame').srcdoc = html;
+},
+// ============================================================
+// FULLSCREEN DO PREVIEW
+// Reintegrado com suporte nativo + WebKit + fallback visual
+// ============================================================
+async toggleFullscreenPreview() {
+    const wrapper = document.getElementById('preview-wrapper');
+    const btn = document.getElementById('btn-full-preview');
+    if (!wrapper) {
+        console.warn('preview-wrapper não encontrado');
+        return;
+    }
+    const nativeFullscreen =
+        document.fullscreenElement ||
+        document.webkitFullscreenElement;
+    const visualFullscreen =
+        wrapper.classList.contains('runtime-fullscreen');
+    // --------------------------------------------------------
+    // SAIR DO FULLSCREEN
+    // --------------------------------------------------------
+    if (nativeFullscreen || visualFullscreen) {
+        try {
+            if (document.exitFullscreen) {
+                await document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+        } catch (err) {
+            console.warn('Erro ao sair do fullscreen:', err);
+        }
+        wrapper.classList.remove('runtime-fullscreen');
+        if (btn) {
+            btn.classList.remove('is-active');
+        }
+        UI.showToast?.('Fullscreen encerrado');
+        return;
+    }
+    // --------------------------------------------------------
+    // ENTRAR NO FULLSCREEN NATIVO
+    // --------------------------------------------------------
+    try {
+        if (wrapper.requestFullscreen) {
+            await wrapper.requestFullscreen();
+            if (btn) {
+                btn.classList.add('is-active');
+            }
+            UI.showToast?.('Preview em tela cheia');
+            return;
+        }
+        // Safari / WebKit
+        if (wrapper.webkitRequestFullscreen) {
+            wrapper.webkitRequestFullscreen();
+            if (btn) {
+                btn.classList.add('is-active');
+            }
+            UI.showToast?.('Preview em tela cheia');
+            return;
+        }
+    } catch (err) {
+        console.warn('Fullscreen nativo indisponível:', err);
+    }
+    // --------------------------------------------------------
+    // FALLBACK VISUAL
+    // --------------------------------------------------------
+    wrapper.classList.add('runtime-fullscreen');
+    if (btn) {
+        btn.classList.add('is-active');
+    }
+    UI.showToast?.('Preview expandido');
+},
+
+  // ---------- blocos (placeholder extensível p/ Rhea/MathBF) ----------
+  renderBlocks() {
+    const list = document.getElementById('blocks-list');
+    const demoBlocks = [
+      { name: 'Card', color: '#00e5ff', hint: "UNO.block('card', {title, hz, color})" },
+      { name: 'Hero', color: '#ff2ec4', hint: "UNO.block('hero', {title, subtitle})" },
+      { name: 'Badge Arquétipo', color: '#ffb020', hint: "UNO.block('badge', {archetype})" }
+    ];
+    list.innerHTML = demoBlocks.map(b =>
+      '<div class="block-card" onclick="App.toast(\'Blocks engine: roadmap — ainda não conectado ao Renderer\')">' +
+      '<div class="swatch" style="background:' + b.color + '22;border:1px solid ' + b.color + '55"></div>' +
+      '<div class="meta"><b>' + b.name + '</b><span>' + b.hint + '</span></div>' +
+      '</div>'
+    ).join('') + '<p style="font-size:11.5px;color:var(--text-faint);line-height:1.6;margin-top:6px">' +
+      'Reservado para a fusão Rhea / MathBF — construtor de componentes sobre o Renderer atual.</p>';
+  }
+};
+
+window.addEventListener('DOMContentLoaded', () => App.init());
+</script>
+
+</body>
+</html>

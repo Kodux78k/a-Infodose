@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>KOBLLUX · UNO + DEVOS (Standalone Core)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#05070a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<style>
+:root{
+  --bg-void:#05070a; --bg-panel:#0b0e14; --bg-card:#11151d; --bg-raised:#161b26;
+  --line:#232938; --line-soft:#1a1f2b;
+  --cyan:#00e5ff; --magenta:#ff2ec4; --amber:#ffb020; --green:#3ddc84; --red:#ff5470;
+  --text:#d7dbe4; --text-dim:#7d8496; --text-faint:#4b5266;
+  --nav-h:58px; --head-h:52px; --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  --mono:'JetBrains Mono','SF Mono',ui-monospace,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Inter',system-ui,sans-serif;
+  --r-sm:6px; --r-md:10px; --r-lg:16px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:var(--bg-void)}
+body{
+  font-family:var(--sans);color:var(--text);
+  padding:var(--safe-t) 0 var(--safe-b) 0;
+  display:flex;flex-direction:column;min-height:100dvh;
+  font-size:14px;
+}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+
+/* ICONS */
+.ic{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:inline-block;vertical-align:middle;flex-shrink:0}
+.ic-lg{width:20px;height:20px}
+.ic-sm{width:13px;height:13px}
+
+/* LAYOUT */
+#uno-root{display:flex;flex-direction:column;flex:1;min-height:0;position:relative}
+#uno-head{
+  height:var(--head-h);flex-shrink:0;display:flex;align-items:center;gap:8px;
+  padding:0 10px;background:rgba(11,14,20,.92);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);z-index:40;
+}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan)}
+.brand small{color:var(--text-faint);font-weight:500;letter-spacing:.06em;text-transform:none}
+.ws-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);font-family:var(--mono);text-align:center}
+.head-actions{display:flex;align-items:center;gap:4px}
+
+.ibtn{
+  width:34px;height:34px;border-radius:var(--r-sm);border:1px solid var(--line);
+  background:transparent;color:var(--text-dim);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all.15s;position:relative;flex-shrink:0;
+}
+.ibtn:active{transform:scale(.92)}
+.ibtn:hover{color:var(--text);border-color:#333c50}
+.ibtn.on{color:var(--cyan);border-color:var(--cyan);background:rgba(0,229,255,.08)}
+.btn{flex:1;padding:11px;border-radius:var(--r-sm);border:1px solid var(--line);background:transparent;color:var(--text);font-weight:600;font-size:12.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn.primary{border-color:var(--cyan);color:var(--cyan)}
+.btn.primary:hover{background:rgba(0,229,255,.08)}
+.btn.warning{border-color:var(--amber);color:var(--amber)}
+.btn.danger{border-color:var(--red);color:var(--red)}
+
+#uno-main{flex:1;min-height:0;display:flex;position:relative;overflow:hidden}
+.uno-view{display:none;flex:1;min-height:0;flex-direction:column;overflow:hidden}
+.uno-view.active{display:flex}
+
+#uno-nav{
+  height:calc(var(--nav-h) + var(--safe-b));padding-bottom:var(--safe-b);flex-shrink:0;
+  display:flex;background:rgba(11,14,20,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);z-index:40;
+}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  color:var(--text-faint);font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  cursor:pointer;border:none;background:none;
+}
+.nav-btn.active{color:var(--cyan)}
+.nav-btn.active.is-runtime{color:var(--magenta)}
+
+/* DRAWER ACCORDION */
+#uno-drawer{
+  position:fixed;top:0;left:-320px;width:300px;bottom:0;background:var(--bg-panel);
+  border-right:1px solid var(--line);z-index:200;transition:left.28s;display:flex;flex-direction:column;padding-top:var(--safe-t);
+}
+#uno-drawer.open{left:0}
+#uno-drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:199;opacity:0;pointer-events:none;transition:opacity.28s}
+#uno-drawer-overlay.open{opacity:1;pointer-events:auto}
+.drawer-head{padding:14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.drawer-content{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:12px}
+
+.uno-accordion {background: var(--bg-card);border: 1px solid var(--line);border-radius: var(--r-md);overflow: hidden;}
+.uno-accordion-head {display: flex;justify-content: space-between;align-items: center;padding: 10px 12px;cursor: pointer;background: var(--bg-panel);border-bottom: 1px solid var(--line-soft);}
+.uno-accordion.collapsed.uno-accordion-head {border-bottom-color: transparent;}
+.uno-accordion-body {padding: 12px;display: flex;flex-direction: column;gap: 8px;}
+.uno-accordion.collapsed.uno-accordion-body {display: none;}
+.chevron {transition: transform 0.3s ease;}
+.uno-accordion.collapsed.chevron {transform: rotate(-90deg);}
+
+/* EDITOR */
+.line-numbers{
+  width:44px;background:var(--bg-panel);color:var(--text-faint);
+  font-family:var(--mono);font-size:12.5px;line-height:20px;text-align:right;
+  padding:12px 8px;border-right:1px solid var(--line-soft);overflow:hidden;
+}
+#uno-syntax-layer,#uno-editor{
+  position:absolute;inset:0;margin:0;padding:12px 14px;
+  font-family:var(--mono);font-size:12.5px;line-height:20px;
+  white-space:pre;tab-size:2;
+}
+#uno-syntax-layer{pointer-events:none;color:var(--text)}
+#uno-editor{
+  background:transparent;color:transparent;caret-color:var(--cyan);
+  border:none;outline:none;resize:none;overflow:auto;z-index:1;
+}
+.tok-comment{color:var(--text-faint);font-style:italic}
+.tok-string{color:var(--green)}
+.tok-tag{color:var(--cyan)}
+.tok-attr{color:var(--amber)}
+.tok-keyword{color:var(--magenta)}
+.tok-number{color:var(--amber)}
+
+#uno-toast{position:fixed;bottom:calc(var(--nav-h) + var(--safe-b) + 14px);left:50%;transform:translateX(-50%);background:rgba(17,21,29,.96);border:1px solid var(--line);color:var(--text);padding:10px 16px;border-radius:999px;font-size:12.5px;z-index:9999;opacity:0;transition:opacity.25s;backdrop-filter:blur(8px)}
+#uno-toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- SVG SPRITES INLINE -->
+<svg hidden>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 2h9l5 5v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="m9 8-4 4 4 4M15 8l4 4-4 4"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><path d="m5 7 5 5-5 5M13 17h6"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M6 4l14 8-14 8V4z"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 3h11l3 3v15a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M8 3v6h7V3M8 21v-7h8v7"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v13m0 0-4.5-4.5M12 16l4.5-4.5M4 20h16"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M8 3H4v4M16 3h4v4M4 16v4h4M20 16v4h-4"/></symbol>
+  <symbol id="i-chevron-down" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></symbol>
+  <symbol id="i-orb" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" opacity=".5"/></symbol>
+  <symbol id="i-wand" viewBox="0 0 24 24"><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M2 22l9-9"/></symbol>
+  <symbol id="i-clean" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+</svg>
+
+<div id="uno-root">
+  <header id="uno-head">
+    <button class="ibtn" onclick="App.toggleDrawer()"><svg class="ic"><use href="#i-menu"/></svg></button>
+    <div class="brand"><svg class="ic" style="color:var(--magenta)"><use href="#i-orb"/></svg>UNO <small>/ KODUX</small></div>
+    <div class="ws-name" id="ws-name">carregando…</div>
+    <div class="head-actions">
+      <button class="ibtn" onclick="App.saveActive(true)"><svg class="ic"><use href="#i-save"/></svg></button>
+      <button class="ibtn" onclick="App.exportProject()"><svg class="ic"><use href="#i-download"/></svg></button>
+      <button class="ibtn on" onclick="App.refreshPreview()"><svg class="ic"><use href="#i-play"/></svg></button>
+    </div>
+  </header>
+
+  <main id="uno-main">
+    <section class="uno-view active" id="view-editor">
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--bg-panel)">
+        <svg class="ic-sm ic"><use href="#i-file"/></svg>
+        <span id="editor-file-name" style="font-family:var(--mono);font-size:12px;color:var(--text-dim);flex:1">nenhum arquivo</span>
+        <span id="editor-dirty-dot" style="width:6px;height:6px;border-radius:50%;background:var(--amber);display:none"></span>
+      </div>
+      <div style="flex:1;display:flex;position:relative">
+        <div class="line-numbers" id="uno-linenums"></div>
+        <div style="flex:1;position:relative">
+          <pre id="uno-syntax-layer"><code id="uno-syntax-code"></code></pre>
+          <textarea id="uno-editor" spellcheck="false"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="uno-view" id="view-preview">
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--bg-panel)">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--text-dim);flex:1">index.html · runtime local</span>
+        <button class="ibtn" onclick="App.refreshPreview()"><svg class="ic-sm ic"><use href="#i-refresh"/></svg></button>
+      </div>
+      <div style="flex:1;background:#fff"><iframe id="uno-frame" sandbox="allow-scripts allow-same-origin" style="width:100%;height:100%;border:none"></iframe></div>
+    </section>
+
+    <section class="uno-view" id="view-inspector">
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--bg-panel)">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--text-dim);flex:1">console output</span>
+      </div>
+      <div id="uno-logs" style="flex:1;overflow-y:auto;padding:10px 14px;font-family:var(--mono);font-size:11.5px"></div>
+    </section>
+  </main>
+
+  <nav id="uno-nav">
+    <button class="nav-btn active" onclick="App.switchView('editor',this)"><svg class="ic"><use href="#i-code"/></svg>Editor</button>
+    <button class="nav-btn is-runtime" onclick="App.switchView('preview',this)"><svg class="ic"><use href="#i-eye"/></svg>Preview</button>
+    <button class="nav-btn" onclick="App.switchView('inspector',this)"><svg class="ic"><use href="#i-terminal"/></svg>Console</button>
+  </nav>
+</div>
+
+<div id="uno-drawer-overlay" onclick="App.toggleDrawer()"></div>
+<aside id="uno-drawer">
+  <div class="drawer-head">
+    <strong>MENU SISTEMA</strong>
+    <button class="ibtn" onclick="App.toggleDrawer()"><svg class="ic-sm ic"><use href="#i-x"/></svg></button>
+  </div>
+  <div class="drawer-content">
+    <div class="uno-accordion">
+      <div class="uno-accordion-head" onclick="this.parentElement.classList.toggle('collapsed')">
+        <span style="font-size:10px;font-weight:700;color:var(--text-dim)"><svg class="ic"><use href="#i-orb"/></svg> Ações & Upload</span>
+        <svg class="ic chevron"><use href="#i-chevron-down"/></svg>
+      </div>
+      <div class="uno-accordion-body">
+        <button class="btn ghost" onclick="document.getElementById('nexus-folder-input').click();"><svg class="ic"><use href="#i-upload"/></svg> Importar Arquivos</button>
+        <input type="file" id="nexus-folder-input" multiple accept=".html,.css,.js" style="display:none" onchange="App.handleUpload(event)">
+        <button class="btn warning" onclick="App.quickClean()"><svg class="ic"><use href="#i-clean"/></svg> Limpar CDNs</button>
+        <button class="btn primary" onclick="App.exportProject()"><svg class="ic"><use href="#i-download"/></svg> Exportar</button>
+      </div>
+    </div>
+    <div class="uno-accordion">
+      <div class="uno-accordion-head" onclick="this.parentElement.classList.toggle('collapsed')">
+        <span style="font-size:10px;font-weight:700;color:var(--text-dim)"><svg class="ic"><use href="#i-folder"/></svg> Arquivos</span>
+        <svg class="ic chevron"><use href="#i-chevron-down"/></svg>
+      </div>
+      <div class="uno-accordion-body"><div id="uno-tree"></div></div>
+    </div>
+  </div>
+</aside>
+
+<div id="uno-toast"></div>
+
+<script>
+'use strict';
+const IDB = {
+  _db:null, DB:'kobllux_uno', STORE:'files',
+  async open(){ if(this._db)return this._db; return new Promise((res,rej)=>{const r=indexedDB.open(this.DB,1); r.onupgradeneeded=e=>e.target.result.createObjectStore(this.STORE,{keyPath:'path'}); r.onsuccess=e=>{this._db=e.target.result;res(this._db)}; r.onerror=rej})},
+  async put(v){ const db=await this.open(); return new Promise((res,rej)=>{db.transaction(this.STORE,'readwrite').objectStore(this.STORE).put(v).onsuccess=()=>res()})},
+  async get(k){ const db=await this.open(); return new Promise((res,rej)=>{const r=db.transaction(this.STORE,'readonly').objectStore(this.STORE).get(k); r.onsuccess=()=>res(r.result); r.onerror=rej})},
+  async getAll(){ const db=await this.open(); return new Promise((res,rej)=>{const r=db.transaction(this.STORE,'readonly').objectStore(this.STORE).getAll(); r.onsuccess=()=>res(r.result||[]); r.onerror=rej})}
+};
+
+const DEFAULT={'index.html':'<!DOCTYPE html>\n<html><head><title>UNO</title></head><body><h1>KOBLLUX UNO</h1></body></html>'};
+
+const App={
+  active:null,dirty:false,
+  async init(){
+    await IDB.open(); const all=await IDB.getAll(); if(!all.length){ for(const k in DEFAULT)await IDB.put({path:k,content:DEFAULT[k]}) }
+    document.getElementById('ws-name').textContent='Projeto-Local';
+    UnoEditor.init(); await this.renderTree(); await this.openFile('index.html');
+    window.addEventListener('message',e=>{ if(e.data?.type==='LOG'){ document.getElementById('uno-logs').innerHTML+=`<div>${e.data.msg}</div>` }})
+  },
+  toast(m){const t=document.getElementById('uno-toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000)},
+  switchView(n,el){document.querySelectorAll('.uno-view').forEach(v=>v.classList.remove('active'));document.getElementById('view-'+n).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active'); if(n==='preview')this.refreshPreview()},
+  toggleDrawer(){document.getElementById('uno-drawer').classList.toggle('open');document.getElementById('uno-drawer-overlay').classList.toggle('open')},
+  async renderTree(){ const files=await IDB.getAll(); document.getElementById('uno-tree').innerHTML=files.map(f=>`<div onclick="App.openFile('${f.path}')" style="padding:8px;cursor:pointer;font-family:var(--mono);font-size:12px">${f.path}</div>`).join('') },
+  async openFile(p){ if(this.active&&this.dirty)await this.saveActive(false); this.active=p; const f=await IDB.get(p); UnoEditor.setValue(f?.content||''); document.getElementById('editor-file-name').textContent=p; this.dirty=false; document.getElementById('editor-dirty-dot').style.display='none' },
+  async saveActive(show){ if(!this.active)return; await IDB.put({path:this.active,content:UnoEditor.getValue()}); this.dirty=false; document.getElementById('editor-dirty-dot').style.display='none'; if(show)this.toast('Salvo!') },
+  async refreshPreview(){ if(this.active)await this.saveActive(false); const all=await IDB.getAll(); let html=all.find(f=>f.path==='index.html')?.content||''; html=`<script>console.log='log';<\/script>`+html; document.getElementById('uno-frame').srcdoc=html },
+  async exportProject(){ const all=await IDB.getAll(); all.forEach(f=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([f.content]));a.download=f.path;a.click()}); this.toast('Exportado!') },
+  async handleUpload(e){ const files=[...e.target.files]; for(const file of files){ await IDB.put({path:file.name,content:await file.text()}) } await this.renderTree(); this.toast('Importado!') },
+  quickClean(){ this.toast('CDNs limpas!') }
+};
+
+const UnoEditor={
+  ta:null,syntax:null,lines:null,
+  init(){ this.ta=document.getElementById('uno-editor'); this.syntax=document.getElementById('uno-syntax-code'); this.lines=document.getElementById('uno-linenums'); this.ta.oninput=()=>{this.highlight();App.markDirty()}; this.ta.onscroll=()=>{this.syntax.parentElement.scrollTop=this.ta.scrollTop} },
+  setValue(v){this.ta.value=v;this.highlight()},
+  getValue(){return this.ta.value},
+  highlight(){ this.syntax.innerHTML=this.ta.value.replace(/</g,'&lt;').replace(/function/g,'<span class="tok-keyword">function</span>'); this.lines.innerHTML=this.ta.value.split('\n').map((_,i)=>`<div>${i+1}</div>`).join('') }
+};
+App.markDirty=()=>{App.dirty=true;document.getElementById('editor-dirty-dot').style.display='block'};
+window.onload=()=>App.init();
+</script>
+</body>
+</html>

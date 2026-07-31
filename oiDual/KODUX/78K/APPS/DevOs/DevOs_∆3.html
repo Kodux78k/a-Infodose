@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head>
+  <meta charset="utf-8">
+  <title>KOBLLUX ∆12 // Meta-Editor &amp; Analyzer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#05070a">
+  <!-- Tailwind & Lucide -->
+  <script src="https://cdn.tailwindcss.com" data-k-id="JS_0"></script>
+  <script src="https://unpkg.com/lucide@latest" data-k-id="JS_1"></script>
+  <!-- CodeMirror -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css" data-k-id="L_0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-ocean.min.css" data-k-id="L_1">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js" data-k-id="JS_2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js" data-k-id="JS_3"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js" data-k-id="JS_4"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js" data-k-id="JS_5"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js" data-k-id="JS_6"></script>
+<style data-k-id="SI_0">
+    :root {
+      --bg-dark: #05070a;
+      --bg-panel: #0d1117;
+      --neon-cyan: #00ffff;
+      --neon-magenta: #ff00ff;
+      --neon-yellow: #fbbf24;
+      --text-main: #c9d1d9;
+      --nav-height: 60px;
+    }
+    body {
+      background-color: var(--bg-dark); color: var(--text-main);
+      font-family: 'Inter', system-ui, sans-serif;
+      margin: 0; padding: 0; height: 100dvh; overflow: hidden;
+      display: flex; flex-direction: column;
+      -webkit-tap-highlight-color: transparent;
+    }
+    /* Utilitários Visuais */
+    .glass { background: rgba(13, 17, 23, 0.85); backdrop-filter: blur(12px); }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+    /* Componentes */
+    .view-panel { display: none; flex: 1; width: 100%; height: 100%; overflow: hidden; position: relative; }
+    .view-panel.active { display: flex; flex-direction: column; }
+    .btn-cyber { 
+        background: rgba(30, 41, 59, 0.5); border: 1px solid #30363d; 
+        color: var(--text-main); border-radius: 8px; transition: all 0.2s; 
+        display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
+    }
+    .btn-cyber:active { transform: scale(0.96); }
+    .btn-cyber:hover { background: rgba(30, 41, 59, 0.9); }
+    .btn-cyber:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+    /* CodeMirror Override */
+    .CodeMirror { height: 100% !important; font-family: 'JetBrains Mono', monospace; font-size: 13px; background: var(--bg-dark) !important; }
+    /* Bottom Navigation */
+    #mobileNav {
+      position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-height);
+      z-index: 100; display: flex; justify-content: space-around; align-items: center;
+      border-top: 1px solid #30363d; padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .nav-item {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: #8b949e; font-size: 10px; font-weight: 600; text-transform: uppercase;
+      height: 100%; cursor: pointer; transition: color 0.2s;
+    }
+    .nav-item.active { color: var(--neon-cyan); }
+    .nav-item.active i { transform: translateY(-2px); transition: transform 0.2s; }
+    /* Action Panel Mobile */
+    #action-panel {
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transform: translateY(100%);
+    }
+    #action-panel.open { transform: translateY(0); }
+  </style></head>
+<body>
+  <!-- HEADER -->
+  <header class="glass w-full flex items-center justify-between px-3 py-3 z-50 border-b border-[#30363d] shrink-0">
+    <div class="flex items-center gap-2 font-bold tracking-widest uppercase text-[10px] sm:text-xs">
+      <i data-lucide="layers" class="w-4 h-4 text-cyan-400"></i>
+      <span>KOBLLUX <span class="text-cyan-400 hidden sm:inline">| Meta-Editor</span></span>
+    </div>
+    <div class="flex gap-1.5 overflow-x-auto custom-scrollbar no-scrollbar items-center">
+      <!-- Undo/Redo Native -->
+      <button onclick="App.undo()" class="btn-cyber w-8 h-8 text-slate-400 border-slate-700" title="Desfazer (Ctrl+Z)">
+        <i data-lucide="undo-2" class="w-3 h-3"></i>
+      </button>
+      <button onclick="App.redo()" class="btn-cyber w-8 h-8 text-slate-400 border-slate-700" title="Refazer (Ctrl+Y)">
+        <i data-lucide="redo-2" class="w-3 h-3"></i>
+      </button>
+      <div class="w-px h-6 bg-slate-700 mx-1"></div>
+      <button onclick="document.getElementById('file-upload').click()" class="btn-cyber px-2.5 py-1.5 text-[10px] text-cyan-400 border-cyan-900">
+        <i data-lucide="upload" class="w-3 h-3"></i> <span class="hidden sm:inline">Importar</span>
+      </button>
+      <input type="file" id="file-upload" class="hidden" accept=".html,.txt">
+      <button onclick="App.loadDemo()" class="btn-cyber px-2.5 py-1.5 text-[10px] text-pink-400 border-pink-900">
+        <i data-lucide="play" class="w-3 h-3"></i> <span class="hidden sm:inline">Teste</span>
+      </button>
+      <button onclick="App.download()" class="btn-cyber px-2.5 py-1.5 text-[10px] text-green-400 border-green-900 shadow-[0_0_10px_rgba(74,222,128,0.2)]">
+        <i data-lucide="download" class="w-3 h-3"></i> <span class="hidden sm:inline">Exportar</span>
+      </button>
+    </div>
+  </header>
+  <!-- WORKSPACE -->
+  <main class="flex-1 relative pb-[var(--nav-height)] bg-[#0d1117] overflow-hidden">
+    <!-- VIEW 1: EDITOR -->
+    <section id="view-editor" class="view-panel active">
+      <div class="flex-1 relative w-full h-full">
+        <textarea id="code-editor"></textarea>
+      </div>
+    </section>
+    <!-- VIEW 2: INSPECTOR (DOM Tree) -->
+    <section id="view-inspector" class="view-panel bg-slate-950">
+      <div class="p-3 bg-slate-900 border-b border-slate-800 flex justify-between items-center text-xs shrink-0">
+        <div class="text-slate-400"><span id="stat-nodes" class="text-white font-bold">0</span> Nós | <span id="stat-divs" class="text-white font-bold">0</span> Divs</div>
+        <div class="text-cyan-400 bg-cyan-950/50 px-2 py-1 rounded border border-cyan-900 font-mono text-[9px] uppercase tracking-wider">Delta Tracking: On</div>
+      </div>
+      <!-- DOM Tree Container -->
+      <div id="tree-container" class="flex-1 overflow-y-auto custom-scrollbar p-2 pb-[300px]">
+        <div class="text-center text-slate-600 mt-10 text-sm">Carregue um arquivo para inspecionar a árvore DOM.</div>
+      </div>
+      <!-- Mobile Action Panel -->
+      <div id="action-panel" class="absolute bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] z-20 rounded-t-xl flex flex-col">
+        <div class="p-3 flex justify-between items-center border-b border-slate-800 shrink-0">
+            <h3 class="font-bold text-sm text-white flex items-center gap-2 truncate" id="ap-title">
+                <i data-lucide="box" class="w-4 h-4 text-cyan-400"></i> Selecione um Nó
+            </h3>
+            <button onclick="UI.closeActionPanel()" class="text-slate-400 p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
+        <div class="p-4 flex-1 overflow-y-auto custom-scrollbar max-h-[60vh]">
+            <div class="bg-slate-800/50 p-3 rounded-lg mb-4 text-xs font-mono border border-slate-700/50 relative overflow-hidden">
+                <div id="ap-seal-badge" class="absolute top-2 right-2 hidden text-[9px] bg-red-900/50 text-red-400 border border-red-900 px-2 py-0.5 rounded flex items-center gap-1">
+                    <i data-lucide="lock" class="w-2.5 h-2.5"></i> SELADO
+                </div>
+                <div class="text-slate-400 mb-1">Classes:</div>
+                <div id="ap-classes" class="text-yellow-400 break-words mb-2 min-h-[16px]">...</div>
+                <div class="text-slate-400 mb-1">ID:</div>
+                <div id="ap-id" class="text-cyan-400 break-words mb-2">...</div>
+                <div class="text-slate-400 mb-1">Deltas Data-*:</div>
+                <div id="ap-deltas" class="text-pink-400 break-words text-[9px]">Nenhum</div>
+            </div>
+            <!-- Botões Primários (Mover/Deletar) -->
+            <div class="grid grid-cols-4 gap-2 mb-3">
+                <button onclick="NodeOps.moveUp()" class="btn-cyber flex-col py-2.5 text-[10px] uppercase font-bold text-slate-300 hover:text-cyan-400">
+                    <i data-lucide="arrow-up" class="w-4 h-4 mb-1"></i> Subir
+                </button>
+                <button onclick="NodeOps.moveDown()" class="btn-cyber flex-col py-2.5 text-[10px] uppercase font-bold text-slate-300 hover:text-cyan-400">
+                    <i data-lucide="arrow-down" class="w-4 h-4 mb-1"></i> Descer
+                </button>
+                <button onclick="NodeOps.clone()" class="btn-cyber flex-col py-2.5 text-[10px] uppercase font-bold text-slate-300 hover:text-green-400">
+                    <i data-lucide="copy" class="w-4 h-4 mb-1"></i> Duplicar
+                </button>
+                <button onclick="NodeOps.delete()" class="btn-cyber flex-col py-2.5 text-[10px] uppercase font-bold text-slate-300 hover:text-red-400">
+                    <i data-lucide="trash-2" class="w-4 h-4 mb-1"></i> Excluir
+                </button>
+            </div>
+            <div class="w-full h-px bg-slate-800 my-4"></div>
+            <h4 class="text-[9px] uppercase text-slate-500 font-bold mb-3 tracking-widest">Ações Avançadas de Matriz</h4>
+            <!-- Botões Avançados (Wrap/Unwrap/Seal) -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <button onclick="NodeOps.wrap()" class="btn-cyber py-3 text-xs border-blue-900/50 text-blue-400 hover:bg-blue-900/20">
+                    <i data-lucide="package" class="w-4 h-4"></i> Integrar (Wrap)
+                </button>
+                <button onclick="NodeOps.unwrap()" class="btn-cyber py-3 text-xs border-orange-900/50 text-orange-400 hover:bg-orange-900/20">
+                    <i data-lucide="minimize-2" class="w-4 h-4"></i> Expandir Div
+                </button>
+                <button onclick="NodeOps.toggleSeal()" id="btn-seal" class="btn-cyber py-3 text-xs border-red-900/50 text-red-400 hover:bg-red-900/20">
+                    <i data-lucide="lock" class="w-4 h-4"></i> Selar Nó
+                </button>
+            </div>
+        </div>
+      </div>
+    </section>
+    <!-- VIEW 3: REFACTOR -->
+    <section id="view-refactor" class="view-panel p-4 bg-slate-950 overflow-y-auto custom-scrollbar">
+      <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 mb-4">
+        <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+          <i data-lucide="zap" class="w-4 h-4 text-yellow-400"></i> Diagnóstico KOBLLUX
+        </h3>
+        <div class="grid grid-cols-2 gap-3 text-center mb-4">
+          <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+            <div class="text-slate-500 text-[10px] uppercase mb-1">Tamanho Atual</div>
+            <div id="stat-size" class="text-lg text-white">0 KB</div>
+          </div>
+          <div class="bg-slate-950 p-3 rounded-lg border border-cyan-900/50">
+            <div class="text-slate-500 text-[10px] uppercase mb-1">Total de Tags</div>
+            <div id="stat-tags" class="text-lg text-cyan-400">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-slate-900 rounded-xl p-4 border border-slate-800">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i data-lucide="alert-triangle" class="w-4 h-4 text-orange-400"></i> Problemas Encontrados
+        </h3>
+        <div id="issues-list" class="space-y-3">
+          <div class="text-xs text-slate-500">Nenhum dado analisado.</div>
+        </div>
+      </div>
+    </section>
+    <!-- VIEW 4: RUNTIME (Preview) -->
+    <section id="view-runtime" class="view-panel bg-black">
+        <div class="p-2 border-b border-[#30363d] bg-[#161b22] flex gap-2 justify-between items-center z-10 shrink-0">
+            <select id="device-select" onchange="UI.changeDevice()" class="bg-[#0d1117] border border-[#30363d] text-white text-[10px] rounded p-1 flex-1 max-w-[120px]">
+                <option value="100%">Responsivo Full</option>
+                <option value="375px">Mobile (375px)</option>
+                <option value="768px">Tablet (768px)</option>
+            </select>
+            <button onclick="App.updatePreview()" class="btn-cyber px-3 py-1 text-[10px] border-cyan-900 text-cyan-400">
+                <i data-lucide="refresh-cw" class="w-3 h-3"></i> Atualizar Iframe
+            </button>
+        </div>
+        <div class="flex-1 w-full bg-zinc-900 flex justify-center items-start overflow-auto">
+            <div id="preview-wrapper" class="w-full h-full bg-white transition-all duration-300 mx-auto">
+                <iframe id="sandbox-frame" class="w-full h-full border-none shadow-2xl" sandbox="allow-scripts allow-same-origin"></iframe>
+            </div>
+        </div>
+    </section>
+  </main>
+  <!-- BOTTOM NAVIGATION -->
+  <nav id="mobileNav" class="glass">
+    <div class="nav-item active" onclick="App.switchTab('editor', this)">
+      <i data-lucide="code" class="w-5 h-5 mb-1"></i><span>Editor</span>
+    </div>
+    <div class="nav-item" onclick="App.switchTab('inspector', this)">
+      <i data-lucide="layout-template" class="w-5 h-5 mb-1"></i><span>Inspector</span>
+    </div>
+    <div class="nav-item" onclick="App.switchTab('refactor', this)">
+      <i data-lucide="activity" class="w-5 h-5 mb-1"></i><span>Refatorar</span>
+    </div>
+    <div class="nav-item" onclick="App.switchTab('runtime', this)">
+      <i data-lucide="play-circle" class="w-5 h-5 mb-1"></i><span>Preview</span>
+    </div>
+  </nav>
+  <!-- Toast -->
+  <div id="toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-cyan-900/90 text-cyan-50 border border-cyan-400 px-4 py-2 rounded-full text-xs font-bold transition-opacity duration-300 opacity-0 pointer-events-none z-[9999]"></div>
+  <script data-k-id="JSI_7">
+    lucide.createIcons();
+    // ==========================================
+    // 1. STATE MANAGEMENT
+    // ==========================================
+    const State = {
+        rawHTML: '',
+        dom: null,
+        analysis: null,
+        treeData: null,
+        selectedNodeId: null,
+        selectedNode: null,
+        editor: null,
+        updateTimeout: null,
+        idCounter: 0,
+        isSyncing: false // flag para evitar loops no change
+    };
+    // ==========================================
+    // 2. KOBLLUX CORE ENGINE 
+    // ==========================================
+    const Engine = {
+        parseHTML(source) {
+            const parser = new DOMParser();
+            State.dom = parser.parseFromString(source, 'text/html');
+            this.analyze(State.dom);
+            State.idCounter = 0;
+            State.treeData = this.toJSONTree(State.dom.body);
+            UI.updateStats();
+            if(document.getElementById('view-inspector').classList.contains('active')){
+                UI.renderTree();
+            }
+        },
+        analyze(doc) {
+            const stats = { elements: 0, divs: 0, duplicateIds: [], ids: new Set() };
+            const walk = (node) => {
+                if (node.nodeType === 1) { // Element
+                    stats.elements++;
+                    const tag = node.tagName.toLowerCase();
+                    if (tag === 'div') stats.divs++;
+                    if (node.id) {
+                        if (stats.ids.has(node.id)) stats.duplicateIds.push(node.id);
+                        else stats.ids.add(node.id);
+                    }
+                    for (let child of node.children) walk(child);
+                }
+            };
+            walk(doc.body);
+            State.analysis = stats;
+            State.analysis.size = new Blob([State.rawHTML]).size;
+        },
+        toJSONTree(node, level = 0) {
+            if (node.nodeType !== 1) return null;
+            if (node.tagName.toLowerCase() === 'script') return null;
+            const isSealed = node.hasAttribute('data-k-sealed');
+            const obj = {
+                id: State.idCounter++,
+                tag: node.tagName.toLowerCase(),
+                domId: node.id,
+                className: node.className,
+                children: [],
+                nodeRef: node,
+                expanded: level < 2,
+                isSealed: isSealed
+            };
+            for (let child of node.childNodes) {
+                if (child.nodeType === 1) {
+                    const parsed = this.toJSONTree(child, level + 1);
+                    if (parsed) obj.children.push(parsed);
+                }
+            }
+            return obj;
+        },
+        findNodeById(node, id) {
+            if (node.id === id) return node;
+            for (let c of node.children) {
+                const found = this.findNodeById(c, id);
+                if (found) return found;
+            }
+            return null;
+        }
+    };
+    // ==========================================
+    // 3. NODE OPERATIONS (Cirurgia no DOM em Memória c/ Histórico e Deltas)
+    // ==========================================
+    const NodeOps = {
+        _checkLock(ref) {
+            // Verifica se o nó ou algum pai está selado
+            if (ref.hasAttribute('data-k-sealed')) return true;
+            if (ref.closest('[data-k-sealed="true"]')) return true;
+            return false;
+        },
+        _sync() {
+            // Extrai HTML
+            const newHTML = "<!DOCTYPE html>\n" + State.dom.documentElement.outerHTML;
+            // INTEGRAÇÃO DE HISTÓRICO NATIVO:
+            // Usamos replaceRange para substituir todo o texto. Isso cria UM passo de histórico válido no CodeMirror!
+            State.isSyncing = true;
+            const doc = State.editor.getDoc();
+            doc.replaceRange(newHTML, {line: 0, ch: 0}, {line: doc.lineCount(), ch: 0}, "+kobllux_op");
+            State.isSyncing = false;
+            // Atualiza memória visual
+            State.rawHTML = newHTML;
+            Engine.parseHTML(State.rawHTML);
+            UI.closeActionPanel();
+        },
+        moveUp() {
+            if(!State.selectedNode) return;
+            const ref = State.selectedNode.nodeRef;
+            if(this._checkLock(ref)) { UI.showToast("Ação bloqueada: Estrutura Selada."); return; }
+            if(ref && ref.previousElementSibling) {
+                ref.setAttribute('data-k-delta', Date.now());
+                ref.setAttribute('data-k-action', 'move-up');
+                ref.parentNode.insertBefore(ref, ref.previousElementSibling);
+                this._sync();
+                UI.showToast("Nó movido para cima!");
+            } else { UI.showToast("Já está no topo do container."); }
+        },
+        moveDown() {
+            if(!State.selectedNode) return;
+            const ref = State.selectedNode.nodeRef;
+            if(this._checkLock(ref)) { UI.showToast("Ação bloqueada: Estrutura Selada."); return; }
+            if(ref && ref.nextElementSibling) {
+                ref.setAttribute('data-k-delta', Date.now());
+                ref.setAttribute('data-k-action', 'move-down');
+                ref.parentNode.insertBefore(ref.nextElementSibling, ref);
+                this._sync();
+                UI.showToast("Nó movido para baixo!");
+            } else { UI.showToast("Já está no fundo do container."); }
+        },
+        clone() {
+            if(!State.selectedNode) return;
+            const ref = State.selectedNode.nodeRef;
+            if(this._checkLock(ref)) { UI.showToast("Ação bloqueada: Estrutura Selada."); return; }
+            const clone = ref.cloneNode(true);
+            clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+            if(clone.id) clone.removeAttribute('id');
+            clone.setAttribute('data-k-delta', Date.now());
+            clone.setAttribute('data-k-action', 'clone');
+            ref.parentNode.insertBefore(clone, ref.nextSibling);
+            this._sync();
+            UI.showToast("Nó Duplicado (Deltas e IDs limpos)!");
+        },
+        delete() {
+            if(!State.selectedNode) return;
+            const ref = State.selectedNode.nodeRef;
+            if(ref.tagName.toLowerCase() === 'body') { UI.showToast("Não é possível excluir o <body>."); return; }
+            if(this._checkLock(ref)) { UI.showToast("Ação bloqueada: Estrutura Selada."); return; }
+            ref.remove();
+            this._sync();
+            UI.showToast("Nó Excluído!");
+        },
+        // --- NOVAS OPERAÇÕES AVANÇADAS ---
+        wrap() {
+            if(!State.selectedNode) return;
+            const ref = State.selectedNode.nodeRef;
+            if(ref.tagName.toLowerCase() === 'body') { UI.showToast("Não se envolve o <body>."); return; }
+            if(this._checkLock(ref)) { UI.showToast("Ação bloqueada: Estrutura Selada."); return; }
+            const wrapper = State.dom.createElement('div');
+            // Injeta dados Delta
+            wrapper.setAttribute('data-k-delta', Date.now());
+            wrapper.setAttribute('data-k-action', 'wrap');
+            wrapper.className = 'kobllux-wrapper';
+            ref.parentNode.insertBefore(wrapper, ref);
+            wrapper.appendChild(ref);
+            this._sync();
+            UI.showToast("📦 Div Integrada! Nó Envolvido.");
+        },
+        unwrap() {
+            if(!State.selectedNode) return;
+            const ref = State.selectedNode.nodeRef;
+            if(ref.tagName.toLowerCase() === 'body') return;
+            if(this._checkLock(ref)) { UI.showToast("Ação bloqueada: Estrutura Selada."); return; }
+            const parent = ref.parentNode;
+            let count = 0;
+            // Move todos os filhos para o nível do pai
+            while (ref.firstChild) {
+                const child = ref.firstChild;
+                if(child.nodeType === 1) {
+                    child.setAttribute('data-k-delta', Date.now());
+                    child.setAttribute('data-k-action', 'unwrapped');
+                }
+                parent.insertBefore(child, ref);
+                count++;
+            }
+            ref.remove();
+            this._sync();
+            UI.showToast(`💥 Div Expandida! ${count} elementos preservados.`);
+        },
+        toggleSeal() {
+            if(!State.selectedNode) return;
+            const ref = State.selectedNode.nodeRef;
+            // Toggle Seal
+            if (ref.hasAttribute('data-k-sealed')) {
+                ref.removeAttribute('data-k-sealed');
+                UI.showToast("🔓 Nó Desbloqueado.");
+            } else {
+                ref.setAttribute('data-k-sealed', 'true');
+                ref.setAttribute('data-k-delta', Date.now());
+                UI.showToast("🔒 Nó Selado. Ações bloqueadas.");
+            }
+            this._sync();
+        }
+    };
+    // ==========================================
+    // 4. UI CONTROLLER 
+    // ==========================================
+    const UI = {
+        showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.style.opacity = '1';
+            setTimeout(() => t.style.opacity = '0', 3000);
+        },
+        updateStats() {
+            if(!State.analysis) return;
+            document.getElementById('stat-nodes').innerText = State.analysis.elements;
+            document.getElementById('stat-divs').innerText = State.analysis.divs;
+            document.getElementById('stat-size').innerText = (State.analysis.size / 1024).toFixed(1) + ' KB';
+            document.getElementById('stat-tags').innerText = State.analysis.elements;
+            this.renderRefactor();
+        },
+        buildTreeHTML(node, level = 0) {
+            if(!node) return '';
+            const isSelected = State.selectedNodeId === node.id;
+            const hasChildren = node.children && node.children.length > 0;
+            const exp = node.expanded;
+            const activeClass = isSelected ? 'bg-cyan-900/40 border-l-2 border-cyan-400' : 'border-l-2 border-transparent';
+            let html = `
+            <div class="tree-node flex items-center py-1.5 px-2 hover:bg-slate-800 cursor-pointer rounded ${activeClass}"
+                 style="padding-left: ${level * 16 + 8}px" data-id="${node.id}">
+                <span class="tree-toggle w-6 flex justify-center text-slate-500" data-id="${node.id}">
+                    ${hasChildren ? (exp ? '<i data-lucide="chevron-down" class="w-4 h-4"></i>' : '<i data-lucide="chevron-right" class="w-4 h-4"></i>') : '<span class="w-4"></span>'}
+                </span>
+                <span class="text-pink-500 font-semibold text-xs pointer-events-none">${node.tag}</span>
+                ${node.domId ? `<span class="text-cyan-400 ml-1 text-xs pointer-events-none">#${node.domId}</span>` : ''}
+                ${node.className ? `<span class="text-yellow-400 ml-1 truncate max-w-[120px] text-[10px] pointer-events-none">.${node.className.split(' ').join('.')}</span>` : ''}
+                ${node.isSealed ? `<i data-lucide="lock" class="w-3 h-3 text-red-500 ml-2"></i>` : ''}
+            </div>
+            `;
+            if (hasChildren && exp) {
+                html += `<div class="tree-children">`;
+                node.children.forEach(c => { html += this.buildTreeHTML(c, level + 1); });
+                html += `</div>`;
+            }
+            return html;
+        },
+        renderTree() {
+            const container = document.getElementById('tree-container');
+            if(!State.treeData) return;
+            container.innerHTML = this.buildTreeHTML(State.treeData);
+            lucide.createIcons();
+        },
+        openActionPanel(node) {
+            State.selectedNode = node;
+            State.selectedNodeId = node.id;
+            // Header Info
+            document.getElementById('ap-title').innerHTML = `<i data-lucide="box" class="w-4 h-4 text-cyan-400"></i> ${node.tag.toUpperCase()} ${node.domId ? `<span class="text-cyan-400 font-mono text-xs ml-2">#${node.domId}</span>` : ''}`;
+            document.getElementById('ap-classes').innerText = node.className || 'Nenhuma classe';
+            document.getElementById('ap-id').innerText = node.domId || 'Sem ID';
+            // Data-* extraction
+            let deltasHtml = [];
+            Array.from(node.nodeRef.attributes).forEach(attr => {
+                if(attr.name.startsWith('data-k-')) {
+                    deltasHtml.push(`<span class="bg-pink-900/40 text-pink-300 px-1 py-0.5 rounded border border-pink-900/50 mr-1">${attr.name.replace('data-k-','')}: ${attr.value}</span>`);
+                }
+            });
+            document.getElementById('ap-deltas').innerHTML = deltasHtml.length > 0 ? deltasHtml.join('') : 'Nenhum delta rastreado.';
+            // Seal State
+            const isSealed = node.nodeRef.hasAttribute('data-k-sealed');
+            document.getElementById('ap-seal-badge').style.display = isSealed ? 'flex' : 'none';
+            const btnSeal = document.getElementById('btn-seal');
+            if(isSealed) {
+                btnSeal.innerHTML = '<i data-lucide="unlock" class="w-4 h-4"></i> Desbloquear';
+                btnSeal.className = 'btn-cyber py-3 text-xs border-green-900/50 text-green-400 hover:bg-green-900/20';
+            } else {
+                btnSeal.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i> Selar Nó';
+                btnSeal.className = 'btn-cyber py-3 text-xs border-red-900/50 text-red-400 hover:bg-red-900/20';
+            }
+            document.getElementById('action-panel').classList.add('open');
+            lucide.createIcons();
+            this.renderTree(); 
+        },
+        closeActionPanel() {
+            document.getElementById('action-panel').classList.remove('open');
+            State.selectedNodeId = null;
+            State.selectedNode = null;
+            this.renderTree();
+        },
+        renderRefactor() {
+            const list = document.getElementById('issues-list');
+            if(!State.analysis) return;
+            let html = '';
+            if (State.analysis.duplicateIds.length > 0) {
+                html += `
+                <div class="flex gap-3 text-sm p-3 bg-red-900/20 border border-red-900/50 rounded-lg">
+                    <i data-lucide="shield-alert" class="w-5 h-5 text-red-400 shrink-0"></i>
+                    <div>
+                        <div class="text-white font-medium">IDs Duplicados Detectados (${State.analysis.duplicateIds.length})</div>
+                        <div class="text-slate-400 font-mono text-xs mt-1 break-words">${State.analysis.duplicateIds.join(', ')}</div>
+                        <div class="text-[10px] text-red-400 mt-2 uppercase tracking-widest">Pode quebrar scripts e âncoras!</div>
+                    </div>
+                </div>`;
+            } else {
+                html += `<div class="text-xs text-green-400 flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4"></i> Estrutura de IDs limpa.</div>`;
+            }
+            list.innerHTML = html;
+            lucide.createIcons();
+        },
+        changeDevice() {
+            const v = document.getElementById('device-select').value;
+            const w = document.getElementById('preview-wrapper');
+            w.style.maxWidth = v;
+        }
+    };
+    // ==========================================
+    // 5. MAIN APP (Init & Commands)
+    // ==========================================
+    const App = {
+        init() {
+            // Init CodeMirror
+            State.editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+                mode: 'htmlmixed', theme: 'material-ocean',
+                lineNumbers: true, lineWrapping: true,
+                matchBrackets: true, autoCloseTags: true,
+                undoDepth: 200 // Memória profunda para history
+            });
+            // Debounce no evento de mudança de código (que não veio do script)
+            State.editor.on('change', () => {
+                if(State.isSyncing) return; // ignora se foi nós que mudamos
+                clearTimeout(State.updateTimeout);
+                State.updateTimeout = setTimeout(() => {
+                    State.rawHTML = State.editor.getValue();
+                    Engine.parseHTML(State.rawHTML);
+                }, 800);
+            });
+            // Event Delegation Tree DOM
+            document.getElementById('tree-container').addEventListener('click', (e) => {
+                const toggle = e.target.closest('.tree-toggle');
+                if(toggle) {
+                    const id = parseInt(toggle.getAttribute('data-id'));
+                    const node = Engine.findNodeById(State.treeData, id);
+                    if(node) { node.expanded = !node.expanded; UI.renderTree(); }
+                    return;
+                }
+                const nodeEl = e.target.closest('.tree-node');
+                if(nodeEl) {
+                    const id = parseInt(nodeEl.getAttribute('data-id'));
+                    const node = Engine.findNodeById(State.treeData, id);
+                    if(node) UI.openActionPanel(node);
+                }
+            });
+            // File Upload Listener
+            document.getElementById('file-upload').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if(!file) return;
+                const r = new FileReader();
+                r.onload = (ev) => { 
+                    State.editor.setValue(ev.target.result); 
+                    UI.showToast('HTML Importado com Sucesso!'); 
+                };
+                r.readAsText(file);
+            });
+            // Atalhos de teclado para Undo/Redo
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); this.undo(); }
+                if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); this.redo(); }
+            });
+        },
+        undo() {
+            if(!State.editor) return;
+            State.editor.undo();
+            State.rawHTML = State.editor.getValue();
+            Engine.parseHTML(State.rawHTML);
+            UI.showToast("Desfeito (Undo)!");
+        },
+        redo() {
+            if(!State.editor) return;
+            State.editor.redo();
+            State.rawHTML = State.editor.getValue();
+            Engine.parseHTML(State.rawHTML);
+            UI.showToast("Refeito (Redo)!");
+        },
+        download() {
+            if(!State.rawHTML) { UI.showToast("Nada para exportar."); return; }
+            const blob = new Blob([State.editor.getValue()], {type: 'text/html'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `kobllux_export_${Date.now()}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            UI.showToast("Download Concluído!");
+        },
+        switchTab(viewName, navEl) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            navEl.classList.add('active');
+            document.querySelectorAll('.view-panel').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${viewName}`).classList.add('active');
+            if (viewName === 'inspector') UI.renderTree();
+            if (viewName === 'runtime') this.updatePreview();
+            if (viewName === 'editor') setTimeout(() => State.editor.refresh(), 100);
+        },
+        updatePreview() {
+            if(!State.rawHTML) return;
+            document.getElementById('sandbox-frame').srcdoc = State.rawHTML;
+            UI.showToast("Iframe Atualizado!");
+        },
+        loadDemo() {
+            const demo = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+</head>
+<body id="app-root" class="bg-gray-950 text-white p-6 font-sans">
+    <header id="main-header" class="border-b border-slate-800 pb-4 mb-6">
+        <h1 class="text-3xl font-black text-cyan-400 tracking-tighter">DUAL<span class="text-white">APP</span></h1>
+        <p class="text-slate-500 text-sm mt-1">Demonstração de Integração e Deltas</p>
+    </header>
+    <main class="grid gap-4 md:grid-cols-2">
+        <section id="painel-ia" class="bg-slate-900 p-5 rounded-xl border border-slate-800">
+            <h2 class="text-lg font-bold mb-3">Módulo CallAI</h2>
+            <div class="bloco-info bg-black/40 p-3 rounded-lg text-sm text-slate-400">
+                Selecione este bloco no Inspector e clique em "Integrar (Wrap)" para ver o Data Delta agir.
+            </div>
+        </section>
+        <section id="painel-seguro" class="bg-slate-900 p-5 rounded-xl border border-red-900/50" data-k-sealed="true" data-k-delta="1700000000000">
+            <h2 class="text-lg font-bold text-red-400 mb-3 flex items-center gap-2"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Nó Selado de Fábrica</h2>
+            <div class="bloco-info bg-black/40 p-3 rounded-lg text-sm text-slate-400">
+                Você não pode apagar nem extrair nada daqui até desbloquear.
+            </div>
+        </section>
+    </main>
+</body>
+</html>`;
+            State.editor.setValue(demo);
+            UI.showToast("Código de Teste Carregado!");
+        }
+    };
+    window.onload = () => App.init();
+  </script>
+</body></html>

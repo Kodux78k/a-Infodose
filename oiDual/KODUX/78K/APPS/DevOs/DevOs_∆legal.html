@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8">
+<title>KOBLLUX ∆12 // Meta-Editor & Analyzer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#05070a">
+
+<style>
+:root {
+  --bg-dark: #05070a; --bg-panel: #0d1117;
+  --neon-cyan: #00ffff; --neon-magenta: #ff00ff; --neon-yellow: #fbbf24;
+  --text-main: #c9d1d9; --nav-height: 60px; --glass: rgba(13, 17, 23, 0.85);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  background: var(--bg-dark); color: var(--text-main);
+  font-family: 'Montserrat', system-ui, sans-serif; margin: 0; padding: 0;
+  height: 100dvh; overflow: hidden; display: flex; flex-direction: column;
+}
+
+/* GLASS */
+.glass { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.06); }
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+
+/* HEADER */
+.app-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid #30363d; flex-shrink: 0;
+}
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 800; letter-spacing: 1px; font-size: 12px; }
+.brand svg { width: 16px; height: 16px; stroke: var(--neon-cyan); }
+.actions { display: flex; gap: 6px; overflow-x: auto; }
+
+/* BUTTONS */
+.btn-cyber {
+  background: rgba(30, 41, 59, 0.5); border: 1px solid #30363d;
+  color: var(--text-main); border-radius: 8px; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
+  padding: 6px 10px; font-size: 10px; font-weight: 600;
+}
+.btn-cyber svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+.btn-cyber:active { transform: scale(0.96); }
+.btn-cyber:hover { background: rgba(30, 41, 59, 0.9); border-color: var(--neon-cyan); }
+.btn-cyber:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+.btn-cyber.cyan { color: var(--neon-cyan); border-color: rgba(0,255,255,0.3); }
+.btn-cyber.pink { color: var(--neon-magenta); border-color: rgba(255,0,255,0.3); }
+.btn-cyber.green { color: #4ade80; border-color: rgba(74,222,128,0.3); box-shadow: 0 0 10px rgba(74,222,128,0.2); }
+
+/* WORKSPACE */
+main { flex: 1; position: relative; padding-bottom: var(--nav-height); background: var(--bg-panel); overflow: hidden; }
+.view-panel { display: none; flex: 1; width: 100%; height: 100%; overflow: hidden; position: relative; flex-direction: column; }
+.view-panel.active { display: flex; }
+
+/* NATIVE TEXTAREA EDITOR */
+#code-editor {
+  width: 100%; height: 100%; background: var(--bg-dark); color: var(--text-main);
+  border: none; outline: none; resize: none; padding: 12px;
+  font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; tab-size: 2;
+}
+
+/* INSPECTOR */
+.inspector-header {
+  padding: 12px; background: #161b22; border-bottom: 1px solid #30363d;
+  display: flex; justify-content: space-between; align-items: center; font-size: 12px; flex-shrink: 0;
+}
+#tree-container { flex: 1; overflow-y: auto; padding: 8px; padding-bottom: 300px; }
+.tree-node { display: flex; align-items: center; padding: 6px 8px; cursor: pointer; border-radius: 4px; border-left: 2px solid transparent; }
+.tree-node:hover { background: #1e293b; }
+.tree-node.active { background: rgba(0,255,255,0.1); border-left-color: var(--neon-cyan); }
+.tree-toggle { width: 24px; display: flex; justify-content: center; }
+.tree-toggle svg { width: 14px; height: 14px; stroke: #8b949e; }
+
+/* ACTION PANEL */
+#action-panel {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: #161b22; border-top: 1px solid #30363d;
+  transform: translateY(100%); transition: transform 0.3s; z-index: 20;
+  border-radius: 16px 16px 0 0;
+}
+#action-panel.open { transform: translateY(0); }
+.ap-header { padding: 12px; display: flex; justify-content: space-between; border-bottom: 1px solid #30363d; }
+.ap-body { padding: 16px; max-height: 60vh; overflow-y: auto; }
+.ap-card { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 16px; font-family: monospace; font-size: 11px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+/* REFACTOR */
+.refactor-panel { padding: 16px; overflow-y: auto; }
+.card { background: #161b22; border-radius: 12px; padding: 16px; border: 1px solid #30363d; margin-bottom: 16px; }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.stat { background: #0d1117; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #30363d; }
+
+/* RUNTIME */
+.device-bar { padding: 8px; border-bottom: 1px solid #30363d; background: #161b22; display: flex; gap: 8px; }
+.device-bar select { background: #0d1117; border: 1px solid #30363d; color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 10px; }
+#preview-wrapper { width: 100%; height: 100%; background: #fff; margin: 0 auto; transition: 0.3s; }
+#sandbox-frame { width: 100%; height: 100%; border: none; }
+
+/* BOTTOM NAV */
+#mobileNav {
+  position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-height);
+  display: flex; justify-content: space-around; align-items: center;
+  border-top: 1px solid #30363d; padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: #8b949e; font-size: 10px; font-weight: 600; text-transform: uppercase;
+  height: 100%; cursor: pointer; transition: color 0.2s;
+}
+.nav-item.active { color: var(--neon-cyan); }
+.nav-item svg { width: 20px; height: 20px; margin-bottom: 4px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+/* TOAST */
+#toast {
+  position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,255,255,0.9); color: #000; border: 1px solid var(--neon-cyan);
+  padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 800;
+  opacity: 0; transition: 0.3s; pointer-events: none; z-index: 9999;
+}
+</style>
+</head>
+<body>
+
+<header class="app-header glass">
+  <div class="brand">
+    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    KOBLLUX <span style="color:var(--neon-cyan)">| Meta-Editor</span>
+  </div>
+  <div class="actions">
+    <button onclick="App.undo()" class="btn-cyber" title="Desfazer">
+      <svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+    </button>
+    <button onclick="App.redo()" class="btn-cyber" title="Refazer">
+      <svg viewBox="0 0 24 24"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+    </button>
+    <button onclick="document.getElementById('file-upload').click()" class="btn-cyber cyan">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Importar
+    </button>
+    <input type="file" id="file-upload" style="display:none" accept=".html,.txt">
+    <button onclick="App.loadDemo()" class="btn-cyber pink">
+      <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg> Teste
+    </button>
+    <button onclick="App.download()" class="btn-cyber green">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar
+    </button>
+  </div>
+</header>
+
+<main>
+  <section id="view-editor" class="view-panel active">
+    <textarea id="code-editor" placeholder="<!DOCTYPE html>..."></textarea>
+  </section>
+
+  <section id="view-inspector" class="view-panel">
+    <div class="inspector-header">
+      <div><span id="stat-nodes">0</span> Nós | <span id="stat-divs">0</span> Divs</div>
+      <div style="color:var(--neon-cyan); font-size:9px">Delta Tracking: On</div>
+    </div>
+    <div id="tree-container" class="custom-scrollbar">
+      <div style="text-align:center; color:#555; margin-top:40px">Carregue um arquivo para inspecionar</div>
+    </div>
+    <div id="action-panel">
+      <div class="ap-header">
+        <h3 id="ap-title">Selecione um Nó</h3>
+        <button onclick="UI.closeActionPanel()"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="ap-body custom-scrollbar">
+        <div class="ap-card">
+          <div id="ap-seal-badge" style="display:none; color:#ff4b6b; font-size:9px">🔒 SELADO</div>
+          <div>Classes: <span id="ap-classes" style="color:var(--neon-yellow)">...</span></div>
+          <div>ID: <span id="ap-id" style="color:var(--neon-cyan)">...</span></div>
+          <div>Deltas: <span id="ap-deltas" style="color:var(--neon-magenta); font-size:9px">Nenhum</span></div>
+        </div>
+        <div class="grid-4">
+          <button onclick="NodeOps.moveUp()" class="btn-cyber"><svg viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>Subir</button>
+          <button onclick="NodeOps.moveDown()" class="btn-cyber"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>Descer</button>
+          <button onclick="NodeOps.clone()" class="btn-cyber"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8v-2a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>Copiar</button>
+          <button onclick="NodeOps.delete()" class="btn-cyber"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Excluir</button>
+        </div>
+        <div style="height:1px; background:#30363d; margin:16px 0"></div>
+        <div class="grid-3">
+          <button onclick="NodeOps.wrap()" class="btn-cyber"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>Wrap</button>
+          <button onclick="NodeOps.unwrap()" class="btn-cyber"><svg viewBox="0 0 24 24"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>Unwrap</button>
+          <button onclick="NodeOps.toggleSeal()" id="btn-seal" class="btn-cyber"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Selar</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-refactor" class="view-panel refactor-panel custom-scrollbar">
+    <div class="card">
+      <h3>Diagnóstico KOBLLUX</h3>
+      <div class="stats-grid">
+        <div class="stat"><div style="font-size:10px; color:#8b949e">Tamanho</div><div id="stat-size">0 KB</div></div>
+        <div class="stat"><div style="font-size:10px; color:#8b949e">Total Tags</div><div id="stat-tags" style="color:var(--neon-cyan)">0</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Problemas</h3>
+      <div id="issues-list">Nenhum dado analisado.</div>
+    </div>
+  </section>
+
+  <section id="view-runtime" class="view-panel">
+    <div class="device-bar">
+      <select id="device-select" onchange="UI.changeDevice()">
+        <option value="100%">Responsivo</option>
+        <option value="375px">Mobile</option>
+        <option value="768px">Tablet</option>
+      </select>
+      <button onclick="App.updatePreview()" class="btn-cyber cyan">
+        <svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M20.49 9A9 9 0 0 0 5.64 5.64M3.51 15a9 9 0 0 0 14.85 3.36"/></svg> Atualizar
+      </button>
+    </div>
+    <div id="preview-wrapper"><iframe id="sandbox-frame" sandbox="allow-scripts allow-same-origin"></iframe></div>
+  </section>
+</main>
+
+<nav id="mobileNav" class="glass">
+  <div class="nav-item active" onclick="App.switchTab('editor', this)">
+    <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Editor</span>
+  </div>
+  <div class="nav-item" onclick="App.switchTab('inspector', this)">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18"/></svg><span>Inspector</span>
+  </div>
+  <div class="nav-item" onclick="App.switchTab('refactor', this)">
+    <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span>Refatorar</span>
+  </div>
+  <div class="nav-item" onclick="App.switchTab('runtime', this)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg><span>Preview</span>
+  </div>
+</nav>
+
+<div id="toast"></div>
+
+<script>
+const State = { rawHTML: '', dom: null, analysis: null, treeData: null, selectedNodeId: null, selectedNode: null, idCounter: 0 };
+const UI = {
+  showToast(msg){ const t=document.getElementById('toast'); t.innerText=msg; t.style.opacity='1'; setTimeout(()=>t.style.opacity='0',3000); },
+  updateStats(){
+    if(!State.analysis) return;
+    document.getElementById('stat-nodes').innerText=State.analysis.elements;
+    document.getElementById('stat-divs').innerText=State.analysis.divs;
+    document.getElementById('stat-size').innerText=(State.analysis.size/1024).toFixed(1)+' KB';
+    document.getElementById('stat-tags').innerText=State.analysis.elements;
+  },
+  buildTreeHTML(node,level=0){
+    if(!node) return '';
+    const active=State.selectedNodeId===node.id?'active':'';
+    let html=`<div class="tree-node ${active}" style="padding-left:${level*16+8}px" data-id="${node.id}">
+      <span class="tree-toggle">${node.children.length?'<svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>':'<span style="width:14px"></span>'}</span>
+      <span style="color:var(--neon-magenta)">${node.tag}</span>
+      ${node.domId?`<span style="color:var(--neon-cyan); margin-left:4px">#${node.domId}</span>`:''}
+      ${node.isSealed?'<span style="color:#ff4b6b; margin-left:4px">🔒</span>':''}
+    </div>`;
+    if(node.expanded) node.children.forEach(c=>html+=this.buildTreeHTML(c,level+1));
+    return html;
+  },
+  renderTree(){ document.getElementById('tree-container').innerHTML=this.buildTreeHTML(State.treeData); },
+  openActionPanel(node){ State.selectedNode=node; State.selectedNodeId=node.id; this.renderTree(); document.getElementById('action-panel').classList.add('open'); },
+  closeActionPanel(){ document.getElementById('action-panel').classList.remove('open'); State.selectedNodeId=null; this.renderTree(); },
+  changeDevice(){ document.getElementById('preview-wrapper').style.maxWidth=document.getElementById('device-select').value; }
+};
+
+const Engine = {
+  parseHTML(src){
+    State.rawHTML=src; const p=new DOMParser(); State.dom=p.parseFromString(src,'text/html');
+    this.analyze(); State.idCounter=0; State.treeData=this.toJSONTree(State.dom.body); UI.updateStats(); UI.renderTree();
+  },
+  analyze(){
+    let elements=0,divs=0; const walk=n=>{ if(n.nodeType===1){ elements++; if(n.tagName==='DIV')divs++; [...n.children].forEach(walk); } };
+    walk(State.dom.body); State.analysis={elements,divs,size:new Blob([State.rawHTML]).size};
+  },
+  toJSONTree(node,level=0){
+    if(node.nodeType!==1||node.tagName==='SCRIPT')return null;
+    const obj={id:State.idCounter++,tag:node.tagName.toLowerCase(),domId:node.id,className:node.className,children:[],nodeRef:node,expanded:level<2,isSealed:node.hasAttribute('data-k-sealed')};
+    [...node.childNodes].forEach(c=>{const r=this.toJSONTree(c,level+1); if(r)obj.children.push(r);}); return obj;
+  },
+  findNodeById(node,id){ if(node.id===id)return node; for(let c of node.children){const f=this.findNodeById(c,id); if(f)return f;} }
+};
+
+const NodeOps={
+  _sync(){ State.rawHTML='<!DOCTYPE html>\n'+State.dom.documentElement.outerHTML; document.getElementById('code-editor').value=State.rawHTML; Engine.parseHTML(State.rawHTML); UI.closeActionPanel(); },
+  moveUp(){ if(State.selectedNode){ const r=State.selectedNode.nodeRef; if(r.previousElementSibling){r.parentNode.insertBefore(r,r.previousElementSibling); this._sync(); UI.showToast('Movido!')} } },
+  moveDown(){ if(State.selectedNode){ const r=State.selectedNode.nodeRef; if(r.nextElementSibling){r.parentNode.insertBefore(r.nextElementSibling,r); this._sync(); UI.showToast('Movido!')} } },
+  clone(){ if(State.selectedNode){ const c=State.selectedNode.nodeRef.cloneNode(true); c.removeAttribute('id'); State.selectedNode.nodeRef.parentNode.insertBefore(c,State.selectedNode.nodeRef.nextSibling); this._sync(); UI.showToast('Duplicado!')} },
+  delete(){ if(State.selectedNode){ State.selectedNode.nodeRef.remove(); this._sync(); UI.showToast('Excluído!')} },
+  wrap(){ if(State.selectedNode){ const w=State.dom.createElement('div'); w.className='kobllux-wrapper'; State.selectedNode.nodeRef.parentNode.insertBefore(w,State.selectedNode.nodeRef); w.appendChild(State.selectedNode.nodeRef); this._sync(); UI.showToast('Wrap!')} },
+  unwrap(){ if(State.selectedNode){ const r=State.selectedNode.nodeRef; while(r.firstChild)r.parentNode.insertBefore(r.firstChild,r); r.remove(); this._sync(); UI.showToast('Unwrap!')} },
+  toggleSeal(){ if(State.selectedNode){ const r=State.selectedNode.nodeRef; r.hasAttribute('data-k-sealed')?r.removeAttribute('data-k-sealed'):r.setAttribute('data-k-sealed','true'); this._sync(); UI.showToast('Seal toggled!')} }
+};
+
+const App={
+  init(){
+    const editor=document.getElementById('code-editor');
+    editor.oninput=()=>{ State.rawHTML=editor.value; Engine.parseHTML(State.rawHTML); };
+    document.getElementById('tree-container').onclick=e=>{
+      const n=e.target.closest('.tree-node'); if(n)UI.openActionPanel(Engine.findNodeById(State.treeData,parseInt(n.dataset.id)));
+    };
+    document.getElementById('file-upload').onchange=e=>{ const f=e.target.files[0]; if(f){ const r=new FileReader(); r.onload=ev=>{editor.value=ev.target.result; Engine.parseHTML(ev.target.result);}; r.readAsText(f); } };
+  },
+  undo(){ document.execCommand('undo'); UI.showToast('Desfeito!'); },
+  redo(){ document.execCommand('redo'); UI.showToast('Refeito!'); },
+  download(){ const b=new Blob([State.rawHTML],{type:'text/html'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`kobllux_${Date.now()}.html`; a.click(); UI.showToast('Exportado!'); },
+  switchTab(v,el){
+    document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active')); el.classList.add('active');
+    document.querySelectorAll('.view-panel').forEach(p=>p.classList.remove('active')); document.getElementById(`view-${v}`).classList.add('active');
+    if(v==='runtime')this.updatePreview();
+  },
+  updatePreview(){ document.getElementById('sandbox-frame').srcdoc=State.rawHTML; UI.showToast('Preview!'); },
+  loadDemo(){
+    const demo=`<!DOCTYPE html><html><head></head><body><h1>KOBLLUX DEMO</h1><div id="box" class="teste">Selecione no Inspector</div></body></html>`;
+    document.getElementById('code-editor').value=demo; Engine.parseHTML(demo); UI.showToast('Demo carregada!');
+  }
+};
+window.onload=App.init;
+</script>
+</body></html>
