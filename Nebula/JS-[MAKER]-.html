@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>DUAL · JS Paste Studio</title>
+<style>
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+:root{
+  --bg:#05070a;
+  --panel:#0b1016;
+  --panel2:#101720;
+  --line:#1c2a35;
+  --text:#e8f7ff;
+  --muted:#7f95a3;
+  --cyan:#00f0ff;
+  --green:#23ac51;
+  --orange:#f97316;
+}
+body{
+  margin:0;
+  min-height:100vh;
+  padding:12px;
+  background:
+    radial-gradient(circle at 50% -10%,rgba(0,240,255,.12),transparent 35%),
+    linear-gradient(180deg,#05070a,#020305);
+  color:var(--text);
+  font-family:Arial,Helvetica,sans-serif;
+}
+.app{
+  width:100%;
+  max-width:900px;
+  margin:auto;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+header{
+  border:1px solid var(--line);
+  background:rgba(11,16,22,.95);
+  border-radius:18px;
+  padding:18px;
+}
+.logo{
+  color:var(--cyan);
+  font-size:11px;
+  font-weight:bold;
+  letter-spacing:3px;
+}
+h1{
+  margin:7px 0 4px;
+  font-size:24px;
+}
+.subtitle{
+  color:var(--muted);
+  font-size:13px;
+}
+.toolbar{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+}
+button{
+  min-height:48px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--panel2);
+  color:var(--text);
+  font-weight:bold;
+  cursor:pointer;
+}
+button:active{
+  transform:scale(.97);
+}
+.btn-paste{
+  color:var(--cyan);
+  border-color:rgba(0,240,255,.45);
+}
+.btn-copy{
+  color:#ff9b57;
+  border-color:rgba(249,115,22,.45);
+}
+.btn-download{
+  color:#55d87d;
+  border-color:rgba(35,172,81,.55);
+}
+.editor{
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:var(--panel);
+}
+.editor-top{
+  display:flex;
+  justify-content:space-between;
+  padding:12px 15px;
+  border-bottom:1px solid var(--line);
+}
+.editor-title{
+  color:var(--muted);
+  font-size:11px;
+  letter-spacing:1px;
+}
+.status{
+  color:var(--green);
+  font-size:11px;
+  font-weight:bold;
+}
+textarea{
+  display:block;
+  width:100%;
+  min-height:60vh;
+  resize:vertical;
+  border:0;
+  outline:0;
+  padding:18px;
+  background:#030507;
+  color:#d9f7ff;
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    monospace;
+  font-size:13px;
+  line-height:1.6;
+  tab-size:2;
+}
+.footer{
+  display:flex;
+  justify-content:space-between;
+  padding:12px 15px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:rgba(11,16,22,.8);
+  color:var(--muted);
+  font-size:12px;
+}
+.counter{
+  color:var(--cyan);
+}
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:25px;
+  transform:translateX(-50%) translateY(20px);
+  background:#101820;
+  border:1px solid var(--cyan);
+  color:white;
+  padding:12px 18px;
+  border-radius:12px;
+  opacity:0;
+  pointer-events:none;
+  transition:.25s;
+  z-index:99;
+  font-size:13px;
+}
+.toast.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
+@media(max-width:600px){
+  .toolbar{
+    grid-template-columns:repeat(2,1fr);
+  }
+  textarea{
+    min-height:60vh;
+    font-size:12px;
+  }
+  h1{
+    font-size:20px;
+  }
+}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="logo">DUAL · KOBLLUX · JAVASCRIPT TOOL</div>
+  <h1>JS Paste Studio</h1>
+  <div class="subtitle">
+    Cole, edite, copie ou baixe seu código JavaScript.
+  </div>
+</header>
+<div class="toolbar">
+  <button class="btn-paste" onclick="colar()">
+    📋 Colar
+  </button>
+  <button class="btn-copy" onclick="copiar()">
+    📄 Copiar
+  </button>
+  <button class="btn-download" onclick="baixarJS()">
+    💾 Baixar .JS
+  </button>
+  <button onclick="limpar()">
+    🧹 Limpar
+  </button>
+</div>
+<section class="editor">
+  <div class="editor-top">
+    <span class="editor-title">
+      JAVASCRIPT · EDITOR
+    </span>
+<span class="status" id="status">
+  PRONTO
+</span>
+  </div>
+  <textarea
+    id="codigo"
+    spellcheck="false"
+    autocapitalize="off"
+    autocomplete="off"
+    autocorrect="off"
+    placeholder="// Cole seu JavaScript aqui
+const App = {
+  init() {
+    console.log('KOBLLUX ONLINE');
+  }
+};
+App.init();"
+  ></textarea>
+</section>
+<div class="footer">
+  <span>DUAL · JS STUDIO</span>
+  <span class="counter" id="contador">
+    0 caracteres
+  </span>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const codigo =
+  document.getElementById("codigo");
+const contador =
+  document.getElementById("contador");
+const statusEl =
+  document.getElementById("status");
+const toast =
+  document.getElementById("toast");
+/* =========================
+   CONTADOR
+========================= */
+function atualizarContador(){
+  const total =
+    codigo.value.length;
+  contador.textContent =
+    total.toLocaleString("pt-BR") +
+    (total === 1
+      ? " caractere"
+      : " caracteres");
+}
+/* =========================
+   TOAST
+========================= */
+function avisar(mensagem){
+  toast.textContent =
+    mensagem;
+  toast.classList.add("show");
+  clearTimeout(
+    window.toastTimer
+  );
+  window.toastTimer =
+    setTimeout(() => {
+      toast.classList.remove(
+        "show"
+      );
+    },1800);
+}
+/* =========================
+   COLAR
+========================= */
+async function colar(){
+  try{
+    const texto =
+      await navigator
+        .clipboard
+        .readText();
+    if(!texto){
+      avisar(
+        "A área de transferência está vazia."
+      );
+      return;
+    }
+    codigo.value =
+      texto;
+    atualizarContador();
+    statusEl.textContent =
+      "COLADO";
+    avisar(
+      "JavaScript colado."
+    );
+    codigo.focus();
+  }catch(erro){
+    avisar(
+      "Permita acesso à área de transferência ou cole manualmente."
+    );
+  }
+}
+/* =========================
+   COPIAR
+========================= */
+async function copiar(){
+  const texto =
+    codigo.value;
+  if(!texto.trim()){
+    avisar(
+      "Nada para copiar."
+    );
+    return;
+  }
+  try{
+    await navigator
+      .clipboard
+      .writeText(texto);
+    statusEl.textContent =
+      "COPIADO";
+    avisar(
+      "JavaScript copiado."
+    );
+  }catch(erro){
+    codigo.select();
+    document.execCommand(
+      "copy"
+    );
+    avisar(
+      "JavaScript copiado."
+    );
+  }
+}
+/* =========================
+   BAIXAR .JS
+========================= */
+function baixarJS(){
+  const texto =
+    codigo.value;
+  if(!texto.trim()){
+    avisar(
+      "Nada para baixar."
+    );
+    return;
+  }
+  const blob =
+    new Blob(
+      [texto],
+      {
+        type:
+          "text/javascript;charset=utf-8"
+      }
+    );
+  const url =
+    URL.createObjectURL(
+      blob
+    );
+  const link =
+    document.createElement(
+      "a"
+    );
+  link.href =
+    url;
+  link.download =
+    "script-" +
+    new Date()
+      .toISOString()
+      .slice(0,19)
+      .replace(
+        /[:T]/g,
+        "-"
+      ) +
+    ".js";
+  document.body.appendChild(
+    link
+  );
+  link.click();
+  link.remove();
+  setTimeout(() => {
+    URL.revokeObjectURL(
+      url
+    );
+  },1000);
+  statusEl.textContent =
+    "BAIXADO";
+  avisar(
+    "Arquivo .JS gerado."
+  );
+}
+/* =========================
+   LIMPAR
+========================= */
+function limpar(){
+  if(!codigo.value.trim()){
+    avisar(
+      "O editor já está vazio."
+    );
+    return;
+  }
+  codigo.value =
+    "";
+  atualizarContador();
+  statusEl.textContent =
+    "LIMPO";
+  avisar(
+    "Editor limpo."
+  );
+  codigo.focus();
+}
+/* =========================
+   INPUT
+========================= */
+codigo.addEventListener(
+  "input",
+  () => {
+    atualizarContador();
+    statusEl.textContent =
+      "EDITANDO";
+  }
+);
+/* =========================
+   INIT
+========================= */
+atualizarContador();
+</script>
+</body>
+</html>

@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>DROP → RUNTIME · Monolithic Builder</title>
+<style>
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+:root{
+  --bg:#050607;
+  --panel:#0b0e12;
+  --panel2:#11161c;
+  --line:#252c34;
+  --text:#eef3f7;
+  --muted:#89939d;
+  --cyan:#00f5d4;
+  --purple:#9b6cff;
+  --green:#5dff8a;
+  --orange:#ff9f43;
+  --red:#ff5577;
+}
+body{
+  margin:0;
+  min-height:100vh;
+  background:
+    radial-gradient(circle at 10% 0%,rgba(0,245,212,.08),transparent 35%),
+    radial-gradient(circle at 100% 100%,rgba(155,108,255,.1),transparent 40%),
+    var(--bg);
+  color:var(--text);
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+.app{
+  width:min(1200px,100%);
+  margin:auto;
+  padding:18px;
+}
+header{
+  padding:6px 3px 18px;
+}
+.logo{
+  font-size:clamp(25px,6vw,42px);
+  font-weight:950;
+  letter-spacing:-2px;
+}
+.logo span{
+  color:var(--cyan);
+}
+.subtitle{
+  color:var(--muted);
+  font-size:12px;
+  margin-top:5px;
+}
+.dropzone{
+  border:1px dashed #3d4852;
+  border-radius:18px;
+  padding:25px 18px;
+  text-align:center;
+  background:rgba(255,255,255,.025);
+  transition:.2s;
+  margin-bottom:14px;
+}
+.dropzone.drag{
+  border-color:var(--cyan);
+  background:rgba(0,245,212,.07);
+  transform:scale(1.005);
+}
+.drop-title{
+  font-weight:900;
+  font-size:15px;
+}
+.drop-sub{
+  color:var(--muted);
+  font-size:11px;
+  margin:6px 0 14px;
+}
+input[type=file]{
+  display:none;
+}
+.file-btn,
+button{
+  border:1px solid var(--line);
+  background:var(--panel2);
+  color:var(--text);
+  border-radius:10px;
+  padding:10px 13px;
+  font-size:11px;
+  font-weight:850;
+  cursor:pointer;
+}
+button:hover,
+.file-btn:hover{
+  border-color:var(--cyan);
+}
+.primary{
+  background:var(--cyan);
+  color:#00120e;
+  border-color:var(--cyan);
+}
+.green{
+  color:var(--green);
+  border-color:rgba(93,255,138,.4);
+}
+.purple{
+  color:#c8b7ff;
+  border-color:rgba(155,108,255,.5);
+}
+.red{
+  color:#ff829b;
+  border-color:rgba(255,85,119,.4);
+}
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+.full{
+  grid-column:1/-1;
+}
+@media(max-width:800px){
+  .grid{
+    grid-template-columns:1fr;
+  }
+}
+.card{
+  background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.012));
+  border:1px solid var(--line);
+  border-radius:18px;
+  overflow:hidden;
+}
+.head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:12px 14px;
+  border-bottom:1px solid var(--line);
+}
+.title{
+  font-size:11px;
+  font-weight:950;
+  letter-spacing:.8px;
+}
+.badge{
+  font-size:9px;
+  font-weight:900;
+  color:var(--cyan);
+  padding:4px 8px;
+  border-radius:99px;
+  border:1px solid rgba(0,245,212,.2);
+  background:rgba(0,245,212,.07);
+}
+textarea{
+  display:block;
+  width:100%;
+  min-height:360px;
+  resize:vertical;
+  border:0;
+  outline:0;
+  padding:15px;
+  background:#07090c;
+  color:#dce6ec;
+  font:12px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;
+}
+#output{
+  color:#bafff4;
+}
+.toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  padding:10px;
+  border-top:1px solid var(--line);
+}
+.files{
+  max-height:280px;
+  overflow:auto;
+  padding:10px;
+}
+.file-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:9px 10px;
+  border-bottom:1px solid rgba(255,255,255,.05);
+  font:11px ui-monospace,monospace;
+}
+.file-row:last-child{
+  border-bottom:0;
+}
+.file-icon{
+  width:25px;
+  text-align:center;
+}
+.file-name{
+  flex:1;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.file-size{
+  color:var(--muted);
+  font-size:9px;
+}
+.empty{
+  padding:25px;
+  text-align:center;
+  color:var(--muted);
+  font-size:11px;
+}
+.options{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  padding:10px;
+}
+.option{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:11px;
+  color:var(--muted);
+}
+.option input{
+  accent-color:var(--cyan);
+}
+.preview{
+  height:500px;
+  background:white;
+}
+iframe{
+  width:100%;
+  height:100%;
+  border:0;
+}
+.status{
+  padding:9px 13px;
+  border-top:1px solid var(--line);
+  color:var(--muted);
+  font-size:10px;
+}
+.status.ok{
+  color:var(--cyan);
+}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="logo">
+    DROP <span>→</span> RUNTIME
+  </div>
+  <div class="subtitle">
+    Monolithic JavaScript Builder · Tudo em um único runtime.js
+  </div>
+</header>
+<!-- DROP -->
+<div class="dropzone" id="dropzone">
+  <div class="drop-title">
+    Solte múltiplos arquivos ou uma pasta inteira
+  </div>
+  <div class="drop-sub">
+    index.html · CSS · JS · Bootloader · módulos · assets
+  </div>
+  <label class="file-btn">
+    📂 Selecionar arquivos
+    <input
+      id="fileInput"
+      type="file"
+      multiple
+    >
+  </label>
+  <label class="file-btn">
+    📦 Selecionar pasta
+    <input
+      id="folderInput"
+      type="file"
+      webkitdirectory
+      multiple
+    >
+  </label>
+</div>
+<div class="grid">
+<!-- FILE TREE -->
+<section class="card full">
+  <div class="head">
+<div class="title">
+  PROJECT FILES
+</div>
+<span class="badge" id="fileCount">
+  0 FILES
+</span>
+  </div>
+  <div class="files" id="fileList">
+<div class="empty">
+  Nenhum arquivo carregado.
+</div>
+  </div>
+  <div class="toolbar">
+<button id="clearFiles" class="red">
+  Limpar projeto
+</button>
+  </div>
+</section>
+<!-- INPUT -->
+<section class="card">
+  <div class="head">
+<div class="title">
+  SOURCE
+</div>
+<span class="badge">
+  INPUT
+</span>
+  </div>
+  <textarea
+    id="source"
+    placeholder="Cole HTML, CSS ou JavaScript aqui..."
+  ></textarea>
+  <div class="toolbar">
+<button id="pasteBtn" class="primary">
+  📋 Paste
+</button>
+<button id="addSource">
+  + Adicionar ao projeto
+</button>
+  </div>
+</section>
+<!-- OPTIONS -->
+<section class="card">
+  <div class="head">
+<div class="title">
+  BUILD OPTIONS
+</div>
+<span class="badge">
+  MONOLITH
+</span>
+  </div>
+  <div class="options">
+<label class="option">
+  <input type="checkbox" id="includeHTML" checked>
+  HTML
+</label>
+<label class="option">
+  <input type="checkbox" id="includeCSS" checked>
+  CSS
+</label>
+<label class="option">
+  <input type="checkbox" id="includeJS" checked>
+  JS
+</label>
+<label class="option">
+  <input type="checkbox" id="includeBoot" checked>
+  Bootloader
+</label>
+<label class="option">
+  <input type="checkbox" id="keepRemote" checked>
+  Manter imports remotos
+</label>
+  </div>
+  <div class="toolbar">
+<button
+  id="buildBtn"
+  class="primary"
+>
+  ⚡ BUILD MONOLITH
+</button>
+<button
+  id="previewBtn"
+  class="purple"
+>
+  ▶ Preview
+</button>
+  </div>
+</section>
+<!-- OUTPUT -->
+<section class="card full">
+  <div class="head">
+<div class="title">
+  MONOLITHIC RUNTIME
+</div>
+<span class="badge">
+  runtime.js
+</span>
+  </div>
+  <textarea
+    id="output"
+    readonly
+    placeholder="O runtime.js monolítico será gerado aqui..."
+  ></textarea>
+  <div class="toolbar">
+<button id="copyBtn">
+  ⧉ Copiar runtime.js
+</button>
+<button id="downloadBtn" class="green">
+  ↓ Baixar runtime.js
+</button>
+  </div>
+</section>
+<!-- PREVIEW -->
+<section class="card full">
+  <div class="head">
+<div class="title">
+  WEBVIEW / SANDBOX RUNTIME
+</div>
+<span class="badge">
+  LIVE
+</span>
+  </div>
+  <div class="preview">
+<iframe id="preview"></iframe>
+  </div>
+  <div
+    id="status"
+    class="status"
+  >
+    Aguardando projeto...
+  </div>
+</section>
+</div>
+</div>
+<script>
+const files = [];
+const source =
+document.getElementById("source");
+const output =
+document.getElementById("output");
+const fileList =
+document.getElementById("fileList");
+const fileCount =
+document.getElementById("fileCount");
+const status =
+document.getElementById("status");
+const preview =
+document.getElementById("preview");
+// =====================================================
+// FILE HELPERS
+// =====================================================
+function ext(name){
+  return name
+    .split(".")
+    .pop()
+    .toLowerCase();
+}
+function isHTML(name){
+  return /\.(html?|htm)$/i.test(name);
+}
+function isCSS(name){
+  return /\.css$/i.test(name);
+}
+function isJS(name){
+  return /\.(js|mjs)$/i.test(name);
+}
+function isAsset(name){
+  return /\.(png|jpg|jpeg|gif|webp|svg|ico|mp3|wav|ogg|mp4|webm|woff|woff2|ttf)$/i.test(name);
+}
+// =====================================================
+// LOAD FILES
+// =====================================================
+async function addFiles(list){
+  for(const file of list){
+    if(!file) continue;
+    const text =
+      await file.text();
+    files.push({
+      name:
+      file.webkitRelativePath
+      || file.name,
+      text,
+      type:
+      ext(file.name),
+      size:
+      file.size
+    });
+  }
+  renderFiles();
+  status.textContent =
+    `✓ ${files.length} arquivo(s) no projeto`;
+}
+// =====================================================
+// RENDER FILE TREE
+// =====================================================
+function renderFiles(){
+  fileCount.textContent =
+    `${files.length} FILES`;
+  if(!files.length){
+    fileList.innerHTML =
+      `<div class="empty">
+        Nenhum arquivo carregado.
+      </div>`;
+    return;
+  }
+  fileList.innerHTML =
+    files.map((file,index)=>{
+      let icon="📄";
+      if(isHTML(file.name))
+        icon="🌐";
+      else if(isCSS(file.name))
+        icon="🎨";
+      else if(isJS(file.name))
+        icon="⚡";
+      else if(isAsset(file.name))
+        icon="🖼️";
+      return `
+      <div class="file-row">
+        <div class="file-icon">
+          ${icon}
+        </div>
+        <div class="file-name">
+          ${escapeHTML(file.name)}
+        </div>
+        <div class="file-size">
+          ${formatBytes(file.size)}
+        </div>
+      </div>
+      `;
+    }).join("");
+}
+// =====================================================
+// ESCAPE
+// =====================================================
+function escapeHTML(text){
+  return text
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;");
+}
+function escapeTemplate(text){
+  return text
+    .replace(/\\/g,"\\\\")
+    .replace(/`/g,"\\`")
+    .replace(/\$\{/g,"\\${");
+}
+function formatBytes(bytes){
+  if(bytes<1024)
+    return bytes+" B";
+  if(bytes<1024*1024)
+    return (bytes/1024).toFixed(1)+" KB";
+  return (bytes/1024/1024).toFixed(1)+" MB";
+}
+// =====================================================
+// BUILD MONOLITH
+// =====================================================
+function buildMonolith(){
+  if(!files.length){
+    alert(
+      "Adicione arquivos ao projeto primeiro."
+    );
+    return;
+  }
+  const htmlFiles =
+    files.filter(f=>isHTML(f.name));
+  const cssFiles =
+    files.filter(f=>isCSS(f.name));
+  const jsFiles =
+    files.filter(f=>isJS(f.name));
+  const bootFiles =
+    files.filter(f=>
+      /bootloader/i.test(f.name)
+    );
+  const includeHTML =
+    document.getElementById(
+      "includeHTML"
+    ).checked;
+  const includeCSS =
+    document.getElementById(
+      "includeCSS"
+    ).checked;
+  const includeJS =
+    document.getElementById(
+      "includeJS"
+    ).checked;
+  const includeBoot =
+    document.getElementById(
+      "includeBoot"
+    ).checked;
+  let html =
+    htmlFiles
+    .find(f=>
+      /(^|\/)index\.html$/i
+      .test(f.name)
+    )
+    || htmlFiles[0];
+  let bodyHTML="";
+  let css="";
+  let js="";
+  // ===================================================
+  // HTML
+  // ===================================================
+  if(includeHTML && html){
+    const parser =
+      new DOMParser();
+    const doc =
+      parser.parseFromString(
+        html.text,
+        "text/html"
+      );
+    bodyHTML =
+      doc.body
+      ? doc.body.innerHTML
+      : html.text;
+  }
+  // ===================================================
+  // CSS
+  // ===================================================
+  if(includeCSS){
+    css =
+      cssFiles
+      .map(f=>`
+/* ═══ ${f.name} ═══ */
+${f.text}
+`)
+      .join("\n");
+  }
+  // ===================================================
+  // JS
+  // ===================================================
+  if(includeJS){
+    js =
+      jsFiles
+      .filter(f=>
+        !(
+          includeBoot === false
+          &&
+          /bootloader/i.test(
+            f.name
+          )
+        )
+      )
+      .map(f=>`
+/* ═══ ${f.name} ═══ */
+${f.text}
+`)
+      .join("\n");
+  }
+  // ===================================================
+  // BOOTLOADER
+  // ===================================================
+  let boot="";
+  if(
+    includeBoot
+    &&
+    bootFiles.length
+  ){
+    boot =
+      bootFiles
+      .map(f=>`
+/* ═══ BOOTLOADER: ${f.name} ═══ */
+${f.text}
+`)
+      .join("\n");
+  }
+  // ===================================================
+  // REMOTE IMPORTS
+  // ===================================================
+  const keepRemote =
+    document.getElementById(
+      "keepRemote"
+    ).checked;
+  if(
+    !keepRemote
+  ){
+    js =
+      js.replace(
+        /^\s*import[\s\S]*?from\s*['"][^'"]+['"]\s*;?/gm,
+        ""
+      );
+  }
+  // ===================================================
+  // MONOLITH
+  // ===================================================
+  const finalJS = `
+/*
+╔════════════════════════════════════════════╗
+║        KOBLLUX MONOLITHIC RUNTIME          ║
+║        DROP → RUNTIME BUILDER              ║
+║                                            ║
+║        HTML + CSS + JS + BOOTLOADER        ║
+╚════════════════════════════════════════════╝
+*/
+(function(){
+"use strict";
+// ═════════════════════════════════════════════
+// RUNTIME STATE
+// ═════════════════════════════════════════════
+window.KOBLLUX_RUNTIME = {
+  version:
+    "MONOLITHIC-RUNTIME-1.0",
+  started:
+    Date.now(),
+  status:
+    "BOOTING"
+};
+// ═════════════════════════════════════════════
+// HTML
+// ═════════════════════════════════════════════
+const HTML = \`${escapeTemplate(bodyHTML)}\`;
+// ═════════════════════════════════════════════
+// CSS
+// ═════════════════════════════════════════════
+const CSS = \`${escapeTemplate(css)}\`;
+// ═════════════════════════════════════════════
+// MOUNT HTML
+// ═════════════════════════════════════════════
+function mountHTML(){
+  if(!HTML)
+    return;
+  const parser =
+    new DOMParser();
+  const doc =
+    parser.parseFromString(
+      HTML,
+      "text/html"
+    );
+  const root =
+    document.getElementById(
+      "kobllux-runtime-root"
+    )
+    ||
+    document.body;
+  while(
+    doc.body.firstChild
+  ){
+    root.appendChild(
+      document.importNode(
+        doc.body.firstChild,
+        true
+      )
+    );
+  }
+}
+// ═════════════════════════════════════════════
+// MOUNT CSS
+// ═════════════════════════════════════════════
+function mountCSS(){
+  if(!CSS)
+    return;
+  const style =
+    document.createElement(
+      "style"
+    );
+  style.id =
+    "KOBLLUX_MONOLITH_CSS";
+  style.textContent =
+    CSS;
+  document.head.appendChild(
+    style
+  );
+}
+// ═════════════════════════════════════════════
+// EXECUTE BUNDLE
+// ═════════════════════════════════════════════
+function execute(code){
+  if(!code.trim())
+    return;
+  const script =
+    document.createElement(
+      "script"
+    );
+  script.textContent =
+    code;
+  document.body.appendChild(
+    script
+  );
+}
+// ═════════════════════════════════════════════
+// BOOT
+// ═════════════════════════════════════════════
+function boot(){
+  mountCSS();
+  mountHTML();
+  execute(\`${escapeTemplate(js)}\`);
+  execute(\`${escapeTemplate(boot)}\`);
+  window.KOBLLUX_RUNTIME.status =
+    "READY";
+  window.dispatchEvent(
+    new CustomEvent(
+      "KOBLLUX_READY"
+    )
+  );
+}
+// ═════════════════════════════════════════════
+// DOM READY
+// ═════════════════════════════════════════════
+if(
+  document.readyState
+  ===
+  "loading"
+){
+  document.addEventListener(
+    "DOMContentLoaded",
+    boot,
+    {once:true}
+  );
+}else{
+  boot();
+}
+})();
+`;
+  output.value =
+    finalJS;
+  status.textContent =
+    `✓ Monolith criado · ${finalJS.length} caracteres · ${files.length} arquivos`;
+  status.className =
+    "status ok";
+}
+// =====================================================
+// UPLOAD
+// =====================================================
+document
+.getElementById("fileInput")
+.addEventListener(
+"change",
+e=>{
+  addFiles(
+    e.target.files
+  );
+});
+document
+.getElementById("folderInput")
+.addEventListener(
+"change",
+e=>{
+  addFiles(
+    e.target.files
+  );
+});
+// =====================================================
+// DRAG DROP
+// =====================================================
+const dropzone =
+document.getElementById(
+  "dropzone"
+);
+dropzone.addEventListener(
+"dragover",
+e=>{
+  e.preventDefault();
+  dropzone.classList.add(
+    "drag"
+  );
+});
+dropzone.addEventListener(
+"dragleave",
+()=>{
+  dropzone.classList.remove(
+    "drag"
+  );
+});
+dropzone.addEventListener(
+"drop",
+e=>{
+  e.preventDefault();
+  dropzone.classList.remove(
+    "drag"
+  );
+  addFiles(
+    e.dataTransfer.files
+  );
+});
+// =====================================================
+// CLIPBOARD
+// =====================================================
+document
+.getElementById("pasteBtn")
+.addEventListener(
+"click",
+async()=>{
+  try{
+    source.value =
+      await navigator
+      .clipboard
+      .readText();
+  }catch(e){
+    alert(
+      "Clipboard bloqueado."
+    );
+  }
+});
+// =====================================================
+// ADD SOURCE
+// =====================================================
+document
+.getElementById("addSource")
+.addEventListener(
+"click",
+()=>{
+  if(!source.value.trim())
+    return;
+  files.push({
+    name:
+      "pasted-module.js",
+    text:
+      source.value,
+    type:
+      "js",
+    size:
+      source.value.length
+  });
+  renderFiles();
+  source.value="";
+  status.textContent =
+    "✓ Código adicionado ao projeto.";
+});
+// =====================================================
+// BUILD
+// =====================================================
+document
+.getElementById("buildBtn")
+.addEventListener(
+"click",
+buildMonolith
+);
+// =====================================================
+// COPY
+// =====================================================
+document
+.getElementById("copyBtn")
+.addEventListener(
+"click",
+async()=>{
+  if(!output.value)
+    return;
+  await navigator
+  .clipboard
+  .writeText(
+    output.value
+  );
+  status.textContent =
+    "✓ runtime.js copiado.";
+});
+// =====================================================
+// DOWNLOAD
+// =====================================================
+document
+.getElementById("downloadBtn")
+.addEventListener(
+"click",
+()=>{
+  if(!output.value)
+    return;
+  const blob =
+    new Blob(
+      [output.value],
+      {
+        type:
+        "application/javascript"
+      }
+    );
+  const url =
+    URL.createObjectURL(
+      blob
+    );
+  const a =
+    document.createElement(
+      "a"
+    );
+  a.href =
+    url;
+  a.download =
+    "runtime.js";
+  a.click();
+  URL.revokeObjectURL(
+    url
+  );
+});
+// =====================================================
+// PREVIEW
+// =====================================================
+document
+.getElementById("previewBtn")
+.addEventListener(
+"click",
+()=>{
+  if(!output.value)
+    buildMonolith();
+  const runtime =
+    output.value
+    .replace(
+      /<\/script>/gi,
+      "<\\/script>"
+    );
+  preview.srcdoc = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width,initial-scale=1">
+<title>KOBLLUX Runtime</title>
+</head>
+<body>
+<div id="kobllux-runtime-root"></div>
+<script>
+${runtime}
+<\/script>
+</body>
+</html>
+`;
+  status.textContent =
+    "✓ Monolith executado no Sandbox.";
+});
+// =====================================================
+// CLEAR
+// =====================================================
+document
+.getElementById("clearFiles")
+.addEventListener(
+"click",
+()=>{
+  files.length=0;
+  output.value="";
+  source.value="";
+  preview.srcdoc="";
+  renderFiles();
+  status.textContent =
+    "Projeto limpo.";
+  status.className =
+    "status";
+});
+</script>
+</body>
+</html>
