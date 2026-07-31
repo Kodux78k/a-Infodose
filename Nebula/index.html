@@ -1,0 +1,2409 @@
+<html lang="pt-BR"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEBULA · Unified Live Editor</title>
+
+  <!-- BOW primeiro (lei Δ) -->
+  <script src="./uno_fluxos_delta3.v1.1.bow.js"></script>
+
+  <!-- Tailwind + Font -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&amp;display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --grad-a: #78e3ff;
+      --grad-b: #b978ff;
+      --bg: #050110;
+      --panel: #0d0421;
+      --ink: #eaf6ff;
+      --muted: #9db0cc;
+      --radius: 16px;
+      --sidebar-width: 278px;
+      --nebula-accent-pink: #ff63d0;
+      --nebula-accent-cyan: #43e8ff;
+      --nebula-accent-green: #7bffb0;
+      --nebula-border-soft: rgba(255, 255, 255, 0.08);
+      --nebula-text-main: #f8f4ff;
+      --nebula-text-soft: #c5bddf;
+      --radius-card: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    body, html {
+      height: 100%;
+      margin: 0;
+      background: radial-gradient(circle at top, #200037 0%, #090017 42%, #020007 100%);
+      color: var(--nebula-text-main);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow: auto;
+    }
+
+    .app-shell {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #sidebar {
+      width: var(--sidebar-width);
+      min-width: var(--sidebar-width);
+      background: linear-gradient(180deg, #0d0421 0%, #050110 100%);
+      border-right: 1px solid rgba(34, 211, 238, 0.15);
+      display: flex;
+      flex-direction: column;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      z-index: 50;
+    }
+    #sidebar.collapsed { margin-left: calc(var(--sidebar-width) * -1); }
+
+    .side-content {
+      padding: 1.5rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .toggle-tab {
+      position: absolute;
+      right: -32px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 32px;
+      height: 64px;
+      background: var(--panel);
+      border: 1px solid rgba(34, 211, 238, 0.2);
+      border-left: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0 12px 12px 0;
+      color: var(--grad-a);
+      box-shadow: 10px 0 20px rgba(0,0,0,0.4);
+    }
+
+    .tabs-nav {
+      display: flex;
+      background: rgba(0,0,0,0.3);
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      gap: 4px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: linear-gradient(90deg, var(--grad-a), var(--grad-b));
+      color: #000;
+    }
+
+    .card-section {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    textarea.code-editor {
+      width: 100%;
+      min-height: 150px;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(34, 211, 238, 0.1);
+      border-radius: 8px;
+      color: #22d3ee;
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+      padding: 10px;
+      outline: none;
+      resize: vertical;
+    }
+
+    main {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem;
+      background: radial-gradient(circle at center, #100821 0%, #050110 100%);
+      overflow: auto;
+    }
+
+    .preview-container {
+      flex: 1;
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+      border: 6px solid #1a1a2e;
+    }
+    iframe { width: 100%; height: 100%; border: none; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--grad-b); border-radius: 10px; }
+
+    /* Cards de cápsulas (parte inferior) */
+    .card {
+      border-radius: var(--radius-card);
+      padding: 1rem 1.1rem;
+      background: radial-gradient(circle at top, #241236 0%, #140a23 40%, #05010b 100%);
+      border: 1px solid var(--nebula-border-soft);
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.65);
+      margin-top: 0.9rem;
+    }
+    .card-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.6rem;
+    }
+    .card h3 { margin: 0; font-size: 0.95rem; }
+    .mini-label { font-size: 0.75rem; color: var(--nebula-text-soft); margin-bottom: 0.35rem; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      border-radius: 999px;
+      padding: 0.13rem 0.55rem;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+    }
+    .badge-auto { border-color: var(--nebula-accent-green); color: var(--nebula-accent-green); }
+    .badge-tip { border-color: var(--nebula-accent-cyan); color: var(--nebula-accent-cyan); }
+
+    .preview-frame {
+      width: 100%;
+      min-height: 320px;
+      border-radius: 16px;
+      border: 1px solid var(--nebula-border-soft);
+      background: #ffffff;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.8);
+    }
+
+    .controls-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin-top: 0.5rem;
+    }
+
+    button, .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      border-radius: 999px;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.8rem;
+      border: none;
+      cursor: pointer;
+      color: #050010;
+      background: linear-gradient(135deg, var(--nebula-accent-pink), var(--nebula-accent-cyan));
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.6);
+    }
+    button.secondary {
+      background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03));
+      color: var(--nebula-text-main);
+      border: 1px solid rgba(255,255,255,0.16);
+      box-shadow: none;
+    }
+    button:active { transform: translateY(1px); }
+
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .toggle input { accent-color: var(--nebula-accent-cyan); width: 16px; height: 16px; }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      padding: 0.6rem 0.7rem;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: #05000c;
+      color: var(--nebula-text-main);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.8rem;
+      resize: vertical;
+    }
+    textarea:focus-visible {
+      outline: 2px solid rgba(99, 234, 255, 0.75);
+      outline-offset: 1px;
+    }
+
+    .code-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.35rem;
+      margin-bottom: 0.35rem;
+    }
+    .code-label-row span { font-size: 0.78rem; color: var(--nebula-text-soft); }
+    .code-label-row .actions { display: inline-flex; gap: 0.3rem; }
+    .code-label-row button { font-size: 0.7rem; padding: 0.25rem 0.55rem; box-shadow: none; }
+
+    details summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    details summary::-webkit-details-marker { display: none; }
+    .summary-left { display: flex; align-items: center; gap: 0.4rem; }
+    .summary-left span { font-size: 0.86rem; font-weight: 500; }
+    .summary-icon {
+      width: 18px; height: 18px; border-radius: 999px;
+      background: radial-gradient(circle at top, var(--nebula-accent-pink), var(--nebula-accent-cyan));
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 0.72rem; color: #050010;
+    }
+    .summary-label-soft { font-size: 0.72rem; color: var(--nebula-text-soft); }
+    details .inner { margin-top: 0.7rem; }
+
+    .footer-note {
+      margin-top: 1.1rem;
+      font-size: 0.75rem;
+      text-align: center;
+      color: var(--nebula-text-soft);
+      opacity: 0.8;
+    }
+
+    .capsules-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 0.6rem;
+    }
+    .capsules-list { margin: 0; padding: 0; list-style: none; }
+    .capsule-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      padding: 0.55rem 0.65rem;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.32);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 0.45rem;
+    }
+    .capsule-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.4rem;
+    }
+    .capsule-name { font-size: 0.85rem; font-weight: 500; }
+    .capsule-meta { font-size: 0.72rem; color: var(--nebula-text-soft); }
+    .capsule-buttons {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.15rem;
+    }
+    .capsule-buttons button {
+      font-size: 0.7rem;
+      padding: 0.22rem 0.6rem;
+      box-shadow: none;
+    }
+
+    .hidden { display: none !important; }
+
+    @media (min-width: 768px) {
+      .preview-frame { min-height: 380px; }
+    }
+  </style>
+<style>:root { --z-base: 0; --z-content: 100; --z-widget: 500; --z-overlay: 1000; --z-system: 5000; }</style><style>
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+:root{
+  --bg:#050607;
+  --panel:#0c0f12;
+  --panel2:#11151a;
+  --line:#242a31;
+  --text:#edf2f7;
+  --muted:#89939f;
+  --accent:#00f5d4;
+  --accent2:#7c3aed;
+  --danger:#ff4d6d;
+}
+body{
+  margin:0;
+  min-height:100vh;
+  background:
+    radial-gradient(circle at 20% 0%,rgba(0,245,212,.08),transparent 35%),
+    radial-gradient(circle at 90% 100%,rgba(124,58,237,.1),transparent 35%),
+    var(--bg);
+  color:var(--text);
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+.app{
+  width:min(1100px,100%);
+  margin:auto;
+  padding:18px;
+}
+header{
+  padding:12px 4px 20px;
+}
+h1{
+  margin:0;
+  font-size:clamp(24px,5vw,42px);
+  letter-spacing:-1.5px;
+}
+h1 span{
+  color:var(--accent);
+}
+.subtitle{
+  margin-top:7px;
+  color:var(--muted);
+  font-size:14px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+@media(max-width:800px){
+  .grid{
+    grid-template-columns:1fr;
+  }
+}
+.card{
+  background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.015));
+  border:1px solid var(--line);
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.25);
+}
+.card-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:13px 15px;
+  border-bottom:1px solid var(--line);
+}
+.card-title{
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:.5px;
+}
+.badge{
+  font-size:10px;
+  padding:4px 8px;
+  border-radius:999px;
+  background:rgba(0,245,212,.08);
+  color:var(--accent);
+  border:1px solid rgba(0,245,212,.2);
+}
+textarea{
+  display:block;
+  width:100%;
+  min-height:400px;
+  resize:vertical;
+  border:0;
+  outline:0;
+  padding:16px;
+  background:#080a0d;
+  color:#d9e1e8;
+  font-family:"SFMono-Regular",Consolas,monospace;
+  font-size:12px;
+  line-height:1.6;
+}
+#output{
+  color:#b8f7ee;
+}
+.actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  padding:12px;
+  border-top:1px solid var(--line);
+}
+button,
+.file-label{
+  appearance:none;
+  border:1px solid var(--line);
+  background:var(--panel2);
+  color:var(--text);
+  border-radius:10px;
+  padding:10px 13px;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+  transition:.2s;
+}
+button:hover,
+.file-label:hover{
+  border-color:var(--accent);
+  transform:translateY(-1px);
+}
+.primary{
+  background:var(--accent);
+  color:#00110e;
+  border-color:var(--accent);
+}
+.purple{
+  background:rgba(124,58,237,.15);
+  border-color:rgba(124,58,237,.4);
+}
+.danger{
+  color:#ff8097;
+}
+input[type=file]{
+  display:none;
+}
+.full{
+  grid-column:1/-1;
+}
+.preview-wrap{
+  height:520px;
+  background:#fff;
+  position:relative;
+}
+.preview-wrap iframe{
+  width:100%;
+  height:100%;
+  border:0;
+  background:white;
+}
+.status{
+  padding:10px 14px;
+  font-size:11px;
+  color:var(--muted);
+  border-top:1px solid var(--line);
+}
+.status.ok{
+  color:var(--accent);
+}
+select{
+  background:#080a0d;
+  color:var(--text);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:8px;
+}
+.meta{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+</style><link href="https://www.infodose.com.br/css/a€uArX.css" rel="stylesheet" data-k-id="L_m1k"><style> 
+body, html{overflow-y:auto !important;}
+ /* Orb */
+ .orb {      
+ background: radial-gradient(circle at 30% 30%, var(--grad-a, #78e7ff), transparent 78%),
+                  radial-gradient(circle at 70% 70%, var(--kob-voice-secondary, #00f2ff), var(--orb-secondary, #3b82f6));
+      box-shadow: 0 0 18px var(--kob-voice-primary), 0 0 36px rgba(120,227,255,0.4);
+      animation: orbSpin var(--orb-speed) linear infinite;
+      width: 100%; height: 100%; border-radius: 50%; display: grid; place-items: center;
+
+      width: 56px; height: 56px; 
+
+    }
+    .orb-core {
+
+      min-width: 100%; min-height: 100%; 
+border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, var(--orb-accent, #78e7ff), transparent 78%),
+                  radial-gradient(circle at 70% 70%, var(--kob-voice-primary, #00f2ff), var(--kob-voice-secondary, #3b82f6));
+      box-shadow: 0 0 18px var(--kob-voice-secondary), 0 0 36px rgba(120,227,255,0.4);
+      animation: orbSpin var(--orb-speed) linear infinite;
+
+      width: 56px; height: 56px; 
+
+    }
+    @keyframes orbSpin { to { transform: rotate(360deg); } }
+    @keyframes orbPulse { from { transform: scale(1); } to { transform: scale(1.15); } }
+</style><style>
+  /* Colours used in the UNO loader */
+  :root {
+    --g1: #F0F;
+    --g2: #0FF;
+  }
+
+  /* Basic page styling */
+  html, body {
+    height: 100%;
+    margin: 0;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Loader container */
+  .di-loader {
+    --di-size: 36px;
+    position: relative;
+    width: var(--di-size);
+    height: var(--di-size);
+  }
+
+  /* Rotating conic gradient ring */
+  .di-ring {
+    position: absolute;
+    inset: 0;
+    background: conic-gradient(from 90deg, var(--g1), var(--g2));
+    border-radius: 50%;
+    /* mask to create a donut shape */
+    -webkit-mask: radial-gradient(
+      farthest-side,
+      transparent calc(50% - 1px),
+      #000 calc(50% - 1px),
+      #000 100%
+    );
+    mask: radial-gradient(
+      farthest-side,
+      transparent calc(50% - 1px),
+      #000 calc(50% - 1px),
+      #000 100%
+    );
+    animation: spin 6s linear infinite;
+  }
+
+  /* Pulsating stroke across the loader */
+  .di-stroke {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 64%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--g1), var(--g2));
+    transform: translate(-50%, -50%);
+    border-radius: 999px;
+    animation: breath 2.4s ease-in-out infinite;
+  }
+
+  /* Container for orbiting dots */
+  .di-dots {
+    position: absolute;
+    inset: 0;
+    transform: rotate(-90deg);
+    animation: orbit 4.2s linear infinite;
+  }
+
+  /* Individual dot styling */
+  .di-dots i {
+    --i: 0;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: conic-gradient(var(--g1), var(--g2));
+    -webkit-mask: radial-gradient(circle, #000 62%, transparent 63%);
+    mask: radial-gradient(circle, #000 62%, transparent 63%);
+    opacity: 0.85;
+    transform: rotate(calc(var(--i) * 51deg)) translate(
+      calc(7px + var(--i) * 2.2px)
+    ) rotate(calc(var(--i) * -51deg));
+    animation: pulse 4.2s linear infinite;
+    animation-delay: calc(var(--i) * 0.6s);
+  }
+
+  /* Animations */
+  @keyframes orbit {
+    to {
+      transform: rotate(270deg);
+    }
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes breath {
+    0%,
+    100% {
+      opacity: 0.9;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+  @keyframes pulse {
+    0%,
+    70% {
+      opacity: 0.55;
+      transform: scale(0.92);
+    }
+    76%,
+    84% {
+      opacity: 1;
+      transform: scale(1.12);
+    }
+    100% {
+      opacity: 0.7;
+      transform: scale(0.96);
+    }
+  }
+</style><style>
+:root {
+  --glass-bg: rgba(7, 10, 15, 0.8); --glass-border: rgba(255, 255, 255, 0.08);
+  --accent: #3b82f6; --critical: #ef4444; --warning: #f59e0b; --bg: #02040a;
+  --cyan: #00e5ff; --magenta: #ff2ec4; --text: #f8fafc; --text-dim: #64748b;
+}
+
+body {
+  background: var(--bg); color: var(--text);
+  font-family: system-ui, -apple-system, sans-serif; margin: 0; overflow: auto;
+}
+
+/* SVG ICONS */
+.ic{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ic-lg{width:30px;height:30px}
+
+/* DRAGGABLE TRIGGER */
+#sumbus-trigger {
+  position: fixed; left: 20px; bottom: 20px; width: 48px; height: 48px; border-radius: 120px;
+  background: rgba(255, 255, 255, 0.05); cursor: grab; z-index: 10000;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 0px rgba(37, 99, 235, 0.4); touch-action: none; border: 2px solid rgba(255,255,255,0.1);
+color: var(--text);}
+#sumbus-trigger:active { cursor: grabbing; transform: scale(0.9); }
+
+/* DECK OVERLAY */
+#sumbus-deck {
+  position: fixed; inset: 0; background: rgba(1, 2, 4, 0.19); backdrop-filter: blur(40px);
+  z-index: 9999; display: none; opacity: 0; transition: all 0.3s ease;
+  grid-template-columns: 440px 1fr;
+}
+#sumbus-deck.active { display: grid; opacity: 1; }
+
+.sidebar {
+  background: #070a0f; border-right: 1px solid var(--glass-border);
+  display: flex; flex-direction: column; height: 100vh;
+}
+
+.tab-btn {
+  flex: 1; padding: 12px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+  color: #475569; border-bottom: 2px solid transparent; background: none; border: none; cursor: pointer;
+}
+.tab-btn.active { color: var(--accent); border-color: var(--accent); background: rgba(59, 130, 246, 0.05); }
+
+.panel { display: none; flex-direction: column; flex: 1; overflow-y: auto; padding: 24px; }
+.panel.active { display: flex; }
+
+.conflict-card {
+  background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 12px; padding: 12px; margin-bottom: 8px;
+}
+.status-badge { font-size: 8px; padding: 2px 6px; border-radius: 4px; font-weight: 900; text-transform: uppercase; }
+
+/* TEXTAREA CODE VIEW & EDITOR */
+#editor-container { flex: 1; background: #0b0e14; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
+#code-textarea { width: 100%; height: 100%; background: transparent; color: var(--text);
+  border: none; outline: none; padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 12px; resize: none; }
+
+/* PREVIEW FRAME */
+.preview-area { padding: 20px; display: flex; flex-direction: column; gap: 12px; position: relative; }
+#main-iframe {
+  background: white; border-radius: 16px; box-shadow: 0 40px 80px -20px rgba(0,0,0,0.8);
+  width: 100%; height: 100%; border: none; transition: max-width 0.4s ease;
+}
+.scan-line {
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: rgba(59, 130, 246, 0.5); box-shadow: 0 0 15px #3b82f6; z-index: 10; display: none;
+}
+.scanning.scan-line { display: block; animation: scan 2s linear infinite; }
+@keyframes scan { from { top: 0%; } to { top: 100%; } }
+
+.btn { height: 48px; background: #0f172a; color: white; border-radius: 12px; font-size: 12px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--glass-border); cursor: pointer; }
+.btn.primary { background: var(--text); border-color: var(--accent); }
+.btn:hover { opacity: 0.8; }
+
+@media (max-width: 768px) {
+  body { overflow: hidden; }
+  #sumbus-deck { grid-template-columns: 1fr; overflow-y: auto; height: 100vh; }
+  .sidebar { height: auto; }
+  .preview-area { min-height: 100dvh; }
+}
+</style></head>
+<body>
+
+<!-- ====== SIDEBAR + PREVIEW (modo split) ====== -->
+<div class="app-shell">
+  <aside id="sidebar">
+    <button class="toggle-tab" onclick="toggleSidebar()">
+      <span id="side-icon">◀</span>
+    </button>
+
+    <div class="side-content">
+      <header class="mb-6">
+        <h1 class="text-2xl font-black text-white italic">NEBULA <span class="text-cyan-400">UNIFIED</span></h1>
+        <p class="text-[10px] text-slate-500 tracking-[3px] uppercase font-bold">Split &amp; Patch Engine</p>
+      </header>
+
+      <nav class="tabs-nav">
+        <button class="tab-btn active" onclick="switchTab('links', this)">Links</button>
+        <button class="tab-btn" onclick="switchTab('body', this)">Body</button>
+        <button class="tab-btn" onclick="switchTab('js', this)">Scripts</button>
+      </nav>
+
+      <div id="panel-links" class="tab-panel">
+        <div class="card-section">
+          <label class="text-[10px] font-bold text-cyan-500 uppercase mb-2 block">Source Upload</label>
+          <input type="file" id="file-upload" accept=".html" class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-cyan-500/10 file:text-cyan-400 hover:file:bg-cyan-500/20 cursor-pointer">
+        </div>
+        <div class="card-section">
+          <div class="flex justify-between mb-3">
+            <label class="text-[10px] font-bold text-pink-500 uppercase">External CSS</label>
+            <button onclick="addLinkField()" class="text-[9px] bg-pink-500/20 text-pink-400 px-2 py-0.5 rounded">ADD</button>
+          </div>
+          <div id="links-list" class="space-y-2"></div>
+        </div>
+        <div class="card-section">
+          <label class="text-[10px] font-bold text-emerald-500 uppercase mb-3 block">Internal Styles</label>
+          <div id="styles-list" class="space-y-3"></div>
+        </div>
+      </div>
+
+      <div id="panel-body" class="tab-panel hidden">
+        <div class="card-section">
+          <label class="text-[10px] font-bold text-emerald-500 uppercase mb-2 block">Body Structure</label>
+          <div id="body-tree" class="max-h-60 overflow-y-auto space-y-2 pr-2"></div>
+        </div>
+        <div class="card-section">
+          <div class="flex justify-between mb-2">
+            <label id="block-label" class="text-[10px] font-bold text-white uppercase">Editor de Bloco</label>
+            <button onclick="saveBlockEdit()" class="text-[9px] bg-emerald-500 text-black font-bold px-2 py-0.5 rounded">SALVAR</button>
+          </div>
+          <textarea id="block-editor" class="code-editor" placeholder="Selecione um bloco acima..."></textarea>
+        </div>
+      </div>
+
+      <div id="panel-js" class="tab-panel hidden">
+        <div class="card-section">
+          <label class="text-[10px] font-bold text-yellow-500 uppercase mb-3 block">Global Script</label>
+          <textarea id="js-global-editor" class="code-editor" style="min-height: 300px;" placeholder="// Seu código JS aqui..."></textarea>
+          <button onclick="updatePreviewSplit()" class="w-full mt-3 bg-yellow-500 text-black font-bold py-2 rounded text-xs hover:bg-yellow-400 transition">APLICAR LOGICA</button>
+        </div>
+      </div>
+
+      <div class="mt-8">
+        <button onclick="exportFullHTML()" class="w-full bg-white text-black font-black py-3 rounded-xl text-sm shadow-xl hover:scale-[1.02] active:scale-95 transition">GERAR BUILD FINAL</button>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="flex justify-between items-center mb-4">
+      <div>
+        <h2 class="text-white font-bold text-lg">Live Preview</h2>
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+          <span class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Workspace Ativo</span>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="updatePreviewSplit()" class="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-[10px] font-bold hover:bg-white/10 transition">RECARREGAR</button>
+        <button onclick="openNewWindow()" class="px-4 py-2 bg-cyan-500 text-black rounded-lg text-[10px] font-bold hover:bg-cyan-400 transition">POP-OUT</button>
+      </div>
+    </div>
+
+    <div class="preview-container">
+      <iframe id="preview-frame" sandbox="allow-scripts allow-modals allow-same-origin"></iframe>
+    </div>
+
+    <footer class="mt-4 flex justify-between text-[10px] text-slate-500 font-bold uppercase tracking-tighter">
+      <span>Nebula Evolution Engine</span>
+      <span id="status-msg">Pronto para processamento</span>
+    </footer>
+  </main>
+</div>
+
+<!-- ====== MODO CARD (HTML/CSS/JS + Cápsulas) ====== -->
+<div style="max-width:960px;margin:0 auto;padding:1.25rem 0.9rem 2.5rem;">
+  <section class="card" id="preview-card">
+    <div class="card-title-row">
+      <h3>1 · Preview da página</h3>
+      <span class="badge badge-tip">visual primeiro</span>
+    </div>
+    <p class="mini-label">Tudo que você editar nos blocos de código abaixo aparece aqui.</p>
+    <iframe id="previewFrame" class="preview-frame" title="Preview Live"></iframe>
+    <div class="controls-row">
+      <button id="runOnceBtn">🔁 Atualizar agora</button>
+      <label class="toggle">
+        <input type="checkbox" id="autoRunToggle" checked="">
+        <span>Atualizar automaticamente enquanto digita</span>
+      </label>
+    </div>
+    <p class="mini-label" id="statusText" style="margin-top:0.5rem;">Status: aguardando primeira atualização…</p>
+  </section>
+
+  <section class="card">
+    <details open="">
+      <summary>
+        <div class="summary-left"><div class="summary-icon">H</div><span>2 · HTML</span></div>
+        <span class="summary-label-soft">estrutura da página</span>
+      </summary>
+      <div class="inner">
+        <div class="code-label-row">
+          <span>HTML (conteúdo do &lt;body&gt;)</span>
+          <div class="actions">
+            <button class="secondary" type="button" id="btnHtmlPaste">Colar</button>
+            <button class="secondary" type="button" id="btnHtmlClear">Limpar</button>
+            <button class="secondary" type="button" id="btnHtmlSample">Exemplo</button>
+          </div>
+        </div>
+        <textarea id="htmlInput" spellcheck="false"></textarea>
+      </div>
+    </details>
+  </section>
+
+  <section class="card">
+    <details open="">
+      <summary>
+        <div class="summary-left"><div class="summary-icon">C</div><span>3 · CSS</span></div>
+        <span class="summary-label-soft">estilo da página</span>
+      </summary>
+      <div class="inner">
+        <div class="code-label-row">
+          <span>CSS (vai dentro de &lt;style&gt;)</span>
+          <div class="actions">
+            <button class="secondary" type="button" id="btnCssClear">Limpar</button>
+            <button class="secondary" type="button" id="btnCssSample">Exemplo</button>
+          </div>
+        </div>
+        <textarea id="cssInput" spellcheck="false"></textarea>
+      </div>
+    </details>
+  </section>
+
+  <section class="card">
+    <details>
+      <summary>
+        <div class="summary-left"><div class="summary-icon">J</div><span>4 · JavaScript</span></div>
+        <span class="summary-label-soft">interação / comportamento</span>
+      </summary>
+      <div class="inner">
+        <div class="code-label-row">
+          <span>JS (vai no final do &lt;body&gt;)</span>
+          <div class="actions">
+            <button class="secondary" type="button" id="btnJsClear">Limpar</button>
+            <button class="secondary" type="button" id="btnJsSample">Exemplo</button>
+          </div>
+        </div>
+        <textarea id="jsInput" spellcheck="false"></textarea>
+      </div>
+    </details>
+  </section>
+
+  <section class="card">
+    <div class="card-title-row">
+      <h3>5 · Cápsulas salvas &amp; Play Store interna</h3>
+      <span class="badge badge-auto">localStorage</span>
+    </div>
+    <p class="mini-label">Salva o combo HTML/CSS/JS atual como cápsula e publica como app da Play Store interna (Hub1).</p>
+    <div class="capsules-actions">
+      <button id="saveCapsuleBtn">💾 Salvar como cápsula</button>
+      <button class="secondary" type="button" id="clearCapsulesBtn">🧹 Apagar todas</button>
+    </div>
+    <p class="mini-label" id="capsulesStatus">Nenhuma cápsula salva ainda.</p>
+    <ul class="capsules-list" id="capsulesList"></ul>
+  </section>
+
+  <p class="footer-note">
+    Tudo fica salvo no navegador (edição atual + cápsulas + apps internos). Dá pra limpar sem medo, é tudo local.
+  </p>
+</div>
+
+<script>
+/* ============================================================
+   NEBULA · ESTADO + FUNÇÕES (versão única, sem duplicação)
+   ============================================================ */
+
+// ---------- SIDEBAR STATE ----------
+let state = {
+  headMeta: '',
+  links: [],
+  styles: [],
+  body: '',
+  js: '',
+  selectedBlockIdx: -1
+};
+
+function toggleSidebar() {
+  const side = document.getElementById('sidebar');
+  const icon = document.getElementById('side-icon');
+  side.classList.toggle('collapsed');
+  icon.textContent = side.classList.contains('collapsed') ? '▶' : '◀';
+}
+
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+  document.getElementById('panel-' + tabId).classList.remove('hidden');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+document.getElementById('file-upload').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(ev.target.result, 'text/html');
+    state.headMeta = Array.from(doc.head.querySelectorAll('meta, title')).map(m => m.outerHTML).join('\n');
+    state.links = Array.from(doc.querySelectorAll('link[rel="stylesheet"]')).map(l => ({ href: l.getAttribute('href'), id: Math.random() }));
+    state.styles = Array.from(doc.querySelectorAll('style')).map(s => ({ content: s.textContent }));
+    const bodyClone = doc.body.cloneNode(true);
+    Array.from(bodyClone.querySelectorAll('script')).forEach(s => s.remove());
+    state.body = bodyClone.innerHTML;
+    state.js = Array.from(doc.querySelectorAll('script')).map(s => s.textContent).join('\n\n');
+    document.getElementById('js-global-editor').value = state.js;
+    renderLinks();
+    renderStyles();
+    renderBodyTree();
+    updatePreviewSplit();
+    document.getElementById('status-msg').textContent = "HTML Processado com sucesso";
+  };
+  reader.readAsText(file);
+});
+
+function renderLinks() {
+  const container = document.getElementById('links-list');
+  container.innerHTML = state.links.map((l, i) => `
+    <div class="flex gap-2 items-center">
+      <input type="text" value="${l.href || ''}" oninput="state.links[${i}].href = this.value" class="flex-1 bg-black/40 border border-white/10 rounded px-2 py-1 text-[11px] text-cyan-300 outline-none focus:border-cyan-500">
+      <button onclick="state.links.splice(${i},1); renderLinks(); updatePreviewSplit();" class="text-red-500 text-lg">&times;</button>
+    </div>
+  `).join('') || '<p class="text-[10px] text-slate-600 italic">Sem links externos.</p>';
+}
+
+function addLinkField() {
+  state.links.push({ href: '', id: Math.random() });
+  renderLinks();
+}
+
+function renderStyles() {
+  const container = document.getElementById('styles-list');
+  container.innerHTML = state.styles.map((s, i) => `
+    <div class="relative">
+      <textarea oninput="state.styles[${i}].content = this.value" class="code-editor !min-h-[80px]">${s.content || ''}</textarea>
+      <button onclick="state.styles.splice(${i},1); renderStyles(); updatePreviewSplit();" class="absolute top-1 right-2 text-red-500 hover:text-red-400 text-sm">Remover</button>
+    </div>
+  `).join('') || '<p class="text-[10px] text-slate-600 italic">Sem estilos internos.</p>';
+}
+
+function renderBodyTree() {
+  const container = document.getElementById('body-tree');
+  const temp = document.createElement('div');
+  temp.innerHTML = state.body;
+  const children = Array.from(temp.children);
+  container.innerHTML = children.map((c, i) => {
+    const label = c.id ? `#${c.id}` : (c.className ? `.${c.className.split(' ')[0]}` : c.tagName.toLowerCase());
+    return `
+      <button onclick="selectBlock(${i})" class="w-full text-left p-2 rounded bg-white/5 border border-white/5 hover:bg-white/10 text-[10px] flex justify-between items-center group">
+        <span class="text-slate-300 font-mono">${label}</span>
+        <span class="text-[8px] text-slate-500 opacity-0 group-hover:opacity-100 uppercase">Editar</span>
+      </button>
+    `;
+  }).join('');
+}
+
+function selectBlock(idx) {
+  state.selectedBlockIdx = idx;
+  const temp = document.createElement('div');
+  temp.innerHTML = state.body;
+  const node = temp.children[idx];
+  document.getElementById('block-editor').value = node ? node.innerHTML : '';
+  document.getElementById('block-label').textContent = "Editando: " + (node ? node.tagName : 'Bloco');
+}
+
+function saveBlockEdit() {
+  if (state.selectedBlockIdx === -1) return;
+  const temp = document.createElement('div');
+  temp.innerHTML = state.body;
+  if (temp.children[state.selectedBlockIdx]) {
+    temp.children[state.selectedBlockIdx].innerHTML = document.getElementById('block-editor').value;
+    state.body = temp.innerHTML;
+    updatePreviewSplit();
+    document.getElementById('status-msg').textContent = "Bloco atualizado";
+  }
+}
+
+function updatePreviewSplit() {
+  state.js = document.getElementById('js-global-editor').value;
+  const iframe = document.getElementById('preview-frame');
+  const linksHtml = state.links.map(l => `<link rel="stylesheet" href="${l.href || ''}">`).join('\n');
+  const stylesHtml = state.styles.map(s => `<style>${s.content || ''}</style>`).join('\n');
+  const content = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  ${state.headMeta}
+  ${linksHtml}
+  ${stylesHtml}
+</head>
+<body style="margin:0;padding:0;">
+  ${state.body}
+  <script>${(state.js || '').replace(/<\/script>/g, '<\\/script>')}<\/script>
+</body>
+</html>`;
+  const blob = new Blob([content], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  if (iframe.src) URL.revokeObjectURL(iframe.src);
+  iframe.src = url;
+}
+
+function exportFullHTML() {
+  const linksHtml = state.links.map(l => `<link rel="stylesheet" href="${l.href || ''}">`).join('\n');
+  const stylesHtml = state.styles.map(s => `<style>${s.content || ''}</style>`).join('\n');
+  const final = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  ${state.headMeta}
+  ${linksHtml}
+  ${stylesHtml}
+</head>
+<body>
+${state.body}
+<script>
+${document.getElementById('js-global-editor').value}
+<\/script>
+</body>
+</html>`;
+  const blob = new Blob([final], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `nebula_build_${Date.now()}.html`;
+  a.click();
+}
+
+function openNewWindow() {
+  const iframe = document.getElementById('preview-frame');
+  if (!iframe.src) return;
+  fetch(iframe.src).then(r => r.text()).then(html => {
+    const win = window.open();
+    win.document.write(html);
+  });
+}
+
+document.getElementById('js-global-editor').addEventListener('blur', updatePreviewSplit);
+
+// ---------- CARD MODE (HTML/CSS/JS + Cápsulas) ----------
+const htmlInput = document.getElementById("htmlInput");
+const cssInput = document.getElementById("cssInput");
+const jsInput = document.getElementById("jsInput");
+const previewFrame = document.getElementById("previewFrame");
+const autoRunToggle = document.getElementById("autoRunToggle");
+const runOnceBtn = document.getElementById("runOnceBtn");
+const statusText = document.getElementById("statusText");
+
+const btnHtmlClear = document.getElementById("btnHtmlClear");
+const btnCssClear = document.getElementById("btnCssClear");
+const btnJsClear = document.getElementById("btnJsClear");
+const btnHtmlSample = document.getElementById("btnHtmlSample");
+const btnCssSample = document.getElementById("btnCssSample");
+const btnJsSample = document.getElementById("btnJsSample");
+const btnHtmlPaste = document.getElementById("btnHtmlPaste");
+
+const saveCapsuleBtn = document.getElementById("saveCapsuleBtn");
+const clearCapsulesBtn = document.getElementById("clearCapsulesBtn");
+const capsulesStatus = document.getElementById("capsulesStatus");
+const capsulesList = document.getElementById("capsulesList");
+
+const STORAGE_KEY = "nebula_live_editor_v1";
+const CAPSULES_KEY = "nebula_live_capsules_v1";
+const HUB1_APPS_KEY = "hub1_apps_capsules_v1";
+
+function setStatus(text, type = "info") {
+  if (!statusText) return;
+  statusText.textContent = "Status: " + text;
+  if (type === "ok") statusText.style.color = "#9bffc9";
+  else if (type === "warn") statusText.style.color = "#ffcf8a";
+  else if (type === "error") statusText.style.color = "#ff9b7b";
+  else statusText.style.color = "#f8f4ff";
+}
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const obj = JSON.parse(raw);
+    if (typeof obj.html === "string") htmlInput.value = obj.html;
+    if (typeof obj.css === "string") cssInput.value = obj.css;
+    if (typeof obj.js === "string") jsInput.value = obj.js;
+    if (typeof obj.auto === "boolean") autoRunToggle.checked = obj.auto;
+    return true;
+  } catch (e) {
+    console.warn("Erro ao carregar do storage:", e);
+    return false;
+  }
+}
+
+function saveToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      html: htmlInput.value,
+      css: cssInput.value,
+      js: jsInput.value,
+      auto: autoRunToggle.checked
+    }));
+  } catch (e) {
+    console.warn("Erro ao salvar no storage:", e);
+  }
+}
+
+function buildDocumentString() {
+  const html = htmlInput.value || "";
+  const css = cssInput.value || "";
+  const js = jsInput.value || "";
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Preview · Nebula Live</title>
+  <style>
+  html, body { margin: 0; padding: 0; }
+  ${css}
+  </style>
+</head>
+<body>
+${html}
+<script>
+${js.replace(/<\/script>/gi, "<\\/script>")}
+<\/script>
+</body>
+</html>`;
+}
+
+function updatePreview() {
+  try {
+    const docString = buildDocumentString();
+    const blob = new Blob([docString], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    previewFrame.src = url;
+    setStatus(autoRunToggle.checked ? "preview atualizado automaticamente." : "preview atualizado manualmente.", "ok");
+    saveToStorage();
+  } catch (e) {
+    console.error("Erro ao atualizar preview:", e);
+    setStatus("erro ao atualizar preview. Veja o console.", "error");
+  }
+}
+
+let debounceTimer = null;
+function scheduleUpdate() {
+  if (!autoRunToggle.checked) {
+    saveToStorage();
+    setStatus("auto-update desligado. Clique em “Atualizar agora”.", "warn");
+    return;
+  }
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(updatePreview, 350);
+}
+
+htmlInput.addEventListener("input", scheduleUpdate);
+cssInput.addEventListener("input", scheduleUpdate);
+jsInput.addEventListener("input", scheduleUpdate);
+
+autoRunToggle.addEventListener("change", () => {
+  saveToStorage();
+  if (autoRunToggle.checked) {
+    setStatus("auto-update ligado. Qualquer digitação atualiza o preview.");
+    updatePreview();
+  } else {
+    setStatus("auto-update desligado. Use “Atualizar agora”.", "warn");
+  }
+});
+
+runOnceBtn.addEventListener("click", updatePreview);
+
+async function pasteIntoHtml() {
+  if (!navigator.clipboard || !navigator.clipboard.readText) {
+    alert("API de clipboard não disponível aqui. Tenta em HTTPS ou localhost.");
+    setStatus("clipboard API indisponível neste contexto.", "warn");
+    return;
+  }
+  try {
+    const text = await navigator.clipboard.readText();
+    if (!text) {
+      setStatus("clipboard vazio ou sem texto.", "warn");
+      return;
+    }
+    htmlInput.value = text;
+    scheduleUpdate();
+    setStatus("conteúdo colado do clipboard no HTML.", "ok");
+  } catch (e) {
+    console.error("Erro ao ler clipboard:", e);
+    alert("Não consegui ler o clipboard. O navegador talvez tenha bloqueado.");
+    setStatus("erro ao tentar colar do clipboard.", "error");
+  }
+}
+btnHtmlPaste.addEventListener("click", pasteIntoHtml);
+
+btnHtmlClear.addEventListener("click", () => { htmlInput.value = ""; scheduleUpdate(); });
+btnCssClear.addEventListener("click", () => { cssInput.value = ""; scheduleUpdate(); });
+btnJsClear.addEventListener("click", () => { jsInput.value = ""; scheduleUpdate(); });
+
+const SAMPLE_HTML = `
+<div class="hero">
+  <h1>Olá, Nebula Live 👋</h1>
+  <p>Esse é o seu batedor visual de HTML/CSS/JS.</p>
+  <button class="hero-btn">Clique aqui</button>
+</div>
+`.trim();
+
+const SAMPLE_CSS = `
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: radial-gradient(circle at top, #1b0032, #050010);
+  color: #f8f4ff;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hero {
+  text-align: center;
+  padding: 32px 20px;
+  border-radius: 24px;
+  background: radial-gradient(circle at top, #32104b, #140620);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+.hero h1 { margin-bottom: 8px; }
+.hero p { margin-top: 0; margin-bottom: 16px; opacity: 0.85; }
+.hero-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  background: linear-gradient(135deg, #ff63d0, #43e8ff);
+  color: #050010;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.7);
+}
+`.trim();
+
+const SAMPLE_JS = `
+document.querySelector(".hero-btn")?.addEventListener("click", () => {
+  alert("Rodando JS no preview! 🔮");
+});
+`.trim();
+
+btnHtmlSample.addEventListener("click", () => { htmlInput.value = SAMPLE_HTML; scheduleUpdate(); });
+btnCssSample.addEventListener("click", () => { cssInput.value = SAMPLE_CSS; scheduleUpdate(); });
+btnJsSample.addEventListener("click", () => { jsInput.value = SAMPLE_JS; scheduleUpdate(); });
+
+function getCapsules() {
+  try {
+    const raw = localStorage.getItem(CAPSULES_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) {
+    console.warn("Erro ao ler cápsulas:", e);
+    return [];
+  }
+}
+
+function setCapsules(arr) {
+  try {
+    localStorage.setItem(CAPSULES_KEY, JSON.stringify(arr));
+  } catch (e) {
+    console.warn("Erro ao salvar cápsulas:", e);
+  }
+}
+
+function formatDate(iso) {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    const dia = String(d.getDate()).padStart(2, "0");
+    const mes = String(d.getMonth() + 1).padStart(2, "0");
+    const ano = d.getFullYear();
+    const hora = String(d.getHours()).padStart(2, "0");
+    const min = String(d.getMinutes()).padStart(2, "0");
+    return `${dia}/${mes}/${ano} · ${hora}:${min}`;
+  } catch { return ""; }
+}
+
+function getHub1Apps() {
+  try {
+    const raw = localStorage.getItem(HUB1_APPS_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) {
+    console.warn("Erro ao ler apps Hub1:", e);
+    return [];
+  }
+}
+
+function setHub1Apps(arr) {
+  try {
+    localStorage.setItem(HUB1_APPS_KEY, JSON.stringify(arr));
+  } catch (e) {
+    console.warn("Erro ao salvar apps Hub1:", e);
+  }
+}
+
+window.NebulaLiveHub1 = {
+  getCapsules,
+  getHub1Apps,
+  HUB1_APPS_KEY,
+  CAPSULES_KEY
+};
+
+function publishCapsuleAsHub1App(capsule) {
+  const apps = getHub1Apps();
+  const appId = "nebula-" + capsule.id;
+  const filtered = apps.filter(a => a.id !== appId);
+  const app = {
+    id: appId,
+    name: capsule.name || "Cápsula Nebula",
+    createdAt: capsule.createdAt,
+    type: "html_capsule",
+    source: "NebulaLiveEditor",
+    html: capsule.html || "",
+    css: capsule.css || "",
+    js: capsule.js || ""
+  };
+  filtered.unshift(app);
+  setHub1Apps(filtered);
+}
+
+function renderCapsulesList() {
+  const capsules = getCapsules();
+  capsulesList.innerHTML = "";
+  if (!capsules.length) {
+    capsulesStatus.textContent = "Nenhuma cápsula salva ainda.";
+    return;
+  }
+  capsulesStatus.textContent = `Você tem ${capsules.length} cápsula(s) salva(s).`;
+  const existingApps = getHub1Apps();
+  const existingIds = new Set(existingApps.map(a => a.id));
+
+  capsules.forEach(capsule => {
+    const li = document.createElement("li");
+    li.className = "capsule-item";
+
+    const top = document.createElement("div");
+    top.className = "capsule-top";
+    const nameEl = document.createElement("div");
+    nameEl.className = "capsule-name";
+    nameEl.textContent = capsule.name || "(sem nome)";
+    const metaEl = document.createElement("div");
+    metaEl.className = "capsule-meta";
+    metaEl.textContent = formatDate(capsule.createdAt);
+    top.appendChild(nameEl);
+    top.appendChild(metaEl);
+
+    const btnRow = document.createElement("div");
+    btnRow.className = "capsule-buttons";
+
+    const btnLoad = document.createElement("button");
+    btnLoad.type = "button";
+    btnLoad.className = "secondary";
+    btnLoad.textContent = "Carregar";
+    btnLoad.addEventListener("click", () => {
+      htmlInput.value = capsule.html || "";
+      cssInput.value = capsule.css || "";
+      jsInput.value = capsule.js || "";
+      saveToStorage();
+      updatePreview();
+      setStatus(`cápsula “${capsule.name || "sem nome"}” carregada.`, "ok");
+    });
+
+    const btnPublish = document.createElement("button");
+    btnPublish.type = "button";
+    btnPublish.className = "secondary";
+    const appId = "nebula-" + capsule.id;
+    btnPublish.textContent = existingIds.has(appId) ? "📲 Atualizar app Hub1" : "📲 Publicar no Hub1";
+    btnPublish.addEventListener("click", () => {
+      publishCapsuleAsHub1App(capsule);
+      setStatus(`cápsula “${capsule.name || "sem nome"}” publicada como app Hub1.`, "ok");
+      renderCapsulesList();
+    });
+
+    const btnDelete = document.createElement("button");
+    btnDelete.type = "button";
+    btnDelete.className = "secondary";
+    btnDelete.textContent = "Excluir";
+    btnDelete.addEventListener("click", () => {
+      if (!confirm(`Apagar cápsula “${capsule.name || "sem nome"}”?`)) return;
+      const arr = getCapsules().filter(c => c.id !== capsule.id);
+      setCapsules(arr);
+      setStatus("cápsula apagada.", "warn");
+      renderCapsulesList();
+    });
+
+    btnRow.appendChild(btnLoad);
+    btnRow.appendChild(btnPublish);
+    btnRow.appendChild(btnDelete);
+    li.appendChild(top);
+    li.appendChild(btnRow);
+    capsulesList.appendChild(li);
+  });
+}
+
+function saveCapsule() {
+  const html = htmlInput.value || "";
+  const css = cssInput.value || "";
+  const js = jsInput.value || "";
+  if (!html && !css && !js) {
+    alert("Nada pra salvar. Preenche pelo menos HTML, CSS ou JS.");
+    return;
+  }
+  let name = prompt("Nome da cápsula:", "Layout " + new Date().toLocaleString());
+  if (name === null) return;
+  name = name.trim() || ("Cápsula sem nome " + new Date().toLocaleString());
+  const newCapsule = {
+    id: Date.now(),
+    name,
+    html,
+    css,
+    js,
+    createdAt: new Date().toISOString()
+  };
+  const arr = getCapsules();
+  arr.unshift(newCapsule);
+  setCapsules(arr);
+  renderCapsulesList();
+  setStatus(`cápsula “${name}” salva.`, "ok");
+}
+
+function clearCapsules() {
+  const capsules = getCapsules();
+  if (!capsules.length) {
+    alert("Você não tem cápsulas salvas.");
+    return;
+  }
+  if (!confirm("Apagar TODAS as cápsulas salvas neste navegador?")) return;
+  setCapsules([]);
+  setStatus("todas as cápsulas foram apagadas.", "warn");
+  renderCapsulesList();
+}
+
+saveCapsuleBtn.addEventListener("click", saveCapsule);
+clearCapsulesBtn.addEventListener("click", clearCapsules);
+
+// ---------- INIT ----------
+window.addEventListener("DOMContentLoaded", () => {
+  const hadStored = loadFromStorage();
+  if (!hadStored) {
+    htmlInput.value = SAMPLE_HTML;
+    cssInput.value = SAMPLE_CSS;
+    jsInput.value = SAMPLE_JS;
+  }
+  renderCapsulesList();
+  updatePreview();
+});
+
+console.log("✧ {ℤ} NEBULA LIVE EDITOR · COMPLETO · SELADO · 0 < Δ < 1 · VIVO");
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+</script>
+
+
+
+
+<div class="app">
+<header>
+  <h1>HTML → <span>JS</span> Injector Studio</h1>
+  <div class="subtitle">
+    Converta qualquer conteúdo HTML em um módulo JavaScript injetável.
+  </div>
+</header>
+<div class="grid">
+<!-- INPUT -->
+<section class="card">
+  <div class="card-head">
+    <div class="card-title">01 · SOURCE</div>
+<div class="meta">
+  <span class="badge" id="fileType">TEXT</span>
+  <label class="file-label">
+    UPLOAD
+    <input id="fileInput" type="file">
+  </label>
+</div>
+  </div>
+  <textarea id="source" placeholder="Cole aqui o HTML, TXT ou qualquer conteúdo que deseja transformar em JS..."></textarea>
+  <div class="actions">
+<button class="primary" id="pasteBtn">
+  📋 Paste Clipboard
+</button>
+<button id="convertBtn">
+  ⚡ Converter → JS
+</button>
+<button id="clearBtn" class="danger">
+  Limpar
+</button>
+  </div>
+</section>
+<!-- OUTPUT -->
+<section class="card">
+  <div class="card-head">
+<div class="card-title">
+  02 · GENERATED JS
+</div>
+<span class="badge">
+  INJECTOR
+</span>
+  </div>
+  <textarea id="output" readonly="" placeholder="O JavaScript convertido aparecerá aqui..."></textarea>
+  <div class="actions">
+<button id="copyBtn">
+  ⧉ Copiar JS
+</button>
+<button id="downloadBtn">
+  ↓ Baixar .JS
+</button>
+<button id="previewBtn" class="purple">
+  ▶ Sandbox Preview
+</button>
+  </div>
+</section>
+<!-- PREVIEW -->
+<section class="card full">
+  <div class="card-head">
+<div class="card-title">
+  03 · SANDBOX PREVIEW
+</div>
+<div class="meta">
+  <select id="target">
+    <option value="#inject-here">#inject-here</option>
+    <option value="body">body</option>
+    <option value="main">main</option>
+    <option value="#app">#app</option>
+  </select>
+</div>
+  </div>
+  <div class="preview-wrap">
+    <iframe id="preview"></iframe>
+  </div>
+  <div class="status" id="status">
+    Aguardando conversão...
+  </div>
+</section>
+</div>
+</div>
+<script>
+const source = document.getElementById("source");
+const output = document.getElementById("output");
+const fileInput = document.getElementById("fileInput");
+const fileType = document.getElementById("fileType");
+const preview = document.getElementById("preview");
+const status = document.getElementById("status");
+const target = document.getElementById("target");
+// ============================================================
+// BASE DO INJECTOR
+// ============================================================
+function buildInjector(html){
+  const safe = html
+    .replace(/\\/g,"\\\\")
+    .replace(/`/g,"\\`")
+    .replace(/\$\{/g,"\\${");
+  const selector = target.value;
+  return `(function(h,s='${selector}'){
+const p=new DOMParser(),
+c=p.parseFromString(h,'text/html'),
+f=document.createDocumentFragment(),
+t=document.querySelector(s)||document.body;
+Array.from(c.body.childNodes)
+.forEach(n=>f.appendChild(document.importNode(n,true)));
+t.appendChild(f);
+Array.from(c.querySelectorAll('script'))
+.forEach(x=>{
+const n=document.createElement('script');
+for(const a of x.attributes)
+n.setAttribute(a.name,a.value);
+n.textContent=x.textContent;
+document.body.appendChild(n);
+});
+})(\`${safe}\`);`;
+}
+// ============================================================
+// CONVERTER
+// ============================================================
+function convert(){
+  const html = source.value.trim();
+  if(!html){
+    status.textContent="Nada para converter.";
+    return;
+  }
+  output.value = buildInjector(html);
+  status.textContent =
+    `✓ Conversão concluída · ${html.length} caracteres`;
+  status.className="status ok";
+}
+// ============================================================
+// CLIPBOARD
+// ============================================================
+document.getElementById("pasteBtn")
+.addEventListener("click",async()=>{
+  try{
+    const text =
+      await navigator.clipboard.readText();
+    source.value=text;
+    fileType.textContent="CLIPBOARD";
+    status.textContent=
+      "✓ Conteúdo colado do Clipboard.";
+  }catch(err){
+    alert(
+      "O navegador bloqueou o Clipboard. " +
+      "Cole manualmente no campo."
+    );
+  }
+});
+// ============================================================
+// UPLOAD
+// ============================================================
+fileInput.addEventListener("change",async e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+  const text=await file.text();
+  source.value=text;
+  fileType.textContent=
+    file.name.split(".").pop().toUpperCase();
+  status.textContent=
+    `✓ Arquivo carregado: ${file.name}`;
+});
+// ============================================================
+// CONVERTER
+// ============================================================
+document.getElementById("convertBtn")
+.addEventListener("click",convert);
+// ============================================================
+// COPIAR
+// ============================================================
+document.getElementById("copyBtn")
+.addEventListener("click",async()=>{
+  if(!output.value)return;
+  await navigator.clipboard.writeText(
+    output.value
+  );
+  status.textContent=
+    "✓ JS copiado para o Clipboard.";
+});
+// ============================================================
+// DOWNLOAD
+// ============================================================
+document.getElementById("downloadBtn")
+.addEventListener("click",()=>{
+  if(!output.value)return;
+  const blob=new Blob(
+    [output.value],
+    {type:"application/javascript"}
+  );
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="injector-module.js";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+// ============================================================
+// PREVIEW SANDBOX
+// ============================================================
+document.getElementById("previewBtn")
+.addEventListener("click",()=>{
+  if(!output.value){
+    convert();
+  }
+  const baseHTML=`
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width,initial-scale=1">
+<title>Injector Sandbox</title>
+<style>
+body{
+margin:0;
+padding:30px;
+font-family:system-ui;
+background:#101216;
+color:white;
+}
+#inject-here{
+min-height:200px;
+padding:20px;
+border:2px dashed #444;
+border-radius:16px;
+}
+</style>
+</head>
+<body>
+<h2>Sandbox Preview</h2>
+<div id="inject-here">
+<!-- conteúdo será injetado aqui -->
+</div>
+<script>
+${output.value}
+<\/script>
+</body>
+</html>
+`;
+  preview.srcdoc=baseHTML;
+  status.textContent=
+    "✓ Sandbox executado com sucesso.";
+  status.className="status ok";
+});
+// ============================================================
+// LIMPAR
+// ============================================================
+document.getElementById("clearBtn")
+.addEventListener("click",()=>{
+  source.value="";
+  output.value="";
+  preview.srcdoc="";
+  fileType.textContent="TEXT";
+  status.textContent=
+    "Aguardando conversão...";
+  status.className="status";
+});
+// ============================================================
+// AUTO CONVERSÃO AO MUDAR DESTINO
+// ============================================================
+target.addEventListener("change",()=>{
+  if(source.value.trim()){
+    convert();
+  }
+});
+</script>
+
+<script>
+const source = document.getElementById("source");
+const output = document.getElementById("output");
+const fileInput = document.getElementById("fileInput");
+const fileType = document.getElementById("fileType");
+const preview = document.getElementById("preview");
+const status = document.getElementById("status");
+const target = document.getElementById("target");
+// ============================================================
+// BASE DO INJECTOR
+// ============================================================
+function buildInjector(html){
+  const safe = html
+    .replace(/\\/g,"\\\\")
+    .replace(/`/g,"\\`")
+    .replace(/\$\{/g,"\\${");
+  const selector = target.value;
+  return `(function(h,s='${selector}'){
+const p=new DOMParser(),
+c=p.parseFromString(h,'text/html'),
+f=document.createDocumentFragment(),
+t=document.querySelector(s)||document.body;
+Array.from(c.body.childNodes)
+.forEach(n=>f.appendChild(document.importNode(n,true)));
+t.appendChild(f);
+Array.from(c.querySelectorAll('script'))
+.forEach(x=>{
+const n=document.createElement('script');
+for(const a of x.attributes)
+n.setAttribute(a.name,a.value);
+n.textContent=x.textContent;
+document.body.appendChild(n);
+});
+})(\`${safe}\`);`;
+}
+// ============================================================
+// CONVERTER
+// ============================================================
+function convert(){
+  const html = source.value.trim();
+  if(!html){
+    status.textContent="Nada para converter.";
+    return;
+  }
+  output.value = buildInjector(html);
+  status.textContent =
+    `✓ Conversão concluída · ${html.length} caracteres`;
+  status.className="status ok";
+}
+// ============================================================
+// CLIPBOARD
+// ============================================================
+document.getElementById("pasteBtn")
+.addEventListener("click",async()=>{
+  try{
+    const text =
+      await navigator.clipboard.readText();
+    source.value=text;
+    fileType.textContent="CLIPBOARD";
+    status.textContent=
+      "✓ Conteúdo colado do Clipboard.";
+  }catch(err){
+    alert(
+      "O navegador bloqueou o Clipboard. " +
+      "Cole manualmente no campo."
+    );
+  }
+});
+// ============================================================
+// UPLOAD
+// ============================================================
+fileInput.addEventListener("change",async e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+  const text=await file.text();
+  source.value=text;
+  fileType.textContent=
+    file.name.split(".").pop().toUpperCase();
+  status.textContent=
+    `✓ Arquivo carregado: ${file.name}`;
+});
+// ============================================================
+// CONVERTER
+// ============================================================
+document.getElementById("convertBtn")
+.addEventListener("click",convert);
+// ============================================================
+// COPIAR
+// ============================================================
+document.getElementById("copyBtn")
+.addEventListener("click",async()=>{
+  if(!output.value)return;
+  await navigator.clipboard.writeText(
+    output.value
+  );
+  status.textContent=
+    "✓ JS copiado para o Clipboard.";
+});
+// ============================================================
+// DOWNLOAD
+// ============================================================
+document.getElementById("downloadBtn")
+.addEventListener("click",()=>{
+  if(!output.value)return;
+  const blob=new Blob(
+    [output.value],
+    {type:"application/javascript"}
+  );
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="injector-module.js";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+// ============================================================
+// PREVIEW SANDBOX
+// ============================================================
+document.getElementById("previewBtn")
+.addEventListener("click",()=>{
+  if(!output.value){
+    convert();
+  }
+  const baseHTML=`
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width,initial-scale=1">
+<title>Injector Sandbox</title>
+<style>
+body{
+margin:0;
+padding:30px;
+font-family:system-ui;
+background:#101216;
+color:white;
+}
+#inject-here{
+min-height:200px;
+padding:20px;
+border:2px dashed #444;
+border-radius:16px;
+}
+</style>
+</head>
+<body>
+<h2>Sandbox Preview</h2>
+<div id="inject-here">
+<!-- conteúdo será injetado aqui -->
+</div>
+<script>
+${output.value}
+<\/script>
+</body>
+</html>
+`;
+  preview.srcdoc=baseHTML;
+  status.textContent=
+    "✓ Sandbox executado com sucesso.";
+  status.className="status ok";
+});
+// ============================================================
+// LIMPAR
+// ============================================================
+document.getElementById("clearBtn")
+.addEventListener("click",()=>{
+  source.value="";
+  output.value="";
+  preview.srcdoc="";
+  fileType.textContent="TEXT";
+  status.textContent=
+    "Aguardando conversão...";
+  status.className="status";
+});
+// ============================================================
+// AUTO CONVERSÃO AO MUDAR DESTINO
+// ============================================================
+target.addEventListener("change",()=>{
+  if(source.value.trim()){
+    convert();
+  }
+});
+</script>
+
+<!-- SVG SPRITE INLINE -->
+<svg hidden="">
+  <symbol id="i-shield" viewBox="0 0 100 100" aria-hidden="true">
+          <defs>
+            <radialGradient id="orb_az_df506_core" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="hsl(35,100%,66%)" stop-opacity="1"></stop>
+              <stop offset="55%" stop-color="hsl(215,92%,46%)" stop-opacity=".9"></stop>
+              <stop offset="100%" stop-color="hsl(215,100%,12%)" stop-opacity="0"></stop>
+            </radialGradient>
+
+            <linearGradient id="orb_az_df506_ring" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="hsl(35,100%,76%)"></stop>
+              <stop offset="100%" stop-color="hsl(215,100%,58%)"></stop>
+            </linearGradient>
+          </defs>
+
+          <circle cx="50" cy="50" r="46" fill="#05070c"></circle>
+          <circle cx="50" cy="50" r="40" fill="url(#orb_az_df506_core)" opacity=".28"></circle>
+          <circle cx="50" cy="50" r="38" fill="none" stroke="url(#orb_az_df506_ring)" stroke-width="1"></circle>
+          <circle cx="50" cy="50" r="46" fill="none" stroke="url(#orb_az_df506_ring)" stroke-width="2.5" stroke-dasharray="70 20 10 30" stroke-linecap="round" opacity=".86"></circle>
+          <circle cx="50" cy="50" r="8" fill="#ffffff" opacity=".22" filter="blur(2px)"></circle>
+          <circle cx="50" cy="50" r="3" fill="#ffffff" opacity=".85"></circle></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M20.49 9A9 9 0 0 0 5.64 5.64M3.51 15a9 9 0 0 0 14.85 3.36"></path></symbol>
+  <symbol id="i-file-up" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="12" y2="12"></line><line x1="15" y1="15" x2="12" y2="12"></line></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></symbol>
+  <symbol id="i-smartphone" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></symbol>
+  <symbol id="i-radar" viewBox="0 0 24 24"><path d="M3 3v18h18"></path><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path><circle cx="12" cy="12" r="10"></circle></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></symbol>
+</svg>
+
+<!-- FLOATING TRIGGER -->
+<div class="orb" id="sumbus-trigger" title="Drag to Move · Click to Open">
+
+sümbüs
+
+ <span class="di-loader" aria-hidden="true">
+    <span class="di-ring"></span>
+    <span class="di-stroke"></span>
+    <span class="di-dots">
+      <i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i><i style="--i:5"></i><i style="--i:6"></i>
+   </span>
+  </span>
+
+ <svg class="ic-olg oorb" style="display:none; color:#fff"><use href="#i-shield"></use></svg>
+ </div> 
+
+<!-- SÜMBÜS INTERFACE -->
+<div id="sumbus-deck">
+  <div class="sidebar">
+    <div style="padding:24px;border-bottom:1px solid var(--glass-border);display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:40px;height:40px;border-radius:12px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;font-style:italic">S</div>
+        <div>
+          <h1 style="font-weight:900;font-size:20px;margin:0;letter-spacing:-1px">SÜMBÜS</h1>
+          <p style="font-size:8px;color:var(--accent);font-family:monospace;letter-spacing:0.2em;margin:0">Recursive Architecture</p>
+        </div>
+      </div>
+      <button onclick="recursiveLoop()" style="padding:8px;background:#1e293b;border:none;border-radius:8px;cursor:pointer">
+        <svg class="ic" style="color:#fff"><use href="#i-refresh"></use></svg>
+      </button>
+    </div>
+
+    <div style="display:flex;border-bottom:1px solid var(--glass-border);background:rgba(0,0,0,0.2)">
+      <button class="tab-btn active" onclick="showTab('build')">Build</button>
+      <button class="tab-btn" onclick="showTab('scan')">Spatial Scan</button>
+      <button class="tab-btn" onclick="showTab('code')">Code Editor</button>
+    </div>
+
+    <!-- BUILD PANEL -->
+    <div id="panel-build" class="panel active">
+      <section style="margin-bottom:24px">
+        <label style="font-size:10px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:12px">Base System</label>
+        <div style="background:rgba(255,255,255,0.05);border:1px dashed rgba(255,255,255,0.1);border-radius:12px;padding:16px;text-align:center;position:relative">
+          <input type="file" id="base-input" style="position:absolute;inset:0;opacity:0;cursor:pointer" accept=".html">
+          <svg class="ic" style="margin:0 auto 8px;color:var(--text-dim)"><use href="#i-file-up"></use></svg>
+          <p id="base-name" style="font-size:11px;color:var(--text-dim);margin:0">Drag &amp; Drop Base HTML</p>
+        </div>
+      </section>
+
+      <section>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <label style="font-size:10px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">Injection Layers</label>
+          <button onclick="addLayer()" style="font-size:10px;font-weight:900;color:var(--accent);background:none;border:none;cursor:pointer">+ ADD LAYER</button>
+        </div>
+        <div id="layers-list" style="display:flex;flex-direction:column;gap:12px"></div>
+      </section>
+    </div>
+
+    <!-- SCAN PANEL -->
+    <div id="panel-scan" class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+        <h2 style="font-size:14px;font-weight:700;margin:0">Collision Analyzer</h2>
+        <button onclick="runCollisionScan()" style="padding:6px 12px;background:var(--accent);border:none;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer">RUN SCANNER</button>
+      </div>
+      <div id="scan-results" style="display:flex;flex-direction:column;gap:12px">
+        <div style="text-align:center;padding:80px 0;opacity:0.3">
+          <svg class="ic-lg" style="margin:0 auto 16px"><use href="#i-radar"></use></svg>
+          <p style="font-size:12px;text-transform:uppercase;letter-spacing:1px">Aguardando Análise</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CODE EDITOR PANEL (Editable) -->
+    <div id="panel-code" class="panel" style="padding:0">
+      <div id="editor-container">
+        <div style="padding: 8px 12px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--glass-border); display: flex; justify-content: flex-end;">
+          <button onclick="applyCodeChanges()" style="padding: 4px 12px; background: var(--accent); border: none; border-radius: 6px; font-size: 10px; font-weight: 700; color: white; cursor: pointer;">APPLY CHANGES</button>
+        </div>
+        <textarea id="code-textarea"></textarea>
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div style="padding:24px;background:#000;border-top:1px solid var(--glass-border);display:flex;flex-direction:column;gap:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <button onclick="copyCode()" class="btn"><svg class="ic"><use href="#i-copy"></use></svg> COPY</button>
+        <button onclick="downloadCode()" class="btn"><svg class="ic"><use href="#i-download"></use></svg> DOWNLOAD</button>
+      </div>
+      <button onclick="toggleDeck()" class="btn primary" style="letter-spacing:1px">EXIT ARCHITECT</button>
+    </div>
+  </div>
+
+  <!-- PREVIEW AREA -->
+  <div class="preview-area" id="preview-area">
+    <div class="scan-line"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 8px">
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="display:flex;gap:6px">
+          <div style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div>
+          <div style="width:10px;height:10px;border-radius:50%;background:#f59e0b"></div>
+          <div style="width:10px;height:10px;border-radius:50%;background:#22c55e"></div>
+        </div>
+        <span style="font-size:9px;font-family:monospace;color:var(--text-dim);text-transform:uppercase" id="engine-status">SÜMBÜS Core: Idle</span>
+      </div>
+      <div style="display:flex;background:#0f172a;border-radius:8px;padding:4px;border:1px solid var(--glass-border)">
+        <button onclick="resizeFrame('100%')" style="padding:8px;background:none;border:none;cursor:pointer"><svg class="ic" style="width:14px"><use href="#i-monitor"></use></svg></button>
+        <button onclick="resizeFrame('390px')" style="padding:8px;background:none;border:none;cursor:pointer"><svg class="ic" style="width:14px"><use href="#i-smartphone"></use></svg></button>
+      </div>
+    </div>
+    <div style="flex:1;position:relative">
+      <iframe id="main-iframe" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+const Z_LEVELS = { BASE: 0, CONTENT: 100, WIDGET: 500, OVERLAY: 1000, SYSTEM: 5000 };
+let state = { baseHtml: '', layers: [], finalHtml: '' };
+
+// DRAG LOGIC
+const trigger = document.getElementById('sumbus-trigger');
+let isDragging = false, dragStart = { x: 0, y: 0 };
+trigger.onpointerdown = (e) => { isDragging = true; dragStart = { x: e.clientX - trigger.offsetLeft, y: e.clientY - trigger.offsetTop }; trigger.setPointerCapture(e.pointerId); };
+window.onpointermove = (e) => { if (!isDragging) return; trigger.style.left = `${e.clientX - dragStart.x}px`; trigger.style.top = `${e.clientY - dragStart.y}px`; trigger.style.bottom = 'auto'; };
+window.onpointerup = () => { isDragging = false; };
+trigger.onclick = (e) => { if (Math.abs(e.clientX - dragStart.x - trigger.offsetLeft) < 5) toggleDeck(); };
+
+function toggleDeck() {
+  const deck = document.getElementById('sumbus-deck');
+  const isActive = deck.classList.toggle('active');
+  if(isActive) updateEngine();
+}
+
+function showTab(tab) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`panel-${tab}`).classList.add('active');
+  event.target.classList.add('active');
+  if(tab === 'code') document.getElementById('code-textarea').value = state.finalHtml;
+}
+
+document.getElementById('base-input').onchange = async (e) => {
+  const file = e.target.files[0]; if(!file) return;
+  state.baseHtml = await file.text(); document.getElementById('base-name').innerText = file.name; updateEngine();
+};
+
+function addLayer() {
+  state.layers.push({ id: Date.now(), html: '', target: 'body', name: 'Untitled Layer' }); renderLayers();
+}
+
+function renderLayers() {
+  const list = document.getElementById('layers-list'); list.innerHTML = '';
+  state.layers.forEach(l => {
+    const el = document.createElement('div');
+    el.style.cssText = 'background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:12px';
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <input type="text" value="${l.name}" onchange="updateLayerProp(${l.id}, 'name', this.value)"
+               style="background:transparent;border:none;color:var(--accent);font-size:11px;font-weight:700">
+        <button onclick="removeLayer(${l.id})" style="background:none;border:none;cursor:pointer"><svg class="ic" style="width:14px;color:#64748b"><use href="#i-x"/></svg></button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <label style="flex:1;background:#0f172a;border:1px solid var(--glass-border);border-radius:8px;padding:6px;text-align:center;font-size:9px;font-weight:700;cursor:pointer">
+          LINK HTML <input type="file" class="hidden" accept=".html" onchange="loadLayerFile(${l.id}, this)" style="display:none">
+        </label>
+        <input type="text" placeholder="Target CSS" value="${l.target}" onchange="updateLayerProp(${l.id}, 'target', this.value)"
+               style="flex:1;background:rgba(0,0,0,0.4);border:none;border-radius:8px;padding:0 8px;font-size:10px;font-family:monospace;color:var(--text-dim)">
+      </div>`;
+    list.appendChild(el);
+  });
+}
+
+window.updateLayerProp = (id, prop, val) => { state.layers.find(x => x.id === id)[prop] = val; updateEngine(); };
+window.loadLayerFile = async (id, input) => { const file = input.files[0]; if(!file) return; const l = state.layers.find(x => x.id === id); l.html = await file.text(); l.name = file.name.split('.')[0]; renderLayers(); updateEngine(); };
+window.removeLayer = (id) => { state.layers = state.layers.filter(x => x.id!== id); renderLayers(); updateEngine(); };
+
+window.recursiveLoop = () => {
+  if(!state.finalHtml) return;
+  state.baseHtml = state.finalHtml; state.layers = [];
+  document.getElementById('base-name').innerText = "LOOP_LAYER_" + Date.now();
+  renderLayers(); updateEngine(); showTab('build');
+};
+
+function updateEngine() {
+  if(!state.baseHtml) return;
+  const parser = new DOMParser(); const doc = parser.parseFromString(state.baseHtml, 'text/html');
+  const zStyle = doc.createElement('style');
+  zStyle.textContent = `:root { --z-base: ${Z_LEVELS.BASE}; --z-content: ${Z_LEVELS.CONTENT}; --z-widget: ${Z_LEVELS.WIDGET}; --z-overlay: ${Z_LEVELS.OVERLAY}; --z-system: ${Z_LEVELS.SYSTEM}; }`;
+  doc.head.appendChild(zStyle);
+
+  state.layers.forEach(l => {
+    if(!l.html) return;
+    const lDoc = parser.parseFromString(l.html, 'text/html');
+    Array.from(lDoc.querySelectorAll('style, link[rel="stylesheet"]')).forEach(s => doc.head.appendChild(s.cloneNode(true)));
+    const target = doc.querySelector(l.target) || doc.body;
+    Array.from(lDoc.body.childNodes).forEach(n => target.appendChild(n.cloneNode(true)));
+    Array.from(lDoc.querySelectorAll('script')).forEach(s => { const ns = doc.createElement('script'); ns.textContent = s.textContent; doc.body.appendChild(ns); });
+  });
+
+  state.finalHtml = doc.documentElement.outerHTML;
+  document.getElementById('main-iframe').srcdoc = state.finalHtml;
+  document.getElementById('engine-status').innerText = 'Engine: Synchronized';
+  document.getElementById('code-textarea').value = state.finalHtml;
+}
+
+// Funções do Editor de HTML integrado
+window.applyCodeChanges = () => {
+  const textareaContent = document.getElementById('code-textarea').value;
+  state.baseHtml = textareaContent;
+  state.layers = []; // Consolida na base
+  state.finalHtml = textareaContent;
+  document.getElementById('main-iframe').srcdoc = state.finalHtml;
+  document.getElementById('engine-status').innerText = 'Engine: Editor Synced';
+};
+
+async function runCollisionScan() {
+  const area = document.getElementById('preview-area'); const iframe = document.getElementById('main-iframe');
+  area.classList.add('scanning'); document.getElementById('scan-results').innerHTML = '<div style="text-align:center;padding:40px;color:var(--accent)">VARRENDO...</div>';
+  await new Promise(r => setTimeout(r, 1200));
+  const frameDoc = iframe.contentDocument; const elements = Array.from(frameDoc.querySelectorAll('[id]')).filter(el => frameDoc.defaultView.getComputedStyle(el).position!== 'static');
+  const rects = elements.map(el => ({id: el.id, rect: el.getBoundingClientRect(), z: parseInt(frameDoc.defaultView.getComputedStyle(el).zIndex) || 0}));
+  const conflicts = [];
+  for (let i = 0; i < rects.length; i++) for (let j = i + 1; j < rects.length; j++) {
+    const a = rects[i], b = rects[j];
+    const overlap =!(a.rect.right < b.rect.left || a.rect.left > b.rect.right || a.rect.bottom < b.rect.top || a.rect.top > b.rect.bottom);
+    if(overlap) conflicts.push({a,b,level: a.z === b.z? 'CRITICAL' : 'WARNING'});
+  }
+  area.classList.remove('scanning'); renderScanResults(conflicts);
+}
+
+function renderScanResults(conflicts) {
+  const container = document.getElementById('scan-results'); container.innerHTML = '';
+  if(conflicts.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#22c55e;font-weight:700"><svg class="ic" style="margin:0 auto 8px"><use href="#i-check"/></svg>ÁREA LIMPA</div>';
+  } else {
+    conflicts.forEach(c => {
+      const div = document.createElement('div'); div.className = 'conflict-card';
+      div.innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:8px">
+        <span class="status-badge" style="background:${c.level==='CRITICAL'?'#ef4444':'#f59e0b'};color:#000">${c.level}</span></div>
+        <p style="font-size:11px;font-weight:700;margin:0">#${c.a.id} vs #${c.b.id}</p>`;
+      container.appendChild(div);
+    });
+  }
+}
+
+window.copyCode = async () => { await navigator.clipboard.writeText(state.finalHtml); event.target.innerText = 'COPIED!'; setTimeout(() => event.target.innerHTML = '<svg class="ic"><use href="#i-copy"/></svg> COPY', 1000); };
+window.downloadCode = () => { const blob = new Blob([state.finalHtml], {type: 'text/html'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'sumbus-system-final.html'; a.click(); };
+window.resizeFrame = (w) => document.getElementById('main-iframe').style.maxWidth = w;
+</script>
+
+
+<script>
+const Z_LEVELS = { BASE: 0, CONTENT: 100, WIDGET: 500, OVERLAY: 1000, SYSTEM: 5000 };
+let state = { baseHtml: '', layers: [], finalHtml: '' };
+
+// DRAG LOGIC
+const trigger = document.getElementById('sumbus-trigger');
+let isDragging = false, dragStart = { x: 0, y: 0 };
+trigger.onpointerdown = (e) => { isDragging = true; dragStart = { x: e.clientX - trigger.offsetLeft, y: e.clientY - trigger.offsetTop }; trigger.setPointerCapture(e.pointerId); };
+window.onpointermove = (e) => { if (!isDragging) return; trigger.style.left = `${e.clientX - dragStart.x}px`; trigger.style.top = `${e.clientY - dragStart.y}px`; trigger.style.bottom = 'auto'; };
+window.onpointerup = () => { isDragging = false; };
+trigger.onclick = (e) => { if (Math.abs(e.clientX - dragStart.x - trigger.offsetLeft) < 5) toggleDeck(); };
+
+function toggleDeck() {
+  const deck = document.getElementById('sumbus-deck');
+  const isActive = deck.classList.toggle('active');
+  if(isActive) updateEngine();
+}
+
+function showTab(tab) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`panel-${tab}`).classList.add('active');
+  event.target.classList.add('active');
+  if(tab === 'code') document.getElementById('code-textarea').value = state.finalHtml;
+}
+
+document.getElementById('base-input').onchange = async (e) => {
+  const file = e.target.files[0]; if(!file) return;
+  state.baseHtml = await file.text(); document.getElementById('base-name').innerText = file.name; updateEngine();
+};
+
+function addLayer() {
+  state.layers.push({ id: Date.now(), html: '', target: 'body', name: 'Untitled Layer' }); renderLayers();
+}
+
+function renderLayers() {
+  const list = document.getElementById('layers-list'); list.innerHTML = '';
+  state.layers.forEach(l => {
+    const el = document.createElement('div');
+    el.style.cssText = 'background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:12px';
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <input type="text" value="${l.name}" onchange="updateLayerProp(${l.id}, 'name', this.value)"
+               style="background:transparent;border:none;color:var(--accent);font-size:11px;font-weight:700">
+        <button onclick="removeLayer(${l.id})" style="background:none;border:none;cursor:pointer"><svg class="ic" style="width:14px;color:#64748b"><use href="#i-x"/></svg></button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <label style="flex:1;background:#0f172a;border:1px solid var(--glass-border);border-radius:8px;padding:6px;text-align:center;font-size:9px;font-weight:700;cursor:pointer">
+          LINK HTML <input type="file" class="hidden" accept=".html" onchange="loadLayerFile(${l.id}, this)" style="display:none">
+        </label>
+        <input type="text" placeholder="Target CSS" value="${l.target}" onchange="updateLayerProp(${l.id}, 'target', this.value)"
+               style="flex:1;background:rgba(0,0,0,0.4);border:none;border-radius:8px;padding:0 8px;font-size:10px;font-family:monospace;color:var(--text-dim)">
+      </div>`;
+    list.appendChild(el);
+  });
+}
+
+window.updateLayerProp = (id, prop, val) => { state.layers.find(x => x.id === id)[prop] = val; updateEngine(); };
+window.loadLayerFile = async (id, input) => { const file = input.files[0]; if(!file) return; const l = state.layers.find(x => x.id === id); l.html = await file.text(); l.name = file.name.split('.')[0]; renderLayers(); updateEngine(); };
+window.removeLayer = (id) => { state.layers = state.layers.filter(x => x.id!== id); renderLayers(); updateEngine(); };
+
+window.recursiveLoop = () => {
+  if(!state.finalHtml) return;
+  state.baseHtml = state.finalHtml; state.layers = [];
+  document.getElementById('base-name').innerText = "LOOP_LAYER_" + Date.now();
+  renderLayers(); updateEngine(); showTab('build');
+};
+
+function updateEngine() {
+  if(!state.baseHtml) return;
+  const parser = new DOMParser(); const doc = parser.parseFromString(state.baseHtml, 'text/html');
+  const zStyle = doc.createElement('style');
+  zStyle.textContent = `:root { --z-base: ${Z_LEVELS.BASE}; --z-content: ${Z_LEVELS.CONTENT}; --z-widget: ${Z_LEVELS.WIDGET}; --z-overlay: ${Z_LEVELS.OVERLAY}; --z-system: ${Z_LEVELS.SYSTEM}; }`;
+  doc.head.appendChild(zStyle);
+
+  state.layers.forEach(l => {
+    if(!l.html) return;
+    const lDoc = parser.parseFromString(l.html, 'text/html');
+    Array.from(lDoc.querySelectorAll('style, link[rel="stylesheet"]')).forEach(s => doc.head.appendChild(s.cloneNode(true)));
+    const target = doc.querySelector(l.target) || doc.body;
+    Array.from(lDoc.body.childNodes).forEach(n => target.appendChild(n.cloneNode(true)));
+    Array.from(lDoc.querySelectorAll('script')).forEach(s => { const ns = doc.createElement('script'); ns.textContent = s.textContent; doc.body.appendChild(ns); });
+  });
+
+  state.finalHtml = doc.documentElement.outerHTML;
+  document.getElementById('main-iframe').srcdoc = state.finalHtml;
+  document.getElementById('engine-status').innerText = 'Engine: Synchronized';
+  document.getElementById('code-textarea').value = state.finalHtml;
+}
+
+// Funções do Editor de HTML integrado
+window.applyCodeChanges = () => {
+  const textareaContent = document.getElementById('code-textarea').value;
+  state.baseHtml = textareaContent;
+  state.layers = []; // Consolida na base
+  state.finalHtml = textareaContent;
+  document.getElementById('main-iframe').srcdoc = state.finalHtml;
+  document.getElementById('engine-status').innerText = 'Engine: Editor Synced';
+};
+
+async function runCollisionScan() {
+  const area = document.getElementById('preview-area'); const iframe = document.getElementById('main-iframe');
+  area.classList.add('scanning'); document.getElementById('scan-results').innerHTML = '<div style="text-align:center;padding:40px;color:var(--accent)">VARRENDO...</div>';
+  await new Promise(r => setTimeout(r, 1200));
+  const frameDoc = iframe.contentDocument; const elements = Array.from(frameDoc.querySelectorAll('[id]')).filter(el => frameDoc.defaultView.getComputedStyle(el).position!== 'static');
+  const rects = elements.map(el => ({id: el.id, rect: el.getBoundingClientRect(), z: parseInt(frameDoc.defaultView.getComputedStyle(el).zIndex) || 0}));
+  const conflicts = [];
+  for (let i = 0; i < rects.length; i++) for (let j = i + 1; j < rects.length; j++) {
+    const a = rects[i], b = rects[j];
+    const overlap =!(a.rect.right < b.rect.left || a.rect.left > b.rect.right || a.rect.bottom < b.rect.top || a.rect.top > b.rect.bottom);
+    if(overlap) conflicts.push({a,b,level: a.z === b.z? 'CRITICAL' : 'WARNING'});
+  }
+  area.classList.remove('scanning'); renderScanResults(conflicts);
+}
+
+function renderScanResults(conflicts) {
+  const container = document.getElementById('scan-results'); container.innerHTML = '';
+  if(conflicts.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#22c55e;font-weight:700"><svg class="ic" style="margin:0 auto 8px"><use href="#i-check"/></svg>ÁREA LIMPA</div>';
+  } else {
+    conflicts.forEach(c => {
+      const div = document.createElement('div'); div.className = 'conflict-card';
+      div.innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:8px">
+        <span class="status-badge" style="background:${c.level==='CRITICAL'?'#ef4444':'#f59e0b'};color:#000">${c.level}</span></div>
+        <p style="font-size:11px;font-weight:700;margin:0">#${c.a.id} vs #${c.b.id}</p>`;
+      container.appendChild(div);
+    });
+  }
+}
+
+window.copyCode = async () => { await navigator.clipboard.writeText(state.finalHtml); event.target.innerText = 'COPIED!'; setTimeout(() => event.target.innerHTML = '<svg class="ic"><use href="#i-copy"/></svg> COPY', 1000); };
+window.downloadCode = () => { const blob = new Blob([state.finalHtml], {type: 'text/html'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'sumbus-system-final.html'; a.click(); };
+window.resizeFrame = (w) => document.getElementById('main-iframe').style.maxWidth = w;
+</script></body></html>
