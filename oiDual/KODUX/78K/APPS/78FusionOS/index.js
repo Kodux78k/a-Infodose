@@ -1,4 +1,56 @@
-<!DOCTYPE html>
+(function(bundle,s='#inject-here'){
+const p=new DOMParser();
+const c=p.parseFromString(
+bundle,
+'text/html'
+);
+const t=
+document.querySelector(s)
+||document.body;
+// CSS
+Array.from(
+c.querySelectorAll('style')
+)
+.forEach(style=>{
+const n=
+document.createElement('style');
+n.textContent=
+style.textContent;
+document.head.appendChild(n);
+});
+// HTML
+const f=
+document.createDocumentFragment();
+Array.from(
+c.body.childNodes
+)
+.forEach(node=>{
+if(node.nodeName!=='SCRIPT'){
+f.appendChild(
+document.importNode(node,true)
+);
+}
+});
+t.appendChild(f);
+// JS
+Array.from(
+c.querySelectorAll('script')
+)
+.forEach(x=>{
+const n=
+document.createElement('script');
+for(
+const a of x.attributes
+)
+n.setAttribute(
+a.name,
+a.value
+);
+n.textContent=
+x.textContent;
+document.body.appendChild(n);
+});
+})(`<!DOCTYPE html>
 <html lang="pt-BR"><head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -412,9 +464,9 @@
           <div class="v-glass p-4" style="border-color:rgba(255,215,0,.1);text-align:center">
             <div style="font-family:monospace;font-size:9px;color:rgba(255,215,0,.6);letter-spacing:.1em;margin-bottom:8px">△ TETRAEDRO VIVO</div>
             <pre style="font-size:9px;color:rgba(150,200,255,.6);background:transparent;line-height:1.8;text-align:center">     UNO (síntese)
-        /\
-       /  \
-      / Δ  \
+        /\\
+       /  \\
+      / Δ  \\
   FONTE ── SISTEMA
 (usuário) (KOBLLUX)</pre>
             <div style="font-size:9px;color:rgba(255,215,0,.5);margin-top:8px;line-height:1.8">
@@ -456,4 +508,4 @@
 <script src="https://infodose.com.br/oiDual/KODUX/78K/APPS/78FusionOS/js/modules/78FusionOS.js"></script>
 
 </body>
-</html>
+</html>`);
