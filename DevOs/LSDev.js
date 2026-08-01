@@ -1,19 +1,53 @@
-(function(h,s='header'){
-const p=new DOMParser(),
-c=p.parseFromString(h,'text/html'),
-f=document.createDocumentFragment(),
-t=document.querySelector(s)||document.body;
-Array.from(c.body.childNodes)
-.forEach(n=>f.appendChild(
-document.importNode(n,true)
-));
+(function(bundle,s='main-header'){
+const p=new DOMParser();
+const c=p.parseFromString(
+bundle,
+'text/html'
+);
+const t=
+document.querySelector(s)
+||document.body;
+// CSS
+Array.from(
+c.querySelectorAll('style')
+)
+.forEach(style=>{
+const n=
+document.createElement('style');
+n.textContent=
+style.textContent;
+document.head.appendChild(n);
+});
+// HTML
+const f=
+document.createDocumentFragment();
+Array.from(
+c.body.childNodes
+)
+.forEach(node=>{
+if(node.nodeName!=='SCRIPT'){
+f.appendChild(
+document.importNode(node,true)
+);
+}
+});
 t.appendChild(f);
-Array.from(c.querySelectorAll('script'))
+// JS
+Array.from(
+c.querySelectorAll('script')
+)
 .forEach(x=>{
-const n=document.createElement('script');
-for(const a of x.attributes)
-n.setAttribute(a.name,a.value);
-n.textContent=x.textContent;
+const n=
+document.createElement('script');
+for(
+const a of x.attributes
+)
+n.setAttribute(
+a.name,
+a.value
+);
+n.textContent=
+x.textContent;
 document.body.appendChild(n);
 });
 })(`<!DOCTYPE html>
@@ -962,9 +996,9 @@ document.body.appendChild(n);
       return text
         .toLowerCase()
         .normalize('NFD')
-        .replace(/[\\\\u0300-\\\\u036f]/g, '')
-        .replace(/[^a-z0-9\\\\s]/g, ' ')
-        .split(/\\\\s+/)
+        .replace(/[\\u0300-\\u036f]/g, '')
+        .replace(/[^a-z0-9\\s]/g, ' ')
+        .split(/\\s+/)
         .filter(w => w.length > 1);
     },
 
@@ -1036,9 +1070,9 @@ document.body.appendChild(n);
       if (p && typeof p === 'object') return 'json[object]';
       return 'json[' + (typeof p) + ']';
     }
-    if (/^data:image\\\\//i.test(v) || /\\\\.(png|jpe?g|gif|webp|svg)(\\\\?|$)/i.test(v)) return 'image';
+    if (/^data:image\\//i.test(v) || /\\.(png|jpe?g|gif|webp|svg)(\\?|$)/i.test(v)) return 'image';
     if (/^(true|false|1|0)$/i.test(v)) return 'boolean-like';
-    if (/^https?:\\\\/\\\\//i.test(v)) return 'url';
+    if (/^https?:\\/\\//i.test(v)) return 'url';
     if (/^data:/i.test(v)) return 'data-url';
     return 'string';
   }
@@ -1119,7 +1153,7 @@ document.body.appendChild(n);
     for (const [prefix, keys] of Object.entries(groups)) {
       const div = document.createElement('div');
       div.className = 'group-stat';
-      div.innerHTML = \\\`<div class="count">\\\${keys.length}</div><div class="label">\\\${prefix}</div>\\\`;
+      div.innerHTML = \`<div class="count">\${keys.length}</div><div class="label">\${prefix}</div>\`;
       container.appendChild(div);
     }
     if (Object.keys(groups).length === 0) {
@@ -1147,21 +1181,21 @@ document.body.appendChild(n);
       const val = localStorage.getItem(key) || '';
       const card = document.createElement('div');
       card.className = 'card-item';
-      card.innerHTML = \\\`
-        <div class="title">\\\${key}</div>
-        <div class="meta">\\\${val.length > 60 ? val.slice(0, 60) + '…' : val}</div>
-        <div class="preview">\\\${val.length > 120 ? val.slice(0, 120) + '…' : val}</div>
+      card.innerHTML = \`
+        <div class="title">\${key}</div>
+        <div class="meta">\${val.length > 60 ? val.slice(0, 60) + '…' : val}</div>
+        <div class="preview">\${val.length > 120 ? val.slice(0, 120) + '…' : val}</div>
         <div class="actions">
-          <button data-action="view" data-key="\\\${key}">👁️ Ver</button>
-          <button data-action="copy" data-key="\\\${key}">📋 Copiar</button>
+          <button data-action="view" data-key="\${key}">👁️ Ver</button>
+          <button data-action="copy" data-key="\${key}">📋 Copiar</button>
         </div>
-      \\\`;
+      \`;
       container.appendChild(card);
     }
     container.querySelectorAll('[data-action="view"]').forEach(btn => {
       btn.addEventListener('click', () => {
         const k = btn.dataset.key;
-        alert(\\\`🔍 \\\${k}\\\\n\\\\n\\\${localStorage.getItem(k) || ''}\\\`);
+        alert(\`🔍 \${k}\\n\\n\${localStorage.getItem(k) || ''}\`);
       });
     });
     container.querySelectorAll('[data-action="copy"]').forEach(btn => {
@@ -1208,10 +1242,10 @@ document.body.appendChild(n);
       head.className = 'raw-head';
 
       const left = document.createElement('div');
-      left.innerHTML = \\\`
-        <div class="raw-key">\\\${key}\\\${dis.has(key) ? ' <span class="raw-type">(desativado)</span>' : ''}</div>
-        <div class="raw-type">\\\${inferType(val)} · \\\${prettyBytes((val || '').length)}</div>
-      \\\`;
+      left.innerHTML = \`
+        <div class="raw-key">\${key}\${dis.has(key) ? ' <span class="raw-type">(desativado)</span>' : ''}</div>
+        <div class="raw-type">\${inferType(val)} · \${prettyBytes((val || '').length)}</div>
+      \`;
 
       const ctr = document.createElement('div');
       ctr.className = 'raw-ctr';
@@ -1225,7 +1259,7 @@ document.body.appendChild(n);
       bEdit.className = 'raw-btn';
       bEdit.textContent = '✎ Editar';
       bEdit.addEventListener('click', () => {
-        const next = prompt(\\\`Editar valor de\\\\n\\\${key}\\\`, val ?? '');
+        const next = prompt(\`Editar valor de\\n\${key}\`, val ?? '');
         if (next == null) return;
         MemoryCore.set(key, String(next));
         renderRaw();
@@ -1294,13 +1328,13 @@ document.body.appendChild(n);
       const on = !dis.has(p.key);
       const item = document.createElement('div');
       item.className = 'preset-item';
-      item.innerHTML = \\\`
+      item.innerHTML = \`
         <div class="info">
-          <div class="label">\\\${p.label}</div>
-          <div class="key">\\\${p.key}</div>
+          <div class="label">\${p.label}</div>
+          <div class="key">\${p.key}</div>
         </div>
-        <div class="switch \\\${on ? 'on' : ''}" data-key="\\\${p.key}"></div>
-      \\\`;
+        <div class="switch \${on ? 'on' : ''}" data-key="\${p.key}"></div>
+      \`;
       const sw = item.querySelector('.switch');
       sw.addEventListener('click', () => toggleDisabled(p.key));
       grid.appendChild(item);
@@ -1326,21 +1360,21 @@ document.body.appendChild(n);
     if (!query.trim()) { resultsContainer.innerHTML = ''; return; }
     const results = MemoryCore.search(query);
     if (results.length === 0) {
-      resultsContainer.innerHTML = \\\`<div style="color:#6a7a92; text-align:center; padding:20px;">Nenhum resultado para "\\\${query}"</div>\\\`;
+      resultsContainer.innerHTML = \`<div style="color:#6a7a92; text-align:center; padding:20px;">Nenhum resultado para "\${query}"</div>\`;
       return;
     }
     let html = '';
     for (const item of results) {
       const scorePct = Math.round(item.score * 100);
-      html += \\\`
+      html += \`
         <div class="search-result-item">
           <div>
-            <div class="key">\\\${item.key}</div>
-            <div class="value-preview">\\\${item.value.length > 100 ? item.value.slice(0, 100) + '…' : item.value}</div>
+            <div class="key">\${item.key}</div>
+            <div class="value-preview">\${item.value.length > 100 ? item.value.slice(0, 100) + '…' : item.value}</div>
           </div>
-          <div class="score">\\\${scorePct}% relevância</div>
+          <div class="score">\${scorePct}% relevância</div>
         </div>
-      \\\`;
+      \`;
     }
     resultsContainer.innerHTML = html;
   }
@@ -1551,7 +1585,7 @@ const KDevPanel = {
 
   updateVar(varName, value) {
     document.documentElement.style.setProperty(varName, value);
-    const displaySpan = document.getElementById(\\\`val\\\${varName}\\\`);
+    const displaySpan = document.getElementById(\`val\${varName}\`);
     if (displaySpan) displaySpan.innerText = value;
   },
 
@@ -1583,26 +1617,26 @@ const KDevPanel = {
       const bgClass = res.isKodux ? 'kdev-card--kodux' : 'kdev-card--normal';
       const badgeClass = isCSS ? 'kdev-badge--css' : 'kdev-badge--js';
       const statusClass = !res.active ? 'kdev-card--disabled' : '';
-      const shieldSvg = \\\`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="kdev-icon kdev-icon-sm" style="display:inline; padding-bottom:1px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>\\\`;
-      const trashSvg = \\\`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="kdev-icon kdev-icon-sm"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>\\\`;
-      const html = \\\`
-        <div class="kdev-card \\\${bgClass} \\\${statusClass}" id="res-card-\\\${i}">
+      const shieldSvg = \`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="kdev-icon kdev-icon-sm" style="display:inline; padding-bottom:1px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>\`;
+      const trashSvg = \`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="kdev-icon kdev-icon-sm"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>\`;
+      const html = \`
+        <div class="kdev-card \${bgClass} \${statusClass}" id="res-card-\${i}">
           <div class="kdev-card-top">
             <div class="kdev-badges">
-              <span class="kdev-badge \\\${badgeClass}">\\\${res.type}</span>
-              \\\${res.isKodux ? \\\`<span class="kdev-badge-kodux">\\\${shieldSvg} Kodux</span>\\\` : ''}
+              <span class="kdev-badge \${badgeClass}">\${res.type}</span>
+              \${res.isKodux ? \`<span class="kdev-badge-kodux">\${shieldSvg} Kodux</span>\` : ''}
             </div>
             <label class="kdev-toggle">
-              <input type="checkbox" class="kdev-toggle-input" \\\${res.active ? 'checked' : ''} onchange="KDevPanel.toggleResource(\\\${i}, this.checked)">
+              <input type="checkbox" class="kdev-toggle-input" \${res.active ? 'checked' : ''} onchange="KDevPanel.toggleResource(\${i}, this.checked)">
               <div class="kdev-toggle-bg"></div>
             </label>
           </div>
           <div class="kdev-card-bottom">
-            <input type="text" value="\\\${res.url}" onchange="KDevPanel.updateUrl(\\\${i}, this.value)" class="kdev-res-input kdev-font-mono">
-            <button onclick="KDevPanel.deleteResource(\\\${i})" class="kdev-delete" title="Remover Tag">\\\${trashSvg}</button>
+            <input type="text" value="\${res.url}" onchange="KDevPanel.updateUrl(\${i}, this.value)" class="kdev-res-input kdev-font-mono">
+            <button onclick="KDevPanel.deleteResource(\${i})" class="kdev-delete" title="Remover Tag">\${trashSvg}</button>
           </div>
         </div>
-      \\\`;
+      \`;
       container.insertAdjacentHTML('beforeend', html);
     });
   },
@@ -1625,7 +1659,7 @@ const KDevPanel = {
         res.el = newScript;
       }
     }
-    const card = document.getElementById(\\\`res-card-\\\${i}\\\`);
+    const card = document.getElementById(\`res-card-\${i}\`);
     if (isActive) card.classList.remove('kdev-card--disabled');
     else card.classList.add('kdev-card--disabled');
   },
@@ -1690,17 +1724,17 @@ const KDevPanel = {
     const computedBg = document.documentElement.style.getPropertyValue('--bg');
     if (computedBg) {
       const styleTag = document.createElement('style');
-      styleTag.innerHTML = \\\`
+      styleTag.innerHTML = \`
         :root {
-          --bg: \\\${document.documentElement.style.getPropertyValue('--bg')};
-          --bg-dark: \\\${document.documentElement.style.getPropertyValue('--bg-dark')};
-          --active-color: \\\${document.documentElement.style.getPropertyValue('--active-color')};
+          --bg: \${document.documentElement.style.getPropertyValue('--bg')};
+          --bg-dark: \${document.documentElement.style.getPropertyValue('--bg-dark')};
+          --active-color: \${document.documentElement.style.getPropertyValue('--active-color')};
         }
-      \\\`;
+      \`;
       cloneDoc.querySelector('head').appendChild(styleTag);
     }
 
-    const htmlContent = '<!DOCTYPE html>\\\\n' + cloneDoc.outerHTML;
+    const htmlContent = '<!DOCTYPE html>\\n' + cloneDoc.outerHTML;
     const blob = new Blob([htmlContent], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1719,4 +1753,5 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 </body>
-</html>`);
+</html>`); 
+
