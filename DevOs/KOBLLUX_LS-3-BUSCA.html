@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KOBLLUX Explorer + Baú Lite</title>
+  <style>
+    /* ===== RESET E BASE ===== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #0b0d17;
+      color: #f0f4fc;
+      min-height: 100vh;
+    }
+    button {
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: inherit;
+      font: inherit;
+    }
+
+    /* ===== BOTÃO FLUTUANTE (Baú) ===== */
+    #bau-fab {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff52e5, #00c5e5);
+      color: #fff;
+      font-size: 28px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+      z-index: 2147483647;
+      display: grid;
+      place-items: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    #bau-fab:hover {
+      transform: scale(1.08);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+    }
+    #bau-fab:active {
+      transform: scale(0.95);
+    }
+
+    /* ===== MODAL ===== */
+    .bau-modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(12px);
+      z-index: 2147483646;
+      padding: 16px;
+    }
+    .bau-modal.open {
+      display: flex;
+    }
+    .bau-panel {
+      width: min(1200px, 96vw);
+      max-height: 92vh;
+      background: rgba(14, 17, 30, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: 24px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .bau-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      flex-wrap: wrap;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .bau-panel-header .logo {
+      font-weight: 800;
+      font-size: 1.2rem;
+      background: linear-gradient(135deg, #ff52e5, #00c5e5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .bau-panel-header .logo span {
+      font-weight: 300;
+      -webkit-text-fill-color: #8a9bb5;
+    }
+    .bau-panel-header .actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .bau-panel-header .actions button {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #c8d6f0;
+      padding: 6px 14px;
+      border-radius: 40px;
+      font-size: 0.8rem;
+      transition: 0.2s;
+    }
+    .bau-panel-header .actions button:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+    .bau-panel-header .close-btn {
+      background: rgba(255, 70, 70, 0.15) !important;
+      border-color: rgba(255, 70, 70, 0.2) !important;
+    }
+    .bau-panel-header .close-btn:hover {
+      background: rgba(255, 70, 70, 0.25) !important;
+    }
+
+    /* ===== NAVEGAÇÃO POR ABAS ===== */
+    .bau-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 8px 24px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(0, 0, 0, 0.15);
+      flex-wrap: wrap;
+    }
+    .bau-tabs button {
+      padding: 10px 18px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #8a9bb5;
+      border-radius: 12px 12px 0 0;
+      transition: 0.15s;
+      border-bottom: 2px solid transparent;
+    }
+    .bau-tabs button:hover {
+      color: #d6e0f0;
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .bau-tabs button.active {
+      color: #fff;
+      border-bottom-color: #7b6cf6;
+      background: rgba(123, 108, 246, 0.08);
+    }
+
+    /* ===== CONTEÚDO DAS ABAS ===== */
+    .bau-tab-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+      max-height: calc(92vh - 130px);
+    }
+    .bau-tab-pane {
+      display: none;
+      animation: fadeIn 0.2s;
+    }
+    .bau-tab-pane.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ===== DASHBOARD ===== */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-card .value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #ff52e5, #00c5e5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .stat-card .label {
+      font-size: 0.8rem;
+      color: #8a9bb5;
+      margin-top: 4px;
+    }
+    .group-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .group-stat {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+    .group-stat .count {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #b1c8ff;
+    }
+    .group-stat .label {
+      font-size: 0.75rem;
+      color: #6a7a92;
+    }
+
+    /* ===== CARDS ===== */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .card-item {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 14px;
+      transition: 0.15s;
+    }
+    .card-item:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+    .card-item .title {
+      font-weight: 600;
+      color: #d6e0f0;
+      word-break: break-word;
+    }
+    .card-item .meta {
+      font-size: 0.7rem;
+      color: #6a7a92;
+      margin: 4px 0 8px;
+    }
+    .card-item .preview {
+      font-size: 0.8rem;
+      color: #b0c0d8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-item .actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .card-item .actions button {
+      background: rgba(255, 255, 255, 0.06);
+      padding: 4px 12px;
+      border-radius: 30px;
+      font-size: 0.7rem;
+      color: #b0c0d8;
+      transition: 0.15s;
+    }
+    .card-item .actions button:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+
+    /* ===== BUSCA ===== */
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .search-box input {
+      flex: 1;
+      padding: 12px 18px;
+      border-radius: 40px;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      background: rgba(0, 0, 0, 0.4);
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      transition: 0.2s;
+    }
+    .search-box input:focus {
+      border-color: #7b6cf6;
+      box-shadow: 0 0 0 4px rgba(123, 108, 246, 0.15);
+    }
+    .search-box input::placeholder {
+      color: #5a6a82;
+    }
+    .search-result-item {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .search-result-item .key {
+      font-weight: 600;
+      color: #c8d6f0;
+    }
+    .search-result-item .score {
+      font-size: 0.75rem;
+      color: #6a7a92;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 2px 12px;
+      border-radius: 40px;
+    }
+    .search-result-item .value-preview {
+      font-size: 0.8rem;
+      color: #8a9bb5;
+      flex-basis: 100%;
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 90%;
+    }
+
+    /* ===== FERRAMENTAS (presets, export, import) ===== */
+    .tools-section {
+      display: grid;
+      gap: 16px;
+    }
+    .tools-section details {
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .tools-section details summary {
+      font-weight: 600;
+      color: #c8d6f0;
+      cursor: pointer;
+    }
+    .presets-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .preset-item {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .preset-item .info {
+      flex: 1;
+    }
+    .preset-item .info .label {
+      font-weight: 500;
+      font-size: 0.85rem;
+    }
+    .preset-item .info .key {
+      font-size: 0.7rem;
+      color: #6a7a92;
+    }
+    .preset-item .switch {
+      width: 44px;
+      height: 26px;
+      border-radius: 40px;
+      background: rgba(255, 255, 255, 0.12);
+      position: relative;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .preset-item .switch.on {
+      background: rgba(25, 226, 123, 0.3);
+    }
+    .preset-item .switch::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      transition: 0.2s;
+    }
+    .preset-item .switch.on::after {
+      left: 21px;
+    }
+    .tools-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .tools-actions button {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #c8d6f0;
+      padding: 6px 14px;
+      border-radius: 40px;
+      font-size: 0.8rem;
+    }
+    .tools-actions button:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    /* ===== RESPONSIVO ===== */
+    @media (max-width: 700px) {
+      .bau-panel-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .bau-tabs {
+        padding: 8px 12px 0;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+      }
+      .bau-tabs button {
+        padding: 8px 12px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+      }
+      .bau-tab-content {
+        padding: 16px;
+      }
+      .stat-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .card-grid {
+        grid-template-columns: 1fr;
+      }
+      #bau-fab {
+        width: 52px;
+        height: 52px;
+        font-size: 24px;
+        bottom: 16px;
+        right: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== BOTÃO FLUTUANTE ===== -->
+  <button id="bau-fab" aria-label="Abrir Baú" title="Abrir Baú">📦</button>
+
+  <!-- ===== MODAL ===== -->
+  <div id="bau-modal" class="bau-modal" aria-hidden="true">
+    <div class="bau-panel">
+      <!-- Cabeçalho -->
+      <div class="bau-panel-header">
+        <div class="logo">KOBLLUX <span>Explorer</span></div>
+        <div class="actions">
+          <button id="bau-refresh" title="Atualizar">⟳</button>
+          <button id="bau-close" class="close-btn" title="Fechar">✕</button>
+        </div>
+      </div>
+
+      <!-- Abas -->
+      <div class="bau-tabs" id="bau-tabs">
+        <button class="active" data-tab="dashboard">📊 Dashboard</button>
+        <button data-tab="library">📚 Biblioteca</button>
+        <button data-tab="drafts">📝 Rascunhos</button>
+        <button data-tab="vault">🗄️ Vault</button>
+        <button data-tab="fractals">🌀 Fractais</button>
+        <button data-tab="archetypes">🧙 Arquétipos</button>
+        <button data-tab="search">🔍 Busca</button>
+        <button data-tab="tools">⚙️ Ferramentas</button>
+      </div>
+
+      <!-- Conteúdo -->
+      <div class="bau-tab-content" id="bau-tab-content">
+        <!-- DASHBOARD -->
+        <div id="tab-dashboard" class="bau-tab-pane active">
+          <h2 style="font-weight:600; font-size:1.4rem; margin-bottom:12px;">Painel</h2>
+          <div class="stat-grid" id="dashboardStats">
+            <div class="stat-card"><div class="value" id="statUser">—</div><div class="label">Usuário</div></div>
+            <div class="stat-card"><div class="value" id="statAssistant">—</div><div class="label">Assistente</div></div>
+            <div class="stat-card"><div class="value" id="statTotal">—</div><div class="label">Total de itens</div></div>
+            <div class="stat-card"><div class="value" id="statSize">—</div><div class="label">Espaço usado</div></div>
+          </div>
+          <h3 style="font-weight:500; font-size:1rem; color:#b0c0d8; margin-top:8px;">Agrupamento automático</h3>
+          <div class="group-stats" id="groupStats"></div>
+        </div>
+
+        <!-- BIBLIOTECA -->
+        <div id="tab-library" class="bau-tab-pane">
+          <h2 style="font-weight:600; font-size:1.4rem; margin-bottom:8px;">📚 Biblioteca</h2>
+          <div class="card-grid" id="libraryGrid"></div>
+        </div>
+
+        <!-- RASCUNHOS -->
+        <div id="tab-drafts" class="bau-tab-pane">
+          <h2 style="font-weight:600; font-size:1.4rem; margin-bottom:8px;">📝 Rascunhos</h2>
+          <div class="card-grid" id="draftsGrid"></div>
+        </div>
+
+        <!-- VAULT -->
+        <div id="tab-vault" class="bau-tab-pane">
+          <h2 style="font-weight:600; font-size:1.4rem; margin-bottom:8px;">🗄️ Vault</h2>
+          <div class="card-grid" id="vaultGrid"></div>
+        </div>
+
+        <!-- FRACTAIS -->
+        <div id="tab-fractals" class="bau-tab-pane">
+          <h2 style="font-weight:600; font-size:1.4rem; margin-bottom:8px;">🌀 Fractais</h2>
+          <div class="card-grid" id="fractalsGrid"></div>
+        </div>
+
+        <!-- ARQUÉTIPOS -->
+        <div id="tab-archetypes" class="bau-tab-pane">
+          <h2 style="font-weight:600; font-size:1.4rem; margin-bottom:8px;">🧙 Arquétipos</h2>
+          <div class="card-grid" id="archetypesGrid"></div>
+        </div>
+
+        <!-- BUSCA SEMÂNTICA -->
+        <div id="tab-search" class="bau-tab-pane">
+          <h2 style="font-weight:600; font-size:1.4rem; margin-bottom:12px;">🔍 Busca Semântica</h2>
+          <div class="search-box">
+            <input type="text" id="semanticSearchInput" placeholder="Ex: 'persona', 'ciclo 369', 'configuração'...">
+          </div>
+          <div id="searchResultsContainer"></div>
+        </div>
+
+        <!-- FERRAMENTAS (presets, export, import) -->
+        <div id="tab-tools" class="bau-tab-pane">
+          <h2 style="font-weight:600; font-size:1.4rem; margin-bottom:12px;">⚙️ Ferramentas</h2>
+          <div class="tools-section">
+            <details open>
+              <summary>Presets (ON/OFF global)</summary>
+              <div class="presets-grid" id="presetsGrid"></div>
+            </details>
+            <details open>
+              <summary>Gerenciamento</summary>
+              <div class="tools-actions">
+                <button id="bau-export">⬆ Exportar tudo</button>
+                <label for="bau-import-file" style="display:inline-block;">
+                  <button type="button">⬇ Importar</button>
+                </label>
+                <input id="bau-import-file" type="file" accept="application/json" hidden>
+                <button id="bau-clear-disabled">⌫ Limpar desativados</button>
+              </div>
+            </details>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!--  SCRIPTS                                                      -->
+  <!-- ============================================================ -->
+  <script>
+    (function() {
+      'use strict';
+
+      // ============================================================
+      //  CONFIGURAÇÕES
+      // ============================================================
+      const LS_KEYS = {
+        HTML: 'lastHTML',
+        USER_SYMBOL: 'userSymbol',
+        SKS: 'di_apiKey',
+        SK_ACTIVE: 'openrouter_active'
+      };
+      const DISABLED_KEY = 'infodose:presets.disabled';
+      const PRESETS = [
+        { key: 'di_userName', label: 'Usuário' },
+        { key: 'di_assistantName', label: 'Assistente' },
+        { key: 'di_apiKey', label: 'Chave OpenRouter (legacy)' },
+        { key: 'di_modelName', label: 'Modelo IA' },
+        { key: 'uno:theme', label: 'Tema' },
+        { key: 'uno:bg', label: 'Fundo Custom' },
+        { key: 'infodose:cssCustom', label: 'CSS Custom' },
+        { key: 'infodose:voices', label: 'Vozes Arquetípicas' }
+      ];
+
+      // ============================================================
+      //  MEMORY CORE (índice invertido)
+      // ============================================================
+      const MemoryCore = {
+        cache: new Map(),
+        invertedIndex: new Map(),
+        ready: false,
+
+        load() {
+          this.cache.clear();
+          this.invertedIndex.clear();
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            const val = localStorage.getItem(key) || '';
+            this.cache.set(key, val);
+            this._indexDocument(key, val);
+          }
+          this.ready = true;
+        },
+
+        _indexDocument(key, text) {
+          const words = this._tokenize(text);
+          for (const w of words) {
+            if (!this.invertedIndex.has(w)) {
+              this.invertedIndex.set(w, new Set());
+            }
+            this.invertedIndex.get(w).add(key);
+          }
+        },
+
+        _tokenize(text) {
+          return text
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9\s]/g, ' ')
+            .split(/\s+/)
+            .filter(w => w.length > 1);
+        },
+
+        search(query) {
+          if (!this.ready) this.load();
+          if (!query || query.trim() === '') return [];
+          const terms = this._tokenize(query);
+          if (terms.length === 0) return [];
+          const scores = new Map();
+          for (const term of terms) {
+            const docs = this.invertedIndex.get(term);
+            if (docs) {
+              for (const key of docs) {
+                scores.set(key, (scores.get(key) || 0) + 1);
+              }
+            }
+          }
+          return Array.from(scores.entries())
+            .sort((a, b) => b[1] - a[1])
+            .map(([key, score]) => ({
+              key,
+              value: this.cache.get(key) || '',
+              score: score / terms.length
+            }));
+        },
+
+        set(key, value) {
+          localStorage.setItem(key, String(value));
+          this.cache.set(key, String(value));
+          this.invertedIndex.forEach((set, word) => {
+            if (set.has(key)) set.delete(key);
+          });
+          this._indexDocument(key, String(value));
+        },
+
+        delete(key) {
+          localStorage.removeItem(key);
+          this.cache.delete(key);
+          this.invertedIndex.forEach((set) => set.delete(key));
+        },
+
+        reload() {
+          this.load();
+        }
+      };
+      window.MemoryCore = MemoryCore;
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => MemoryCore.load());
+      } else {
+        MemoryCore.load();
+      }
+
+      // ============================================================
+      //  UTILITÁRIOS GERAIS
+      // ============================================================
+      const $ = (sel, ctx = document) => ctx.querySelector(sel);
+      const $$ = (sel, ctx = document) => ctx.querySelectorAll(sel);
+
+      function prettyBytes(n) {
+        if (!Number.isFinite(n) || n <= 0) return '0 B';
+        const u = ['B', 'KB', 'MB', 'GB'];
+        let i = 0;
+        while (n >= 1024 && i < u.length - 1) {
+          n /= 1024;
+          i++;
+        }
+        return n.toFixed(2) + ' ' + u[i];
+      }
+
+      function saveFile(name, str) {
+        const blob = new Blob([str], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 800);
+      }
+
+      function disabledSet() {
+        try { return new Set(JSON.parse(localStorage.getItem(DISABLED_KEY) || '[]')); }
+        catch { return new Set(); }
+      }
+      function saveDisabled(set) {
+        localStorage.setItem(DISABLED_KEY, JSON.stringify(Array.from(set)));
+      }
+
+      // ============================================================
+      //  GERENCIAMENTO DE GRUPOS (automático)
+      // ============================================================
+      function getGroups() {
+        const groups = {};
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key === DISABLED_KEY) continue;
+          // Extrai prefixo até ":" ou usa "outros"
+          let prefix = 'outros';
+          const idx = key.indexOf(':');
+          if (idx > 0) {
+            prefix = key.substring(0, idx);
+          }
+          if (!groups[prefix]) groups[prefix] = [];
+          groups[prefix].push(key);
+        }
+        // Ordena por tamanho (maior primeiro)
+        const sorted = Object.keys(groups).sort((a, b) => groups[b].length - groups[a].length);
+        const result = {};
+        for (const g of sorted) {
+          result[g] = groups[g];
+        }
+        return result;
+      }
+
+      // ============================================================
+      //  RENDERIZAÇÃO DASHBOARD
+      // ============================================================
+      function renderDashboard() {
+        const user = localStorage.getItem('di_userName') || '—';
+        const assistant = localStorage.getItem('di_assistantName') || '—';
+        const total = localStorage.length;
+        let size = 0;
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          size += (k + (localStorage.getItem(k) || '')).length;
+        }
+        document.getElementById('statUser').textContent = user;
+        document.getElementById('statAssistant').textContent = assistant;
+        document.getElementById('statTotal').textContent = total;
+        document.getElementById('statSize').textContent = prettyBytes(size);
+
+        // Grupos
+        const groups = getGroups();
+        const container = document.getElementById('groupStats');
+        container.innerHTML = '';
+        for (const [prefix, keys] of Object.entries(groups)) {
+          const div = document.createElement('div');
+          div.className = 'group-stat';
+          div.innerHTML = `
+            <div class="count">${keys.length}</div>
+            <div class="label">${prefix}</div>
+          `;
+          container.appendChild(div);
+        }
+        if (Object.keys(groups).length === 0) {
+          container.innerHTML = '<p style="color:#6a7a92;">Nenhum grupo encontrado.</p>';
+        }
+      }
+
+      // ============================================================
+      //  RENDERIZAÇÃO DE CARDS POR GRUPO
+      // ============================================================
+      function renderCards(containerId, filterFn) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k === DISABLED_KEY) continue;
+          if (filterFn(k)) keys.push(k);
+        }
+        if (keys.length === 0) {
+          container.innerHTML = '<p style="color:#6a7a92;">Nenhum item encontrado.</p>';
+          return;
+        }
+        for (const key of keys) {
+          const val = localStorage.getItem(key) || '';
+          const card = document.createElement('div');
+          card.className = 'card-item';
+          card.innerHTML = `
+            <div class="title">${key}</div>
+            <div class="meta">${val.length > 60 ? val.slice(0, 60) + '…' : val}</div>
+            <div class="preview">${val.length > 120 ? val.slice(0, 120) + '…' : val}</div>
+            <div class="actions">
+              <button data-action="view" data-key="${key}">👁️ Ver</button>
+              <button data-action="copy" data-key="${key}">📋 Copiar</button>
+            </div>
+          `;
+          container.appendChild(card);
+        }
+        // Eventos dos botões
+        container.querySelectorAll('[data-action="view"]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const k = btn.dataset.key;
+            const v = localStorage.getItem(k) || '';
+            alert(`🔍 ${k}\n\n${v}`);
+          });
+        });
+        container.querySelectorAll('[data-action="copy"]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const k = btn.dataset.key;
+            const v = localStorage.getItem(k) || '';
+            navigator.clipboard?.writeText(v).then(() => {
+              alert('Copiado!');
+            }).catch(() => {
+              const ta = document.createElement('textarea');
+              ta.value = v;
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              ta.remove();
+              alert('Copiado!');
+            });
+          });
+        });
+      }
+
+      // ============================================================
+      //  RENDERIZAÇÃO DE PRESETS
+      // ============================================================
+      function renderPresets() {
+        const grid = document.getElementById('presetsGrid');
+        grid.innerHTML = '';
+        const dis = disabledSet();
+        PRESETS.forEach(p => {
+          const val = localStorage.getItem(p.key);
+          const on = !dis.has(p.key);
+          const item = document.createElement('div');
+          item.className = 'preset-item';
+          item.innerHTML = `
+            <div class="info">
+              <div class="label">${p.label}</div>
+              <div class="key">${p.key}</div>
+            </div>
+            <div class="switch ${on ? 'on' : ''}" data-key="${p.key}"></div>
+          `;
+          const sw = item.querySelector('.switch');
+          sw.addEventListener('click', () => {
+            toggleDisabled(p.key);
+          });
+          grid.appendChild(item);
+        });
+      }
+
+      function toggleDisabled(key) {
+        const s = disabledSet();
+        s.has(key) ? s.delete(key) : s.add(key);
+        saveDisabled(s);
+        renderPresets();
+        // Atualiza todas as abas
+        refreshAllTabs();
+      }
+
+      // ============================================================
+      //  REFRESH DE TODAS AS ABAS
+      // ============================================================
+      function refreshAllTabs() {
+        renderDashboard();
+        renderCards('libraryGrid', k => k.includes('doc') || k.includes('note') || k.includes('prompt') || k.includes('text') || k.includes('article'));
+        renderCards('draftsGrid', k => k.includes('draft') || k.includes('rascunho') || k.includes('wip'));
+        renderCards('vaultGrid', k => k.includes('html') || k.includes('css') || k.includes('json') || k.includes('template') || k.includes('asset'));
+        renderCards('fractalsGrid', k => k.includes('fractal') || k.includes('ciclo') || k.includes('369'));
+        renderCards('archetypesGrid', k => k.includes('archetype') || k.includes('arquétipo') || k.includes('persona'));
+        // Busca é re-renderizada apenas quando o usuário digita, mas podemos manter
+      }
+
+      // ============================================================
+      //  BUSCA SEMÂNTICA
+      // ============================================================
+      const searchInput = document.getElementById('semanticSearchInput');
+      const resultsContainer = document.getElementById('searchResultsContainer');
+
+      function performSearch(query) {
+        if (!query.trim()) {
+          resultsContainer.innerHTML = '';
+          return;
+        }
+        const results = MemoryCore.search(query);
+        if (results.length === 0) {
+          resultsContainer.innerHTML = `<div style="color:#6a7a92; text-align:center; padding:20px;">Nenhum resultado para “${query}”</div>`;
+          return;
+        }
+        let html = '';
+        for (const item of results) {
+          const scorePct = Math.round(item.score * 100);
+          html += `
+            <div class="search-result-item">
+              <div>
+                <div class="key">${item.key}</div>
+                <div class="value-preview">${item.value.length > 100 ? item.value.slice(0, 100) + '…' : item.value}</div>
+              </div>
+              <div class="score">${scorePct}% relevância</div>
+            </div>
+          `;
+        }
+        resultsContainer.innerHTML = html;
+      }
+
+      let debounceTimer;
+      searchInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          performSearch(searchInput.value);
+        }, 200);
+      });
+
+      // ============================================================
+      //  NAVEGAÇÃO POR ABAS
+      // ============================================================
+      const tabButtons = document.querySelectorAll('#bau-tabs button');
+      const tabPanes = {
+        dashboard: document.getElementById('tab-dashboard'),
+        library: document.getElementById('tab-library'),
+        drafts: document.getElementById('tab-drafts'),
+        vault: document.getElementById('tab-vault'),
+        fractals: document.getElementById('tab-fractals'),
+        archetypes: document.getElementById('tab-archetypes'),
+        search: document.getElementById('tab-search'),
+        tools: document.getElementById('tab-tools')
+      };
+
+      function switchTab(tabId) {
+        // Atualiza botões
+        tabButtons.forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.tab === tabId);
+        });
+        // Atualiza painéis
+        Object.entries(tabPanes).forEach(([id, pane]) => {
+          pane.classList.toggle('active', id === tabId);
+        });
+        // Ações específicas
+        if (tabId === 'search') {
+          searchInput.focus();
+          performSearch(searchInput.value);
+        }
+        if (tabId === 'dashboard') {
+          renderDashboard();
+        }
+        if (tabId === 'library') renderCards('libraryGrid', k => k.includes('doc') || k.includes('note') || k.includes('prompt') || k.includes('text') || k.includes('article'));
+        if (tabId === 'drafts') renderCards('draftsGrid', k => k.includes('draft') || k.includes('rascunho') || k.includes('wip'));
+        if (tabId === 'vault') renderCards('vaultGrid', k => k.includes('html') || k.includes('css') || k.includes('json') || k.includes('template') || k.includes('asset'));
+        if (tabId === 'fractals') renderCards('fractalsGrid', k => k.includes('fractal') || k.includes('ciclo') || k.includes('369'));
+        if (tabId === 'archetypes') renderCards('archetypesGrid', k => k.includes('archetype') || k.includes('arquétipo') || k.includes('persona'));
+        if (tabId === 'tools') renderPresets();
+      }
+
+      tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          switchTab(btn.dataset.tab);
+        });
+      });
+
+      // ============================================================
+      //  MODAL E BOTÃO FLUTUANTE
+      // ============================================================
+      const modal = document.getElementById('bau-modal');
+      const fab = document.getElementById('bau-fab');
+      const closeBtn = document.getElementById('bau-close');
+
+      function openModal() {
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+        refreshAllTabs();
+        // Abre na dashboard
+        switchTab('dashboard');
+      }
+
+      function closeModal() {
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+      }
+
+      fab.addEventListener('click', openModal);
+      closeBtn.addEventListener('click', closeModal);
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+      });
+
+      // ============================================================
+      //  AÇÕES DAS FERRAMENTAS
+      // ============================================================
+      document.getElementById('bau-export').addEventListener('click', () => {
+        const dump = {};
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k === DISABLED_KEY) continue;
+          dump[k] = localStorage.getItem(k);
+        }
+        saveFile('localstorage_export.json', JSON.stringify(dump, null, 2));
+      });
+
+      document.getElementById('bau-import-file').addEventListener('change', (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const data = JSON.parse(reader.result || '{}');
+            Object.entries(data).forEach(([k, v]) => {
+              if (window.MemoryCore) {
+                window.MemoryCore.set(k, String(v));
+              } else {
+                localStorage.setItem(k, String(v));
+              }
+            });
+            alert('Importado com sucesso.');
+            refreshAllTabs();
+          } catch (err) {
+            alert('JSON inválido.');
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+      });
+
+      document.getElementById('bau-clear-disabled').addEventListener('click', () => {
+        localStorage.setItem(DISABLED_KEY, '[]');
+        refreshAllTabs();
+      });
+
+      document.getElementById('bau-refresh').addEventListener('click', () => {
+        MemoryCore.reload();
+        refreshAllTabs();
+      });
+
+      // ============================================================
+      //  INICIALIZAÇÃO
+      // ============================================================
+      // Seeds (exemplo)
+      if (!localStorage.getItem('__bau_seeded__')) {
+        localStorage.setItem('di_userName', 'KODUX');
+        localStorage.setItem('di_assistantName', 'Dual Infodose');
+        localStorage.setItem('uno:theme', 'nebula');
+        localStorage.setItem('infodose:archetype', 'Mago');
+        localStorage.setItem('doc:sobre_koblux', 'KOBLLUX é um sistema de exploração de dados e conhecimento.');
+        localStorage.setItem('doc:ciclo_369', 'O ciclo 369 é uma sequência de ativação e alinhamento.');
+        localStorage.setItem('draft:ritual_madeira', 'Ritual da madeira: conexão com a terra e estabilidade.');
+        localStorage.setItem('fractal:energia', 'Fractal de energia: padrões de vibração e frequência.');
+        localStorage.setItem('archetype:curandeiro', 'Arquétipo do Curandeiro: sabedoria ancestral e cura.');
+        localStorage.setItem('template:persona', 'Template para criação de personas com atributos e história.');
+        localStorage.setItem('__bau_seeded__', '1');
+      }
+
+      // Renderização inicial
+      refreshAllTabs();
+
+      // Reage a mudanças externas no localStorage
+      window.addEventListener('storage', (e) => {
+        MemoryCore.reload();
+        refreshAllTabs();
+        // Se a aba de busca estiver ativa, re-executa busca
+        const activeTab = document.querySelector('#bau-tabs .active');
+        if (activeTab && activeTab.dataset.tab === 'search') {
+          performSearch(searchInput.value);
+        }
+      });
+
+      console.log('📦 KOBLLUX Explorer + Baú Lite carregado.');
+    })();
+  </script>
+</body>
+</html>

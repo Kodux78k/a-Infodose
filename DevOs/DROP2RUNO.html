@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>DROP → RUNTIME · Module Builder</title>
+<style>
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+:root{
+  --bg:#050607;
+  --panel:#0b0e12;
+  --panel2:#11161c;
+  --line:#252c34;
+  --text:#eef3f7;
+  --muted:#89939d;
+  --cyan:#00f5d4;
+  --purple:#9b6cff;
+  --orange:#ff9f43;
+  --pink:#ff4d9d;
+  --green:#5dff8a;
+}
+body{
+  margin:0;
+  min-height:100vh;
+  background:
+    radial-gradient(circle at 10% 0%,rgba(0,245,212,.08),transparent 35%),
+    radial-gradient(circle at 100% 100%,rgba(155,108,255,.1),transparent 40%),
+    var(--bg);
+  color:var(--text);
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+.app{
+  width:min(1200px,100%);
+  margin:auto;
+  padding:18px;
+}
+header{
+  padding:8px 4px 20px;
+}
+.logo{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:900;
+  letter-spacing:-1px;
+  font-size:clamp(24px,6vw,42px);
+}
+.logo span{
+  color:var(--cyan);
+}
+.subtitle{
+  color:var(--muted);
+  margin-top:6px;
+  font-size:13px;
+}
+.dropzone{
+  border:1px dashed #3b4650;
+  border-radius:18px;
+  padding:22px;
+  text-align:center;
+  background:rgba(255,255,255,.025);
+  margin-bottom:14px;
+  transition:.2s;
+}
+.dropzone.drag{
+  border-color:var(--cyan);
+  background:rgba(0,245,212,.06);
+}
+.drop-title{
+  font-weight:800;
+}
+.drop-sub{
+  color:var(--muted);
+  font-size:11px;
+  margin:5px 0 14px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+.full{
+  grid-column:1/-1;
+}
+@media(max-width:800px){
+  .grid{
+    grid-template-columns:1fr;
+  }
+}
+.card{
+  background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.012));
+  border:1px solid var(--line);
+  border-radius:18px;
+  overflow:hidden;
+}
+.card-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:12px 14px;
+  border-bottom:1px solid var(--line);
+}
+.card-title{
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.7px;
+}
+.badge{
+  font-size:9px;
+  font-weight:800;
+  padding:4px 8px;
+  border-radius:99px;
+  background:rgba(0,245,212,.08);
+  border:1px solid rgba(0,245,212,.2);
+  color:var(--cyan);
+}
+textarea{
+  display:block;
+  width:100%;
+  min-height:360px;
+  resize:vertical;
+  border:0;
+  outline:0;
+  padding:15px;
+  background:#07090c;
+  color:#dbe5eb;
+  font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  font-size:12px;
+  line-height:1.6;
+}
+#output{
+  color:#bafff4;
+}
+.toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  padding:10px;
+  border-top:1px solid var(--line);
+}
+button,
+.file-btn,
+select{
+  border:1px solid var(--line);
+  background:var(--panel2);
+  color:var(--text);
+  border-radius:9px;
+  padding:9px 11px;
+  font-size:11px;
+  font-weight:800;
+  cursor:pointer;
+}
+button:hover,
+.file-btn:hover{
+  border-color:var(--cyan);
+}
+.primary{
+  background:var(--cyan);
+  color:#00120e;
+  border-color:var(--cyan);
+}
+.purple{
+  border-color:rgba(155,108,255,.5);
+  color:#c9b6ff;
+}
+.orange{
+  border-color:rgba(255,159,67,.5);
+  color:#ffc27c;
+}
+.pink{
+  border-color:rgba(255,77,157,.5);
+  color:#ff8fc2;
+}
+.green{
+  border-color:rgba(93,255,138,.5);
+  color:#8affaa;
+}
+input[type=file]{
+  display:none;
+}
+.modes{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:7px;
+  padding:10px;
+}
+@media(max-width:600px){
+  .modes{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
+.mode{
+  min-height:70px;
+  text-align:left;
+  padding:10px;
+}
+.mode strong{
+  display:block;
+  font-size:11px;
+}
+.mode small{
+  display:block;
+  margin-top:4px;
+  color:var(--muted);
+  font-size:9px;
+}
+.mode.active{
+  border-color:var(--cyan);
+  box-shadow:0 0 0 1px rgba(0,245,212,.2) inset;
+  background:rgba(0,245,212,.06);
+}
+.preview{
+  height:500px;
+  background:#fff;
+}
+iframe{
+  width:100%;
+  height:100%;
+  border:0;
+}
+.status{
+  padding:9px 13px;
+  border-top:1px solid var(--line);
+  color:var(--muted);
+  font-size:10px;
+}
+.status.ok{
+  color:var(--cyan);
+}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="logo">
+    DROP <span>→</span> RUNTIME
+  </div>
+  <div class="subtitle">
+    Universal Module Builder · HTML · CSS · JS · Full Bundle
+  </div>
+</header>
+<!-- DROP -->
+<div class="dropzone" id="dropzone">
+  <div class="drop-title">
+    Solte um arquivo aqui
+  </div>
+  <div class="drop-sub">
+    HTML · CSS · JS · TXT · qualquer arquivo de texto
+  </div>
+  <label class="file-btn">
+    📂 Escolher arquivo
+    <input type="file" id="fileInput">
+  </label>
+</div>
+<div class="grid">
+<!-- MODE -->
+<section class="card full">
+  <div class="card-head">
+    <div class="card-title">
+      RUNTIME MODE
+    </div>
+<span class="badge" id="modeBadge">
+  HTML DIRECT
+</span>
+  </div>
+  <div class="modes">
+<button class="mode active" data-mode="html">
+  <strong>HTML DIRECT</strong>
+  <small>HTML → JS Injector</small>
+</button>
+<button class="mode" data-mode="css">
+  <strong>CSS INJECT</strong>
+  <small>CSS → Style Runtime</small>
+</button>
+<button class="mode" data-mode="js">
+  <strong>JS INJECT</strong>
+  <small>JavaScript Module</small>
+</button>
+<button class="mode" data-mode="bundle">
+  <strong>FULL BUNDLE</strong>
+  <small>HTML + CSS + JS</small>
+</button>
+  </div>
+</section>
+<!-- INPUT -->
+<section class="card">
+  <div class="card-head">
+<div class="card-title">
+  SOURCE INPUT
+</div>
+<span class="badge" id="fileType">
+  TEXT
+</span>
+  </div>
+  <textarea
+    id="source"
+    placeholder="Cole ou carregue seu conteúdo aqui..."
+  ></textarea>
+  <div class="toolbar">
+<button class="primary" id="pasteBtn">
+  📋 Paste
+</button>
+<button id="convertBtn">
+  ⚡ Converter
+</button>
+<button id="clearBtn">
+  Limpar
+</button>
+  </div>
+</section>
+<!-- OUTPUT -->
+<section class="card">
+  <div class="card-head">
+<div class="card-title">
+  GENERATED MODULE
+</div>
+<span class="badge">
+  .JS
+</span>
+  </div>
+  <textarea
+    id="output"
+    readonly
+    placeholder="Resultado JS..."
+  ></textarea>
+  <div class="toolbar">
+<button id="copyBtn">
+  ⧉ Copiar
+</button>
+<button id="downloadBtn">
+  ↓ Download JS
+</button>
+<button class="purple" id="previewBtn">
+  ▶ Preview
+</button>
+  </div>
+</section>
+<!-- PREVIEW -->
+<section class="card full">
+  <div class="card-head">
+<div class="card-title">
+  SANDBOX RUNTIME
+</div>
+<select id="target">
+  <option value="#inject-here">#inject-here</option>
+  <option value="body">body</option>
+  <option value=".content">content</option>
+  <option value="#symbolBar">#symbolBar</option>
+
+  <option value=".symbol-bar">.symbol-bar</option>
+  <option value="Head">Head</option>
+
+  <option value=".wrap">.wrap</option>
+
+  <option value="header">header</option>
+
+  <option value="#library">library</option>
+
+  <option value="#root">#root</option>
+  <option value="main">main</option>
+</select>
+  </div>
+
+</section>
+</div>
+</div>
+<script>
+let mode="html";
+const source=
+document.getElementById("source");
+const output=
+document.getElementById("output");
+const preview=
+document.getElementById("preview");
+const target=
+document.getElementById("target");
+const status=
+document.getElementById("status");
+// =====================================================
+// MODE SELECTOR
+// =====================================================
+document.querySelectorAll(".mode")
+.forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".mode")
+    .forEach(x=>x.classList.remove("active"));
+    btn.classList.add("active");
+    mode=btn.dataset.mode;
+    document.getElementById("modeBadge")
+    .textContent=btn.innerText
+    .split("\n")[0]
+    .trim();
+    convert();
+  });
+});
+// =====================================================
+// ESCAPE TEMPLATE
+// =====================================================
+function escapeTemplate(text){
+  return text
+    .replace(/\\/g,"\\\\")
+    .replace(/`/g,"\\`")
+    .replace(/\$\{/g,"\\${");
+}
+// =====================================================
+// HTML DIRECT
+// =====================================================
+function htmlInjector(html){
+  const safe=escapeTemplate(html);
+  const selector=target.value;
+  return `(function(h,s='${selector}'){
+const p=new DOMParser(),
+c=p.parseFromString(h,'text/html'),
+f=document.createDocumentFragment(),
+t=document.querySelector(s)||document.body;
+Array.from(c.body.childNodes)
+.forEach(n=>f.appendChild(
+document.importNode(n,true)
+));
+t.appendChild(f);
+Array.from(c.querySelectorAll('script'))
+.forEach(x=>{
+const n=document.createElement('script');
+for(const a of x.attributes)
+n.setAttribute(a.name,a.value);
+n.textContent=x.textContent;
+document.body.appendChild(n);
+});
+})(\`${safe}\`);`;
+}
+// =====================================================
+// CSS INJECT
+// =====================================================
+function cssInjector(css){
+  const safe=escapeTemplate(css);
+  return `(function(css){
+const style=document.createElement('style');
+style.setAttribute(
+'data-runtime-module',
+'css'
+);
+style.textContent=css;
+document.head.appendChild(style);
+})(\`${safe}\`);`;
+}
+// =====================================================
+// JS INJECT
+// =====================================================
+function jsInjector(js){
+  const safe=escapeTemplate(js);
+  return `(function(code){
+const script=document.createElement('script');
+script.setAttribute(
+'data-runtime-module',
+'js'
+);
+script.textContent=code;
+document.body.appendChild(script);
+})(\`${safe}\`);`;
+}
+// =====================================================
+// FULL BUNDLE
+// =====================================================
+function fullBundle(html){
+  const safe=escapeTemplate(html);
+  const selector=target.value;
+  return `(function(bundle,s='${selector}'){
+const p=new DOMParser();
+const c=p.parseFromString(
+bundle,
+'text/html'
+);
+const t=
+document.querySelector(s)
+||document.body;
+// CSS
+Array.from(
+c.querySelectorAll('style')
+)
+.forEach(style=>{
+const n=
+document.createElement('style');
+n.textContent=
+style.textContent;
+document.head.appendChild(n);
+});
+// HTML
+const f=
+document.createDocumentFragment();
+Array.from(
+c.body.childNodes
+)
+.forEach(node=>{
+if(node.nodeName!=='SCRIPT'){
+f.appendChild(
+document.importNode(node,true)
+);
+}
+});
+t.appendChild(f);
+// JS
+Array.from(
+c.querySelectorAll('script')
+)
+.forEach(x=>{
+const n=
+document.createElement('script');
+for(
+const a of x.attributes
+)
+n.setAttribute(
+a.name,
+a.value
+);
+n.textContent=
+x.textContent;
+document.body.appendChild(n);
+});
+})(\`${safe}\`);`;
+}
+// =====================================================
+// CONVERTER
+// =====================================================
+function convert(){
+  const text=
+  source.value.trim();
+  if(!text){
+    output.value="";
+    return;
+  }
+  if(mode==="html")
+    output.value=
+    htmlInjector(text);
+  if(mode==="css")
+    output.value=
+    cssInjector(text);
+  if(mode==="js")
+    output.value=
+    jsInjector(text);
+  if(mode==="bundle")
+    output.value=
+    fullBundle(text);
+  status.textContent=
+  `✓ ${mode.toUpperCase()} convertido · ${text.length} caracteres`;
+  status.className=
+  "status ok";
+}
+// =====================================================
+// CLIPBOARD
+// =====================================================
+document.getElementById("pasteBtn")
+.addEventListener("click",async()=>{
+  try{
+    source.value=
+    await navigator.clipboard.readText();
+    document.getElementById("fileType")
+    .textContent="CLIPBOARD";
+    convert();
+  }catch(e){
+    alert(
+      "Clipboard bloqueado pelo navegador."
+    );
+  }
+});
+// =====================================================
+// FILE UPLOAD
+// =====================================================
+async function loadFile(file){
+  if(!file)return;
+  const text=
+  await file.text();
+  source.value=text;
+  const ext=
+  file.name
+  .split(".")
+  .pop()
+  .toLowerCase();
+  document.getElementById("fileType")
+  .textContent=
+  ext.toUpperCase();
+  if(ext==="css")
+    setMode("css");
+  else if(ext==="js")
+    setMode("js");
+  else
+    setMode("html");
+  convert();
+  status.textContent=
+  `✓ ${file.name} carregado`;
+}
+document.getElementById("fileInput")
+.addEventListener(
+"change",
+e=>loadFile(e.target.files[0])
+);
+// =====================================================
+// DRAG & DROP
+// =====================================================
+const dropzone=
+document.getElementById("dropzone");
+dropzone.addEventListener(
+"dragover",
+e=>{
+  e.preventDefault();
+  dropzone.classList.add("drag");
+});
+dropzone.addEventListener(
+"dragleave",
+()=>{
+  dropzone.classList.remove("drag");
+});
+dropzone.addEventListener(
+"drop",
+e=>{
+  e.preventDefault();
+  dropzone.classList.remove("drag");
+  loadFile(
+    e.dataTransfer.files[0]
+  );
+});
+// =====================================================
+// MODE PROGRAMÁTICO
+// =====================================================
+function setMode(newMode){
+  mode=newMode;
+  document.querySelectorAll(".mode")
+  .forEach(btn=>{
+    btn.classList.toggle(
+      "active",
+      btn.dataset.mode===newMode
+    );
+  });
+  const active=
+  document.querySelector(
+    `.mode[data-mode="${newMode}"]`
+  );
+  if(active){
+    document.getElementById("modeBadge")
+    .textContent=
+    active.innerText
+    .split("\n")[0]
+    .trim();
+  }
+}
+// =====================================================
+// COPY
+// =====================================================
+document.getElementById("copyBtn")
+.addEventListener("click",async()=>{
+  if(!output.value)return;
+  await navigator.clipboard
+  .writeText(output.value);
+  status.textContent=
+  "✓ Módulo copiado.";
+});
+// =====================================================
+// DOWNLOAD
+// =====================================================
+document.getElementById("downloadBtn")
+.addEventListener("click",()=>{
+  if(!output.value)return;
+  const blob=
+  new Blob(
+    [output.value],
+    {
+      type:
+      "application/javascript"
+    }
+  );
+  const url=
+  URL.createObjectURL(blob);
+  const a=
+  document.createElement("a");
+  a.href=url;
+  a.download=
+  `runtime-${mode}.js`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});
+// =====================================================
+// PREVIEW
+// =====================================================
+document.getElementById("previewBtn")
+.addEventListener("click",()=>{
+  if(!output.value)
+    convert();
+  const base=`
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width,initial-scale=1">
+<title>Runtime Sandbox</title>
+<style>
+body{
+margin:0;
+padding:25px;
+font-family:system-ui;
+background:#101216;
+color:white;
+}
+#inject-here{
+min-height:180px;
+padding:20px;
+border:1px dashed #555;
+border-radius:16px;
+}
+</style>
+</head>
+<body>
+<h2>Runtime Sandbox</h2>
+<div id="inject-here">
+<!-- MODULE INJECTION -->
+</div>
+<script>
+${output.value}
+<\/script>
+</body>
+</html>
+`;
+  preview.srcdoc=base;
+  status.textContent=
+  "✓ Runtime executado no Sandbox.";
+});
+// =====================================================
+// BUTTONS
+// =====================================================
+document.getElementById("convertBtn")
+.addEventListener(
+"click",
+convert
+);
+document.getElementById("clearBtn")
+.addEventListener("click",()=>{
+  source.value="";
+  output.value="";
+  preview.srcdoc="";
+  document.getElementById("fileType")
+  .textContent="TEXT";
+  status.textContent=
+  "Runtime aguardando...";
+  status.className=
+  "status";
+});
+target.addEventListener(
+"change",
+convert
+);
+</script>
+</body>
+</html>
