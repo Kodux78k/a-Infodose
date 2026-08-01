@@ -1,4 +1,4 @@
-(function(bundle,s='main-header'){
+(function(bundle,s='#inject-here'){
 const p=new DOMParser();
 const c=p.parseFromString(
 bundle,
@@ -607,9 +607,9 @@ document.body.appendChild(n);
 <body>
 
 <!-- =====================================================================
-     WIDGET 1 · KOBLLUX EXPLORER + BAÚ (localStorage: leitura + edição)
+<button id="bau-fab" aria-label="Abrir Baú" title="Abrir Baú">📦</button>   
+  WIDGET 1 · KOBLLUX EXPLORER + BAÚ (localStorage: leitura + edição)
      ===================================================================== -->
-<button id="bau-fab" aria-label="Abrir Baú" title="Abrir Baú">📦</button>
 
 <div id="bau-modal" class="bau-modal" aria-hidden="true">
   <div class="bau-panel">
@@ -854,12 +854,12 @@ document.body.appendChild(n);
 
 <!-- =====================================================================
      WIDGET 2 · 78 DEVOS (recursos CSS/JS + variáveis de tema)
-     ===================================================================== -->
-<div class="kdev-wrapper">
+ <div class="kdev-wrapper">
   <button id="dev-btn" onclick="KDevPanel.toggle()" class="kdev-btn">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="kdev-icon kdev-icon-lg"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
     <span class="kdev-btn-text">Dev Panel</span>
   </button>
+    ===================================================================== -->
 
   <div id="dev-panel" class="kdev-panel">
     <div class="kdev-header">
@@ -1463,6 +1463,7 @@ document.addEventListener('keydown', (e) => {
     closeModal();
   }
 });
+
   // ============================================================
   //  AÇÕES DAS FERRAMENTAS
   // ============================================================
@@ -1753,5 +1754,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 </body>
-</html>`); 
-
+</html>`);
