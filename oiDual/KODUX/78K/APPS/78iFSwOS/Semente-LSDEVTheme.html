@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html><head>
+
+<style>:root { --z-base: 0; --z-content: 100; --z-widget: 500; --z-overlay: 1000; --z-system: 5000; }</style><style>
+  :root{
+    --bg-top:#EDEBF3;
+    --bg-bot:#E4E1EE;
+    --card:rgba(255,255,255,.68);
+    --card-solid:#ffffff;
+    --card-strong:rgba(255,255,255,.86);
+    --line:rgba(60,60,67,.10);
+    --line-strong:rgba(60,60,67,.16);
+    --text:#1c1b1f;
+    --text-2:#6c6a75;
+    --text-3:#9997a3;
+    --accent:#6C4CE0;
+    --accent-ink:#4A2FB5;
+    --accent-soft:rgba(108,76,224,.12);
+    --gold:#C7973F;
+    --gold-soft:rgba(199,151,63,.14);
+    --danger:#D8534F;
+    --radius-lg:26px;
+    --radius-md:18px;
+    --radius-sm:12px;
+    --safe-top:env(safe-area-inset-top);
+    --safe-bot:env(safe-area-inset-bottom);
+    --shadow:0 1px 2px rgba(28,27,31,.04), 0 10px 28px -14px rgba(28,27,31,.28);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(120% 60% at 18% -6%, #F6E9DA 0%, transparent 55%),
+      radial-gradient(140% 70% at 100% 0%, #DCE6F5 0%, transparent 50%),
+      linear-gradient(180deg,var(--bg-top),var(--bg-bot) 60%, #DEDAEA 100%);
+    background-attachment:fixed;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;}
+  .app{
+
+
+    margin:0;
+    min-height:100dvh;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+  }
+
+  /* ---------- Top bar ---------- */
+  header.top{
+    padding:calc(var(--safe-top) + 14px) 20px 6px;
+    position:sticky; top:0; z-index:30;
+    backdrop-filter:blur(22px) saturate(160%);
+    -webkit-backdrop-filter:blur(22px) saturate(160%);
+    background:rgba(237,235,243,.72);
+    border-bottom:1px solid transparent;
+    transition:border-color .25s, background .25s;
+  }
+  header.top.scrolled{border-color:var(--line); background:rgba(237,235,243,.92);}
+  .eyebrow{
+    font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent-ink); font-weight:700; opacity:.75; display:flex; align-items:center; gap:6px;
+  }
+  .eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);}
+  .title-row{display:flex; align-items:flex-end; justify-content:space-between; margin-top:2px;}
+  h1.large{font-size:30px; letter-spacing:-.02em; font-weight:750; margin:0; line-height:1.05;}
+  .avatar{
+    width:34px;height:34px;border-radius:50%;
+    background:conic-gradient(from 210deg, var(--accent), var(--gold), var(--accent));
+    display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;
+    box-shadow:0 2px 8px rgba(108,76,224,.35);
+  }
+
+  /* ---------- Screens ---------- */
+  main{flex:1; padding:14px 0 calc(96px + var(--safe-bot)); }
+  .screen{display:none; animation:rise .35s ease both;}
+  .screen.active{display:block;}
+  @keyframes rise{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
+
+  .section-label{
+    font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--text-3); margin:22px 4px 10px; display:flex; align-items:center; justify-content:space-between;
+  }
+  .section-label span.count{color:var(--text-2); font-weight:600; text-transform:none; letter-spacing:0;}
+
+  /* ---------- Glass card system ---------- */
+  .card{
+    background:var(--card);
+    backdrop-filter:blur(18px) saturate(160%);
+    -webkit-backdrop-filter:blur(18px) saturate(160%);
+    border:1px solid rgba(255,255,255,.55);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow);
+    padding:18px;
+    position:relative;
+    overflow:hidden;
+  }
+  .card::before{
+    content:"";
+    position:absolute; inset:0; border-radius:inherit; padding:1px;
+    background:linear-gradient(160deg, rgba(255,255,255,.9), rgba(255,255,255,0) 40%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude;
+    pointer-events:none;
+  }
+  .stack{display:flex; flex-direction:column; gap:10px;}
+
+  /* Grouped iOS list */
+  .glist{
+    background:var(--card-strong); border-radius:var(--radius-md); overflow:hidden;
+    border:1px solid rgba(255,255,255,.6); box-shadow:var(--shadow);
+    backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+  }
+  .grow{display:flex; align-items:center; gap:12px; padding:13px 14px; border-bottom:1px solid var(--line);}
+  .grow:last-child{border-bottom:none;}
+  .grow .ic{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex:0 0 auto;}
+  .grow .tx{flex:1; min-width:0;}
+  .grow .tx b{display:block; font-size:15px; font-weight:600;}
+  .grow .tx small{display:block; font-size:12.5px; color:var(--text-2); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .chev{color:var(--text-3); font-size:13px;}
+
+  /* ---------- 369 signature ring ---------- */
+  .ring-wrap{display:flex; flex-direction:column; align-items:center; padding:22px 10px 8px;}
+  .ring{width:210px; height:210px; position:relative;}
+  .ring svg{width:100%; height:100%; display:block;}
+  .ring .core{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+  }
+  .ring .core .num{font-size:34px; font-weight:800; letter-spacing:-.02em; font-family:ui-monospace,"SF Mono",Menlo,monospace; color:var(--accent-ink);}
+  .ring .core .lab{font-size:11px; color:var(--text-2); margin-top:2px; letter-spacing:.04em;}
+  .ring-caption{margin-top:14px; text-align:center; max-width:280px;}
+  .ring-caption b{font-size:14px;}
+  .ring-caption p{font-size:12.5px; color:var(--text-2); margin:4px 0 0; line-height:1.4;}
+  @media (prefers-reduced-motion: no-preference){
+    .ring .spin{animation:spin 26s linear infinite; transform-origin:105px 105px;}
+    .ring .spin-rev{animation:spin 34s linear infinite reverse; transform-origin:105px 105px;}
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ---------- Flow stepper ---------- */
+  .flow{display:flex; flex-direction:column; gap:0; margin-top:4px;}
+  .fstep{display:flex; gap:14px; position:relative; padding-bottom:22px;}
+  .fstep:last-child{padding-bottom:0;}
+  .fstep .rail{display:flex; flex-direction:column; align-items:center; flex:0 0 auto;}
+  .fstep .node{
+    width:38px; height:38px; border-radius:12px; background:var(--card-strong);
+    border:1px solid rgba(255,255,255,.7); box-shadow:var(--shadow);
+    display:flex; align-items:center; justify-content:center; font-size:17px; z-index:1;
+  }
+  .fstep .node.done{background:linear-gradient(160deg,var(--accent),var(--accent-ink)); color:#fff;}
+  .fstep .thread{width:2px; flex:1; background:linear-gradient(var(--line-strong),var(--line-strong)); background-size:2px 8px; background-repeat:repeat-y; margin-top:4px;}
+  .fstep .body{flex:1; padding-top:6px;}
+  .fstep .body b{font-size:15px; font-weight:650;}
+  .fstep .body p{margin:3px 0 0; font-size:13px; color:var(--text-2); line-height:1.4;}
+  .fstep .body .tag{
+    display:inline-block; margin-top:8px; font-size:11px; font-weight:700; letter-spacing:.03em;
+    color:var(--accent-ink); background:var(--accent-soft); padding:4px 9px; border-radius:20px;
+  }
+  .fstep.active .node{box-shadow:0 0 0 5px var(--accent-soft), var(--shadow);}
+
+  /* ---------- Buttons ---------- */
+  .btn{
+    appearance:none; border:none; cursor:pointer; font-family:inherit;
+    padding:13px 18px; border-radius:16px; font-size:15px; font-weight:650;
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    transition:transform .12s ease, filter .12s ease; width:100%;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:linear-gradient(160deg,var(--accent),var(--accent-ink)); color:#fff; box-shadow:0 10px 22px -10px rgba(74,47,181,.65);}
+  .btn-ghost{background:var(--card-strong); color:var(--text); border:1px solid var(--line-strong);}
+  .btn-gold{background:linear-gradient(160deg,#DCAE5C,var(--gold)); color:#3a2a08;}
+  .btn-row{display:flex; gap:10px;}
+  .btn-row .btn{width:auto; flex:1;}
+  .fab{
+    position:fixed; right:22px; z-index:35;
+    bottom:calc(96px + var(--safe-bot));
+    width:58px; height:58px; border-radius:50%; border:none;
+    background:linear-gradient(160deg,var(--accent),var(--accent-ink));
+    color:#fff; font-size:22px; box-shadow:0 14px 30px -10px rgba(74,47,181,.6);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    max-width:480px; margin:0 auto;
+  }
+  .fab:active{transform:scale(.94);}
+
+  /* ---------- Chips / filters ---------- */
+  .chips{display:flex; gap:8px; overflow-x:auto; padding:2px 2px 4px; scrollbar-width:none;}
+  .chips::-webkit-scrollbar{display:none;}
+  .chip{
+    flex:0 0 auto; padding:8px 14px; border-radius:20px; font-size:13px; font-weight:600;
+    background:var(--card-strong); color:var(--text-2); border:1px solid var(--line-strong); cursor:pointer;
+    white-space:nowrap;
+  }
+  .chip.active{background:var(--accent); color:#fff; border-color:transparent;}
+
+  /* ---------- Library grid ---------- */
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;}
+  .item{
+    background:var(--card); border-radius:var(--radius-md); padding:14px; cursor:pointer;
+    border:1px solid rgba(255,255,255,.55); box-shadow:var(--shadow);
+    backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    display:flex; flex-direction:column; gap:8px; min-height:132px;
+  }
+  .item .kind{font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--gold);}
+  .item .name{font-size:14px; font-weight:650; line-height:1.3;}
+  .item .meta{margin-top:auto; display:flex; align-items:center; justify-content:space-between; font-size:11.5px; color:var(--text-3);}
+  .item .frac{display:flex; align-items:center; gap:4px;}
+  .badge-seed{color:#3E8E5B;} .badge-mirror{color:#3567C9;}
+
+  /* ---------- Toggle select cards (fusão) ---------- */
+  .pick{
+    display:flex; align-items:center; gap:12px; padding:14px; border-radius:var(--radius-md);
+    border:1.5px solid var(--line-strong); background:var(--card-strong); cursor:pointer; margin-bottom:8px;
+  }
+  .pick.sel{border-color:var(--accent); background:var(--accent-soft);}
+  .pick .ic{width:36px;height:36px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:16px; box-shadow:var(--shadow);}
+  .pick .tx b{font-size:14px; display:block;}
+  .pick .tx small{font-size:12px; color:var(--text-2);}
+  .pick .check{margin-left:auto; width:20px;height:20px;border-radius:50%; border:1.5px solid var(--text-3);}
+  .pick.sel .check{background:var(--accent); border-color:var(--accent); position:relative;}
+  .pick.sel .check::after{content:"✓"; color:#fff; font-size:12px; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;}
+
+  .result-card{
+    margin-top:16px; padding:20px; border-radius:var(--radius-lg);
+    background:linear-gradient(165deg, rgba(255,255,255,.85), rgba(255,255,255,.55));
+    border:1px solid rgba(255,255,255,.7); box-shadow:var(--shadow);
+    backdrop-filter:blur(20px);
+  }
+  .result-seal{font-family:ui-monospace,monospace; font-size:11px; color:var(--text-3); letter-spacing:.08em;}
+  .result-card h3{margin:6px 0 8px; font-size:18px;}
+  .result-card p{font-size:13.5px; color:var(--text-2); line-height:1.5; margin:0 0 14px;}
+  .action-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:6px;}
+  .aicon{
+    background:var(--card-strong); border-radius:14px; padding:10px 4px; text-align:center;
+    border:1px solid var(--line); cursor:pointer; font-size:18px;
+  }
+  .aicon small{display:block; font-size:9.5px; color:var(--text-2); margin-top:4px; font-weight:600;}
+  .aicon:active{transform:scale(.94);}
+
+  /* ---------- Hub metrics ---------- */
+  .metric-row{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:12px;}
+  .metric{background:var(--card-strong); border-radius:var(--radius-md); padding:14px 10px; text-align:center; border:1px solid rgba(255,255,255,.6); box-shadow:var(--shadow);}
+  .metric b{display:block; font-size:20px; font-weight:800; font-family:ui-monospace,monospace; color:var(--accent-ink);}
+  .metric small{font-size:10.5px; color:var(--text-2); font-weight:600;}
+
+  /* ---------- Snapshot ---------- */
+  .snap-card{display:flex; align-items:center; gap:12px; padding:14px; border-radius:var(--radius-md); background:var(--card-strong); border:1px solid rgba(255,255,255,.6); box-shadow:var(--shadow); margin-bottom:10px;}
+  .snap-thumb{width:44px;height:44px;border-radius:11px; background:conic-gradient(from 120deg,var(--accent),var(--gold),var(--accent)); flex:0 0 auto;}
+  .snap-tx{flex:1; min-width:0;}
+  .snap-tx b{font-size:14px; display:block;}
+  .snap-tx small{font-size:11.5px; color:var(--text-2); font-family:ui-monospace,monospace;}
+
+  /* ---------- Empty state ---------- */
+  .empty{padding:40px 20px; text-align:center; color:var(--text-2);}
+  .empty .glyph{font-size:30px; margin-bottom:8px;}
+  .empty b{display:block; font-size:14.5px; color:var(--text); margin-bottom:4px;}
+  .empty p{font-size:12.5px; margin:0; line-height:1.4;}
+
+  /* ---------- Bottom tab bar ---------- */
+  nav.tabbar{
+    position:fixed; left:0; right:0; bottom:0; z-index:40;
+    padding:8px 10px calc(10px + var(--safe-bot));
+    backdrop-filter:blur(24px) saturate(180%); -webkit-backdrop-filter:blur(24px) saturate(180%);
+    background:rgba(255,255,255,.72);
+    border-top:1px solid rgba(255,255,255,.6);
+  }
+  .tabbar-inner{max-width:480px; margin:0 auto; display:flex; justify-content:space-around;}
+  .tab{
+    background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:3px;
+    color:var(--text-3); font-size:10px; font-weight:600; cursor:pointer; padding:4px 8px; font-family:inherit;
+  }
+  .tab .tic{font-size:20px; line-height:1;}
+  .tab.active{color:var(--accent-ink);}
+
+  /* ---------- Sheet (modal) ---------- */
+  .sheet-bg{position:fixed; inset:0; background:rgba(20,18,28,.42); z-index:60; opacity:0; pointer-events:none; transition:opacity .25s;}
+  .sheet-bg.open{opacity:1; pointer-events:auto;}
+  .sheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:61; max-width:480px; margin:0 auto;
+    background:#F7F6FA; border-radius:26px 26px 0 0; padding:10px 20px calc(24px + var(--safe-bot));
+    transform:translateY(105%); transition:transform .32s cubic-bezier(.32,.72,0,1);
+    box-shadow:0 -10px 40px rgba(0,0,0,.2); max-height:82dvh; overflow-y:auto;
+  }
+  .sheet.open{transform:translateY(0);}
+  .sheet .grabber{width:38px; height:5px; background:var(--line-strong); border-radius:3px; margin:6px auto 14px;}
+  .sheet h2{font-size:19px; margin:0 0 4px;}
+  .sheet .sub{font-size:12.5px; color:var(--text-2); margin:0 0 16px;}
+  .field{margin-bottom:14px;}
+  .field label{font-size:12px; font-weight:700; color:var(--text-2); display:block; margin-bottom:6px; text-transform:uppercase; letter-spacing:.04em;}
+  .field textarea, .field input{
+    width:100%; border-radius:14px; border:1px solid var(--line-strong); background:#fff;
+    padding:12px 14px; font-size:14.5px; font-family:inherit; color:var(--text); resize:none;
+  }
+  .field textarea{min-height:90px;}
+  .seedtype{display:flex; gap:8px; flex-wrap:wrap;}
+  .toast{
+    position:fixed; left:50%; bottom:calc(120px + var(--safe-bot)); transform:translateX(-50%) translateY(20px);
+    background:rgba(28,27,31,.92); color:#fff; padding:11px 18px; border-radius:14px; font-size:13px; font-weight:600;
+    z-index:80; opacity:0; transition:all .28s ease; pointer-events:none; white-space:nowrap;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+</style></head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     HEADER GLOBAL (mantido)
+═══════════════════════════════════════════════════════ -->
+<script type="module" src="https://www.infodose.com.br/js/modules/Dual_[Theme]-semDiv.js"></script>
+<div class="dual-app">
+  <header class="topbar header-visible" id="main-header">
+    <div id="header" class="brand">
+      <span>DUAL</span>
+      <span class="badge">GLOBAL</span>
+    </div>
+    <button id="theme-dot" class="theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>
+    </button>
+    <script type="module" src="https://www.infodose.com.br/DevOs/LSDev.js"></script>
+  </header>
+
+  <main id="main-content">
+    <div id="inject-here" class="content">
+      <button id="bau-fab" aria-label="Abrir Baú" title="Abrir Baú">📦</button>
+      <div class="kdev-wrapper">
+        <button id="dev-btn" onclick="KDevPanel.toggle()" class="kdev-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="kdev-icon kdev-icon-lg"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+          <span class="kdev-btn-text">Dev Panel</span>
+        </button>
+        <section style="display:none" class="panel demo"></section>
+      </div>
+
+      <!-- ===== APLICAÇÃO INFODOSE ===== -->
+      <div class="app">
+        <header class="top" id="topbar">
+          <div class="eyebrow"><span class="dot"></span> INFODOSE · 369</div>
+          <div class="title-row">
+            <h1 class="large" id="screenTitle">Espaço da Mente</h1>
+            <div class="avatar">K</div>
+          </div>
+        </header>
+
+        <main id="main">
+          <!-- Espaço da Mente -->
+          <section class="screen active" id="screen-espaco">
+            <div class="card ring-wrap">
+              <div class="ring">
+                <svg viewBox="0 0 210 210">
+                  <circle cx="105" cy="105" r="92" fill="none" stroke="rgba(108,76,224,.14)" stroke-width="10"></circle>
+                  <circle class="spin" cx="105" cy="105" r="92" fill="none" stroke="url(#g1)" stroke-width="10" stroke-linecap="round" stroke-dasharray="180 400"></circle>
+                  <circle class="spin-rev" cx="105" cy="105" r="70" fill="none" stroke="rgba(199,151,63,.5)" stroke-width="4" stroke-linecap="round" stroke-dasharray="60 400"></circle>
+                  <defs>
+                    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0" stop-color="#6C4CE0"></stop>
+                      <stop offset="1" stop-color="#C7973F"></stop>
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div class="core">
+                  <div class="num" id="ringNum">3·6·9</div>
+                  <div class="lab">ciclo ativo</div>
+                </div>
+              </div>
+              <div class="ring-caption">
+                <b>Falar → Semente → Espelho → Fusão → Resultado</b>
+                <p>Você traz o que está dentro. O sistema organiza. A fusão transforma os dois em algo novo.</p>
+              </div>
+            </div>
+
+            <div class="btn-row" style="margin-top:14px;">
+              <button class="btn btn-primary" onclick="openSheet('seed')">🎙 Falar</button>
+              <button class="btn btn-ghost" onclick="go('fusao')">🌀 Fundir</button>
+            </div>
+
+            <div class="section-label">Fluxo da experiência</div>
+            <div class="card">
+              <div class="flow" id="flowList"></div>
+            </div>
+
+            <div class="section-label">Recentes <span class="count" id="recentCount">0</span></div>
+            <div class="grid" id="recentGrid"></div>
+          </section>
+
+          <!-- Biblioteca -->
+          <section class="screen" id="screen-biblioteca">
+            <div class="chips" id="libChips"></div>
+            <div class="grid" id="libGrid"></div>
+          </section>
+
+          <!-- Fusão -->
+          <section class="screen" id="screen-fusao">
+            <div class="section-label">🌱 Semente</div>
+            <div id="seedPicks"></div>
+            <button class="btn btn-ghost" style="margin:4px 0 4px;" onclick="openSheet('seed')">+ Nova semente</button>
+
+            <div class="section-label">🪞 Espelho</div>
+            <div id="mirrorPicks"></div>
+
+            <button class="btn btn-primary" style="margin-top:16px;" id="fundirBtn" onclick="fundir()">🌀 Fundir Semente + Espelho</button>
+
+            <div id="resultZone"></div>
+          </section>
+
+          <!-- Hub -->
+          <section class="screen" id="screen-hub">
+            <div class="card">
+              <div class="section-label" style="margin-top:0;">Malha de utilidade</div>
+              <p style="font-size:13px; color:var(--text-2); margin:0 0 4px; line-height:1.5;">Indicadores de transformação — não de vaidade.</p>
+              <div class="metric-row">
+                <div class="metric"><b id="mCriacoes">0</b><small>Criações</small></div>
+                <div class="metric"><b id="mResolvidos">0</b><small>Resolvidos</small></div>
+                <div class="metric"><b id="mRemix">0</b><small>Remixes</small></div>
+              </div>
+            </div>
+
+            <div class="section-label">Comunidade · perguntas abertas</div>
+            <div class="glist">
+              <div class="grow"><div class="ic" style="background:var(--accent-soft);">👁️</div><div class="tx"><b>Quero entender arquitetura de agentes</b><small>3 respostas · Horus</small></div><div class="chev">›</div></div>
+              <div class="grow"><div class="ic" style="background:var(--gold-soft);">🧬</div><div class="tx"><b>Quero aprender fusão semântica</b><small>1 resposta · Kodux</small></div><div class="chev">›</div></div>
+              <div class="grow"><div class="ic" style="background:var(--accent-soft);">🪞</div><div class="tx"><b>Alguém sabe fazer snapshot portátil?</b><small>0 respostas</small></div><div class="chev">›</div></div>
+            </div>
+          </section>
+
+          <!-- Snapshot -->
+          <section class="screen" id="screen-snapshot">
+            <div class="btn-row" style="margin-bottom:16px;">
+              <button class="btn btn-primary" onclick="exportSnapshot()">📦 Exportar Snapshot</button>
+              <button class="btn btn-ghost" onclick="importInput.click()">⇧ Importar</button>
+            </div>
+            <input type="file" id="importInput" accept="application/json" style="display:none;">
+            <div id="snapList"></div>
+          </section>
+        </main>
+
+        <button class="fab" onclick="openSheet('seed')">＋</button>
+
+        <nav class="tabbar">
+          <div class="tabbar-inner">
+            <button class="tab active" data-tab="espaco" onclick="go('espaco')"><span class="tic">✦</span>Espaço</button>
+            <button class="tab" data-tab="biblioteca" onclick="go('biblioteca')"><span class="tic">📚</span>Biblioteca</button>
+            <button class="tab" data-tab="fusao" onclick="go('fusao')"><span class="tic">🌀</span>Fusão</button>
+            <button class="tab" data-tab="hub" onclick="go('hub')"><span class="tic">🕸️</span>Hub</button>
+            <button class="tab" data-tab="snapshot" onclick="go('snapshot')"><span class="tic">📦</span>Snapshot</button>
+          </div>
+        </nav>
+      </div>
+
+      <!-- Sheet -->
+      <div class="sheet-bg" id="sheetBg" onclick="closeSheet()"></div>
+      <div class="sheet" id="sheetSeed">
+        <div class="grabber"></div>
+        <h2>🌱 Nova Semente</h2>
+        <p class="sub">Texto, áudio, ideia, pergunta ou relato — qualquer entrada vira semente.</p>
+        <div class="field">
+          <label>Tipo</label>
+          <div class="seedtype" id="seedTypeChips"></div>
+        </div>
+        <div class="field">
+          <label>Conteúdo</label>
+          <textarea id="seedText" placeholder="Fale ou escreva o que está dentro de você..."></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="saveSeed()">Salvar como Semente</button>
+      </div>
+
+      <div class="toast" id="toast"></div>
+    </div>
+  </main>
+</div>
+
+<script type="module" src="https://www.infodose.com.br/Nebula/di_Jogador.js"></script>
+<script>
+  console.log("Sistema Pronto.");
+</script>
+
+<!-- ============================================================ -->
+<!-- SCRIPT DO APP (mesmo conteúdo, mantido) -->
+<script>
+(function(){
+  "use strict";
+  window.KOBLLUX = window.KOBLLUX || {};
+  var LS_KEY = "di_infodose_state";
+
+  var seedTypes = [
+    {id:"texto", ic:"✍️", lab:"Texto"},
+    {id:"audio", ic:"🎙", lab:"Áudio"},
+    {id:"ideia", ic:"💡", lab:"Ideia"},
+    {id:"pergunta", ic:"❓", lab:"Pergunta"},
+    {id:"relato", ic:"📖", lab:"Relato"}
+  ];
+
+  var flowSteps = [
+    {ic:"🎙", t:"Falar", d:"A entrada principal — texto, áudio ou gravação de voz.", done:true},
+    {ic:"🌱", t:"Semente", d:"Transcrição, limpeza e estruturação do que foi trazido.", done:true},
+    {ic:"🪞", t:"Espelho", d:"Um documento, manifesto ou preset da biblioteca como referência.", done:false},
+    {ic:"🌀", t:"Fusão", d:"Semente + Espelho são processados juntos.", done:false},
+    {ic:"✦", t:"Resultado", d:"Síntese, interpretação, plano ou criação gerada.", done:false},
+    {ic:"💾", t:"Salvar / Publicar / Snapshot", d:"O ciclo se fecha para começar de novo.", done:false}
+  ];
+
+  var libraryCategories = ["Todos","Documentos","Manifestos","E-books","Áudios","Sementes","Espelhos","Presets","Snapshots"];
+
+  var seedLibrary = [
+    {id:"doc1", kind:"Documento", cat:"Documentos", name:"Prompt-Mestre · Visão do Produto", frac:12, seeded:false},
+    {id:"doc2", kind:"Documento", cat:"Documentos", name:"Prompt de Execução · Infodose", frac:9, seeded:false},
+    {id:"doc3", kind:"Manifesto", cat:"Manifestos", name:"Infodose 369 · Manifesto Público", frac:21, seeded:false},
+    {id:"doc4", kind:"Preset", cat:"Presets", name:"Prompt do Snapshot", frac:7, seeded:false},
+    {id:"doc5", kind:"Preset", cat:"Presets", name:"Infodose Creator", frac:14, seeded:false},
+    {id:"doc6", kind:"Manifesto", cat:"Manifestos", name:"Malha de Utilidade · Hub", frac:6, seeded:false},
+    {id:"doc7", kind:"Preset", cat:"Presets", name:"Semantic → Code", frac:11, seeded:false},
+    {id:"doc8", kind:"E-book", cat:"E-books", name:"Ciclo 3·6·9 — Descobrir, Perguntar, Transformar", frac:18, seeded:false}
+  ];
+
+  var state = load();
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(LS_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return {
+      seeds:[
+        {id:"s_"+Date.now(), type:"ideia", text:"Transformar o Nebula Pro Library em uma biblioteca semântica organizada.", ts:Date.now()}
+      ],
+      mirrors:["doc3"],
+      results:[],
+      snapshots:[],
+      metrics:{criacoes:0, resolvidos:0, remix:0},
+      selSeed:null, selMirror:"doc3",
+      libFilter:"Todos"
+    };
+  }
+  function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
+
+  window.KOBLLUX.Infodose = { getState:function(){return state;}, save:save };
+
+  // ---------- toast ----------
+  var toastTimer;
+  function toast(msg){
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 1800);
+  }
+  window.toast = toast;
+
+  // ---------- tab navigation ----------
+  var titles = {espaco:"Espaço da Mente", biblioteca:"Biblioteca", fusao:"Fusão", hub:"Hub", snapshot:"Snapshot"};
+  window.go = function(name){
+    document.querySelectorAll(".screen").forEach(function(s){ s.classList.remove("active"); });
+    document.getElementById("screen-"+name).classList.add("active");
+    document.querySelectorAll(".tab").forEach(function(b){ b.classList.toggle("active", b.dataset.tab===name); });
+    document.getElementById("screenTitle").textContent = titles[name];
+    if(name==="biblioteca") renderLibrary();
+    if(name==="fusao") renderFusao();
+    if(name==="hub") renderHub();
+    if(name==="snapshot") renderSnapshots();
+    document.getElementById("main").scrollTop = 0;
+  };
+
+  // ---------- header scroll shadow ----------
+  document.getElementById("main").addEventListener("scroll", function(e){
+    document.getElementById("topbar").classList.toggle("scrolled", e.target.scrollTop > 4);
+  });
+
+  // ---------- sheet ----------
+  window.openSheet = function(){
+    renderSeedTypeChips();
+    document.getElementById("sheetBg").classList.add("open");
+    document.getElementById("sheetSeed").classList.add("open");
+  };
+  window.closeSheet = function(){
+    document.getElementById("sheetBg").classList.remove("open");
+    document.getElementById("sheetSeed").classList.remove("open");
+  };
+
+  var activeSeedType = "texto";
+  function renderSeedTypeChips(){
+    var wrap = document.getElementById("seedTypeChips");
+    wrap.innerHTML = "";
+    seedTypes.forEach(function(t){
+      var c = document.createElement("div");
+      c.className = "chip" + (t.id===activeSeedType ? " active":"");
+      c.textContent = t.ic + " " + t.lab;
+      c.onclick = function(){ activeSeedType = t.id; renderSeedTypeChips(); };
+      wrap.appendChild(c);
+    });
+  }
+
+  window.saveSeed = function(){
+    var txt = document.getElementById("seedText").value.trim();
+    if(!txt){ toast("Escreva algo antes de salvar"); return; }
+    var seed = {id:"s_"+Date.now(), type:activeSeedType, text:txt, ts:Date.now()};
+    state.seeds.unshift(seed);
+    state.selSeed = seed.id;
+    save();
+    document.getElementById("seedText").value = "";
+    closeSheet();
+    toast("🌱 Semente salva");
+    renderEspaco();
+    if(document.getElementById("screen-fusao").classList.contains("active")) renderFusao();
+  };
+
+  // ---------- Espaço da Mente ----------
+  function renderFlow(){
+    var el = document.getElementById("flowList");
+    el.innerHTML = "";
+    flowSteps.forEach(function(s, i){
+      var row = document.createElement("div");
+      row.className = "fstep" + (!s.done && i===flowActiveIndex() ? " active" : "");
+      row.innerHTML =
+        '<div class="rail"><div class="node' + (s.done?" done":"") + '">' + (s.done ? "✓" : s.ic) + '</div>' +
+        (i < flowSteps.length-1 ? '<div class="thread"></div>' : '') + '</div>' +
+        '<div class="body"><b>' + s.t + '</b><p>' + s.d + '</p>' +
+        (i===flowActiveIndex() ? '<span class="tag">Próximo passo</span>' : '') + '</div>';
+      el.appendChild(row);
+    });
+  }
+  function flowActiveIndex(){
+    if(state.seeds.length===0) return 0;
+    if(!state.selMirror) return 2;
+    if(state.results.length===0) return 3;
+    return 5;
+  }
+
+  function renderRecent(){
+    var grid = document.getElementById("recentGrid");
+    grid.innerHTML = "";
+    var items = state.seeds.slice(0,4);
+    document.getElementById("recentCount").textContent = state.seeds.length;
+    if(items.length===0){
+      grid.innerHTML = '<div class="empty" style="grid-column:1/-1;"><div class="glyph">🌱</div><b>Nenhuma semente ainda</b><p>Toque em Falar para trazer algo de dentro.</p></div>';
+      return;
+    }
+    items.forEach(function(s){
+      var d = document.createElement("div");
+      d.className = "item";
+      d.innerHTML = '<div class="kind badge-seed">Semente · ' + s.type + '</div>' +
+        '<div class="name">' + escapeHtml(s.text.slice(0,64)) + (s.text.length>64?"…":"") + '</div>' +
+        '<div class="meta"><span>' + timeAgo(s.ts) + '</span><span class="frac">✦ semente</span></div>';
+      d.onclick = function(){ state.selSeed = s.id; save(); go('fusao'); };
+      grid.appendChild(d);
+    });
+  }
+
+  function renderEspaco(){ renderFlow(); renderRecent(); }
+
+  // ---------- Biblioteca ----------
+  function renderLibChips(){
+    var wrap = document.getElementById("libChips");
+    wrap.innerHTML = "";
+    libraryCategories.forEach(function(c){
+      var el = document.createElement("div");
+      el.className = "chip" + (c===state.libFilter ? " active":"");
+      el.textContent = c;
+      el.onclick = function(){ state.libFilter = c; save(); renderLibrary(); };
+      wrap.appendChild(el);
+    });
+  }
+  function renderLibrary(){
+    renderLibChips();
+    var grid = document.getElementById("libGrid");
+    grid.innerHTML = "";
+    var pool = seedLibrary.filter(function(it){
+      return state.libFilter==="Todos" || it.cat===state.libFilter;
+    });
+    if(pool.length===0){
+      grid.innerHTML = '<div class="empty" style="grid-column:1/-1;"><div class="glyph">📚</div><b>Nada por aqui</b><p>Tente outra categoria.</p></div>';
+      return;
+    }
+    pool.forEach(function(it){
+      var d = document.createElement("div");
+      d.className = "item";
+      var isMirror = state.mirrors.indexOf(it.id) > -1;
+      d.innerHTML = '<div class="kind" style="color:var(--gold);">' + it.kind + '</div>' +
+        '<div class="name">' + it.name + '</div>' +
+        '<div class="meta"><span>' + it.frac + ' fractais</span><span class="frac ' + (isMirror?'badge-mirror':'') + '">' + (isMirror?'🪞 espelho':'') + '</span></div>';
+      d.onclick = function(){
+        if(state.mirrors.indexOf(it.id)===-1) state.mirrors.push(it.id);
+        state.selMirror = it.id;
+        save();
+        toast("🪞 Usado como Espelho");
+        renderLibrary();
+      };
+      grid.appendChild(d);
+    });
+  }
+
+  // ---------- Fusão ----------
+  function renderFusao(){
+    var seedWrap = document.getElementById("seedPicks");
+    seedWrap.innerHTML = "";
+    if(state.seeds.length===0){
+      seedWrap.innerHTML = '<div class="empty"><div class="glyph">🌱</div><b>Nenhuma semente</b><p>Crie uma semente para iniciar a fusão.</p></div>';
+    }
+    state.seeds.slice(0,5).forEach(function(s){
+      var sel = state.selSeed===s.id;
+      var el = document.createElement("div");
+      el.className = "pick" + (sel?" sel":"");
+      el.innerHTML = '<div class="ic">🌱</div><div class="tx"><b>' + escapeHtml(s.text.slice(0,40)) + (s.text.length>40?"…":"") + '</b><small>' + s.type + ' · ' + timeAgo(s.ts) + '</small></div><div class="check"></div>';
+      el.onclick = function(){ state.selSeed = s.id; save(); renderFusao(); };
+      seedWrap.appendChild(el);
+    });
+
+    var mirrorWrap = document.getElementById("mirrorPicks");
+    mirrorWrap.innerHTML = "";
+    var mirrorItems = seedLibrary.filter(function(it){ return state.mirrors.indexOf(it.id)>-1; });
+    if(mirrorItems.length===0){
+      mirrorWrap.innerHTML = '<div class="empty"><div class="glyph">🪞</div><b>Nenhum espelho escolhido</b><p>Vá até a Biblioteca e escolha um documento como espelho.</p></div>';
+    }
+    mirrorItems.forEach(function(it){
+      var sel = state.selMirror===it.id;
+      var el = document.createElement("div");
+      el.className = "pick" + (sel?" sel":"");
+      el.innerHTML = '<div class="ic">🪞</div><div class="tx"><b>' + it.name + '</b><small>' + it.kind + ' · ' + it.frac + ' fractais</small></div><div class="check"></div>';
+      el.onclick = function(){ state.selMirror = it.id; save(); renderFusao(); };
+      mirrorWrap.appendChild(el);
+    });
+
+    document.getElementById("fundirBtn").disabled = !(state.selSeed && state.selMirror);
+    document.getElementById("fundirBtn").style.opacity = (state.selSeed && state.selMirror) ? 1 : .5;
+
+    renderResultZone();
+  }
+
+  function renderResultZone(){
+    var zone = document.getElementById("resultZone");
+    zone.innerHTML = "";
+    var r = state.results[0];
+    if(!r) return;
+    var card = document.createElement("div");
+    card.className = "result-card";
+    card.innerHTML =
+      '<div class="result-seal">di_resultado · ' + r.hash + '</div>' +
+      '<h3>✦ ' + r.title + '</h3>' +
+      '<p>' + r.text + '</p>' +
+      '<div class="action-grid">' +
+        actionBtn("💾","Salvar","save") +
+        actionBtn("📋","Copiar","copy") +
+        actionBtn("🌱","Semente","toseed") +
+        actionBtn("🪞","Espelho","tomirror") +
+        actionBtn("↗","Compartilhar","share") +
+        actionBtn("📤","Publicar","publish") +
+        actionBtn("📦","Snapshot","snapshot") +
+        actionBtn("🔁","Nova fusão","reset") +
+      '</div>';
+    zone.appendChild(card);
+  }
+  function actionBtn(ic,label,action){
+    return '<div class="aicon" onclick="resultAction(\'' + action + '\')">' + ic + '<small>' + label + '</small></div>';
+  }
+  window.resultAction = function(action){
+    var r = state.results[0];
+    if(!r) return;
+    switch(action){
+      case "save": toast("💾 Resultado salvo"); break;
+      case "copy":
+        if(navigator.clipboard){ navigator.clipboard.writeText(r.text).catch(function(){}); }
+        toast("📋 Copiado"); break;
+      case "toseed":
+        state.seeds.unshift({id:"s_"+Date.now(), type:"resultado", text:r.text, ts:Date.now()});
+        state.selSeed = state.seeds[0].id;
+        save(); toast("🌱 Reutilizado como Semente"); renderFusao(); break;
+      case "tomirror": toast("🪞 Marcado como Espelho"); break;
+      case "share": toast("↗ Link de compartilhamento copiado"); break;
+      case "publish":
+        state.metrics.criacoes++; save(); toast("📤 Publicado no Hub"); break;
+      case "snapshot": createSnapshotFromResult(r); break;
+      case "reset":
+        state.results = []; state.selMirror=null; save(); renderFusao(); break;
+    }
+  };
+
+  function hash8(str){
+    var h = 0;
+    for(var i=0;i<str.length;i++){ h = (h<<5) - h + str.charCodeAt(i); h |= 0; }
+    return (h>>>0).toString(16).padStart(8,"0").slice(0,8);
+  }
+
+  window.fundir = function(){
+    if(!state.selSeed || !state.selMirror) return;
+    var seed = state.seeds.find(function(s){return s.id===state.selSeed;});
+    var mirror = seedLibrary.find(function(m){return m.id===state.selMirror;});
+    if(!seed || !mirror) return;
+    var combined = seed.text + "·" + mirror.name + "·" + Date.now();
+    var result = {
+      id:"r_"+Date.now(),
+      title:"Fusão · " + mirror.name.split("·")[0].trim(),
+      text:"Síntese entre a semente “" + seed.text.slice(0,90) + (seed.text.length>90?"…":"") + "” e o espelho “" + mirror.name + "”. O ciclo se fecha para começar de novo: descobrir → perguntar → transformar.",
+      hash:hash8(combined),
+      ts:Date.now()
+    };
+    state.results.unshift(result);
+    state.metrics.remix++;
+    save();
+    toast("🌀 Fusão concluída");
+    renderFusao();
+  };
+
+  function createSnapshotFromResult(r){
+    var snap = {id:"snap_"+Date.now(), title:r.title, hash:r.hash, ts:Date.now()};
+    state.snapshots.unshift(snap);
+    save();
+    toast("📦 Snapshot exportado");
+  }
+
+  // ---------- Hub ----------
+  function renderHub(){
+    document.getElementById("mCriacoes").textContent = state.metrics.criacoes;
+    document.getElementById("mResolvidos").textContent = state.metrics.resolvidos;
+    document.getElementById("mRemix").textContent = state.metrics.remix;
+  }
+
+  // ---------- Snapshot ----------
+  window.exportSnapshot = function(){
+    var snap = {
+      id:"snap_"+Date.now(),
+      title:"Espaço da Mente · " + new Date().toLocaleDateString("pt-BR"),
+      hash:hash8(JSON.stringify(state) + Date.now()),
+      ts:Date.now(),
+      payload:{seeds:state.seeds.slice(0,10), mirrors:state.mirrors, results:state.results.slice(0,5)}
+    };
+    state.snapshots.unshift(snap);
+    save();
+    renderSnapshots();
+    toast("📦 Snapshot exportado");
+
+    var blob = new Blob([JSON.stringify(snap,null,2)], {type:"application/json"});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = "di_snapshot_" + snap.hash + ".json";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  };
+
+  document.getElementById("importInput").addEventListener("change", function(e){
+    var file = e.target.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      try{
+        var snap = JSON.parse(ev.target.result);
+        snap.id = "snap_"+Date.now();
+        state.snapshots.unshift(snap);
+        save();
+        renderSnapshots();
+        toast("⇧ Snapshot importado");
+      }catch(err){ toast("Arquivo inválido"); }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  });
+
+  function renderSnapshots(){
+    var wrap = document.getElementById("snapList");
+    wrap.innerHTML = "";
+    if(state.snapshots.length===0){
+      wrap.innerHTML = '<div class="empty"><div class="glyph">📦</div><b>Nenhum snapshot ainda</b><p>Exporte um estado configurado da experiência para compartilhar ou clonar depois.</p></div>';
+      return;
+    }
+    state.snapshots.forEach(function(s){
+      var el = document.createElement("div");
+      el.className = "snap-card";
+      el.innerHTML = '<div class="snap-thumb"></div><div class="snap-tx"><b>' + s.title + '</b><small>di_' + s.hash + ' · ' + timeAgo(s.ts) + '</small></div><div class="chev">›</div>';
+      wrap.appendChild(el);
+    });
+  }
+
+  // ---------- utils ----------
+  function escapeHtml(s){
+    return s.replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function timeAgo(ts){
+    var s = Math.floor((Date.now()-ts)/1000);
+    if(s<60) return "agora";
+    if(s<3600) return Math.floor(s/60)+"min";
+    if(s<86400) return Math.floor(s/3600)+"h";
+    return Math.floor(s/86400)+"d";
+  }
+
+  // ---------- boot ----------
+  renderEspaco();
+  save();
+})();
+</script>
+</body></html>
