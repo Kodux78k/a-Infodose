@@ -501,10 +501,840 @@ select {
     padding:
         24px;
 }
+
+/* =========================================================
+KOBLLUX × DUAL
+GLOBAL THEME OVERRIDE
+LIGHT / DARK / GLASS / ARCHETYPE
+========================================================= */
+
+/* =========================================================
+CORE TOKENS
+========================================================= */
+
+:root {
+
+color-scheme:
+    dark;
+/* BASE */
+--bg:
+    #050507;
+--bg-elevated:
+    #0a0a0e;
+--panel:
+    rgba(18, 18, 22, .68);
+--panel-solid:
+    #121216;
+--surface:
+    rgba(255, 255, 255, .045);
+--surface-hover:
+    rgba(255, 255, 255, .08);
+/* TEXTO */
+--text:
+    #f5f5f7;
+--text-strong:
+    #ffffff;
+--muted:
+    rgba(255, 255, 255, .58);
+--subtle:
+    rgba(255, 255, 255, .38);
+/* BORDAS */
+--border:
+    rgba(255, 255, 255, .08);
+--border-strong:
+    rgba(255, 255, 255, .15);
+/* INPUT */
+--input-bg:
+    rgba(255, 255, 255, .055);
+--input-text:
+    var(--text);
+--placeholder:
+    rgba(255, 255, 255, .35);
+/* BUTTON */
+--button-bg:
+    rgba(255, 255, 255, .07);
+--button-hover:
+    rgba(255, 255, 255, .12);
+--button-text:
+    var(--text);
+/* GLASS */
+--glass-bg:
+    rgba(255, 255, 255, .055);
+--glass-border:
+    rgba(255, 255, 255, .08);
+--glass-blur:
+    24px;
+--glass-saturate:
+    150%;
+/* SHADOW */
+--shadow:
+    0 20px 60px
+    rgba(0, 0, 0, .28);
+/* GEOMETRIA */
+--radius:
+    39px;
+--radius-small:
+    20px;
+/* SISTEMA */
+--transition:
+    .25s ease;
+
+}
+
+/* =========================================================
+LIGHT MODE
+========================================================= */
+
+html[data-theme=“light”] {
+
+color-scheme:
+    light;
+/* BASE CLARA */
+--bg:
+    #f5f5f7;
+--bg-elevated:
+    #ffffff;
+/* GLASS CLARO */
+--panel:
+    rgba(255, 255, 255, .72);
+--panel-solid:
+    #ffffff;
+--surface:
+    rgba(0, 0, 0, .025);
+--surface-hover:
+    rgba(0, 0, 0, .055);
+/* TEXTO */
+--text:
+    #1c1c1e;
+--text-strong:
+    #000000;
+--muted:
+    rgba(28, 28, 30, .60);
+--subtle:
+    rgba(28, 28, 30, .38);
+/* BORDAS */
+--border:
+    rgba(0, 0, 0, .07);
+--border-strong:
+    rgba(0, 0, 0, .12);
+/* INPUT */
+--input-bg:
+    rgba(0, 0, 0, .035);
+--input-text:
+    #1c1c1e;
+--placeholder:
+    rgba(28, 28, 30, .38);
+/* BUTTON */
+--button-bg:
+    rgba(0, 0, 0, .045);
+--button-hover:
+    rgba(0, 0, 0, .08);
+--button-text:
+    #1c1c1e;
+/* GLASS */
+--glass-bg:
+    rgba(255, 255, 255, .64);
+--glass-border:
+    rgba(0, 0, 0, .07);
+/* SHADOW */
+--shadow:
+    0 20px 60px
+    rgba(0, 0, 0, .10);
+
+}
+
+/* =========================================================
+GLOBAL RESET
+========================================================= */
+
+* {
+    box-sizing:
+    border-box;
+    -webkit-tap-highlight-color:
+    transparent;
+
+}
+
+/* =========================================================
+GLOBAL BASE
+========================================================= */
+
+html,
+body {
+
+margin:
+    0;
+padding:
+    0;
+width:
+    100%;
+min-height:
+    100%;
+background:
+    var(--bg);
+color:
+    var(--text);
+transition:
+    background
+    var(--transition),
+    color
+    var(--transition);
+
+}
+
+/* =========================================================
+MAIN GLOBAL
+========================================================= */
+
+#main-content {
+
+width:
+    100%;
+min-height:
+    100vh;
+padding-top:
+    56px;
+padding-left:
+    0;
+padding-right:
+    0;
+background:
+    var(--bg);
+color:
+    var(--text);
+
+}
+
+/* =========================================================
+CONTENT
+========================================================= */
+
+.content {
+
+width:
+    100%;
+max-width:
+    100%;
+margin:
+    0 auto;
+padding:
+    28px
+    0
+    120px;
+
+}
+
+/* =========================================================
+TYPOGRAPHY
+========================================================= */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+
+color:
+    var(--text-strong);
+
+}
+
+p,
+span,
+li,
+label,
+small {
+
+color:
+    inherit;
+
+}
+
+.text,
+.text-primary {
+
+color:
+    var(--text);
+
+}
+
+.text-muted,
+.muted,
+.secondary {
+
+color:
+    var(--muted);
+
+}
+
+/* =========================================================
+KOBLLUX ARCHETYPE COLORS
+NÃO SOBRESCREVER
+========================================================= */
+
+.kob-voice-primary,
+.voice-primary,
+[data-voice-primary] {
+
+color:
+    var(--kob-voice-primary);
+
+}
+
+.kob-voice-secondary,
+.voice-secondary,
+[data-voice-secondary] {
+
+color:
+    var(--kob-voice-secondary);
+
+}
+
+/* =========================================================
+ARCHETYPE COLOR HOOKS
+O TEMA NÃO TOMA POSSE DESTAS CORES
+========================================================= */
+
+.kob-accent,
+.voice-accent,
+.archetype-color {
+
+color:
+    var(--kob-voice-primary);
+
+}
+
+.kob-accent-secondary,
+.voice-accent-secondary {
+
+color:
+    var(--kob-voice-secondary);
+
+}
+
+/* =========================================================
+GLOBAL GLASS
+========================================================= */
+
+.panel,
+.card,
+.modal,
+.drawer,
+.sidebar,
+.sheet,
+.deck,
+.overlay-panel,
+.fractal-block,
+.preview-card,
+.glass,
+.surface,
+[class*=“panel”],
+[class*=“card”],
+[class*=“modal”],
+[class*=“drawer”] {
+
+background:
+    var(--glass-bg);
+color:
+    var(--text);
+border:
+    0;
+border-radius:
+    var(--radius);
+box-shadow:
+    var(--shadow);
+backdrop-filter:
+    blur(
+        var(--glass-blur)
+    )
+    saturate(
+        var(--glass-saturate)
+    );
+-webkit-backdrop-filter:
+    blur(
+        var(--glass-blur)
+    )
+    saturate(
+        var(--glass-saturate)
+    );
+transition:
+    background
+    var(--transition),
+    color
+    var(--transition),
+    box-shadow
+    var(--transition);
+
+}
+
+/* =========================================================
+LIGHT GLASS
+========================================================= */
+
+html[data-theme=“light”] .panel,
+html[data-theme=“light”] .card,
+html[data-theme=“light”] .modal,
+html[data-theme=“light”] .drawer,
+html[data-theme=“light”] .sidebar,
+html[data-theme=“light”] .sheet,
+html[data-theme=“light”] .deck,
+html[data-theme=“light”] .overlay-panel,
+html[data-theme=“light”] .preview-card {
+
+background:
+    rgba(
+        255,
+        255,
+        255,
+        .68
+    );
+box-shadow:
+    0
+    20px
+    60px
+    rgba(
+        0,
+        0,
+        0,
+        .08
+    );
+
+}
+
+/* =========================================================
+GLOBAL BUTTONS
+SEMPRE SEM BORDA
+========================================================= */
+
+button,
+.btn,
+.button,
+[role=“button”] {
+
+border:
+    0 !important;
+outline:
+    none;
+border-radius:
+    39px !important;
+background:
+    var(--button-bg);
+color:
+    var(--button-text);
+font:
+    inherit;
+cursor:
+    pointer;
+transition:
+    background
+    var(--transition),
+    color
+    var(--transition),
+    transform
+    .2s ease,
+    box-shadow
+    var(--transition);
+
+}
+
+/* =========================================================
+BUTTON HOVER
+========================================================= */
+
+button:hover,
+.btn:hover,
+.button:hover,
+[role=“button”]:hover {
+
+background:
+    var(--button-hover);
+
+}
+
+/* =========================================================
+BUTTON ACTIVE
+========================================================= */
+
+button:active,
+.btn:active,
+.button:active {
+
+transform:
+    scale(.96);
+
+}
+
+/* =========================================================
+BUTTON PRIMARY
+USA O ARCHETYPE
+========================================================= */
+
+.btn-primary,
+.button-primary,
+.primary-btn {
+
+background:
+    var(--kob-voice-primary);
+color:
+    #ffffff;
+border:
+    0 !important;
+
+}
+
+/* =========================================================
+BUTTON SECONDARY
+========================================================= */
+
+.btn-secondary,
+.button-secondary,
+.secondary-btn {
+
+background:
+    var(--kob-voice-secondary);
+color:
+    #ffffff;
+border:
+    0 !important;
+
+}
+
+/* =========================================================
+INPUTS
+========================================================= */
+
+input,
+textarea,
+select {
+
+width:
+    100%;
+background:
+    var(--input-bg);
+color:
+    var(--input-text);
+border:
+    0;
+border-radius:
+    39px;
+outline:
+    none;
+padding:
+    14px 18px;
+font:
+    inherit;
+transition:
+    background
+    var(--transition),
+    color
+    var(--transition),
+    box-shadow
+    var(--transition);
+
+}
+
+textarea {
+
+border-radius:
+    24px;
+
+}
+
+input::placeholder,
+textarea::placeholder {
+
+color:
+    var(--placeholder);
+
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+
+box-shadow:
+    0
+    0
+    0
+    3px
+    color-mix(
+        in srgb,
+        var(--kob-voice-primary)
+        18%,
+        transparent
+    );
+
+}
+
+/* =========================================================
+BADGES / PILLS / CHIPS
+========================================================= */
+
+.badge,
+.chip,
+.tag,
+.pill {
+
+border:
+    0;
+border-radius:
+    39px;
+background:
+    var(--surface);
+color:
+    var(--muted);
+
+}
+
+/* =========================================================
+HEADER
+========================================================= */
+
+.topbar {
+
+background:
+    var(--glass-bg);
+color:
+    var(--text);
+border:
+    0;
+border-bottom:
+    0;
+backdrop-filter:
+    blur(
+        24px
+    )
+    saturate(
+        150%
+    );
+-webkit-backdrop-filter:
+    blur(
+        24px
+    )
+    saturate(
+        150%
+    );
+
+}
+
+/* =========================================================
+THEME DOT
+========================================================= */
+
+.theme-dot {
+
+border:
+    0 !important;
+border-radius:
+    50% !important;
+background:
+    var(--surface);
+color:
+    var(--text);
+
+}
+
+/* =========================================================
+OVERRIDE DE ELEMENTOS INLINE ESCUROS
+LIGHT MODE
+========================================================= */
+
+html[data-theme=“light”]
+
+[style*=“background:#000”],
+html[data-theme=“light”]
+
+[style*=“background: #000”],
+html[data-theme=“light”]
+
+[style*=“background:#050507”],
+html[data-theme=“light”]
+
+[style*=“background: #050507”] {
+
+background:
+    var(--bg) !important;
+
+}
+
+html[data-theme=“light”]
+
+[style*=“background:#121216”],
+html[data-theme=“light”]
+
+[style*=“background: #121216”] {
+
+background:
+    var(--panel-solid) !important;
+
+}
+
+/* =========================================================
+OVERRIDE DE TEXTO INLINE BRANCO
+========================================================= */
+
+html[data-theme=“light”]
+
+[style*=“color:#fff”],
+html[data-theme=“light”]
+
+[style*=“color: #fff”],
+html[data-theme=“light”]
+
+[style*=“color:white”],
+html[data-theme=“light”]
+
+[style*=“color: white”],
+html[data-theme=“light”]
+
+[style*=“color:#ffffff”],
+html[data-theme=“light”]
+
+[style*=“color: #ffffff”] {
+
+color:
+    var(--text-strong) !important;
+
+}
+
+/* =========================================================
+DIVISÓRIAS
+========================================================= */
+
+hr {
+
+border:
+    0;
+border-top:
+    1px solid
+    var(--border);
+
+}
+
+/* =========================================================
+KOBLLUX BLOB / ORB / GLOW
+O LIGHT MODE NÃO MATA AS CORES DO ARCHETYPE
+========================================================= */
+
+.blob,
+.orb,
+.glow,
+.voice-orb,
+.archetype-orb {
+
+background:
+    radial-gradient(
+        circle,
+        var(--kob-voice-primary),
+        transparent
+        70%
+    );
+opacity:
+    .65;
+filter:
+    blur(30px);
+pointer-events:
+    none;
+
+}
+
+/* =========================================================
+OVERLAY DE ARCHETYPE
+========================================================= */
+
+.voice-overlay,
+.archetype-overlay,
+.kob-overlay {
+
+background:
+    linear-gradient(
+        135deg,
+        color-mix(
+            in srgb,
+            var(--kob-voice-primary)
+            14%,
+            transparent
+        ),
+        color-mix(
+            in srgb,
+            var(--kob-voice-secondary)
+            10%,
+            transparent
+        )
+    );
+pointer-events:
+    none;
+
+}
+
+/* =========================================================
+LIGHT MODE
+PRESERVA OS BLOBS
+========================================================= */
+
+html[data-theme=“light”]
+
+.blob,
+html[data-theme=“light”]
+
+.orb,
+html[data-theme=“light”]
+
+.glow,
+html[data-theme=“light”]
+
+.voice-orb {
+
+opacity:
+    .48;
+filter:
+    blur(35px);
+
+}
+
+/* =========================================================
+TRANSIÇÃO GLOBAL
+========================================================= */
+
+html.dual-theme-transition *,
+html.dual-theme-transition {
+
+transition:
+    background
+    .25s ease,
+    background-color
+    .25s ease,
+    color
+    .25s ease,
+    box-shadow
+    .25s ease,
+    border-color
+    .25s ease;
+
+}
+
+/* =========================================================
+API DE COMPATIBILIDADE
+========================================================= */
+
+[data-theme=“light”] {
+
+--theme-is-light:
+    1;
+
+}
+
+[data-theme=“dark”] {
+
+--theme-is-light:
+    0;
+
+}
 </style>
 </head>
 <body>
-<div class="dual-app">
+
 <!-- ═══════════════════════════════════════════════════════
      HEADER GLOBAL
      1. TOCAR NO HEADER
@@ -516,41 +1346,8 @@ select {
      4. ROLAR PARA CIMA
         → HEADER VOLTA
 ═══════════════════════════════════════════════════════ -->
-<header
-    class="topbar header-visible"
-    id="main-header">
-    <!-- ÁREA DO SISTEMA -->
-    <div class="brand">
-        <span>
-            DUAL
-        </span>
-        <span class="badge">
-            GLOBAL
-        </span>
-    </div>
-    <!-- ÚNICO CONTROLE DE TEMA -->
-
-  <button
-        id="theme-dot"
-        class="theme-dot"
-        type="button"
-        aria-label="Alternar tema"
-        title="Alternar tema">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-       </button>  
 
 
-</header>
-<!-- ═══════════════════════════════════════════════════════
-     MAIN
-═══════════════════════════════════════════════════════ -->
-<main id="main-content">
-    <div class="content">
-        <section style="display:none" class="panel demo">
-        </section>
-    </div>
-</main>
-</div>
 <script>
 /* ═══════════════════════════════════════════════════════
    DUAL MONOLITH
