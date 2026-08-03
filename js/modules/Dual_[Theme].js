@@ -1353,25 +1353,108 @@ API DE COMPATIBILIDADE
    DUAL MONOLITH
    THEME + HEADER COLLAPSE + SMART HEADER
 ═══════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   DUAL GLOBAL SYSTEM
+   ALPHA MEMORY ROOT
+   UNIVERSAL TARGET REGISTRY
+═══════════════════════════════════════════════════════ */
 (() => {
 "use strict";
 /* ═══════════════════════════════════════════════════════
-   ELEMENTOS
+   ROOT
 ═══════════════════════════════════════════════════════ */
 const ROOT =
     document.documentElement;
+/* ═══════════════════════════════════════════════════════
+   UNIVERSAL TARGET RESOLVER
+   Aceita:
+   "#main-header"
+   ".main-header"
+   "#main-header, .main-header"
+   Retorna SEMPRE uma lista de elementos.
+═══════════════════════════════════════════════════════ */
+function resolveTargets(selector) {
+    if (!selector) {
+        return [];
+    }
+    try {
+        return Array.from(
+            document.querySelectorAll(
+                selector
+            )
+        );
+    } catch (error) {
+        console.warn(
+            "[DUAL] Seletor inválido:",
+            selector,
+            error
+        );
+        return [];
+    }
+}
+/* ═══════════════════════════════════════════════════════
+   REGISTRY GLOBAL
+   Um mesmo elemento pode existir
+   por ID ou por classe.
+   Exemplo:
+   #main-header
+   .main-header
+   Ambos podem apontar para o mesmo alvo.
+═══════════════════════════════════════════════════════ */
+const REGISTRY = {
+    HEADER:
+        resolveTargets(
+            "#main-header, .main-header"
+        ),
+    MAIN:
+        resolveTargets(
+            "#main-content, .main-content"
+        ),
+    THEME_DOT:
+        resolveTargets(
+            "#theme-dot, .theme-dot"
+        )
+};
+/* ═══════════════════════════════════════════════════════
+   API UNIVERSAL
+   Exemplo:
+   DualTarget.all("#main-header")
+   DualTarget.all(".card")
+   DualTarget.all(
+       "#main-header, .card"
+   )
+═══════════════════════════════════════════════════════ */
+window.DualTarget = {
+    all(selector) {
+        return resolveTargets(
+            selector
+        );
+    },
+    first(selector) {
+        return (
+            resolveTargets(
+                selector
+            )[0] || null
+        );
+    },
+    exists(selector) {
+        return (
+            resolveTargets(
+                selector
+            ).length > 0
+        );
+    }
+};
+/* ═══════════════════════════════════════════════════════
+   ELEMENTOS
+   Compatibilidade com seu código original
+═══════════════════════════════════════════════════════ */
 const HEADER =
-    document.getElementById(
-        "main-header"
-    );
+    REGISTRY.HEADER;
 const MAIN =
-    document.getElementById(
-        "main-content"
-    );
+    REGISTRY.MAIN;
 const THEME_DOT =
-    document.getElementById(
-        "theme-dot"
-    );
+    REGISTRY.THEME_DOT;
 /* ═══════════════════════════════════════════════════════
    THEME ENGINE
 ═══════════════════════════════════════════════════════ */
@@ -1394,16 +1477,6 @@ function applyTheme(theme) {
             "DUAL Theme · localStorage indisponível"
         );
     }
-    /*
-     * Evento global.
-     *
-     * Qualquer módulo do sistema pode ouvir:
-     *
-     * window.addEventListener(
-     *     "dual:theme-change",
-     *     e => {}
-     * );
-     */
     window.dispatchEvent(
         new CustomEvent(
             "dual:theme-change",
@@ -1432,7 +1505,7 @@ function getInitialTheme() {
     return "dark";
 }
 /* ═══════════════════════════════════════════════════════
-   API GLOBAL
+   API GLOBAL DE TEMA
 ═══════════════════════════════════════════════════════ */
 window.DualTheme = {
     set(theme) {
@@ -1458,75 +1531,187 @@ window.DualTheme = {
     }
 };
 /* ═══════════════════════════════════════════════════════
-   BOLINHA DE TEMA
+   THEME DOT
+   Agora funciona com:
+   #theme-dot
+   ou
+   .theme-dot
+   ou vários .theme-dot
 ═══════════════════════════════════════════════════════ */
-if (THEME_DOT) {
-    THEME_DOT.addEventListener(
-        "click",
-        event => {
-            /*
-             * Impede que o clique
-             * chegue ao header.
-             *
-             * Assim a bolinha troca
-             * o tema sem colapsar
-             * o conteúdo.
-             */
-            event.stopPropagation();
-            DualTheme.toggle();
-        }
-    );
-}
-/* ═══════════════════════════════════════════════════════
-   HEADER → COLLAPSE DO MAIN
-═══════════════════════════════════════════════════════ */
-if (HEADER && MAIN) {
-    HEADER.addEventListener(
-        "click",
-        event => {
-            /*
-             * Se o clique veio da bolinha,
-             * não executa o collapse.
-             */
-            if (
-                event.target.closest(
-                    "#theme-dot"
-                )
-            ) {
-                return;
+THEME_DOT.forEach(
+    dot => {
+        dot.addEventListener(
+            "click",
+            event => {
+                event.stopPropagation();
+                DualTheme.toggle();
             }
-            MAIN.classList.toggle(
-                "hidden"
-            );
-            const collapsed =
-                MAIN.classList.contains(
-                    "hidden"
-                );
-            HEADER.classList.toggle(
-                "is-collapsed",
-                collapsed
-            );
-            /*
-             * Evento para futuras
-             * Symbol Bars / Navigation.
-             */
-            window.dispatchEvent(
-                new CustomEvent(
-                    "dual:content-collapse",
-                    {
-                        detail: {
-                            collapsed
-                        }
+        );
+    }
+);
+/* ═══════════════════════════════════════════════════════
+   HEADER COLLAPSE
+   Todos os headers encontrados
+   podem controlar todos os mains encontrados.
+═══════════════════════════════════════════════════════ */
+HEADER.forEach(
+    header => {
+        header.addEventListener(
+            "click",
+            event => {
+                /*
+                 * Qualquer elemento
+                 * marcado como theme control
+                 * não colapsa o conteúdo.
+                 */
+                if (
+                    event.target.closest(
+                        "#theme-dot, .theme-dot"
+                    )
+                ) {
+                    return;
+                }
+                /*
+                 * Todos os MAIN
+                 * são alternados.
+                 */
+                MAIN.forEach(
+                    main => {
+                        main.classList.toggle(
+                            "hidden"
+                        );
                     }
-                )
+                );
+                const collapsed =
+                    MAIN.some(
+                        main =>
+                            main.classList.contains(
+                                "hidden"
+                            )
+                    );
+                /*
+                 * Todos os HEADER
+                 * recebem o estado.
+                 */
+                HEADER.forEach(
+                    item => {
+                        item.classList.toggle(
+                            "is-collapsed",
+                            collapsed
+                        );
+                    }
+                );
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "dual:content-collapse",
+                        {
+                            detail: {
+                                collapsed
+                            }
+                        }
+                    )
+                );
+            }
+        );
+    }
+);
+/* ═══════════════════════════════════════════════════════
+   UNIVERSAL ACTION ENGINE
+   Um botão controla:
+   1 elemento:
+   data-target="#main-content"
+   Uma classe inteira:
+   data-target=".card"
+   Vários elementos:
+   data-target="#main-content, .card, .panel"
+   Ações:
+   toggle
+   show
+   hide
+   add
+   remove
+═══════════════════════════════════════════════════════ */
+document.addEventListener(
+    "click",
+    event => {
+        const trigger =
+            event.target.closest(
+                "[data-target]"
             );
+        if (!trigger) {
+            return;
         }
-    );
-}
+        /*
+         * Evita conflito com
+         * botões internos do sistema.
+         */
+        if (
+            trigger.matches(
+                "#theme-dot, .theme-dot"
+            )
+        ) {
+            return;
+        }
+        const selector =
+            trigger.dataset.target;
+        const action =
+            trigger.dataset.action ||
+            "toggle";
+        const targets =
+            resolveTargets(
+                selector
+            );
+        if (
+            !targets.length
+        ) {
+            console.warn(
+                "[DUAL] Nenhum alvo encontrado:",
+                selector
+            );
+            return;
+        }
+        targets.forEach(
+            target => {
+                switch (action) {
+                    case "show":
+                        target.hidden =
+                            false;
+                        target.classList.add(
+                            "active"
+                        );
+                        break;
+                    case "hide":
+                        target.hidden =
+                            true;
+                        target.classList.remove(
+                            "active"
+                        );
+                        break;
+                    case "add":
+                    case "activate":
+                        target.classList.add(
+                            "active"
+                        );
+                        break;
+                    case "remove":
+                    case "deactivate":
+                        target.classList.remove(
+                            "active"
+                        );
+                        break;
+                    case "toggle":
+                    default:
+                        target.classList.toggle(
+                            "active"
+                        );
+                        break;
+                }
+            }
+        );
+    }
+);
 /* ═══════════════════════════════════════════════════════
    SMART HEADER
-   SCROLL DOWN → ESCONDE
-   SCROLL UP   → MOSTRA
 ═══════════════════════════════════════════════════════ */
 let lastScrollY =
     window.scrollY;
@@ -1534,22 +1719,21 @@ let ticking =
     false;
 const SCROLL_THRESHOLD =
     8;
-/* Função de controle */
 function updateHeader() {
     const currentScrollY =
         window.scrollY;
-    /*
-     * No topo:
-     * sempre mostra.
-     */
     if (
         currentScrollY <= 10
     ) {
-        HEADER.classList.remove(
-            "header-hidden"
-        );
-        HEADER.classList.add(
-            "header-visible"
+        HEADER.forEach(
+            header => {
+                header.classList.remove(
+                    "header-hidden"
+                );
+                header.classList.add(
+                    "header-visible"
+                );
+            }
         );
         lastScrollY =
             currentScrollY;
@@ -1557,36 +1741,36 @@ function updateHeader() {
             false;
         return;
     }
-    /*
-     * Scroll para baixo
-     * → header sobe.
-     */
     if (
         currentScrollY >
         lastScrollY +
         SCROLL_THRESHOLD
     ) {
-        HEADER.classList.remove(
-            "header-visible"
-        );
-        HEADER.classList.add(
-            "header-hidden"
+        HEADER.forEach(
+            header => {
+                header.classList.remove(
+                    "header-visible"
+                );
+                header.classList.add(
+                    "header-hidden"
+                );
+            }
         );
     }
-    /*
-     * Scroll para cima
-     * → header retorna.
-     */
     else if (
         currentScrollY <
         lastScrollY -
         SCROLL_THRESHOLD
     ) {
-        HEADER.classList.remove(
-            "header-hidden"
-        );
-        HEADER.classList.add(
-            "header-visible"
+        HEADER.forEach(
+            header => {
+                header.classList.remove(
+                    "header-hidden"
+                );
+                header.classList.add(
+                    "header-visible"
+                );
+            }
         );
     }
     lastScrollY =
@@ -1594,13 +1778,10 @@ function updateHeader() {
     ticking =
         false;
 }
-/* Scroll otimizado */
 window.addEventListener(
     "scroll",
     () => {
-        if (
-            !ticking
-        ) {
+        if (!ticking) {
             window.requestAnimationFrame(
                 updateHeader
             );
@@ -1620,9 +1801,19 @@ applyTheme(
     getInitialTheme()
 );
 console.log(
-    "DUAL · GLOBAL SYSTEM READY"
+    "DUAL · GLOBAL SYSTEM READY",
+    {
+        HEADER:
+            HEADER.length,
+        MAIN:
+            MAIN.length,
+        THEME_DOT:
+            THEME_DOT.length
+    }
 );
 })();
+
+
 </script>
 </body>
 </html>`);
