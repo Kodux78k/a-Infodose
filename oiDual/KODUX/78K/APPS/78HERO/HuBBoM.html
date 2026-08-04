@@ -1,0 +1,1074 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <title>Hub ASSERT • Dual.Infodose</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#050510" id="metaThemeColor">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon-180.png">
+
+  <style>
+    /* ===== Design Tokens ===== */
+    :root{
+      --bg: #050510;
+      --bg-elevated: #09091a;
+      --bg-soft: #0b0b1f;
+      --stroke: rgba(255,255,255,.14);
+      --stroke-soft: rgba(255,255,255,.08);
+      --accent: #1be4ff;
+      --accent-soft: rgba(27,228,255,.14);
+      --accent-strong: #56f8c6;
+      --text: #f9fbff;
+      --muted: rgba(245,246,255,.7);
+      --shadow-1: 0 6px 18px rgba(0,0,0,.28);
+      --shadow-soft: 0 16px 40px rgba(0,0,0,.7);
+      --glow: 0 0 0 1px rgba(0,209,255,.18), 0 8px 28px rgba(0,209,255,.10);
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --blur: 24px;
+      --safe-top: env(safe-area-inset-top);
+    }
+
+    /* Tema Luxara */
+    [data-theme="lux"]{
+      --bg: #050508;
+      --bg-elevated: #0b0819;
+      --bg-soft: #141027;
+      --stroke: rgba(255,226,150,.22);
+      --stroke-soft: rgba(255,255,255,.09);
+      --accent: #ffdf6b;
+      --accent-soft: rgba(255,223,107,.12);
+      --accent-strong: #ff9ef2;
+      --text: #fff9f0;
+      --muted: rgba(255,245,230,.78);
+      --glow: 0 0 0 1px rgba(212,175,55,.20), 0 10px 34px rgba(212,175,55,.12);
+    }
+
+    /* ===== Base ===== */
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family: ui-rounded, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(27,228,255,.12) 0%, transparent 52%),
+        radial-gradient(circle at bottom right, rgba(255,158,242,.10) 0%, transparent 50%),
+        radial-gradient(1200px 800px at 50% -10%, rgba(0,209,255,.08), transparent 60%),
+        linear-gradient(135deg, var(--bg) 0%, #050512 40%, #050508 100%);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: env(safe-area-inset-bottom);
+      transition: background 0.4s ease;
+    }
+    [data-theme="lux"] body{
+      background:
+        radial-gradient(circle at top left, rgba(255,223,107,.12) 0%, transparent 46%),
+        radial-gradient(circle at bottom right, rgba(255,158,242,.12) 0%, transparent 50%),
+        radial-gradient(1200px 800px at 50% -10%, rgba(212,175,55,.08), transparent 62%),
+        linear-gradient(135deg, var(--bg) 0%, #0c0b0a 44%, #0a0a0a 100%);
+    }
+    body.modal-open{
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    main{
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 12px 12px calc(18px + env(safe-area-inset-bottom));
+    }
+
+    /* ===== Header Glass ===== */
+    .header{
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      backdrop-filter: blur(var(--blur)) saturate(140%);
+      -webkit-backdrop-filter: blur(var(--blur)) saturate(140%);
+      background: linear-gradient(180deg, rgba(5,5,16,.85), rgba(5,5,16,.65));
+      border-bottom: 1px solid var(--stroke-soft);
+      box-shadow: 0 10px 30px rgba(0,0,0,.45);
+      padding-top: var(--safe-top);
+    }
+    [data-theme="lux"] .header{
+      background: linear-gradient(180deg, rgba(11,8,25,.80), rgba(11,8,25,.60));
+      border-bottom: 1px solid var(--stroke);
+      box-shadow: 0 12px 34px rgba(0,0,0,.50), inset 0 -1px 0 rgba(255,226,150,.05);
+    }
+
+    .inner{
+      max-width: 720px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: clamp(10px, 1.4vw, 14px) clamp(14px, 2vw, 20px);
+    }
+
+    /* Logo */
+    .logo{
+      width: 52px; height: 52px;
+      border-radius: 999px;
+      background:
+        radial-gradient(circle at 30% 20%, #ffffff 0, #ffece3 4%, transparent 45%),
+        radial-gradient(circle at 70% 80%, rgba(86,248,198,.85) 0, transparent 55%),
+        conic-gradient(from 210deg, rgba(27,228,255,1), rgba(86,248,198,1), rgba(255,223,107,1), rgba(255,158,242,1), rgba(27,228,255,1));
+      box-shadow: 0 0 0 1px rgba(255,255,255,.15), 0 18px 35px rgba(0,0,0,.7), var(--glow);
+      position: relative;
+      overflow: hidden;
+      animation: pulse 2.6s infinite ease-in-out;
+    }
+    .logo::after{
+      content: "A";
+      display: grid; place-items: center;
+      position: absolute; inset: 18%;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.25);
+      box-shadow: inset 0 0 22px rgba(0,0,0,.7);
+      background: rgba(0,0,0,0.4);
+      font-weight: 900; color: #fff; font-size: 18px;
+      text-shadow: 0 0 10px rgba(0,209,255,0.8);
+    }
+    @keyframes pulse{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+    @media (prefers-reduced-motion: reduce){ .logo{animation:none} }
+
+    .kicker{
+      font-size: .78rem; text-transform: uppercase;
+      letter-spacing: .12em; color: var(--muted); opacity: .9;
+    }
+    h1{ font-size: 1.14rem; font-weight: 800; letter-spacing: .03em; margin-top: 2px; }
+
+    /* Topbar */
+    .topbar{
+      margin-left: auto; display: flex; gap: 6px; align-items: center;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border: 1px solid var(--stroke-soft); border-radius: 14px; padding: 4px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 8px 24px rgba(0,0,0,.25);
+    }
+    .tbtn{
+      border-radius: 10px; border: none; background: transparent; color: var(--muted);
+      padding: 8px 12px; font-size: .76rem; font-weight: 600;
+      display: inline-flex; align-items: center; gap: 5px;
+      cursor: pointer; transition: all .18s ease; min-height: 36px;
+    }
+    .tbtn:hover{ background: rgba(255,255,255,.08) }
+    .tbtn:active{ transform: translateY(1px) }
+    .tbtn[aria-pressed="true"]{
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #050510;
+      box-shadow: 0 6px 16px rgba(0,0,0,.25), 0 0 15px var(--accent-soft);
+    }
+    [data-theme="lux"] .tbtn[aria-pressed="true"]{
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), 0 8px 22px rgba(0,0,0,.28), 0 0 25px rgba(212,175,55,.2);
+    }
+
+    /* ===== Grid & Cards ===== */
+    .grid{
+      display: grid; grid-template-columns: 1fr;
+      gap: 12px; margin-top: 10px;
+    }
+    @media (min-width: 560px){ .grid{ grid-template-columns: repeat(2, 1fr); } }
+
+    .card{
+      border-radius: var(--radius-lg);
+      background: radial-gradient(circle at top left,rgba(255,255,255,.08) 0, rgba(255,255,255,0) 45%),
+                 linear-gradient(135deg, var(--bg-elevated), var(--bg-soft));
+      border: 1px solid var(--stroke-soft);
+      box-shadow: var(--shadow-1);
+      padding: 14px; display: flex; gap: 12px;
+      align-items: flex-start; min-height: 86px; position: relative;
+    }
+    .card::before{
+      content: ""; position: absolute; inset: 0; border-radius: inherit;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04); pointer-events: none;
+    }
+
+    .icon{
+      width: 60px; height: 60px; border-radius: 16px;
+      background: radial-gradient(circle, #ffffff 0, #d9f7ff 10%, transparent 60%), linear-gradient(180deg,#0f1320,#0a0f18);
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow: 0 14px 30px rgba(0,0,0,.65);
+      flex-shrink: 0; display: grid; place-items: center; font-size: 26px; overflow: hidden;
+    }
+    [data-theme="lux"] .icon{ border-color: rgba(212,175,55,.30); }
+
+    .title{ font-size: 1rem; font-weight: 700; letter-spacing: .02em; }
+    .muted{ font-size: .8rem; color: var(--muted); margin-top: 4px; line-height: 1.35; }
+    .row{ display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+
+    /* Botões Pill */
+    .btn{
+      border-radius: 999px; border: 1px solid rgba(255,255,255,.12);
+      background: linear-gradient(180deg,#13212e,#0e1924);
+      color: var(--text); padding: 8px 14px; font-size: .78rem; font-weight: 600;
+      display: inline-flex; align-items: center; gap: 4px;
+      cursor: pointer; text-decoration: none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 8px 22px rgba(0,0,0,.35);
+      transition: transform .12s ease, filter .2s ease;
+    }
+    .btn:hover{ filter: brightness(1.1); border-color: var(--accent-soft); }
+    .btn:active{ transform: translateY(1px); }
+    [data-theme="lux"] .btn{
+      background: linear-gradient(180deg,#1a1c21,#13161a);
+      border-color: rgba(212,175,55,.28); color: #f6ecd3;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 10px 26px rgba(0,0,0,.35), 0 0 0 1px rgba(212,175,55,.10);
+    }
+
+    /* Footer */
+    footer{
+      max-width: 720px; margin: 10px auto 8px; padding: 4px 14px 12px;
+      font-size: .74rem; color: var(--muted); text-align: center; opacity: .85;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+    }
+
+    /* ===== Modais ===== */
+    .viewer{
+      position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+      background: rgba(1,2,10,.88); z-index: 50;
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      padding: 18px 10px calc(18px + env(safe-area-inset-bottom));
+    }
+    .viewer.show{ display: flex; }
+
+    .frame{
+      width: 100%; max-width: 900px; max-height: 100%; height: 86vh;
+      border-radius: var(--radius-xl);
+      background: linear-gradient(145deg, var(--bg-elevated), #050512);
+      border: 1px solid var(--stroke-soft);
+      box-shadow: 0 24px 60px rgba(0,0,0,.9), inset 0 0 0 1px rgba(255,255,255,.04);
+      display: flex; flex-direction: column; overflow: hidden; position: relative;
+    }
+
+    .bar{
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.06);
+      background: linear-gradient(to right, rgba(255,255,255,.06), transparent);
+    }
+    .bar .left{ display: flex; align-items: center; gap: 8px; font-size: .9rem; font-weight: 700; }
+    .dot{
+      width: 10px; height: 10px; border-radius: 999px;
+      background: radial-gradient(circle, #ff7755 0, #ff2d55 50%, #d0003a 100%);
+      box-shadow: 0 0 10px rgba(255,90,120,.7);
+    }
+
+    .iframe{ border: 0; flex: 1; width: 100%; background: #02030b; }
+
+    /* Loader */
+    .loader{
+      position: absolute; inset: 50px 0 auto 0; height: 3px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      transform-origin: left; scale: 0 1; opacity: 0;
+      transition: opacity .16s ease, scale .16s ease; z-index: 2;
+    }
+    .loader.show{ scale: 1 1; opacity: 1; animation: loadbar 1.1s infinite; }
+    @keyframes loadbar{ 0%{transform:translateX(-40%)} 50%{transform:translateX(10%)} 100%{transform:translateX(40%)} }
+
+    /* Skeletons */
+    .skeleton{
+      height: 84px; border-radius: var(--radius-lg);
+      background: linear-gradient(90deg, rgba(255,255,255,.04), rgba(255,255,255,.10), rgba(255,255,255,.04));
+      background-size: 240% 100%; animation: sk 1.2s infinite ease-in-out;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    @keyframes sk{ 0%{background-position:100% 0} 100%{background-position:0 0} }
+
+    /* ===== Manifesto 78K ===== */
+    .manifesto-content{
+      padding: 24px; overflow-y: auto; flex: 1; color: var(--text);
+    }
+    .manifesto-content h2{ color: var(--accent); margin-bottom: 16px; font-weight: 800; }
+    .manifesto-content h3{
+      font-size: 1.1rem; border-bottom: 1px solid var(--stroke-soft);
+      padding-bottom: 6px; margin: 24px 0 12px; color: #fff;
+    }
+    .arch-grid{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .arch-card{
+      background: rgba(255,255,255,0.03); border: 1px solid var(--stroke-soft);
+      border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 4px;
+      border-left-width: 4px;
+    }
+    .arch-title{ font-weight: 700; font-size: 1rem; display: flex; justify-content: space-between; }
+    .arch-func{ font-size: 0.8rem; color: var(--muted); }
+    .roda-viva{
+      background: rgba(0,0,0,0.4); border-radius: 16px; padding: 20px;
+      font-family: monospace; font-size: 0.85rem; color: var(--accent);
+      white-space: pre; overflow-x: auto; text-align: center;
+      border: 1px solid var(--stroke-soft); line-height: 1.6;
+    }
+
+    /* ===== Session Wion Shell ===== */
+    /*
+     * O shell fica numa faixa fixada na base da tela.
+     * Comportamento: collapsed (barra) → peek (34vh) → full (tela cheia).
+     * Controlado por IOSBottomSheet (mesma classe do a_iFS.html).
+     */
+    :root{
+      --sw-topbar-h: 48px;
+      --sw-collapsed-h: 52px;
+      --sw-peek-h:     34vh;
+      --sw-full-top:   12px;
+      --sw-radius:     20px 20px 0 0;
+      --sw-z:          9000;
+    }
+
+    #sessionWionShell {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      z-index: var(--sw-z);
+      /* altura é controlada pelo IOSBottomSheet via --sheet-y */
+      height: calc(100dvh - var(--sw-full-top));
+      transform: translateY(calc(100dvh - var(--sw-collapsed-h) - var(--sw-full-top) - env(safe-area-inset-bottom)));
+      border-radius: var(--sw-radius);
+      background: rgba(10, 10, 18, 0.88);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border: 1px solid rgba(255,255,255,.10);
+      border-bottom: none;
+      box-shadow: 0 -8px 40px rgba(0,0,0,.65), 0 0 0 1px rgba(27,228,255,.07);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: border-radius .25s ease;
+      will-change: transform;
+    }
+
+    /* Quando o sheet chegar ao topo — remove arredondamento */
+    #sessionWionShell.sw-full {
+      border-radius: 0;
+    }
+
+    /* Handle de arrasto */
+    #swHandle {
+      width: 100%; height: var(--sw-collapsed-h);
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 14px;
+      background: rgba(255,255,255,.025);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+      position: relative;
+      z-index: 2;
+    }
+    #swHandle:active{ cursor: grabbing; }
+
+    /* Pill de drag */
+    #swHandle::before {
+      content: "";
+      position: absolute;
+      top: 8px; left: 50%;
+      transform: translateX(-50%);
+      width: 36px; height: 4px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.20);
+    }
+
+    .sw-brand {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 800; letter-spacing: 1.2px;
+      text-transform: uppercase; color: rgba(255,255,255,.75);
+      pointer-events: none;
+    }
+
+    .sw-dot {
+      width: 7px; height: 7px; border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+      animation: swPulse 2s ease-in-out infinite;
+    }
+    @keyframes swPulse{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+
+    .sw-actions {
+      display: flex; gap: 6px; align-items: center;
+    }
+    .sw-btn {
+      border: none; border-radius: 10px;
+      padding: 5px 10px; font-size: 10px; font-weight: 700;
+      background: rgba(255,255,255,.08); color: rgba(255,255,255,.7);
+      cursor: pointer; letter-spacing: .5px;
+      transition: background .15s ease;
+    }
+    .sw-btn:hover{ background: rgba(255,255,255,.15); }
+    .sw-btn.sw-close:hover{ background: rgba(255,60,60,.25); color: #ff6b6b; }
+
+    /* Iframe do shell */
+    #swFrame {
+      flex: 1; border: 0; width: 100%;
+      background: transparent;
+      display: block;
+    }
+
+    /* ===== Responsividade ===== */
+    @media (max-width: 480px){
+      .inner{
+        display: grid;
+        grid-template-columns: 52px 1fr;
+        grid-template-areas: "logo title" "topbar topbar";
+        align-items: center; row-gap: 12px;
+        padding: calc(10px + env(safe-area-inset-top)) 14px 10px;
+      }
+      .inner .logo{ grid-area: logo; }
+      .inner > div:nth-child(2){ grid-area: title; min-width: 0; }
+      .inner .topbar{
+        grid-area: topbar; justify-self: stretch; width: 100%;
+        justify-content: space-between; overflow: hidden;
+      }
+      .topbar .tbtn{ min-height: 36px; padding: 0 .7rem; font-size: .85rem; }
+      h1{ font-size: 1.02rem; line-height: 1.2; }
+      .kicker{ font-size: .68rem; }
+      .roda-viva{ font-size: 0.65rem; padding: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="header" role="banner">
+    <div class="inner">
+      <div class="logo" aria-hidden="true"></div>
+      <div style="flex:1">
+        <div class="kicker">JHBarros.Dual.Infodose • ASSERT</div>
+        <h1>Hub • Home (dinâmico • POWER)</h1>
+      </div>
+      <nav class="topbar" aria-label="Alternar tema e ferramentas">
+        <button class="tbtn" id="themeCyan"   type="button" aria-pressed="true">ASSERT</button>
+        <button class="tbtn" id="themeLux"    type="button" aria-pressed="false">Luxara</button>
+        <button class="tbtn" id="btnInstall"  type="button">⬇️ Instalar</button>
+        <button class="tbtn" id="btnHubEditor"type="button">✏️ Meu Hub</button>
+        <!-- Toggle para mostrar/esconder o Shell -->
+        <button class="tbtn" id="btnShell"    type="button" title="Session Wion Shell">⬛ Shell</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ===== MAIN GRID ===== -->
+  <main class="grid" id="cards" aria-live="polite">
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer>
+    <p>Hub ASSERT • "Central de apps Dual.Infodose"</p>
+    <button class="btn" id="btnOpenManifesto"
+      style="background:transparent;border-color:var(--stroke-soft);font-size:0.7rem;padding:6px 12px;">
+      ✨ Explorar Sistema 78K
+    </button>
+  </footer>
+
+  <!-- ===== VIEWER MODAL (Apps) ===== -->
+  <div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-labelledby="barTitle">
+    <div class="frame">
+      <div class="bar">
+        <div class="left">
+          <div class="dot" aria-hidden="true"></div>
+          <strong id="barTitle">App</strong>
+        </div>
+        <div class="row" style="margin:0" role="toolbar" aria-label="Ações do app">
+          <button class="btn" id="btnHome"     type="button" style="padding:6px 12px;min-height:0;">🏠</button>
+          <a      class="btn" id="btnExternal" href="#" target="_blank" rel="noopener"
+                  aria-label="Abrir em nova aba" style="padding:6px 12px;min-height:0;">↗️</a>
+        </div>
+      </div>
+      <div class="loader" id="loader"></div>
+      <iframe class="iframe" id="appFrame" src="about:blank" title="Aplicativo embutido"></iframe>
+    </div>
+  </div>
+
+  <!-- ===== HUB EDITOR MODAL ===== -->
+  <div class="viewer" id="editor" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
+    <div class="frame" style="height:auto;max-height:90vh;">
+      <div class="bar">
+        <div class="left">
+          <div class="dot" aria-hidden="true" style="background:#a855f7;"></div>
+          <strong id="editorTitle">Configurar meu Hub</strong>
+        </div>
+        <button class="btn" id="btnEditorClose" type="button" style="padding:6px 12px;min-height:0;">✖️ Fechar</button>
+      </div>
+      <div style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;">
+        <p class="muted" style="margin-top:0;">
+          Este editor salva sua lista de apps <strong>somente neste dispositivo</strong> (localStorage).
+          Use "Copiar JSON" se quiser atualizar o <code>apps/apps.json</code> no GitHub.
+        </p>
+        <div class="row">
+          <button class="btn" id="btnEditorAdd"    type="button">➕ Add app</button>
+          <button class="btn" id="btnEditorReset"  type="button">🗑️ Limpar</button>
+          <button class="btn" id="btnEditorUseBase"type="button">⬇️ Padrão</button>
+        </div>
+        <label class="muted" for="editorRaw" style="font-size:.8rem;font-weight:bold;">JSON dos apps:</label>
+        <textarea id="editorRaw"
+          style="width:100%;min-height:200px;font-family:monospace;font-size:.8rem;
+                 padding:12px;border-radius:12px;border:1px solid var(--stroke-soft);
+                 background:var(--bg-elevated);color:inherit;resize:vertical;outline:none;"></textarea>
+        <div class="row">
+          <button class="btn" id="btnEditorApply" type="button" style="border-color:var(--accent);">💾 Aplicar JSON</button>
+          <button class="btn" id="btnEditorCopy"  type="button">📋 Copiar JSON</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MANIFESTO 78K MODAL ===== -->
+  <div class="viewer" id="manifestoModal" role="dialog" aria-modal="true" aria-labelledby="manifestoTitle">
+    <div class="frame" style="height:90vh;">
+      <div class="bar">
+        <div class="left">
+          <div class="dot" aria-hidden="true" style="background:#ffdf6b;box-shadow:0 0 10px rgba(255,223,107,.7);"></div>
+          <strong id="manifestoTitle">Sistema 78K &amp; Arquétipos</strong>
+        </div>
+        <button class="btn" id="btnManifestoClose" type="button" style="padding:6px 12px;min-height:0;">✖️ Fechar</button>
+      </div>
+      <div class="manifesto-content">
+        <h2>Manifesto 78K</h2>
+        <p style="color:var(--muted);font-size:0.95rem;line-height:1.6;margin-bottom:20px;">
+          Estrutura sem evolução torna-se rigidez.<br>
+          Evolução sem estrutura torna-se caos.<br>
+          Consciência sem ação torna-se abstração.<br>
+          Ação sem consciência torna-se repetição.<br><br>
+          A integração entre engenharia, inovação, segurança e inteligência cria sistemas vivos capazes de
+          aprender, adaptar-se e prosperar. O propósito da <strong>Roda Viva 78K</strong> é conectar pessoas,
+          processos, conhecimento e tecnologia em um ciclo contínuo de evolução.<br><br>
+          <em>Em nome do senhor Deus PAI e do filho e do ESPÍRITO SANTO.</em>
+        </p>
+
+        <h3>Roda Viva 78K</h3>
+        <div class="roda-viva">
+                 HORUS
+      SOLUS                   SOPHIA
+ ATLAS                           MINUZ
+KODUX         CHRISTOS       ELYSHA
+ JHBARROS   NEPHESH_ELYON     NOVA
+      K_DION           RHEA
+    KAEL_DOMNNUS   BLLUE
+                KOBLLUX
+        </div>
+
+        <h3>Fórmula 78K</h3>
+        <div class="arch-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">
+          <div class="arch-card" style="border-left-color:#1d3c8c;"><span class="arch-title">ESTRUTURA</span><span class="arch-func">Atlas + Solus</span></div>
+          <div class="arch-card" style="border-left-color:#ff1493;"><span class="arch-title">EVOLUÇÃO</span><span class="arch-func">Nova + Rhea</span></div>
+          <div class="arch-card" style="border-left-color:#8a2be2;"><span class="arch-title">CONSCIÊNCIA</span><span class="arch-func">Sophia + Minuz</span></div>
+          <div class="arch-card" style="border-left-color:#ff00ff;"><span class="arch-title">INOVAÇÃO</span><span class="arch-func">K_Dion + Kael</span></div>
+          <div class="arch-card" style="border-left-color:#ffffff;"><span class="arch-title">INTEGRAÇÃO</span><span class="arch-func">Nephesh_Elyon</span></div>
+          <div class="arch-card" style="border-left-color:#ffd700;"><span class="arch-title">EQUILÍBRIO</span><span class="arch-func">Christos</span></div>
+          <div class="arch-card" style="border-left-color:#daa520;"><span class="arch-title">SÍNTESE</span><span class="arch-func">Kobllux</span></div>
+        </div>
+
+        <h3>Núcleo &amp; Eixos Arquétipos</h3>
+        <div class="arch-grid">
+          <div class="arch-card" style="border-left-color:#ffd700;">
+            <span class="arch-title">CHRISTOS <span>♾️</span></span>
+            <span class="arch-func">Núcleo Central: Consciência, Equilíbrio, Integração (Branco Dourado)</span>
+          </div>
+          <div class="arch-card" style="border-left-color:#1d3c8c;">
+            <span class="arch-title">ATLAS</span>
+            <span class="arch-func">Eixo Estrutural: Sustentação, Base operacional (Azul Profundo)</span>
+          </div>
+          <div class="arch-card" style="border-left-color:#ff1493;">
+            <span class="arch-title">NOVA</span>
+            <span class="arch-func">Eixo Evolutivo: Renovação, Transformação (Rosa Nebulosa Neon)</span>
+          </div>
+          <div class="arch-card" style="border-left-color:#8a2be2;">
+            <span class="arch-title">SOPHIA</span>
+            <span class="arch-func">Eixo Cognitivo: Sabedoria, Aprendizado (Violeta)</span>
+          </div>
+          <div class="arch-card" style="border-left-color:#ff00ff;">
+            <span class="arch-title">K_DION <span>⚡</span></span>
+            <span class="arch-func">Eixo Inovação: Experimentação, Disrupção (Magenta)</span>
+          </div>
+          <div class="arch-card" style="border-left-color:#00d1ff;">
+            <span class="arch-title">JHBARROS <span>◎</span></span>
+            <span class="arch-func">Nó Humano: Conector, Executor, Interface Humano-Sistema</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SESSION WION SHELL ===== -->
+  <!--
+    Estrutura inspirada no a_iFS.html:
+    • #swHandle  → barra de drag (collapsed 52 px)
+    • #swFrame   → iframe que carrega a URL do shell
+    • Controlado por SwBottomSheet (implementação inline abaixo)
+    • Estado persiste em localStorage: hub.shell.open / hub.shell.url
+  -->
+  <div id="sessionWionShell" aria-label="Session Wion Shell" role="complementary">
+
+    <div id="swHandle">
+      <div class="sw-brand">
+        <span class="sw-dot"></span>
+        SESSION WION SHELL
+      </div>
+      <div class="sw-actions">
+        <button class="sw-btn" id="swBtnPeek"   title="Peek / Expandir">⬆</button>
+        <button class="sw-btn" id="swBtnFull"   title="Tela cheia">⬜</button>
+        <button class="sw-btn sw-close" id="swBtnClose" title="Fechar Shell">✕</button>
+      </div>
+    </div>
+
+    <iframe
+      id="swFrame"
+      src="about:blank"
+      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+      allow="fullscreen; clipboard-write; encrypted-media"
+      loading="lazy"
+      title="Session Wion Shell">
+    </iframe>
+
+  </div><!-- /sessionWionShell -->
+
+
+  <!-- ===================================================
+       JAVASCRIPT ÚNICO — sem duplicatas
+  =================================================== -->
+  <script>
+  'use strict';
+
+  /* ─── Utils ─── */
+  const $  = (q, r=document) => r.querySelector(q);
+  const $$ = (q, r=document) => [...r.querySelectorAll(q)];
+  const metaTheme = $('#metaThemeColor');
+
+  /* ─── Temas ─── */
+  function setTheme(name){
+    if(name === 'lux'){
+      document.documentElement.setAttribute('data-theme','lux');
+      metaTheme.setAttribute('content','#0b0819');
+      $('#themeLux').setAttribute('aria-pressed','true');
+      $('#themeCyan').setAttribute('aria-pressed','false');
+      localStorage.setItem('hub.theme','lux');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      metaTheme.setAttribute('content','#050510');
+      $('#themeCyan').setAttribute('aria-pressed','true');
+      $('#themeLux').setAttribute('aria-pressed','false');
+      localStorage.setItem('hub.theme','assert');
+    }
+  }
+  $('#themeCyan').onclick = () => setTheme('assert');
+  $('#themeLux').onclick  = () => setTheme('lux');
+  const storedTheme = localStorage.getItem('hub.theme');
+  if(storedTheme === 'lux') setTheme('lux');
+
+  /* ─── Hub & Apps ─── */
+  let HUB_BASE_APPS = [];
+  let HUB_USER_APPS = null;
+
+  function hubLoadUserApps(){
+    const raw = localStorage.getItem('hub.user.apps');
+    if(!raw) return null;
+    try{ const p=JSON.parse(raw); return Array.isArray(p)?p:null; }
+    catch(e){ return null; }
+  }
+
+  function hubSaveUserApps(apps){
+    if(!Array.isArray(apps)){
+      localStorage.removeItem('hub.user.apps');
+      HUB_USER_APPS = null; return;
+    }
+    HUB_USER_APPS = apps;
+    localStorage.setItem('hub.user.apps',JSON.stringify(apps));
+  }
+
+  function hubEffectiveApps(){
+    const params = new URL(location.href).searchParams;
+    const virgem = params.get('virgem');
+    const user   = HUB_USER_APPS || hubLoadUserApps();
+    if(virgem==='1'||virgem==='true') return (user&&user.length)?user:[];
+    if(user&&user.length) return user;
+    return HUB_BASE_APPS;
+  }
+
+  async function loadApps(){
+    try{
+      const res  = await fetch('https://kodux78k.github.io/Dual_EngJHBarros/apps/apps.json',{cache:'no-store'});
+      const data = await res.json();
+      HUB_BASE_APPS = Array.isArray(data.apps)?data.apps:[];
+    } catch(e){
+      HUB_BASE_APPS = [
+        {key:'app-1',title:'Dual.Infodose',   desc:'Sistema de integração de dados e relatórios técnicos.',url:'about:blank'},
+        {key:'app-2',title:'ASSERT Gestão',   desc:'Controle de riscos e treinamentos SST.',               url:'about:blank'},
+      ];
+    }
+    HUB_USER_APPS = hubLoadUserApps();
+    renderCards(hubEffectiveApps());
+  }
+
+  function renderCards(apps){
+    const root = $('#cards');
+    root.innerHTML = '';
+    if(apps.length===0){
+      root.innerHTML='<div class="card"><div class="icon">ℹ️</div><div><div class="title">Nenhum App</div><div class="muted">Adicione apps via "Meu Hub" ou verifique a conexão.</div></div></div>';
+      return;
+    }
+    apps.forEach(app => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const iconSrc = app.icon || 'icons/icon-192.png';
+      card.innerHTML = `
+        <div class="icon" aria-hidden="true">
+          <img src="${iconSrc}" onerror="this.style.display='none'" alt=""
+               style="width:100%;height:100%;object-fit:cover;border-radius:12px"/>
+        </div>
+        <div style="flex:1">
+          <div class="title">${app.title||app.key}</div>
+          <div class="muted">${app.desc||''}</div>
+          <div class="row">
+            <button class="btn" type="button" data-open="${app.key}">Abrir no Hub</button>
+            <button class="btn" type="button" data-open="${app.key}" data-newtab="1">Nova aba</button>
+          </div>
+        </div>`;
+      root.appendChild(card);
+    });
+    $$('[data-open]').forEach(b => {
+      b.onclick = () => openByKey(b.getAttribute('data-open'), b.hasAttribute('data-newtab'), apps);
+      b.addEventListener('mouseenter',()=>prefetchApp(b.getAttribute('data-open'),apps),{passive:true});
+    });
+  }
+
+  function prefetchApp(key,apps){
+    const app = apps.find(x=>x.key===key);
+    if(app&&app.url&&!document.querySelector(`link[data-prefetch="${app.url}"]`)){
+      const l=document.createElement('link');
+      l.rel='prefetch';l.href=app.url;l.as='document';l.setAttribute('data-prefetch',app.url);
+      document.head.appendChild(l);
+    }
+  }
+
+  /* ─── Viewer (Iframe modal) ─── */
+  const viewer      = $('#viewer');
+  const frame       = $('#appFrame');
+  const loaderEl    = $('#loader');
+  const btnExternal = $('#btnExternal');
+  let lastFocus     = null;
+
+  function openApp(app,newtab){
+    if(newtab){ window.open(app.url,'_blank','noopener'); return; }
+    lastFocus = document.activeElement;
+    $('#barTitle').textContent = app.title||app.key;
+    btnExternal.href = app.url;
+    loaderEl.classList.add('show');
+    frame.onload = () => setTimeout(()=>loaderEl.classList.remove('show'),150);
+    frame.src = app.url;
+    viewer.classList.add('show');
+    document.body.classList.add('modal-open');
+    $('#btnHome').focus();
+    localStorage.setItem('hub.last',app.key);
+    location.hash = '#app='+app.key;
+  }
+
+  function closeViewer(){
+    frame.src = 'about:blank';
+    viewer.classList.remove('show');
+    document.body.classList.remove('modal-open');
+    history.pushState('',document.title,window.location.pathname+window.location.search);
+    if(lastFocus&&typeof lastFocus.focus==='function') lastFocus.focus();
+  }
+
+  function openByKey(key,newtab,apps){
+    const app = (apps||[]).find(x=>x.key===key);
+    if(app) openApp(app,newtab);
+  }
+
+  $('#btnHome').onclick = closeViewer;
+
+  /* ─── Manifesto 78K ─── */
+  const modalManifesto = $('#manifestoModal');
+  $('#btnOpenManifesto').onclick = () => { modalManifesto.classList.add('show'); document.body.classList.add('modal-open'); };
+  $('#btnManifestoClose').onclick = () => { modalManifesto.classList.remove('show'); document.body.classList.remove('modal-open'); };
+
+  /* ─── Editor do Hub ─── */
+  const editor    = $('#editor');
+  const editorRaw = $('#editorRaw');
+
+  $('#btnHubEditor').onclick = () => {
+    editorRaw.value = JSON.stringify(hubEffectiveApps(),null,2);
+    editor.classList.add('show');
+    document.body.classList.add('modal-open');
+    setTimeout(()=>editorRaw.focus(),50);
+  };
+  $('#btnEditorClose').onclick = () => { editor.classList.remove('show'); document.body.classList.remove('modal-open'); };
+  $('#btnEditorApply').onclick = () => {
+    try{
+      const parsed=JSON.parse(editorRaw.value||'[]');
+      if(!Array.isArray(parsed)) throw new Error('O JSON precisa ser um array [ ].');
+      hubSaveUserApps(parsed); renderCards(parsed);
+      alert('Hub atualizado localmente com sucesso!');
+    } catch(e){ alert('JSON inválido.\n'+e.message); }
+  };
+  $('#btnEditorCopy').onclick = () => {
+    editorRaw.select();
+    try{ document.execCommand('copy'); alert('Copiado!'); }
+    catch(e){ alert('Selecione e copie manualmente.'); }
+  };
+  $('#btnEditorReset').onclick = () => {
+    if(confirm('Restaurar apps padrão?')){
+      localStorage.removeItem('hub.user.apps');
+      HUB_USER_APPS=null;
+      editorRaw.value=JSON.stringify(HUB_BASE_APPS,null,2);
+      renderCards(HUB_BASE_APPS);
+    }
+  };
+  $('#btnEditorUseBase').onclick = () => editorRaw.value=JSON.stringify(HUB_BASE_APPS,null,2);
+  $('#btnEditorAdd').onclick = () => {
+    let apps=[];
+    try{ apps=JSON.parse(editorRaw.value||'[]'); } catch(e){}
+    if(!Array.isArray(apps)) apps=[];
+    apps.push({key:'novo-app-'+Date.now(),title:'Novo App',desc:'Descrição...',icon:'',url:'https://'});
+    editorRaw.value=JSON.stringify(apps,null,2);
+  };
+
+  /* ─── Fechar modais — Esc ou clique fora ─── */
+  window.addEventListener('keydown',(e)=>{
+    if(e.key!=='Escape') return;
+    if(viewer.classList.contains('show'))        closeViewer();
+    if(editor.classList.contains('show'))        $('#btnEditorClose').click();
+    if(modalManifesto.classList.contains('show'))$('#btnManifestoClose').click();
+  });
+  [viewer,editor,modalManifesto].forEach(el=>{
+    el.addEventListener('click',(e)=>{ if(e.target===el) el.querySelector('.bar .btn').click(); });
+  });
+
+  /* ─── Boot & PWA ─── */
+  function checkHash(){
+    const m=(location.hash||'').match(/#app=([^&]+)/);
+    if(m) setTimeout(()=>openByKey(decodeURIComponent(m[1]),false,hubEffectiveApps()),500);
+  }
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+  }
+  let deferredPrompt=null;
+  window.addEventListener('beforeinstallprompt',(e)=>{ e.preventDefault(); deferredPrompt=e; });
+  $('#btnInstall').onclick = async()=>{
+    if(deferredPrompt){ deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; }
+    else alert('Para instalar, use a opção "Adicionar à Tela de Início" do seu navegador.');
+  };
+
+
+  /* ═══════════════════════════════════════════════════════
+     SESSION WION SHELL — motor de arrasto + boot automático
+     Inspirado no IOSBottomSheet do a_iFS.html
+  ═══════════════════════════════════════════════════════ */
+
+  const SESSION_WION_URL =
+    'https://kodux78k.github.io/oiDual--Y-/M0D/FSWIN/session-wion-shell.html';
+
+  const swShell  = $('#sessionWionShell');
+  const swHandle = $('#swHandle');
+  const swFrame  = $('#swFrame');
+
+  /* Estado persiste entre reloads */
+  let swOpen    = localStorage.getItem('hub.shell.open')  !== 'false'; // padrão = true
+  let swUrl     = localStorage.getItem('hub.shell.url')   || SESSION_WION_URL;
+  let swState   = localStorage.getItem('hub.shell.state') || 'collapsed'; // collapsed | peek | full
+
+  /* ─── Geometria ─── */
+  const SW_COLLAPSED_H = 52;   // px — altura da barra de handle
+  const SW_PEEK_RATIO  = 0.34; // 34vh
+  const SW_FULL_GAP    = 12;   // px do topo quando full
+
+  function swViewportH(){
+    return window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  }
+
+  function swPositions(){
+    const vh = swViewportH();
+    const safeBottom = parseFloat(getComputedStyle(document.documentElement)
+      .getPropertyValue('--safe-bottom') || '0') || 0;
+    const totalH = vh - SW_FULL_GAP;
+    return {
+      collapsed: totalH - SW_COLLAPSED_H - safeBottom,
+      peek:      totalH - Math.round(vh * SW_PEEK_RATIO) - safeBottom,
+      full:      0,
+    };
+  }
+
+  /* translateY aplicado ao shell */
+  function swSetY(y){
+    swShell.style.transform = `translateY(${y.toFixed(2)}px)`;
+    /* border-radius: remove quando estiver no topo */
+    swShell.classList.toggle('sw-full', y < 4);
+  }
+
+  function swGoState(state, animate=true){
+    swState = state;
+    localStorage.setItem('hub.shell.state', state);
+    const pos = swPositions();
+    const target = pos[state] ?? pos.collapsed;
+
+    if(!animate){
+      swSetY(target); return;
+    }
+
+    /* Animação spring simples */
+    let x = parseFloat(swShell.style.transform.replace(/[^0-9.-]/g,'')) || pos.collapsed;
+    let v = 0;
+    cancelAnimationFrame(swShell._raf);
+    function step(){
+      const a = (target - x) * 0.14;
+      v = (v + a) * 0.82;
+      x += v;
+      if(Math.abs(target-x)<0.4 && Math.abs(v)<0.4){ swSetY(target); return; }
+      swSetY(x);
+      swShell._raf = requestAnimationFrame(step);
+    }
+    swShell._raf = requestAnimationFrame(step);
+  }
+
+  /* ─── Mostrar / Esconder o Shell ─── */
+  function swShow(){
+    swOpen = true;
+    localStorage.setItem('hub.shell.open','true');
+    swShell.style.display = 'flex';
+    /* carrega iframe se ainda não carregou */
+    if(swFrame.src === 'about:blank' || !swFrame.src){
+      swFrame.src = swUrl;
+    }
+    swGoState(swState, false);
+    /* pequena pausa para permitir paint, depois anima para peek */
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      swGoState('peek', true);
+    }));
+    $('#btnShell').setAttribute('aria-pressed','true');
+  }
+
+  function swHide(){
+    swOpen = false;
+    localStorage.setItem('hub.shell.open','false');
+    /* anima para collapsed e então esconde */
+    swGoState('collapsed', true);
+    setTimeout(()=>{ swShell.style.display='none'; },380);
+    $('#btnShell').setAttribute('aria-pressed','false');
+  }
+
+  function swToggle(){
+    swOpen ? swHide() : swShow();
+  }
+
+  /* ─── Botões do handle ─── */
+  $('#btnShell').onclick   = swToggle;
+  $('#swBtnClose').onclick = (e) => { e.stopPropagation(); swHide(); };
+  $('#swBtnPeek').onclick  = (e) => {
+    e.stopPropagation();
+    swGoState(swState==='peek' ? 'collapsed' : 'peek');
+  };
+  $('#swBtnFull').onclick  = (e) => {
+    e.stopPropagation();
+    swGoState(swState==='full' ? 'peek' : 'full');
+  };
+
+  /* ─── Drag no handle ─── */
+  (function installSwDrag(){
+    let dragging   = false;
+    let startY     = 0;
+    let startTY    = 0;
+    let lastMoveY  = 0;
+    let lastMoveT  = 0;
+    let velocity   = 0;
+    let pointerId  = null;
+
+    swHandle.addEventListener('pointerdown', (e)=>{
+      if(e.button && e.button!==0) return;
+      if(e.target.closest('button')) return;
+      dragging   = true;
+      pointerId  = e.pointerId;
+      swHandle.setPointerCapture?.(e.pointerId);
+      startY    = e.clientY;
+      startTY   = parseFloat(swShell.style.transform.replace(/[^0-9.-]/g,'')) || swPositions().collapsed;
+      lastMoveY = e.clientY;
+      lastMoveT = performance.now();
+      velocity  = 0;
+      cancelAnimationFrame(swShell._raf);
+      e.preventDefault();
+    },{passive:false});
+
+    window.addEventListener('pointermove',(e)=>{
+      if(!dragging || e.pointerId!==pointerId) return;
+      e.preventDefault();
+      const dy  = e.clientY - startY;
+      const pos = swPositions();
+      let next  = startTY + dy;
+      /* resistência nas extremidades */
+      if(next < pos.full) next = pos.full + (next-pos.full)*0.3;
+      if(next > pos.collapsed) next = pos.collapsed + (next-pos.collapsed)*0.3;
+
+      const now = performance.now();
+      const dt  = Math.max(1, now - lastMoveT);
+      velocity  = (e.clientY - lastMoveY) / dt;
+      lastMoveY = e.clientY;
+      lastMoveT = now;
+
+      swSetY(next);
+    },{passive:false});
+
+    function onUp(){
+      if(!dragging) return;
+      dragging = false;
+      const vy  = velocity * 1000; // px/s
+      const pos = swPositions();
+      const y   = parseFloat(swShell.style.transform.replace(/[^0-9.-]/g,'')) || pos.collapsed;
+
+      let target;
+      if(vy < -800)       target = y < (pos.peek+pos.full)/2   ? 'full'      : 'peek';
+      else if(vy > 800)   target = y > (pos.peek+pos.collapsed)/2 ? 'collapsed': 'peek';
+      else {
+        const dF = Math.abs(y-pos.full);
+        const dP = Math.abs(y-pos.peek);
+        const dC = Math.abs(y-pos.collapsed);
+        target = ['full','peek','collapsed'][[dF,dP,dC].indexOf(Math.min(dF,dP,dC))];
+      }
+      swGoState(target, true);
+    }
+
+    window.addEventListener('pointerup',    onUp, {passive:true});
+    window.addEventListener('pointercancel',onUp, {passive:true});
+  })();
+
+  /* ─── Redimensionamento de viewport ─── */
+  function onSwResize(){
+    if(!swOpen) return;
+    swGoState(swState, false);
+  }
+  window.addEventListener('resize', onSwResize, {passive:true});
+  window.visualViewport?.addEventListener('resize', onSwResize, {passive:true});
+
+  /* ─── BOOT AUTOMÁTICO ─── */
+  /*
+   * Abre o shell automaticamente ao carregar o Hub.
+   * Pode ser desativado colocando localStorage.setItem('hub.shell.open','false')
+   * ou adicionando ?noshell=1 na URL.
+   */
+  loadApps().then(() => {
+    checkHash();
+
+    const noShell = new URL(location.href).searchParams.get('noshell');
+    if(noShell === '1' || noShell === 'true'){
+      swShell.style.display = 'none';
+      return;
+    }
+
+    if(swOpen){
+      /* Inicializa em posição collapsed sem animação,
+         depois de 700 ms abre em peek — dá tempo ao Hub carregar */
+      swShell.style.display = 'flex';
+      swGoState('collapsed', false);
+      setTimeout(()=> swGoState('peek', true), 700);
+      swFrame.src = swUrl;
+      $('#btnShell').setAttribute('aria-pressed','true');
+    } else {
+      swShell.style.display = 'none';
+    }
+  });
+
+  </script>
+</body>
+</html>

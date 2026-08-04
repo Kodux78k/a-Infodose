@@ -1,0 +1,1446 @@
+<html lang="pt-BR"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>HUB UNO | FORGE + ORÁCULO</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#050812">
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiSHViIFVubyIsInNob3J0X25hbWUiOiJIVUIiLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjMDUwODEyIiwidGhlbWVfY29sb3IiOiIjMDUwODEyIn0=">
+
+    <!-- Fontes e Ícones -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;600;900&amp;family=JetBrains+Mono:wght@400;700&amp;family=Orbitron:wght@500;700&amp;family=Inter:wght@300;400;600;800&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://w.soundcloud.com/player/api.js"></script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bg: '#050812',
+                        surface: 'rgba(15, 23, 42, 0.6)',
+                        neon: { cyan: '#00f2ff', blue: '#0066ff', purple: '#bd00ff', red: '#ef4444', orange: '#ff5500' }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                        orbitron: ['Orbitron', 'sans-serif'],
+                        montserrat: ['Montserrat', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --primary: #ff5500;
+        }
+
+        /* Estilos Core Globais */
+        body, html {
+            background-color: #050812;
+            color: #f1f5f9;
+            margin: 0; padding: 0;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #050812 70%);
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+        /* Ambient Blobs */
+        .ambient-light { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+        .blob { position: absolute; width: 45vw; height: 45vw; border-radius: 50%; filter: blur(120px); opacity: 0.12; animation: pulseBlob 15s infinite alternate; }
+        .blob-1 { top: -10%; right: -10%; background: #00f2ff; }
+        .blob-2 { bottom: -10%; left: -10%; background: var(--primary); }
+        @keyframes pulseBlob { from { transform: scale(1); } to { transform: scale(1.2) translate(5%, 5%); } }
+
+        /* Integração Glassmorphism Fusion */
+        .fusion-card {
+            background: rgba(10, 15, 25, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 242, 255, 0.15);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 242, 255, 0.05);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .oraculo-card {
+            border-color: rgba(255, 85, 0, 0.3);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 85, 0, 0.05);
+        }
+
+        .avatar-slot {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: linear-gradient(135deg, #00f2ff, #bd00ff);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.4);
+        }
+
+        .cyber-input {
+            width: 100%; background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px;
+            padding: 12px 16px; color: #fff; outline: none; font-family: 'JetBrains Mono', monospace;
+            transition: border-color 0.3s;
+        }
+        .cyber-input:focus { border-color: #00f2ff; box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); }
+
+        /* Animações Orbe e Player */
+        .orb-canvas-container { position: relative; width: 100%; height: 180px; display: flex; justify-content: center; align-items: center; }
+        
+        .hero-glow { box-shadow: 0 0 60px var(--primary); opacity: 0.2; transition: opacity 0.2s; }
+        .btn-primary { background: var(--primary); box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 20px var(--primary); transition: all 0.15s; }
+        .btn-primary:active { transform: scale(0.94); filter: brightness(1.3); }
+
+        .track-item { transition: background 0.2s, transform 0.15s; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .track-item:active { transform: scale(0.99); }
+        .track-item.playing { background: rgba(255, 85, 0, 0.08); border-left: 3px solid var(--primary); }
+        .track-item.playing .track-title { color: var(--primary); }
+
+        @keyframes spin-slow { 100% { transform: rotate(360deg); } }
+        .spin-anim { animation: spin-slow 12s linear infinite; }
+        .spin-paused { animation-play-state: paused; }
+
+        .ki-bar-container { background: #1a1e2a; border-radius: 20px; padding: 2px; border: 1px solid #3a3f55; }
+        .ki-bar-fill { height: 6px; border-radius: 20px; background: linear-gradient(90deg, #ffbb00, var(--primary)); box-shadow: 0 0 12px var(--primary); width: 0%; transition: width 0.1s linear;}
+        .ki-value { font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 8px var(--primary); }
+
+        #dynamic-cdns-container { display: none; }
+        
+        /* Ajuste do Reprodutor Flutuante */
+        .bottom-player-docked { bottom: 64px; } /* Acima da Navbar (64px = h-16) */
+    </style>
+<style>:root { --z-base: 0; --z-content: 100; --z-widget: 500; --z-overlay: 1000; --z-system: 5000; }</style><style>
+    /* ============================
+       TOKENS · NEBULA PRO + MADEIRA
+       ============================ */
+    :root{
+      --bg-main: radial-gradient(circle at top, #141429 0%, #050715 45%, #020309 100%);
+      --bg-overlay-default: radial-gradient(circle at 75% 15%, #ff7ad9 0%, #ff9ed5 22%, transparent 68%);
+      --bg-overlay-warm: radial-gradient(circle at 80% 15%, #ff9a6c 0%, #ffce8a 22%, transparent 68%);
+      --bg-overlay-cool: radial-gradient(circle at 25% 10%, #00f6ff 0%, #7cf6ff 22%, transparent 68%);
+      --bg-overlay-deep: radial-gradient(circle at 5% 10%, #9f7dff 0%, #ff7ad9 22%, transparent 70%);
+
+      --accent-main:#ff7ad9;
+      --accent-warm:#ffb5e2;
+      --accent-cold:#00f6ff;
+
+      --card-bg: rgba(8,10,25,0.96);
+      --text-main:#fdfdff;
+      --text-soft:#c6c9ff;
+      --text-muted:#7b81a8;
+
+      --hero-height:260px;
+      --rail-card-width:160px;
+      --rail-card-height:96px;
+
+      --hero-img-url:url("https://images.pexels.com/photos/1181675/pexels-photo-1181675.jpeg?auto=compress&cs=tinysrgb&w=800");
+    }
+
+    *{box-sizing:border-box;margin:0;padding:0;}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+      color:var(--text-main);
+      background:var(--bg-main);
+      display:flex;
+      justify-content:center;
+      align-items:stretch;
+      position:relative;
+      overflow-x:hidden;
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      background:var(--bg-overlay-default);
+      opacity:0;
+      pointer-events:none;
+      animation:dawnFade 1.6s ease-out 0.12s forwards;
+      z-index:-1;
+    }
+
+    body[data-stream-bg="warm"]::before{ background:var(--bg-overlay-warm); }
+    body[data-stream-bg="cool"]::before{ background:var(--bg-overlay-cool); }
+    body[data-stream-bg="deep"]::before{ background:var(--bg-overlay-deep); }
+
+    @keyframes dawnFade{
+      0%{opacity:0;filter:blur(14px);}
+      40%{opacity:0.6;filter:blur(7px);}
+      100%{opacity:1;filter:blur(0);}
+    }
+
+    .shell{
+      width:100%;
+      max-width:480px;
+      margin:0 auto;
+      padding:18px 0 80px; /* Espaço pro player flutuante */
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+      position:relative;
+      z-index:1;
+      animation:fadeUp 0.75s ease-out 0.18s both;
+    }
+
+    @keyframes fadeUp{
+      from{opacity:0;transform:translateY(18px);}
+      to{opacity:1;transform:translateY(0);}
+    }
+
+    /* HEADER */
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:0 16px;
+    }
+
+    .logo-title{
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+    }
+    .logo-title span:nth-child(1){
+      font-size:11px;
+      letter-spacing:0.14em;
+      text-transform:uppercase;
+      color:var(--text-muted);
+    }
+    .logo-title span:nth-child(2){
+      font-size:15px;
+      font-weight:600;
+      color:var(--text-soft);
+    }
+
+    .mode-toggle{
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.18);
+      padding:4px 10px 4px 6px;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:11px;
+      color:var(--text-soft);
+      background:radial-gradient(circle at 0% 0%, rgba(0,246,255,0.35), transparent 60%), rgba(4,8,28,0.92);
+      box-shadow:0 10px 26px rgba(0,0,0,0.75);
+      backdrop-filter:blur(10px);
+      -webkit-backdrop-filter:blur(10px);
+      cursor:pointer;
+      transition:transform 0.2s ease,background 0.25s ease,border-color 0.25s ease;
+    }
+    .mode-dot{
+      width:16px;height:16px;border-radius:999px;
+      background:radial-gradient(circle at 30% 20%, #ffffff, var(--accent-cold));
+      box-shadow:0 0 10px rgba(0,246,255,0.85);
+    }
+
+    body[data-theme="madeira"] .mode-toggle{
+      background:radial-gradient(circle at 0% 0%, rgba(255,180,140,0.55), transparent 60%), rgba(14,8,4,0.98);
+      border-color:rgba(255,200,160,0.9);
+    }
+    body[data-theme="madeira"] .mode-dot{
+      background:radial-gradient(circle at 30% 20%, #ffffff, #ffce8a);
+      box-shadow:0 0 14px rgba(255,200,160,0.98);
+    }
+
+    /* HERO CARD */
+    .hero-stream{ margin-top:4px; padding:0 16px; }
+    .hero-card{
+      position:relative;
+      height:var(--hero-height);
+      border-radius:22px;
+      overflow:hidden;
+      box-shadow:0 22px 44px rgba(0,0,0,0.95);
+      border:1px solid rgba(153,175,255,0.35);
+      background: radial-gradient(circle at 10% 0%, rgba(255,149,214,0.32), transparent 55%), linear-gradient(135deg, rgba(8,10,35,0.98), rgba(4,5,18,0.98));
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-end;
+      cursor:pointer;
+    }
+    .hero-bg{
+      position:absolute; inset:0;
+      background: radial-gradient(circle at 80% 0%, rgba(0,246,255,0.35), transparent 55%), radial-gradient(circle at 0 100%, rgba(255,122,191,0.45), transparent 55%), var(--hero-img-url);
+      background-size:cover; background-position:center; background-repeat:no-repeat;
+      mix-blend-mode:lighten; opacity:0.6; pointer-events:none;
+      transition:opacity 0.25s ease, transform 0.25s ease;
+    }
+    .hero-gradient{
+      position:absolute; inset:0;
+      background:linear-gradient(180deg, rgba(3,5,18,0.0) 0%, rgba(3,5,18,0.4) 40%, rgba(3,5,18,0.95) 100%);
+    }
+    .hero-content{ position:relative; padding:14px; z-index:1; display:flex; flex-direction:column; gap:6px; }
+    .hero-tag-row{ display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--text-muted); }
+    .hero-tag{ padding:3px 9px; border-radius:999px; border:1px solid rgba(255,149,214,0.75); background:rgba(26,12,32,0.96); color:#ffd8f2; font-size:10px; text-transform:uppercase; letter-spacing:0.14em; }
+    .hero-title{ font-size:20px; font-weight:650; letter-spacing:0.02em; }
+    .hero-subtitle{ font-size:13px; color:var(--accent-warm); }
+    .hero-actions{ display:flex; align-items:center; gap:8px; margin-top:4px; }
+    .btn-primary{
+      border-radius:999px; border:none; padding:7px 14px; font-size:13px; font-weight:500;
+      background:radial-gradient(circle at 20% 0%, #ffffff, var(--accent-main)); color:#1a0c14;
+      display:inline-flex; align-items:center; gap:6px; cursor:pointer; box-shadow:0 0 16px rgba(255,91,155,0.9);
+    }
+    .tts-btn{
+      border-radius:999px; border:1px solid rgba(153,175,255,0.8);
+      background:radial-gradient(circle at 20% 0%, rgba(255,255,255,0.8), var(--accent-cold)); color:#10141f; font-size:14px;
+      width:28px;height:28px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 0 12px rgba(0,246,255,0.85); flex-shrink:0;
+    }
+
+    /* GREETING */
+    .greeting-strip{ padding:4px 16px 0; display:flex; flex-direction:column; gap:8px; }
+    .greeting-line{ display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--text-soft); }
+    .greeting-name{font-weight:600;}
+    .time-mini{ font-size:11px; color:var(--text-muted); }
+
+    /* RAILS */
+    .section-title{ font-size:14px; font-weight:500; padding:12px 16px 4px; display:flex; justify-content:space-between; align-items:flex-start; color:var(--text-soft); gap:6px; }
+    .section-title span:nth-child(2){ font-size:11px; color:var(--text-muted); }
+    .rail{ padding:0 16px 4px; }
+    .rail-track{ display:flex; gap:10px; overflow-x:auto; padding-bottom:6px; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; }
+    .rail-track::-webkit-scrollbar{height:4px;}
+    .rail-track::-webkit-scrollbar-thumb{ background:rgba(120,135,210,0.7); border-radius:999px; }
+
+    .stream-card{
+      min-width:var(--rail-card-width); max-width:var(--rail-card-width); height:var(--rail-card-height);
+      border-radius:14px; border:1px solid rgba(92,115,205,0.9);
+      background: radial-gradient(circle at 10% 0%, rgba(255,149,214,0.25), rgba(10,13,35,0.96));
+      box-shadow:0 12px 26px rgba(0,0,0,0.92); scroll-snap-align:start; position:relative; overflow:hidden; cursor:pointer;
+    }
+    .stream-thumb{
+      position:absolute; inset:0; background-size:cover; background-position:center; background-repeat:no-repeat;
+      mix-blend-mode:lighten; opacity:0.62; transform:scale(1.05); transition:opacity 0.2s ease, transform 0.2s ease;
+    }
+    .stream-inner{ position:relative; padding:8px; height:100%; display:flex; flex-direction:column; justify-content:flex-end; }
+    .stream-card:hover .stream-thumb{ opacity:0.8; transform:scale(1.08); }
+    .stream-tag{ position:absolute; top:6px;left:8px; font-size:10px; padding:2px 6px; border-radius:999px; border:1px solid rgba(153,175,255,0.85); background:rgba(5,8,26,0.9); color:#e0e3ff; }
+    .stream-tts{ position:absolute; top:6px;right:6px; }
+    .stream-title{ font-size:12px; font-weight:500; text-shadow:0 1px 4px rgba(0,0,0,0.8); }
+    .stream-sub{ font-size:10px; color:var(--text-muted); text-shadow:0 1px 3px rgba(0,0,0,0.8); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+    /* GLOBAL PLAYER FLUTUANTE (Estilo fundido do PLAYER_[GLOBAL]) */
+    #global-player {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: calc(100% - 40px);
+      max-width: 400px;
+      height: 240px;
+      border-radius: 16px;
+      background: rgba(8, 10, 25, 0.85);
+      border: 1px solid rgba(153, 175, 255, 0.3);
+      box-shadow: 0 14px 40px rgba(0,0,0,0.9);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: translateY(150%);
+      opacity: 0;
+      pointer-events: none;
+    }
+    #global-player.active {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #global-player.minimized {
+      height: 48px;
+    }
+    .player-window-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: rgba(0,0,0,0.5);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .player-title-drag {
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      user-select: none;
+    }
+    .player-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .btn-win {
+      background: transparent;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      opacity: 0.6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.2s;
+    }
+    .btn-win:hover { opacity: 1; }
+    .btn-win.hover-red:hover { color: #ff4a4a; }
+    #player-frame-wrap {
+      flex: 1;
+      width: 100%;
+      background: #000;
+      position: relative;
+    }
+    #player-frame-wrap iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    body[data-theme="madeira"]{
+      --accent-main:#ffb36f; --accent-warm:#ffe1b3; --accent-cold:#9ff0c8;
+      --card-bg:rgba(22,12,6,0.96); --text-soft:#f6e2c1; --text-muted:#b9966c;
+    }
+  </style></head>
+<body class="antialiased text-slate-200">
+
+    <!-- Container Dinâmico para as CDNs (DevOS) -->
+    <div id="dynamic-cdns-container"></div>
+
+    <!-- Ambient Fundo -->
+    <div class="ambient-light"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
+
+    <!-- Modal Oráculo: Adicionar Link -->
+    <div id="linkModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 hidden bg-black/60 backdrop-blur-sm">
+        <div class="fusion-card oraculo-card w-full max-w-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold flex items-center gap-2 font-orbitron text-neon-orange">
+                    <i data-lucide="radio" class="w-5 h-5"></i> SINTONIZAR LINK
+                </h3>
+                <button id="closeModal" class="p-1 text-slate-400 hover:text-white transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <input type="text" id="linkInput" placeholder="URL do SoundCloud ou YouTube..." class="cyber-input mb-4 focus:border-neon-orange focus:shadow-[0_0_10px_rgba(255,85,0,0.2)]">
+            <button id="addLinkBtn" class="btn-primary w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-white"><i data-lucide="plus-circle" class="w-5 h-5"></i> ADICIONAR</button>
+            <p class="text-[10px] text-gray-400 mt-3 text-center font-mono">Suporte: track/playlist SC • vídeo YT</p>
+        </div>
+    </div>
+
+    <!-- Layout Principal -->
+    <div class="max-w-[480px] mx-auto min-h-screen flex flex-col relative z-10 pb-[140px]">
+        
+        <!-- Header Consolidado -->
+        <header class="flex items-center justify-between p-4 sticky top-0 z-50 bg-[#050812]/80 backdrop-blur-md border-b border-white/5">
+            <div class="flex items-center gap-2">
+                <i data-lucide="zap" class="w-5 h-5" style="color: var(--primary)"></i>
+                <h1 class="text-lg font-orbitron font-bold tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-neon-cyan to-neon-orange">UNO<span class="text-white">·ORÁCULO</span></h1>
+            </div>
+            <div class="flex gap-2 items-center">
+                <label for="upload" class="cursor-pointer w-9 h-9 rounded-full bg-surface border border-white/10 flex items-center justify-center hover:border-neon-orange transition text-slate-300">
+                    <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                    <input type="file" id="upload" accept="audio/*" multiple="" class="hidden">
+                </label>
+                <button id="pasteLinkBtn" class="w-9 h-9 rounded-full bg-surface border border-white/10 flex items-center justify-center hover:border-neon-orange transition text-slate-300">
+                    <i data-lucide="link" class="w-4 h-4"></i>
+                </button>
+                <button class="w-9 h-9 rounded-full bg-surface border border-neon-cyan/30 flex items-center justify-center hover:bg-neon-cyan/20 transition text-neon-cyan" onclick="document.getElementById('devos-panel').classList.toggle('hidden')">
+                    <i data-lucide="cpu" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="p-4 flex flex-col gap-6">
+            <!-- A Orbe Animada -->
+            <div class="orb-canvas-container -my-4">
+                <canvas id="particleCanvas" class="absolute inset-0 z-0"></canvas>
+                <div class="w-14 h-14 rounded-full bg-white shadow-[0_0_30px_#00f2ff,0_0_60px_#bd00ff,inset_0_0_20px_#fff] animate-pulse z-10 relative"></div>
+            </div>
+
+            <!-- MÓDULO 1: FUSION CARD / DevOS -->
+            <div class="fusion-card" id="mainCard">
+                <div class="p-4 flex items-center gap-4 bg-white/5 border-b border-white/5">
+                    <div class="avatar-slot" id="avatarTarget"></div>
+                    <div class="flex-1">
+                        <div class="flex gap-1 items-baseline"><span class="font-light text-slate-400 text-sm">Oi,</span><span class="font-bold text-white text-lg" id="lblName">Convidado</span></div>
+                        <div class="text-[10px] text-neon-cyan font-mono tracking-[0.2em]">CORTEX ONLINE</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-mono text-lg font-bold text-slate-200" id="clockTime">00:00</div>
+                    </div>
+                </div>
+
+                <div class="p-5">
+                    <input type="text" class="cyber-input mb-4" id="inputUser" placeholder="Seu codinome neural..." autocomplete="off">
+                    
+                    <!-- DevOS Painel -->
+                    <div id="devos-panel" class="hidden border-t border-white/10 pt-4 mt-2">
+                        <h3 class="font-orbitron text-xs font-bold text-neon-purple tracking-widest mb-3"><i data-lucide="settings" class="inline w-3 h-3 mr-1"></i> DEVOS CDN MANAGER</h3>
+                        <div class="flex flex-col gap-2" id="cdn-toggles-container"></div>
+                        <button id="apply-cdns-btn" class="w-full mt-4 bg-neon-cyan/10 border border-neon-cyan text-neon-cyan py-2 rounded-lg text-xs font-bold tracking-widest hover:bg-neon-cyan hover:text-black transition shadow-[0_0_10px_rgba(0,242,255,0.2)]">
+                            APLICAR MÓDULOS
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MÓDULO 2: ORÁCULO PLAYER -->
+            <div class="fusion-card oraculo-card p-6 flex flex-col items-center relative overflow-visible">
+                <div class="absolute inset-0 hero-glow rounded-full blur-3xl -z-10 w-64 h-64 mx-auto mt-6" id="heroGlow"></div>
+                
+                <div class="relative w-56 h-56 rounded-2xl overflow-hidden shadow-2xl mb-4 border border-orange-500/30">
+                    <img id="mainCover" src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&amp;w=500&amp;auto=format&amp;fit=crop" class="w-full h-full object-cover transition-transform duration-700">
+                    <button id="heroPlayBtn" onclick="togglePlay()" class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition">
+                        <div class="btn-primary p-4 rounded-full"><i data-lucide="play" class="w-8 h-8 ml-1 text-white"></i></div>
+                    </button>
+                </div>
+
+                <div class="text-center w-full">
+                    <h2 id="mainTitle" class="text-xl font-bold truncate text-white">CÉREBRO SILENCIOSO</h2>
+                    <p id="mainArtist" class="text-gray-400 text-xs font-mono">Aguardando transmissão</p>
+                </div>
+
+                <div class="w-full mt-4">
+                    <canvas id="visualizer" class="w-full h-12 rounded-lg bg-black/20"></canvas>
+                    <div class="flex items-center gap-3 mt-2 px-1">
+                        <span class="text-[8px] font-bold tracking-widest text-orange-300/70">RADAR KI</span>
+                        <div class="ki-bar-container flex-1"><div id="kiBarFill" class="ki-bar-fill" style="width:0%"></div></div>
+                        <span id="kiValueDisplay" class="ki-value text-xs font-mono text-orange-400">0000</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-center gap-6 mt-6 w-full">
+                    <button onclick="prevTrack()" class="p-2 text-gray-400 hover:text-white transition"><i data-lucide="skip-back" class="w-6 h-6"></i></button>
+                    <button id="mainPlayBtn" onclick="togglePlay()" class="btn-primary p-4 rounded-full text-white"><i data-lucide="play" id="playIconMain" class="w-7 h-7 ml-1"></i></button>
+                    <button onclick="nextTrack()" class="p-2 text-gray-400 hover:text-white transition"><i data-lucide="skip-forward" class="w-6 h-6"></i></button>
+                </div>
+            </div>
+
+            <!-- MÓDULO 3: PLAYLIST -->
+            <div>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-orange-200/80 mb-2 font-orbitron px-2">PLAYLISTS SINTONIZADAS</h3>
+                <div class="fusion-card bg-black/40 p-2 border-white/5">
+                    <div id="trackList" class="flex flex-col gap-1 max-h-64 overflow-y-auto pr-1">
+                        <div class="text-center text-gray-500 text-xs py-8">Nenhuma frequência. Use o topo para adicionar.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- REPRODUTOR INFERIOR FLUTUANTE (Acima da Nav) -->
+    <div id="bottomPlayer" class="fusion-card fixed left-2 right-2 bottom-player-docked p-2 flex items-center z-40 transform translate-y-[150%] transition-transform duration-300 border-orange-500/30 rounded-2xl bg-[#0a0f19]/95">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-gray-800 cursor-pointer rounded-t-2xl overflow-hidden" id="progressContainer" onclick="seek(event)">
+            <div id="progressBar" class="h-full bg-gradient-to-r from-amber-400 to-orange-500 w-0 shadow-[0_0_10px_orange]"></div>
+        </div>
+        <div class="flex items-center gap-3 flex-1 overflow-hidden pl-2 cursor-pointer pt-1" onclick="window.scrollTo({top:0, behavior:'smooth'})">
+            <img id="miniCover" src="" class="w-10 h-10 rounded-full object-cover border border-orange-500/40 spin-anim spin-paused">
+            <div class="flex flex-col truncate">
+                <span id="miniTitle" class="text-xs font-bold truncate text-white">—</span>
+                <div class="flex items-center gap-2">
+                    <span id="miniTime" class="text-[10px] text-orange-400 font-mono">0:00 / 0:00</span>
+                    <span id="sourceBadge" class="text-[8px] bg-orange-900/40 px-1 rounded text-orange-300">LOCAL</span>
+                </div>
+            </div>
+        </div>
+        <button onclick="togglePlay()" class="text-white p-2 mr-1"><i data-lucide="play" id="playIconMini" class="w-5 h-5"></i></button>
+    </div>
+
+    <!-- NAVEGAÇÃO INFERIOR PRINCIPAL -->
+    <nav class="fixed bottom-0 left-0 right-0 h-16 bg-[#0a0f19]/90 backdrop-blur-xl border-t border-white/5 flex justify-around items-center z-50">
+        <div class="flex flex-col items-center gap-1 text-neon-cyan cursor-pointer transition hover:scale-110"><i data-lucide="home" class="w-5 h-5"></i><span class="text-[8px] font-bold font-orbitron">HOME</span></div>
+        <div class="flex flex-col items-center gap-1 text-slate-500 cursor-pointer transition hover:scale-110 hover:text-white"><i data-lucide="layers" class="w-5 h-5"></i><span class="text-[8px] font-bold font-orbitron">STACK</span></div>
+        <div class="flex flex-col items-center gap-1 text-slate-500 cursor-pointer transition hover:scale-110 hover:text-white"><i data-lucide="hexagon" class="w-5 h-5"></i><span class="text-[8px] font-bold font-orbitron">CORTEX</span></div>
+    </nav>
+
+    <!-- Contentores Invisíveis Mídia -->
+    <audio id="audioElement" crossorigin="anonymous"></audio>
+    <div id="sc-widget-container" style="display:none;"></div>
+    <div id="yt-player-container" style="display:none;"></div>
+
+    <!-- SCRIPTS FUSÃO -->
+    <script>
+        // Inicialização de Ícones
+        lucide.createIcons();
+
+        // ----------------------------------------------------
+        // LÓGICA BASE DO KARD (Nome e Relógio)
+        // ----------------------------------------------------
+        const inputUser = document.getElementById('inputUser');
+        const lblName = document.getElementById('lblName');
+        const clockTime = document.getElementById('clockTime');
+
+        setInterval(() => clockTime.innerText = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}), 1000);
+
+        inputUser.addEventListener('input', (e) => {
+            const val = e.target.value.trim() || 'Convidado';
+            lblName.innerText = val; localStorage.setItem('di_userName', val);
+        });
+        const savedName = localStorage.getItem('di_userName');
+        if(savedName) { inputUser.value = savedName; lblName.innerText = savedName; }
+
+        // ----------------------------------------------------
+        // ANIMAÇÃO DA ORBE EM CANVAS (Hub Uno)
+        // ----------------------------------------------------
+        const canvasHub = document.getElementById('particleCanvas');
+        const ctxHub = canvasHub.getContext('2d');
+        let particles = [];
+        
+        function resizeHub() { canvasHub.width = canvasHub.parentElement.clientWidth; canvasHub.height = canvasHub.parentElement.clientHeight; }
+        window.addEventListener('resize', resizeHub); resizeHub();
+
+        class Particle {
+            constructor() { this.reset(); }
+            reset() {
+                this.angle = Math.random() * Math.PI * 2;
+                this.radius = Math.random() * 60 + 20;
+                this.speed = (Math.random() * 0.02) + 0.005;
+                this.size = Math.random() * 2 + 0.5;
+                this.color = Math.random() > 0.5 ? '#00f2ff' : '#bd00ff';
+                this.dir = Math.random() > 0.5 ? 1 : -1;
+            }
+            update() { this.angle += this.speed * this.dir; }
+            draw() {
+                const x = canvasHub.width / 2 + Math.cos(this.angle) * this.radius;
+                const y = canvasHub.height / 2 + Math.sin(this.angle) * this.radius;
+                ctxHub.beginPath(); ctxHub.arc(x, y, this.size, 0, Math.PI * 2);
+                ctxHub.fillStyle = this.color; ctxHub.shadowBlur = 10; ctxHub.shadowColor = this.color; ctxHub.fill();
+            }
+        }
+        for(let i=0; i<40; i++) particles.push(new Particle());
+        function animateHub() {
+            ctxHub.clearRect(0, 0, canvasHub.width, canvasHub.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateHub);
+        }
+        animateHub();
+
+        // ----------------------------------------------------
+        // DEVOS: GERENCIADOR DE MÓDULOS CDN
+        // ----------------------------------------------------
+        const cdnModules = [
+            { id: 'cdn-css-nanai', type: 'css', name: 'Kob Dox Nanai V4', url: 'https://kodux78k.github.io/oiDual--Y-/css/kob-dox-nanai-v4.css', defaultState: false },
+            { id: 'cdn-css-aura', type: 'css', name: 'Kob Aura CSS', url: 'https://kodux78k.github.io/oiDual--Y-/M0D/kob-DH0/css/kob-aura.css', defaultState: false },
+            { id: 'cdn-js-inline', type: 'js', name: 'Inline 000 Core', url: 'https://kodux78k.github.io/oi-Dual/js/modules/inline-000.js', defaultState: false },
+            { id: 'cdn-js-maindh0', type: 'js', name: 'Kob DH0 Main', url: 'https://kodux78k.github.io/oiDual--Y-/M0D/kob-DH0/js/kobdh0-main.js', defaultState: false, isModule: true }
+        ];
+
+        const containerToggles = document.getElementById('cdn-toggles-container');
+        const dynamicContainer = document.getElementById('dynamic-cdns-container');
+        let currentConfig = JSON.parse(localStorage.getItem('devos_config')) || Object.fromEntries(cdnModules.map(m => [m.id, m.defaultState]));
+
+        function renderDevOSToggles() {
+            containerToggles.innerHTML = '';
+            cdnModules.forEach(mod => {
+                const isActive = currentConfig[mod.id];
+                containerToggles.insertAdjacentHTML('beforeend', `
+                <div class="flex justify-between items-center bg-black/30 p-2 rounded border border-white/5">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="${mod.type === 'css' ? 'palette' : 'code'}" class="${mod.type === 'css' ? 'text-pink-400' : 'text-yellow-400'} w-3 h-3"></i>
+                        <span class="text-xs font-bold text-white">${mod.name}</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" ${isActive ? 'checked' : ''} onchange="currentConfig['${mod.id}'] = this.checked">
+                        <div class="w-7 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-neon-cyan"></div>
+                    </label>
+                </div>`);
+            });
+            lucide.createIcons();
+        }
+
+        document.getElementById('apply-cdns-btn').addEventListener('click', () => {
+            localStorage.setItem('devos_config', JSON.stringify(currentConfig));
+            dynamicContainer.innerHTML = '';
+            let needsReload = false;
+            cdnModules.forEach(mod => {
+                if (currentConfig[mod.id]) {
+                    if (mod.type === 'css') {
+                        const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = mod.url; dynamicContainer.appendChild(link);
+                    } else needsReload = true;
+                }
+            });
+            if (needsReload) alert('Para aplicar os scripts JS corretamente, recarregue a página.');
+        });
+        
+        renderDevOSToggles();
+        cdnModules.filter(m => m.type === 'css' && currentConfig[m.id]).forEach(mod => {
+            const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = mod.url; dynamicContainer.appendChild(link);
+        });
+
+        // ----------------------------------------------------
+        // LÓGICA DO REPRODUTOR ORÁCULO
+        // ----------------------------------------------------
+        const audio = document.getElementById('audioElement');
+        const trackListEl = document.getElementById('trackList');
+        const bottomPlayer = document.getElementById('bottomPlayer');
+        const progressBar = document.getElementById('progressBar');
+        const progressContainer = document.getElementById('progressContainer');
+        const kiBarFill = document.getElementById('kiBarFill');
+        const kiValueDisplay = document.getElementById('kiValueDisplay');
+        const canvasVis = document.getElementById('visualizer');
+        const canvasCtxVis = canvasVis.getContext('2d');
+        const heroGlow = document.getElementById('heroGlow');
+
+        let tracks = []; let currentIndex = -1; let isPlaying = false; let currentSourceType = null;
+        let scWidget = null; let scDuration = 0;
+        let ytPlayer = null; let ytPlayerReady = false; let ytPending = null;
+        let audioCtx = null; let analyser = null; let sourceNode = null; let dataArray = null; let isAudioCtxInit = false;
+
+        function updateThemeColor() {
+            const hour = new Date().getHours();
+            let color = '#ff5500';
+            if (hour >= 5 && hour < 12) color = '#f59e0b';
+            else if (hour >= 18 && hour < 23) color = '#bd00ff';
+            document.documentElement.style.setProperty('--primary', color);
+        }
+
+        function setPlayingUI(playing) {
+            isPlaying = playing;
+            const icon = playing ? 'pause' : 'play';
+            document.getElementById('playIconMain').setAttribute('data-lucide', icon);
+            document.getElementById('playIconMini').setAttribute('data-lucide', icon);
+            document.getElementById('heroPlayBtn').classList.toggle('hidden', playing);
+            document.getElementById('miniCover').classList.toggle('spin-paused', !playing);
+            lucide.createIcons();
+            renderTrackList();
+        }
+
+        function formatTime(sec) {
+            if (!isFinite(sec) || sec < 0) return '0:00';
+            const m = Math.floor(sec / 60); const s = Math.floor(sec % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        function updateMetaUI(track) {
+            document.getElementById('mainTitle').innerText = track.title || 'Desconhecido';
+            document.getElementById('mainArtist').innerText = track.artist || track.type.toUpperCase();
+            document.getElementById('miniTitle').innerText = track.title || '—';
+            
+            const cover = track.cover || 'https://picsum.photos/500/500?random=' + Date.now();
+            document.getElementById('mainCover').src = cover;
+            document.getElementById('miniCover').src = cover;
+            
+            const badge = document.getElementById('sourceBadge');
+            badge.innerText = track.type.toUpperCase();
+            badge.className = `text-[8px] px-1 rounded ${track.type === 'local' ? 'bg-blue-900/40 text-blue-300' : track.type === 'soundcloud' ? 'bg-orange-900/40 text-orange-300' : 'bg-red-900/40 text-red-300'}`;
+            renderTrackList();
+        }
+
+        function renderTrackList() {
+            if (!tracks.length) { trackListEl.innerHTML = '<div class="text-center text-gray-500 py-6 text-xs">VAZIO</div>'; return; }
+            trackListEl.innerHTML = '';
+            tracks.forEach((t, i) => {
+                const active = i === currentIndex;
+                trackListEl.insertAdjacentHTML('beforeend', `
+                <div class="track-item flex items-center gap-3 p-2 cursor-pointer rounded-lg ${active ? 'playing' : 'hover:bg-white/5'}" onclick="window.loadOrToggle(${i})">
+                    <img src="${t.cover}" class="w-10 h-10 rounded object-cover border ${active ? 'border-orange-500' : 'border-white/10'}" />
+                    <div class="flex-1 min-w-0">
+                        <div class="track-title text-xs font-semibold truncate ${active ? 'text-orange-400' : 'text-white'}">${t.title}</div>
+                        <div class="text-[9px] text-gray-400">${t.artist} • <span class="uppercase">${t.type}</span></div>
+                    </div>
+                    ${active && isPlaying ? '<i data-lucide="volume-2" class="w-4 h-4 text-orange-500"></i>' : ''}
+                </div>`);
+            });
+            lucide.createIcons();
+        }
+
+        window.loadOrToggle = (i) => {
+            if (currentIndex === i) togglePlay();
+            else loadTrack(i, { autoplay: true });
+        }
+
+        function extractYouTubeID(url) {
+            const match = url.match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([0-9A-Za-z_-]{11})/);
+            return match ? match[1] : null;
+        }
+
+        function initVisualizerForLocal() {
+            if (isAudioCtxInit) return;
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioCtx.createAnalyser(); sourceNode = audioCtx.createMediaElementSource(audio);
+                sourceNode.connect(analyser); analyser.connect(audioCtx.destination); analyser.fftSize = 128;
+                dataArray = new Uint8Array(analyser.frequencyBinCount); isAudioCtxInit = true;
+            } catch (e) { console.warn('AudioContext error:', e); }
+        }
+
+        function drawVisualizer() {
+            requestAnimationFrame(drawVisualizer);
+            canvasVis.width = canvasVis.clientWidth; canvasVis.height = canvasVis.clientHeight;
+            const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+            
+            canvasCtxVis.clearRect(0, 0, canvasVis.width, canvasVis.height);
+            
+            if (currentSourceType === 'local' && analyser && isPlaying) {
+                analyser.getByteFrequencyData(dataArray);
+                const barWidth = (canvasVis.width / dataArray.length) * 1.5; let x = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    const h = (dataArray[i] / 255) * canvasVis.height;
+                    canvasCtxVis.fillStyle = primary; canvasCtxVis.shadowBlur = 8; canvasCtxVis.shadowColor = primary;
+                    canvasCtxVis.fillRect(x, canvasVis.height - h, barWidth - 1, h); x += barWidth;
+                }
+                heroGlow.style.opacity = 0.1 + (dataArray[0] / 255) * 0.4;
+            } else if (isPlaying) {
+                canvasCtxVis.fillStyle = primary; canvasCtxVis.shadowBlur = 8; canvasCtxVis.shadowColor = primary;
+                for (let i = 0; i < 20; i++) {
+                    const h = 5 + Math.random() * 15;
+                    canvasCtxVis.fillRect(i * 12, canvasVis.height - h, 6, h);
+                }
+            }
+        }
+
+        function pauseAll() {
+            audio.pause();
+            if (scWidget) try { scWidget.pause(); } catch(e){}
+            if (ytPlayer && ytPlayer.pauseVideo) try { ytPlayer.pauseVideo(); } catch(e){}
+        }
+
+        function loadTrack(index, options = {}) {
+            if (index < 0 || index >= tracks.length) return;
+            currentIndex = index; const track = tracks[index]; currentSourceType = track.type;
+            updateMetaUI(track); pauseAll();
+            
+            progressBar.style.width = '0%'; kiBarFill.style.width = '0%'; kiValueDisplay.innerText = '0000';
+            document.getElementById('miniTime').innerText = '0:00 / 0:00';
+
+            if (track.type === 'local') {
+                audio.src = track.url; audio.load();
+                if (!isAudioCtxInit) initVisualizerForLocal();
+                if (options.autoplay) audio.play().then(() => { if(audioCtx) audioCtx.resume(); setPlayingUI(true); }).catch(()=>setPlayingUI(false));
+                else setPlayingUI(false);
+            } 
+            else if (track.type === 'soundcloud') {
+                if (!scWidget) {
+                    const iframe = document.createElement('iframe'); iframe.allow = 'autoplay'; iframe.style.display = 'none';
+                    document.getElementById('sc-widget-container').appendChild(iframe); scWidget = SC.Widget(iframe);
+                    scWidget.bind(SC.Widget.Events.PLAY, () => setPlayingUI(true));
+                    scWidget.bind(SC.Widget.Events.PAUSE, () => setPlayingUI(false));
+                    scWidget.bind(SC.Widget.Events.FINISH, nextTrack);
+                    scWidget.bind(SC.Widget.Events.PLAY_PROGRESS, (e) => updateProgress(e.relativePosition || 0, (e.currentPosition||0)/1000, scDuration));
+                }
+                scWidget.load(track.url, { auto_play: options.autoplay, visual: false });
+                setTimeout(() => scWidget.getDuration(d => scDuration = (d||0)/1000), 1000);
+            }
+            else if (track.type === 'youtube') {
+                ytPending = { track, autoplay: options.autoplay };
+                if (window.YT && window.YT.Player && ytPlayerReady && ytPlayer) {
+                    if (options.autoplay) ytPlayer.loadVideoById(track.id); else ytPlayer.cueVideoById(track.id);
+                } else if (!ytPlayer) {
+                    ytPlayer = new YT.Player('yt-player-container', {
+                        height: '0', width: '0', videoId: track.id,
+                        playerVars: { playsinline: 1, modestbranding: 1 },
+                        events: {
+                            onReady: () => { ytPlayerReady = true; if(ytPending.autoplay) ytPlayer.loadVideoById(ytPending.track.id); },
+                            onStateChange: (e) => {
+                                if (e.data === 1) setPlayingUI(true);
+                                else if (e.data === 2) setPlayingUI(false);
+                                else if (e.data === 0) nextTrack();
+                            }
+                        }
+                    });
+                }
+            }
+            bottomPlayer.classList.remove('translate-y-[150%]');
+        }
+
+        window.togglePlay = function() {
+            if (!tracks.length) return;
+            if (currentIndex === -1) { loadTrack(0, { autoplay: true }); return; }
+            if (isPlaying) pauseAll();
+            else {
+                if (currentSourceType === 'local') { audio.play(); if(audioCtx) audioCtx.resume(); }
+                else if (currentSourceType === 'soundcloud') scWidget.play();
+                else if (currentSourceType === 'youtube') ytPlayer.playVideo();
+            }
+            setPlayingUI(!isPlaying);
+        }
+
+        window.nextTrack = function() { if(tracks.length) loadTrack((currentIndex + 1) % tracks.length, { autoplay: isPlaying }); }
+        window.prevTrack = function() { if(tracks.length) loadTrack(currentIndex - 1 < 0 ? tracks.length - 1 : currentIndex - 1, { autoplay: isPlaying }); }
+
+        function updateProgress(pct, cur, dur) {
+            progressBar.style.width = `${pct * 100}%`;
+            kiBarFill.style.width = `${pct * 100}%`;
+            kiValueDisplay.innerText = Math.floor(pct * 9001).toString().padStart(4, '0');
+            document.getElementById('miniTime').innerText = `${formatTime(cur)} / ${formatTime(dur)}`;
+        }
+
+        audio.addEventListener('timeupdate', () => {
+            if (currentSourceType === 'local' && audio.duration) updateProgress(audio.currentTime / audio.duration, audio.currentTime, audio.duration);
+        });
+        audio.addEventListener('ended', nextTrack);
+        
+        setInterval(() => {
+            if (currentSourceType === 'youtube' && isPlaying && ytPlayer && ytPlayer.getDuration) {
+                const cur = ytPlayer.getCurrentTime(); const dur = ytPlayer.getDuration();
+                if (dur) updateProgress(cur/dur, cur, dur);
+            }
+        }, 500);
+
+        window.seek = function(e) {
+            const rect = progressContainer.getBoundingClientRect(); const pct = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+            if (currentSourceType === 'local' && audio.duration) audio.currentTime = pct * audio.duration;
+            else if (currentSourceType === 'soundcloud' && scWidget && scDuration) scWidget.seekTo(pct * scDuration * 1000);
+            else if (currentSourceType === 'youtube' && ytPlayer) ytPlayer.seekTo(pct * ytPlayer.getDuration(), true);
+        }
+
+        // Modais e Inserção
+        document.getElementById('pasteLinkBtn').addEventListener('click', () => { document.getElementById('linkModal').classList.remove('hidden'); });
+        document.getElementById('closeModal').addEventListener('click', () => { document.getElementById('linkModal').classList.add('hidden'); });
+        document.getElementById('addLinkBtn').addEventListener('click', async () => {
+            const url = document.getElementById('linkInput').value.trim(); if (!url) return;
+            const type = url.includes('soundcloud') ? 'soundcloud' : (url.includes('youtu') ? 'youtube' : null);
+            if (!type) return alert('Apenas SoundCloud ou YouTube');
+            
+            const id = type === 'youtube' ? extractYouTubeID(url) : null;
+            tracks.push({
+                type, url, id, title: 'Nova Adição (' + type + ')', artist: 'Pendente',
+                cover: type === 'youtube' ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : 'https://picsum.photos/500/500?sc'
+            });
+            renderTrackList(); document.getElementById('linkModal').classList.add('hidden'); document.getElementById('linkInput').value = '';
+            if(currentIndex === -1) loadTrack(0, {autoplay:false});
+        });
+
+        document.getElementById('upload').addEventListener('change', (e) => {
+            Array.from(e.target.files).forEach((f, i) => {
+                tracks.push({ type: 'local', url: URL.createObjectURL(f), title: f.name.replace(/\.[^/.]+$/, ''), artist: 'Upload Local', cover: `https://picsum.photos/seed/${f.name}/500/500` });
+            });
+            renderTrackList(); if(currentIndex === -1) loadTrack(0, {autoplay:false});
+        });
+
+        // Setup Inicial
+        if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+            const tag = document.createElement('script'); tag.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(tag);
+        }
+        window.onYouTubeIframeAPIReady = () => { ytPlayerReady = true; };
+
+        // Adicionar faixas padrão (Como na referência)
+        setTimeout(() => {
+            tracks.push(
+                { type: 'soundcloud', url: 'https://soundcloud.com/prod-next-level/sets/kodux-as-reliquias-do-principe-trilhas', title: 'RELÍQUIAS DO PRÍNCIPE', artist: 'KODUX', cover: 'https://picsum.photos/500/500?reliquias' },
+                { type: 'youtube', id: 'Bt_rLbMjJDk', url: 'https://youtu.be/Bt_rLbMjJDk', title: 'Trilhas Potencializadoras', artist: 'Dual.NextLevel', cover: 'https://img.youtube.com/vi/Bt_rLbMjJDk/hqdefault.jpg' }
+            );
+            renderTrackList(); loadTrack(0, { autoplay: false });
+        }, 1000);
+
+        updateThemeColor(); setInterval(updateThemeColor, 60000);
+        drawVisualizer();
+
+    </script>
+
+
+
+
+
+  <div class="shell">
+    <header>
+      <div class="logo-title">
+        <span>Dual.Infodose</span>
+        <span>Portal Supremo · Streaming</span>
+      </div>
+      <button class="mode-toggle" id="themeToggleBtn" type="button">
+        <div class="mode-dot"></div>
+        <span>Modo Nebula / Madeira</span>
+      </button>
+    </header>
+
+    <!-- Saudação -->
+    <section class="greeting-strip">
+      <div class="greeting-line">
+        <span class="greeting-name">Olá, KODUX</span>
+        <span class="time-mini" id="timeMini">Streaming do dia · ready</span>
+      </div>
+    </section>
+
+    <!-- HERO · STREAMING DO DIA -->
+    <section class="hero-stream">
+      <article class="hero-card" id="heroCard">
+        <div class="hero-bg" id="heroBg"></div>
+        <div class="hero-gradient"></div>
+        <div class="hero-content">
+          <div class="hero-tag-row">
+            <span class="hero-tag" id="heroTag">Streaming do dia</span>
+          </div>
+          <h1 class="hero-title" id="heroTitle">Portal Supremo</h1>
+          <p class="hero-subtitle" id="heroSubtitle">Canal Interno Ativo</p>
+          <div class="hero-actions">
+            <button class="btn-primary" id="heroPlayBtn" type="button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              Assistir agora
+            </button>
+            <button class="tts-btn" type="button" title="Ouvir descrição" id="heroTtsBtn">◎</button>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- RAILS · PLAYLISTS -->
+    <section class="section-title">
+      <span>Trilhas &amp; Ativações</span>
+      <span>Faixas para abrir o campo.</span>
+    </section>
+    <section class="rail">
+      <div class="rail-track" id="streamRailTrilhas"></div>
+    </section>
+
+    <section class="section-title">
+      <span>Sinopses &amp; Conhecimento</span>
+      <span>Fundamentos da Infodose.</span>
+    </section>
+    <section class="rail">
+      <div class="rail-track" id="streamRailSinopses"></div>
+    </section>
+
+    <section class="section-title">
+      <span>Ambiente &amp; Espaço da Mente</span>
+      <span>O lugar onde tudo acontece.</span>
+    </section>
+    <section class="rail">
+      <div class="rail-track" id="streamRailAmbiente"></div>
+    </section>
+
+    <section class="section-title">
+      <span>Meditações Guiadas</span>
+      <span>Jornadas guiadas profundas.</span>
+    </section>
+    <section class="rail">
+      <div class="rail-track" id="streamRailMeditacoes"></div>
+    </section>
+
+  </div>
+
+  <!-- GLOBAL PLAYER FLUTUANTE -->
+  <div id="global-player" class="overflow-hidden">
+    <div class="player-window-controls">
+      <div class="player-title-drag">Stream Interno</div>
+      <div class="player-actions">
+        <button onclick="Player.minimize()" class="btn-win" title="Minimizar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+        <button onclick="Player.stop()" class="btn-win hover-red" title="Fechar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+    </div>
+    <div id="player-frame-wrap"></div>
+  </div>
+
+  <script>
+    // ============================
+    // THEME & UTILS
+    // ============================
+    const themeToggleBtn = document.getElementById("themeToggleBtn");
+    function initTheme(){
+      const saved = localStorage.getItem("portalTheme");
+      if (saved === "nebula" || saved === "madeira"){
+        document.body.setAttribute("data-theme", saved);
+      }
+      themeToggleBtn?.addEventListener("click", () => {
+        const current = document.body.getAttribute("data-theme") === "madeira" ? "nebula" : "madeira";
+        document.body.setAttribute("data-theme", current);
+        localStorage.setItem("portalTheme", current);
+      });
+    }
+
+    const synth = ("speechSynthesis" in window) ? window.speechSynthesis : null;
+    function speak(text){
+      if (!synth || !text) return;
+      try{
+        synth.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = "pt-BR";
+        synth.speak(u);
+      }catch(e){ console.warn("TTS falhou", e); }
+    }
+
+    // ============================
+    // PLAYER UNIVERSAL
+    // ============================
+    const Player = {
+      _detect: function(src) {
+        if (!src) return 'none';
+        if (/^[a-zA-Z0-9_-]{11}$/.test(src)) return {type:'yt', id:src}; // ID direto
+        if (/^https?:\/\//.test(src)) {
+          if (/\.(mp3|ogg|wav|aac|m4a|flac)(\?|$)/i.test(src)) return 'audio';
+          if (/\.(mp4|webm|mov|mkv|avi)(\?|$)/i.test(src)) return 'video';
+          if (/youtube\.com|youtu\.be/.test(src)) {
+            const m = src.match(/(?:v=|youtu\.be\/|embed\/)([^&?/]+)/);
+            return m ? {type:'yt', id:m[1]} : 'none';
+          }
+          return 'video';
+        }
+        return 'yt';
+      },
+      play: function(src, title) {
+        const gp = document.getElementById('global-player');
+        const fw = document.getElementById('player-frame-wrap');
+        const type = Player._detect(src);
+
+        let html = '';
+
+        if (type === 'yt' || (type && type.type === 'yt')) {
+          const id = (type.id) ? type.id : src;
+          // Renderiza o iframe do YouTube direto no player flutuante
+          html = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&modestbranding=1&controls=1&rel=0" allow="autoplay; encrypted-media; fullscreen"></iframe>`;
+        } else if (type === 'video') {
+          html = `<video src="${src}" autoplay controls playsinline style="width:100%;height:100%;object-fit:contain;background:#000;"></video>`;
+        } else if (type === 'audio') {
+          html = `
+            <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);padding:20px;gap:16px;">
+              <div style="font-size:10px;letter-spacing:3px;color:#00f6ff;text-transform:uppercase;opacity:0.7">◎ Áudio</div>
+              <div style="font-size:13px;color:rgba(255,255,255,0.8);text-align:center;max-width:90%;line-height:1.5;">${title||'Mídia'}</div>
+              <audio src="${src}" autoplay controls style="width:100%;max-width:340px;outline:none;"></audio>
+            </div>`;
+        }
+
+        if(html !== '') {
+          fw.innerHTML = html;
+          gp.classList.remove('minimized');
+          gp.classList.add('active');
+        }
+      },
+      minimize: () => { document.getElementById('global-player').classList.toggle('minimized'); },
+      stop: () => {
+        const gp = document.getElementById('global-player');
+        gp.classList.remove('active');
+        setTimeout(() => { document.getElementById('player-frame-wrap').innerHTML = ''; }, 300);
+      }
+    };
+
+    // ============================
+    // DATA & PLAYLISTS
+    // ============================
+    function categoryToBg(cat){
+      switch(cat){
+        case "Trilhas e Ativações": return "deep";
+        case "Sinopses": return "warm";
+        case "Ambiente e Espaço da Mente": return "cool";
+        case "Neurociência e Bem-Estar": return "deep";
+        case "Meditações Guiadas": return "cool";
+        default: return "default";
+      }
+    }
+
+    function ytVideo(id, title, subtitle, category){
+      return {
+        id, title, subtitle,
+        tag: category, category,
+        thumb: "https://img.youtube.com/vi/" + id + "/hqdefault.jpg",
+        heroImg: "https://img.youtube.com/vi/" + id + "/maxresdefault.jpg",
+        bgMode: categoryToBg(category)
+      };
+    }
+
+    const streamingItems = [
+      // Trilhas e Ativações
+      ytVideo("Bt_rLbMjJDk", "Trilhas Potencializadoras", "Ative aromas, memórias e intenção.", "Trilhas e Ativações"),
+      ytVideo("_0wVkryxanE", "A magia dos 12 arquétipos", "Introdução viva à magia arquetípica.", "Trilhas e Ativações"),
+      ytVideo("Id2NI9tv1r4", "Infodose – Pra quem merece", "Se chegou até aqui, é porque você merece.", "Trilhas e Ativações"),
+      
+      // Sinopses
+      ytVideo("qldgs0aLdB0", "A Fórmula da Dopamina Sexy", "Base da dopamina aplicada.", "Sinopses"),
+      ytVideo("FbutKMpd8MY", "O Espaço da Mente", "Onde tudo acontece antes de acontecer.", "Sinopses"),
+      ytVideo("1L9_rFmIGJ8", "A Recompensa", "Por que buscamos tanto a recompensa?", "Sinopses"),
+
+      // Ambiente e Espaço da Mente
+      ytVideo("koKhjQKGJSc", "O poder das cortinas", "Mudando a energia do ambiente.", "Ambiente e Espaço da Mente"),
+      ytVideo("KrtOVrk8aDk", "Poder sob seus pés", "Pisos criam fluxos de energia.", "Ambiente e Espaço da Mente"),
+
+      // Meditações Guiadas
+      ytVideo("hfQ1L6fCfAo", "À deriva no espaço da mente", "Viagem pelo espaço interno.", "Meditações Guiadas"),
+      ytVideo("Tq99vQNQ6dQ", "Na mente do espaço da mente", "Camada meta do espaço.", "Meditações Guiadas"),
+      ytVideo("DTDfkHwuMic", "Universo da Mente", "Exploração em múltiplos espaços.", "Meditações Guiadas")
+    ];
+
+    // ============================
+    // RENDERIZAÇÃO DA UI
+    // ============================
+    function createStreamCard(item){
+      const card = document.createElement("article");
+      card.className = "stream-card";
+      card.innerHTML = `
+        <div class="stream-thumb" style="background-image:url('${item.thumb}')"></div>
+        <div class="stream-inner">
+          <div class="stream-title">${item.title}</div>
+          <div class="stream-sub">${item.subtitle}</div>
+        </div>
+        <div class="stream-tag">${item.tag}</div>
+      `;
+
+      const ttsBtn = document.createElement("button");
+      ttsBtn.className = "tts-btn stream-tts";
+      ttsBtn.textContent = "◎";
+      ttsBtn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        speak(`${item.title}. ${item.subtitle}`);
+      });
+      card.appendChild(ttsBtn);
+
+      card.addEventListener("click", () => {
+        document.body.setAttribute("data-stream-bg", item.bgMode || "default");
+        Player.play(item.id, item.title);
+      });
+
+      return card;
+    }
+
+    function initStreaming(){
+      const rails = {
+        "Trilhas e Ativações": document.getElementById("streamRailTrilhas"),
+        "Sinopses": document.getElementById("streamRailSinopses"),
+        "Ambiente e Espaço da Mente": document.getElementById("streamRailAmbiente"),
+        "Meditações Guiadas": document.getElementById("streamRailMeditacoes")
+      };
+
+      streamingItems.forEach(item => {
+        if (rails[item.category]) {
+          rails[item.category].appendChild(createStreamCard(item));
+        }
+      });
+
+      // Configura Hero Card (Pega o primeiro ou um randômico do dia)
+      const heroItem = streamingItems[0];
+      if (heroItem){
+        document.getElementById("heroTitle").textContent = heroItem.title;
+        document.getElementById("heroSubtitle").textContent = heroItem.subtitle;
+        document.getElementById("heroTag").textContent = heroItem.category;
+        document.getElementById("heroBg").style.backgroundImage = `url('${heroItem.heroImg}')`;
+        document.body.setAttribute("data-stream-bg", heroItem.bgMode);
+
+        const playHero = (ev) => {
+          ev.stopPropagation();
+          Player.play(heroItem.id, heroItem.title);
+        };
+
+        document.getElementById("heroCard").addEventListener("click", playHero);
+        document.getElementById("heroPlayBtn").addEventListener("click", playHero);
+        document.getElementById("heroTtsBtn").addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          speak(`${heroItem.title}. ${heroItem.subtitle}`);
+        });
+      }
+
+      // Greetings setup
+      const h = new Date().getHours();
+      let period = (h >= 5 && h < 12) ? "Manhã" : (h >= 12 && h < 18) ? "Tarde" : "Noite";
+      document.getElementById("timeMini").textContent = `${period} de Streaming · pronto`;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initTheme();
+      initStreaming();
+    });
+  </script>
+
+
+
+<script>
+    // ============================
+    // THEME & UTILS
+    // ============================
+    const themeToggleBtn = document.getElementById("themeToggleBtn");
+    function initTheme(){
+      const saved = localStorage.getItem("portalTheme");
+      if (saved === "nebula" || saved === "madeira"){
+        document.body.setAttribute("data-theme", saved);
+      }
+      themeToggleBtn?.addEventListener("click", () => {
+        const current = document.body.getAttribute("data-theme") === "madeira" ? "nebula" : "madeira";
+        document.body.setAttribute("data-theme", current);
+        localStorage.setItem("portalTheme", current);
+      });
+    }
+
+    const synth = ("speechSynthesis" in window) ? window.speechSynthesis : null;
+    function speak(text){
+      if (!synth || !text) return;
+      try{
+        synth.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = "pt-BR";
+        synth.speak(u);
+      }catch(e){ console.warn("TTS falhou", e); }
+    }
+
+    // ============================
+    // PLAYER UNIVERSAL
+    // ============================
+    const Player = {
+      _detect: function(src) {
+        if (!src) return 'none';
+        if (/^[a-zA-Z0-9_-]{11}$/.test(src)) return {type:'yt', id:src}; // ID direto
+        if (/^https?:\/\//.test(src)) {
+          if (/\.(mp3|ogg|wav|aac|m4a|flac)(\?|$)/i.test(src)) return 'audio';
+          if (/\.(mp4|webm|mov|mkv|avi)(\?|$)/i.test(src)) return 'video';
+          if (/youtube\.com|youtu\.be/.test(src)) {
+            const m = src.match(/(?:v=|youtu\.be\/|embed\/)([^&?/]+)/);
+            return m ? {type:'yt', id:m[1]} : 'none';
+          }
+          return 'video';
+        }
+        return 'yt';
+      },
+      play: function(src, title) {
+        const gp = document.getElementById('global-player');
+        const fw = document.getElementById('player-frame-wrap');
+        const type = Player._detect(src);
+
+        let html = '';
+
+        if (type === 'yt' || (type && type.type === 'yt')) {
+          const id = (type.id) ? type.id : src;
+          // Renderiza o iframe do YouTube direto no player flutuante
+          html = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&modestbranding=1&controls=1&rel=0" allow="autoplay; encrypted-media; fullscreen"></iframe>`;
+        } else if (type === 'video') {
+          html = `<video src="${src}" autoplay controls playsinline style="width:100%;height:100%;object-fit:contain;background:#000;"></video>`;
+        } else if (type === 'audio') {
+          html = `
+            <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);padding:20px;gap:16px;">
+              <div style="font-size:10px;letter-spacing:3px;color:#00f6ff;text-transform:uppercase;opacity:0.7">◎ Áudio</div>
+              <div style="font-size:13px;color:rgba(255,255,255,0.8);text-align:center;max-width:90%;line-height:1.5;">${title||'Mídia'}</div>
+              <audio src="${src}" autoplay controls style="width:100%;max-width:340px;outline:none;"></audio>
+            </div>`;
+        }
+
+        if(html !== '') {
+          fw.innerHTML = html;
+          gp.classList.remove('minimized');
+          gp.classList.add('active');
+        }
+      },
+      minimize: () => { document.getElementById('global-player').classList.toggle('minimized'); },
+      stop: () => {
+        const gp = document.getElementById('global-player');
+        gp.classList.remove('active');
+        setTimeout(() => { document.getElementById('player-frame-wrap').innerHTML = ''; }, 300);
+      }
+    };
+
+    // ============================
+    // DATA & PLAYLISTS
+    // ============================
+    function categoryToBg(cat){
+      switch(cat){
+        case "Trilhas e Ativações": return "deep";
+        case "Sinopses": return "warm";
+        case "Ambiente e Espaço da Mente": return "cool";
+        case "Neurociência e Bem-Estar": return "deep";
+        case "Meditações Guiadas": return "cool";
+        default: return "default";
+      }
+    }
+
+    function ytVideo(id, title, subtitle, category){
+      return {
+        id, title, subtitle,
+        tag: category, category,
+        thumb: "https://img.youtube.com/vi/" + id + "/hqdefault.jpg",
+        heroImg: "https://img.youtube.com/vi/" + id + "/maxresdefault.jpg",
+        bgMode: categoryToBg(category)
+      };
+    }
+
+    const streamingItems = [
+      // Trilhas e Ativações
+      ytVideo("Bt_rLbMjJDk", "Trilhas Potencializadoras", "Ative aromas, memórias e intenção.", "Trilhas e Ativações"),
+      ytVideo("_0wVkryxanE", "A magia dos 12 arquétipos", "Introdução viva à magia arquetípica.", "Trilhas e Ativações"),
+      ytVideo("Id2NI9tv1r4", "Infodose – Pra quem merece", "Se chegou até aqui, é porque você merece.", "Trilhas e Ativações"),
+      
+      // Sinopses
+      ytVideo("qldgs0aLdB0", "A Fórmula da Dopamina Sexy", "Base da dopamina aplicada.", "Sinopses"),
+      ytVideo("FbutKMpd8MY", "O Espaço da Mente", "Onde tudo acontece antes de acontecer.", "Sinopses"),
+      ytVideo("1L9_rFmIGJ8", "A Recompensa", "Por que buscamos tanto a recompensa?", "Sinopses"),
+
+      // Ambiente e Espaço da Mente
+      ytVideo("koKhjQKGJSc", "O poder das cortinas", "Mudando a energia do ambiente.", "Ambiente e Espaço da Mente"),
+      ytVideo("KrtOVrk8aDk", "Poder sob seus pés", "Pisos criam fluxos de energia.", "Ambiente e Espaço da Mente"),
+
+      // Meditações Guiadas
+      ytVideo("hfQ1L6fCfAo", "À deriva no espaço da mente", "Viagem pelo espaço interno.", "Meditações Guiadas"),
+      ytVideo("Tq99vQNQ6dQ", "Na mente do espaço da mente", "Camada meta do espaço.", "Meditações Guiadas"),
+      ytVideo("DTDfkHwuMic", "Universo da Mente", "Exploração em múltiplos espaços.", "Meditações Guiadas")
+    ];
+
+    // ============================
+    // RENDERIZAÇÃO DA UI
+    // ============================
+    function createStreamCard(item){
+      const card = document.createElement("article");
+      card.className = "stream-card";
+      card.innerHTML = `
+        <div class="stream-thumb" style="background-image:url('${item.thumb}')"></div>
+        <div class="stream-inner">
+          <div class="stream-title">${item.title}</div>
+          <div class="stream-sub">${item.subtitle}</div>
+        </div>
+        <div class="stream-tag">${item.tag}</div>
+      `;
+
+      const ttsBtn = document.createElement("button");
+      ttsBtn.className = "tts-btn stream-tts";
+      ttsBtn.textContent = "◎";
+      ttsBtn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        speak(`${item.title}. ${item.subtitle}`);
+      });
+      card.appendChild(ttsBtn);
+
+      card.addEventListener("click", () => {
+        document.body.setAttribute("data-stream-bg", item.bgMode || "default");
+        Player.play(item.id, item.title);
+      });
+
+      return card;
+    }
+
+    function initStreaming(){
+      const rails = {
+        "Trilhas e Ativações": document.getElementById("streamRailTrilhas"),
+        "Sinopses": document.getElementById("streamRailSinopses"),
+        "Ambiente e Espaço da Mente": document.getElementById("streamRailAmbiente"),
+        "Meditações Guiadas": document.getElementById("streamRailMeditacoes")
+      };
+
+      streamingItems.forEach(item => {
+        if (rails[item.category]) {
+          rails[item.category].appendChild(createStreamCard(item));
+        }
+      });
+
+      // Configura Hero Card (Pega o primeiro ou um randômico do dia)
+      const heroItem = streamingItems[0];
+      if (heroItem){
+        document.getElementById("heroTitle").textContent = heroItem.title;
+        document.getElementById("heroSubtitle").textContent = heroItem.subtitle;
+        document.getElementById("heroTag").textContent = heroItem.category;
+        document.getElementById("heroBg").style.backgroundImage = `url('${heroItem.heroImg}')`;
+        document.body.setAttribute("data-stream-bg", heroItem.bgMode);
+
+        const playHero = (ev) => {
+          ev.stopPropagation();
+          Player.play(heroItem.id, heroItem.title);
+        };
+
+        document.getElementById("heroCard").addEventListener("click", playHero);
+        document.getElementById("heroPlayBtn").addEventListener("click", playHero);
+        document.getElementById("heroTtsBtn").addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          speak(`${heroItem.title}. ${heroItem.subtitle}`);
+        });
+      }
+
+      // Greetings setup
+      const h = new Date().getHours();
+      let period = (h >= 5 && h < 12) ? "Manhã" : (h >= 12 && h < 18) ? "Tarde" : "Noite";
+      document.getElementById("timeMini").textContent = `${period} de Streaming · pronto`;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initTheme();
+      initStreaming();
+    });
+  </script></body></html>

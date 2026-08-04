@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0a0c14">
+  <title>Dual.Infodose · Portal & Player</title>
+
+  <style>
+    /* ============================
+       TOKENS · NEBULA PRO + MADEIRA
+       ============================ */
+    :root{
+      --bg-main: radial-gradient(circle at top, #141429 0%, #050715 45%, #020309 100%);
+      --bg-overlay-default: radial-gradient(circle at 75% 15%, #ff7ad9 0%, #ff9ed5 22%, transparent 68%);
+      --bg-overlay-warm: radial-gradient(circle at 80% 15%, #ff9a6c 0%, #ffce8a 22%, transparent 68%);
+      --bg-overlay-cool: radial-gradient(circle at 25% 10%, #00f6ff 0%, #7cf6ff 22%, transparent 68%);
+      --bg-overlay-deep: radial-gradient(circle at 5% 10%, #9f7dff 0%, #ff7ad9 22%, transparent 70%);
+
+      --accent-main:#ff7ad9;
+      --accent-warm:#ffb5e2;
+      --accent-cold:#00f6ff;
+
+      --card-bg: rgba(8,10,25,0.96);
+      --text-main:#fdfdff;
+      --text-soft:#c6c9ff;
+      --text-muted:#7b81a8;
+
+      --hero-height:260px;
+      --rail-card-width:160px;
+      --rail-card-height:96px;
+
+      --hero-img-url:url("https://images.pexels.com/photos/1181675/pexels-photo-1181675.jpeg?auto=compress&cs=tinysrgb&w=800");
+    }
+
+    *{box-sizing:border-box;margin:0;padding:0;}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+      color:var(--text-main);
+      background:var(--bg-main);
+      display:flex;
+      justify-content:center;
+      align-items:stretch;
+      position:relative;
+      overflow-x:hidden;
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      background:var(--bg-overlay-default);
+      opacity:0;
+      pointer-events:none;
+      animation:dawnFade 1.6s ease-out 0.12s forwards;
+      z-index:-1;
+    }
+
+    body[data-stream-bg="warm"]::before{ background:var(--bg-overlay-warm); }
+    body[data-stream-bg="cool"]::before{ background:var(--bg-overlay-cool); }
+    body[data-stream-bg="deep"]::before{ background:var(--bg-overlay-deep); }
+
+    @keyframes dawnFade{
+      0%{opacity:0;filter:blur(14px);}
+      40%{opacity:0.6;filter:blur(7px);}
+      100%{opacity:1;filter:blur(0);}
+    }
+
+    .shell{
+      width:100%;
+      max-width:480px;
+      margin:0 auto;
+      padding:18px 0 80px; /* Espaço pro player flutuante */
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+      position:relative;
+      z-index:1;
+      animation:fadeUp 0.75s ease-out 0.18s both;
+    }
+
+    @keyframes fadeUp{
+      from{opacity:0;transform:translateY(18px);}
+      to{opacity:1;transform:translateY(0);}
+    }
+
+    /* HEADER */
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:0 16px;
+    }
+
+    .logo-title{
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+    }
+    .logo-title span:nth-child(1){
+      font-size:11px;
+      letter-spacing:0.14em;
+      text-transform:uppercase;
+      color:var(--text-muted);
+    }
+    .logo-title span:nth-child(2){
+      font-size:15px;
+      font-weight:600;
+      color:var(--text-soft);
+    }
+
+    .mode-toggle{
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.18);
+      padding:4px 10px 4px 6px;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:11px;
+      color:var(--text-soft);
+      background:radial-gradient(circle at 0% 0%, rgba(0,246,255,0.35), transparent 60%), rgba(4,8,28,0.92);
+      box-shadow:0 10px 26px rgba(0,0,0,0.75);
+      backdrop-filter:blur(10px);
+      -webkit-backdrop-filter:blur(10px);
+      cursor:pointer;
+      transition:transform 0.2s ease,background 0.25s ease,border-color 0.25s ease;
+    }
+    .mode-dot{
+      width:16px;height:16px;border-radius:999px;
+      background:radial-gradient(circle at 30% 20%, #ffffff, var(--accent-cold));
+      box-shadow:0 0 10px rgba(0,246,255,0.85);
+    }
+
+    body[data-theme="madeira"] .mode-toggle{
+      background:radial-gradient(circle at 0% 0%, rgba(255,180,140,0.55), transparent 60%), rgba(14,8,4,0.98);
+      border-color:rgba(255,200,160,0.9);
+    }
+    body[data-theme="madeira"] .mode-dot{
+      background:radial-gradient(circle at 30% 20%, #ffffff, #ffce8a);
+      box-shadow:0 0 14px rgba(255,200,160,0.98);
+    }
+
+    /* HERO CARD */
+    .hero-stream{ margin-top:4px; padding:0 16px; }
+    .hero-card{
+      position:relative;
+      height:var(--hero-height);
+      border-radius:22px;
+      overflow:hidden;
+      box-shadow:0 22px 44px rgba(0,0,0,0.95);
+      border:1px solid rgba(153,175,255,0.35);
+      background: radial-gradient(circle at 10% 0%, rgba(255,149,214,0.32), transparent 55%), linear-gradient(135deg, rgba(8,10,35,0.98), rgba(4,5,18,0.98));
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-end;
+      cursor:pointer;
+    }
+    .hero-bg{
+      position:absolute; inset:0;
+      background: radial-gradient(circle at 80% 0%, rgba(0,246,255,0.35), transparent 55%), radial-gradient(circle at 0 100%, rgba(255,122,191,0.45), transparent 55%), var(--hero-img-url);
+      background-size:cover; background-position:center; background-repeat:no-repeat;
+      mix-blend-mode:lighten; opacity:0.6; pointer-events:none;
+      transition:opacity 0.25s ease, transform 0.25s ease;
+    }
+    .hero-gradient{
+      position:absolute; inset:0;
+      background:linear-gradient(180deg, rgba(3,5,18,0.0) 0%, rgba(3,5,18,0.4) 40%, rgba(3,5,18,0.95) 100%);
+    }
+    .hero-content{ position:relative; padding:14px; z-index:1; display:flex; flex-direction:column; gap:6px; }
+    .hero-tag-row{ display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--text-muted); }
+    .hero-tag{ padding:3px 9px; border-radius:999px; border:1px solid rgba(255,149,214,0.75); background:rgba(26,12,32,0.96); color:#ffd8f2; font-size:10px; text-transform:uppercase; letter-spacing:0.14em; }
+    .hero-title{ font-size:20px; font-weight:650; letter-spacing:0.02em; }
+    .hero-subtitle{ font-size:13px; color:var(--accent-warm); }
+    .hero-actions{ display:flex; align-items:center; gap:8px; margin-top:4px; }
+    .btn-primary{
+      border-radius:999px; border:none; padding:7px 14px; font-size:13px; font-weight:500;
+      background:radial-gradient(circle at 20% 0%, #ffffff, var(--accent-main)); color:#1a0c14;
+      display:inline-flex; align-items:center; gap:6px; cursor:pointer; box-shadow:0 0 16px rgba(255,91,155,0.9);
+    }
+    .tts-btn{
+      border-radius:999px; border:1px solid rgba(153,175,255,0.8);
+      background:radial-gradient(circle at 20% 0%, rgba(255,255,255,0.8), var(--accent-cold)); color:#10141f; font-size:14px;
+      width:28px;height:28px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 0 12px rgba(0,246,255,0.85); flex-shrink:0;
+    }
+
+    /* GREETING */
+    .greeting-strip{ padding:4px 16px 0; display:flex; flex-direction:column; gap:8px; }
+    .greeting-line{ display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--text-soft); }
+    .greeting-name{font-weight:600;}
+    .time-mini{ font-size:11px; color:var(--text-muted); }
+
+    /* RAILS */
+    .section-title{ font-size:14px; font-weight:500; padding:12px 16px 4px; display:flex; justify-content:space-between; align-items:flex-start; color:var(--text-soft); gap:6px; }
+    .section-title span:nth-child(2){ font-size:11px; color:var(--text-muted); }
+    .rail{ padding:0 16px 4px; }
+    .rail-track{ display:flex; gap:10px; overflow-x:auto; padding-bottom:6px; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; }
+    .rail-track::-webkit-scrollbar{height:4px;}
+    .rail-track::-webkit-scrollbar-thumb{ background:rgba(120,135,210,0.7); border-radius:999px; }
+
+    .stream-card{
+      min-width:var(--rail-card-width); max-width:var(--rail-card-width); height:var(--rail-card-height);
+      border-radius:14px; border:1px solid rgba(92,115,205,0.9);
+      background: radial-gradient(circle at 10% 0%, rgba(255,149,214,0.25), rgba(10,13,35,0.96));
+      box-shadow:0 12px 26px rgba(0,0,0,0.92); scroll-snap-align:start; position:relative; overflow:hidden; cursor:pointer;
+    }
+    .stream-thumb{
+      position:absolute; inset:0; background-size:cover; background-position:center; background-repeat:no-repeat;
+      mix-blend-mode:lighten; opacity:0.62; transform:scale(1.05); transition:opacity 0.2s ease, transform 0.2s ease;
+    }
+    .stream-inner{ position:relative; padding:8px; height:100%; display:flex; flex-direction:column; justify-content:flex-end; }
+    .stream-card:hover .stream-thumb{ opacity:0.8; transform:scale(1.08); }
+    .stream-tag{ position:absolute; top:6px;left:8px; font-size:10px; padding:2px 6px; border-radius:999px; border:1px solid rgba(153,175,255,0.85); background:rgba(5,8,26,0.9); color:#e0e3ff; }
+    .stream-tts{ position:absolute; top:6px;right:6px; }
+    .stream-title{ font-size:12px; font-weight:500; text-shadow:0 1px 4px rgba(0,0,0,0.8); }
+    .stream-sub{ font-size:10px; color:var(--text-muted); text-shadow:0 1px 3px rgba(0,0,0,0.8); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+    /* GLOBAL PLAYER FLUTUANTE (Estilo fundido do PLAYER_[GLOBAL]) */
+    #global-player {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: calc(100% - 40px);
+      max-width: 400px;
+      height: 240px;
+      border-radius: 16px;
+      background: rgba(8, 10, 25, 0.85);
+      border: 1px solid rgba(153, 175, 255, 0.3);
+      box-shadow: 0 14px 40px rgba(0,0,0,0.9);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: translateY(150%);
+      opacity: 0;
+      pointer-events: none;
+    }
+    #global-player.active {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #global-player.minimized {
+      height: 48px;
+    }
+    .player-window-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: rgba(0,0,0,0.5);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .player-title-drag {
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      user-select: none;
+    }
+    .player-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .btn-win {
+      background: transparent;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      opacity: 0.6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.2s;
+    }
+    .btn-win:hover { opacity: 1; }
+    .btn-win.hover-red:hover { color: #ff4a4a; }
+    #player-frame-wrap {
+      flex: 1;
+      width: 100%;
+      background: #000;
+      position: relative;
+    }
+    #player-frame-wrap iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    body[data-theme="madeira"]{
+      --accent-main:#ffb36f; --accent-warm:#ffe1b3; --accent-cold:#9ff0c8;
+      --card-bg:rgba(22,12,6,0.96); --text-soft:#f6e2c1; --text-muted:#b9966c;
+    }
+  </style>
+</head>
+<body data-theme="nebula" data-stream-bg="default">
+
+  <div class="shell">
+    <header>
+      <div class="logo-title">
+        <span>Dual.Infodose</span>
+        <span>Portal Supremo · Streaming</span>
+      </div>
+      <button class="mode-toggle" id="themeToggleBtn" type="button">
+        <div class="mode-dot"></div>
+        <span>Modo Nebula / Madeira</span>
+      </button>
+    </header>
+
+    <!-- Saudação -->
+    <section class="greeting-strip">
+      <div class="greeting-line">
+        <span class="greeting-name">Olá, KODUX</span>
+        <span class="time-mini" id="timeMini">Streaming do dia · ready</span>
+      </div>
+    </section>
+
+    <!-- HERO · STREAMING DO DIA -->
+    <section class="hero-stream">
+      <article class="hero-card" id="heroCard">
+        <div class="hero-bg" id="heroBg"></div>
+        <div class="hero-gradient"></div>
+        <div class="hero-content">
+          <div class="hero-tag-row">
+            <span class="hero-tag" id="heroTag">Streaming do dia</span>
+          </div>
+          <h1 class="hero-title" id="heroTitle">Portal Supremo</h1>
+          <p class="hero-subtitle" id="heroSubtitle">Canal Interno Ativo</p>
+          <div class="hero-actions">
+            <button class="btn-primary" id="heroPlayBtn" type="button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              Assistir agora
+            </button>
+            <button class="tts-btn" type="button" title="Ouvir descrição" id="heroTtsBtn">◎</button>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- RAILS · PLAYLISTS -->
+    <section class="section-title">
+      <span>Trilhas & Ativações</span>
+      <span>Faixas para abrir o campo.</span>
+    </section>
+    <section class="rail">
+      <div class="rail-track" id="streamRailTrilhas"></div>
+    </section>
+
+    <section class="section-title">
+      <span>Sinopses & Conhecimento</span>
+      <span>Fundamentos da Infodose.</span>
+    </section>
+    <section class="rail">
+      <div class="rail-track" id="streamRailSinopses"></div>
+    </section>
+
+    <section class="section-title">
+      <span>Ambiente & Espaço da Mente</span>
+      <span>O lugar onde tudo acontece.</span>
+    </section>
+    <section class="rail">
+      <div class="rail-track" id="streamRailAmbiente"></div>
+    </section>
+
+    <section class="section-title">
+      <span>Meditações Guiadas</span>
+      <span>Jornadas guiadas profundas.</span>
+    </section>
+    <section class="rail">
+      <div class="rail-track" id="streamRailMeditacoes"></div>
+    </section>
+
+  </div>
+
+  <!-- GLOBAL PLAYER FLUTUANTE -->
+  <div id="global-player" class="overflow-hidden">
+    <div class="player-window-controls">
+      <div class="player-title-drag">Stream Interno</div>
+      <div class="player-actions">
+        <button onclick="Player.minimize()" class="btn-win" title="Minimizar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+        <button onclick="Player.stop()" class="btn-win hover-red" title="Fechar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+    </div>
+    <div id="player-frame-wrap"></div>
+  </div>
+
+  <script>
+    // ============================
+    // THEME & UTILS
+    // ============================
+    const themeToggleBtn = document.getElementById("themeToggleBtn");
+    function initTheme(){
+      const saved = localStorage.getItem("portalTheme");
+      if (saved === "nebula" || saved === "madeira"){
+        document.body.setAttribute("data-theme", saved);
+      }
+      themeToggleBtn?.addEventListener("click", () => {
+        const current = document.body.getAttribute("data-theme") === "madeira" ? "nebula" : "madeira";
+        document.body.setAttribute("data-theme", current);
+        localStorage.setItem("portalTheme", current);
+      });
+    }
+
+    const synth = ("speechSynthesis" in window) ? window.speechSynthesis : null;
+    function speak(text){
+      if (!synth || !text) return;
+      try{
+        synth.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = "pt-BR";
+        synth.speak(u);
+      }catch(e){ console.warn("TTS falhou", e); }
+    }
+
+    // ============================
+    // PLAYER UNIVERSAL
+    // ============================
+    const Player = {
+      _detect: function(src) {
+        if (!src) return 'none';
+        if (/^[a-zA-Z0-9_-]{11}$/.test(src)) return {type:'yt', id:src}; // ID direto
+        if (/^https?:\/\//.test(src)) {
+          if (/\.(mp3|ogg|wav|aac|m4a|flac)(\?|$)/i.test(src)) return 'audio';
+          if (/\.(mp4|webm|mov|mkv|avi)(\?|$)/i.test(src)) return 'video';
+          if (/youtube\.com|youtu\.be/.test(src)) {
+            const m = src.match(/(?:v=|youtu\.be\/|embed\/)([^&?/]+)/);
+            return m ? {type:'yt', id:m[1]} : 'none';
+          }
+          return 'video';
+        }
+        return 'yt';
+      },
+      play: function(src, title) {
+        const gp = document.getElementById('global-player');
+        const fw = document.getElementById('player-frame-wrap');
+        const type = Player._detect(src);
+
+        let html = '';
+
+        if (type === 'yt' || (type && type.type === 'yt')) {
+          const id = (type.id) ? type.id : src;
+          // Renderiza o iframe do YouTube direto no player flutuante
+          html = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&modestbranding=1&controls=1&rel=0" allow="autoplay; encrypted-media; fullscreen"></iframe>`;
+        } else if (type === 'video') {
+          html = `<video src="${src}" autoplay controls playsinline style="width:100%;height:100%;object-fit:contain;background:#000;"></video>`;
+        } else if (type === 'audio') {
+          html = `
+            <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);padding:20px;gap:16px;">
+              <div style="font-size:10px;letter-spacing:3px;color:#00f6ff;text-transform:uppercase;opacity:0.7">◎ Áudio</div>
+              <div style="font-size:13px;color:rgba(255,255,255,0.8);text-align:center;max-width:90%;line-height:1.5;">${title||'Mídia'}</div>
+              <audio src="${src}" autoplay controls style="width:100%;max-width:340px;outline:none;"></audio>
+            </div>`;
+        }
+
+        if(html !== '') {
+          fw.innerHTML = html;
+          gp.classList.remove('minimized');
+          gp.classList.add('active');
+        }
+      },
+      minimize: () => { document.getElementById('global-player').classList.toggle('minimized'); },
+      stop: () => {
+        const gp = document.getElementById('global-player');
+        gp.classList.remove('active');
+        setTimeout(() => { document.getElementById('player-frame-wrap').innerHTML = ''; }, 300);
+      }
+    };
+
+    // ============================
+    // DATA & PLAYLISTS
+    // ============================
+    function categoryToBg(cat){
+      switch(cat){
+        case "Trilhas e Ativações": return "deep";
+        case "Sinopses": return "warm";
+        case "Ambiente e Espaço da Mente": return "cool";
+        case "Neurociência e Bem-Estar": return "deep";
+        case "Meditações Guiadas": return "cool";
+        default: return "default";
+      }
+    }
+
+    function ytVideo(id, title, subtitle, category){
+      return {
+        id, title, subtitle,
+        tag: category, category,
+        thumb: "https://img.youtube.com/vi/" + id + "/hqdefault.jpg",
+        heroImg: "https://img.youtube.com/vi/" + id + "/maxresdefault.jpg",
+        bgMode: categoryToBg(category)
+      };
+    }
+
+    const streamingItems = [
+      // Trilhas e Ativações
+      ytVideo("Bt_rLbMjJDk", "Trilhas Potencializadoras", "Ative aromas, memórias e intenção.", "Trilhas e Ativações"),
+      ytVideo("_0wVkryxanE", "A magia dos 12 arquétipos", "Introdução viva à magia arquetípica.", "Trilhas e Ativações"),
+      ytVideo("Id2NI9tv1r4", "Infodose – Pra quem merece", "Se chegou até aqui, é porque você merece.", "Trilhas e Ativações"),
+      
+      // Sinopses
+      ytVideo("qldgs0aLdB0", "A Fórmula da Dopamina Sexy", "Base da dopamina aplicada.", "Sinopses"),
+      ytVideo("FbutKMpd8MY", "O Espaço da Mente", "Onde tudo acontece antes de acontecer.", "Sinopses"),
+      ytVideo("1L9_rFmIGJ8", "A Recompensa", "Por que buscamos tanto a recompensa?", "Sinopses"),
+
+      // Ambiente e Espaço da Mente
+      ytVideo("koKhjQKGJSc", "O poder das cortinas", "Mudando a energia do ambiente.", "Ambiente e Espaço da Mente"),
+      ytVideo("KrtOVrk8aDk", "Poder sob seus pés", "Pisos criam fluxos de energia.", "Ambiente e Espaço da Mente"),
+
+      // Meditações Guiadas
+      ytVideo("hfQ1L6fCfAo", "À deriva no espaço da mente", "Viagem pelo espaço interno.", "Meditações Guiadas"),
+      ytVideo("Tq99vQNQ6dQ", "Na mente do espaço da mente", "Camada meta do espaço.", "Meditações Guiadas"),
+      ytVideo("DTDfkHwuMic", "Universo da Mente", "Exploração em múltiplos espaços.", "Meditações Guiadas")
+    ];
+
+    // ============================
+    // RENDERIZAÇÃO DA UI
+    // ============================
+    function createStreamCard(item){
+      const card = document.createElement("article");
+      card.className = "stream-card";
+      card.innerHTML = `
+        <div class="stream-thumb" style="background-image:url('${item.thumb}')"></div>
+        <div class="stream-inner">
+          <div class="stream-title">${item.title}</div>
+          <div class="stream-sub">${item.subtitle}</div>
+        </div>
+        <div class="stream-tag">${item.tag}</div>
+      `;
+
+      const ttsBtn = document.createElement("button");
+      ttsBtn.className = "tts-btn stream-tts";
+      ttsBtn.textContent = "◎";
+      ttsBtn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        speak(`${item.title}. ${item.subtitle}`);
+      });
+      card.appendChild(ttsBtn);
+
+      card.addEventListener("click", () => {
+        document.body.setAttribute("data-stream-bg", item.bgMode || "default");
+        Player.play(item.id, item.title);
+      });
+
+      return card;
+    }
+
+    function initStreaming(){
+      const rails = {
+        "Trilhas e Ativações": document.getElementById("streamRailTrilhas"),
+        "Sinopses": document.getElementById("streamRailSinopses"),
+        "Ambiente e Espaço da Mente": document.getElementById("streamRailAmbiente"),
+        "Meditações Guiadas": document.getElementById("streamRailMeditacoes")
+      };
+
+      streamingItems.forEach(item => {
+        if (rails[item.category]) {
+          rails[item.category].appendChild(createStreamCard(item));
+        }
+      });
+
+      // Configura Hero Card (Pega o primeiro ou um randômico do dia)
+      const heroItem = streamingItems[0];
+      if (heroItem){
+        document.getElementById("heroTitle").textContent = heroItem.title;
+        document.getElementById("heroSubtitle").textContent = heroItem.subtitle;
+        document.getElementById("heroTag").textContent = heroItem.category;
+        document.getElementById("heroBg").style.backgroundImage = `url('${heroItem.heroImg}')`;
+        document.body.setAttribute("data-stream-bg", heroItem.bgMode);
+
+        const playHero = (ev) => {
+          ev.stopPropagation();
+          Player.play(heroItem.id, heroItem.title);
+        };
+
+        document.getElementById("heroCard").addEventListener("click", playHero);
+        document.getElementById("heroPlayBtn").addEventListener("click", playHero);
+        document.getElementById("heroTtsBtn").addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          speak(`${heroItem.title}. ${heroItem.subtitle}`);
+        });
+      }
+
+      // Greetings setup
+      const h = new Date().getHours();
+      let period = (h >= 5 && h < 12) ? "Manhã" : (h >= 12 && h < 18) ? "Tarde" : "Noite";
+      document.getElementById("timeMini").textContent = `${period} de Streaming · pronto`;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initTheme();
+      initStreaming();
+    });
+  </script>
+</body>
+</html>
+

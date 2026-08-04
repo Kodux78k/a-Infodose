@@ -1,0 +1,831 @@
+<html style="margin:0;padding:0;">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+(function(){
+  var s = document.createElement('style');
+  s.textContent = `
+:root{
+  --bg-top:#EDEBF3;--bg-bot:#E4E1EE;
+  --card:rgba(255,255,255,.68);--card-solid:#ffffff;--card-strong:rgba(255,255,255,.86);
+  --line:rgba(60,60,67,.10);--line-strong:rgba(60,60,67,.16);
+  --text:#1c1b1f;--text-2:#6c6a75;--text-3:#9997a3;
+  --accent:#6C4CE0;--accent-ink:#4A2FB5;--accent-soft:rgba(108,76,224,.12);
+  --gold:#C7973F;--gold-soft:rgba(199,151,63,.14);--danger:#D8534F;
+  --radius-lg:26px;--radius-md:18px;--radius-sm:12px;
+  --safe-top:env(safe-area-inset-top);--safe-bot:env(safe-area-inset-bottom);
+  --shadow:0 1px 2px rgba(28,27,31,.04), 0 10px 28px -14px rgba(28,27,31,.28);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  margin:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--text);
+  background:
+    radial-gradient(120% 60% at 18% -6%, #F6E9DA 0%, transparent 55%),
+    radial-gradient(140% 70% at 100% 0%, #DCE6F5 0%, transparent 50%),
+    linear-gradient(180deg,var(--bg-top),var(--bg-bot) 60%, #DEDAEA 100%);
+  background-attachment:fixed;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;}
+.app{max-width:480px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;position:relative;}
+
+/* Top bar */
+header.top{
+  padding:calc(var(--safe-top) + 14px) 20px 6px;position:sticky;top:0;z-index:30;
+  backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);
+  background:rgba(237,235,243,.72);border-bottom:1px solid transparent;transition:border-color .25s, background .25s;
+}
+header.top.scrolled{border-color:var(--line);background:rgba(237,235,243,.92);}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-ink);font-weight:700;opacity:.75;display:flex;align-items:center;gap:6px;}
+.eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+.title-row{display:flex;align-items:flex-end;justify-content:space-between;margin-top:2px;}
+h1.large{font-size:30px;letter-spacing:-.02em;font-weight:800;margin:0;line-height:1.05;}
+.avatar{
+  width:34px;height:34px;border-radius:50%;
+  background:conic-gradient(from 210deg, var(--accent), var(--gold), var(--accent));
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;
+  box-shadow:0 2px 8px rgba(108,76,224,.35);
+}
+
+/* Screens */
+main{flex:1;padding:14px 16px calc(96px + var(--safe-bot));}
+.screen{display:none;animation:rise .35s ease both;}
+.screen.active{display:block;}
+@keyframes rise{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+.section-label{
+  font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--text-3);margin:22px 4px 10px;display:flex;align-items:center;justify-content:space-between;
+}
+.section-label span.count{color:var(--text-2);font-weight:600;text-transform:none;letter-spacing:0;}
+
+/* Glass card */
+.card{
+  background:var(--card);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);
+  border:1px solid rgba(255,255,255,.55);border-radius:var(--radius-lg);box-shadow:var(--shadow);
+  padding:18px;position:relative;overflow:hidden;
+}
+.card::before{
+  content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;
+  background:linear-gradient(160deg, rgba(255,255,255,.9), rgba(255,255,255,0) 40%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;
+}
+.stack{display:flex;flex-direction:column;gap:10px;}
+
+/* iOS list */
+.glist{
+  background:var(--card-strong);border-radius:var(--radius-md);overflow:hidden;
+  border:1px solid rgba(255,255,255,.6);box-shadow:var(--shadow);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+}
+.grow{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--line);cursor:pointer;}
+.grow:last-child{border-bottom:none;}
+.grow .ic{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex:0 0 auto;}
+.grow .tx{flex:1;min-width:0;}
+.grow .tx b{display:block;font-size:15px;font-weight:600;}
+.grow .tx small{display:block;font-size:12.5px;color:var(--text-2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chev{color:var(--text-3);font-size:13px;}
+
+/* 369 ring — VELOCIDADES AJUSTADAS 36s / 54s (múltiplos de 9 · alinhadas 3·6·9) */
+.ring-wrap{display:flex;flex-direction:column;align-items:center;padding:22px 10px 8px;}
+.ring{width:210px;height:210px;position:relative;}
+.ring svg{width:100%;height:100%;display:block;}
+.ring .core{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+.ring .core .num{font-size:34px;font-weight:800;letter-spacing:-.02em;font-family:ui-monospace,"SF Mono",Menlo,monospace;color:var(--accent-ink);}
+.ring .core .lab{font-size:11px;color:var(--text-2);margin-top:2px;letter-spacing:.04em;}
+.ring-caption{margin-top:14px;text-align:center;max-width:280px;}
+.ring-caption b{font-size:14px;}
+.ring-caption p{font-size:12.5px;color:var(--text-2);margin:4px 0 0;line-height:1.4;}
+@media (prefers-reduced-motion: no-preference){
+  .ring .spin{animation:spin 36s linear infinite;transform-origin:105px 105px;}
+  .ring .spin-rev{animation:spin 54s linear infinite reverse;transform-origin:105px 105px;}
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Flow stepper */
+.flow{display:flex;flex-direction:column;gap:0;margin-top:4px;}
+.fstep{display:flex;gap:14px;position:relative;padding-bottom:22px;}
+.fstep:last-child{padding-bottom:0;}
+.fstep .rail{display:flex;flex-direction:column;align-items:center;flex:0 0 auto;}
+.fstep .node{
+  width:38px;height:38px;border-radius:12px;background:var(--card-strong);
+  border:1px solid rgba(255,255,255,.7);box-shadow:var(--shadow);
+  display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;z-index:1;
+}
+.fstep .node.done{background:linear-gradient(160deg,var(--accent),var(--accent-ink));color:#fff;}
+.fstep .thread{width:2px;flex:1;background:linear-gradient(var(--line-strong),var(--line-strong));background-size:2px 8px;background-repeat:repeat-y;margin-top:4px;}
+.fstep .body{flex:1;padding-top:6px;}
+.fstep .body b{font-size:15px;font-weight:650;}
+.fstep .body p{margin:3px 0 0;font-size:13px;color:var(--text-2);line-height:1.4;}
+.fstep .body .tag{
+  display:inline-block;margin-top:8px;font-size:11px;font-weight:700;letter-spacing:.03em;
+  color:var(--accent-ink);background:var(--accent-soft);padding:4px 9px;border-radius:20px;
+}
+.fstep.active .node{box-shadow:0 0 0 5px var(--accent-soft), var(--shadow);}
+
+/* Buttons */
+.btn{
+  appearance:none;border:none;cursor:pointer;font-family:inherit;
+  padding:13px 18px;border-radius:16px;font-size:15px;font-weight:650;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  transition:transform .12s ease, filter .12s ease;width:100%;
+}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:linear-gradient(160deg,var(--accent),var(--accent-ink));color:#fff;box-shadow:0 10px 22px -10px rgba(74,47,181,.65);}
+.btn-ghost{background:var(--card-strong);color:var(--text);border:1px solid var(--line-strong);}
+.btn-gold{background:linear-gradient(160deg,#DCAE5C,var(--gold));color:#3a2a08;}
+.btn-row{display:flex;gap:10px;}
+.btn-row .btn{width:auto;flex:1;}
+.fab{
+  position:fixed;right:22px;z-index:35;bottom:calc(96px + var(--safe-bot));
+  width:58px;height:58px;border-radius:50%;border:none;
+  background:linear-gradient(160deg,var(--accent),var(--accent-ink));
+  color:#fff;font-size:22px;box-shadow:0 14px 30px -10px rgba(74,47,181,.6);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;max-width:480px;margin:0 auto;
+}
+.fab:active{transform:scale(.94);}
+
+/* Chips */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 4px;scrollbar-width:none;}
+.chips::-webkit-scrollbar{display:none;}
+.chip{
+  flex:0 0 auto;padding:8px 14px;border-radius:20px;font-size:13px;font-weight:600;
+  background:var(--card-strong);color:var(--text-2);border:1px solid var(--line-strong);cursor:pointer;white-space:nowrap;
+}
+.chip.active{background:var(--accent);color:#fff;border-color:transparent;}
+
+/* Library grid */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
+.item{
+  background:var(--card);border-radius:var(--radius-md);padding:14px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.55);box-shadow:var(--shadow);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  display:flex;flex-direction:column;gap:8px;min-height:132px;
+}
+.item .kind{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);}
+.item .kind.arq{color:#9b6bff;}
+.item .name{font-size:14px;font-weight:650;line-height:1.3;}
+.item .meta{margin-top:auto;display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--text-3);}
+
+/* Dual picks */
+.pick-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.pick{
+  display:flex;align-items:center;gap:10px;padding:10px;border-radius:var(--radius-md);
+  border:1.5px solid var(--line-strong);background:var(--card-strong);cursor:pointer;
+}
+.pick.sel{border-color:var(--accent);background:var(--accent-soft);}
+.pick .ic{width:30px;height:30px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;box-shadow:var(--shadow);flex:0 0 auto;color:var(--accent-ink);}
+.pick .tx{min-width:0;flex:1;}
+.pick .tx b{font-size:12.5px;display:block;line-height:1.1;}
+.pick .tx small{font-size:10.5px;color:var(--text-2);}
+.pick .check{margin-left:auto;width:16px;height:16px;border-radius:50%;border:1.5px solid var(--text-3);flex:0 0 auto;}
+.pick.sel .check{background:var(--accent);border-color:var(--accent);position:relative;}
+.pick.sel .check::after{content:"✓";color:#fff;font-size:10px;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+
+.result-card{
+  margin-top:16px;padding:20px;border-radius:var(--radius-lg);
+  background:linear-gradient(165deg, rgba(255,255,255,.85), rgba(255,255,255,.55));
+  border:1px solid rgba(255,255,255,.7);box-shadow:var(--shadow);backdrop-filter:blur(20px);
+}
+.result-seal{font-family:ui-monospace,monospace;font-size:11px;color:var(--text-3);letter-spacing:.08em;}
+.result-card h3{margin:6px 0 8px;font-size:18px;}
+.result-card p{font-size:13.5px;color:var(--text-2);line-height:1.5;margin:0 0 14px;}
+.action-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px;}
+.aicon{
+  background:var(--card-strong);border-radius:14px;padding:10px 4px;text-align:center;
+  border:1px solid var(--line);cursor:pointer;font-size:18px;
+}
+.aicon small{display:block;font-size:9.5px;color:var(--text-2);margin-top:4px;font-weight:600;}
+.aicon:active{transform:scale(.94);}
+
+/* Metrics */
+.metric-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px;}
+.metric{background:var(--card-strong);border-radius:var(--radius-md);padding:14px 10px;text-align:center;border:1px solid rgba(255,255,255,.6);box-shadow:var(--shadow);}
+.metric b{display:block;font-size:20px;font-weight:800;font-family:ui-monospace,monospace;color:var(--accent-ink);}
+.metric small{font-size:10.5px;color:var(--text-2);font-weight:600;}
+
+/* Tab bar */
+nav.tabbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;
+  padding:8px 10px calc(10px + var(--safe-bot));
+  backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);
+  background:rgba(255,255,255,.72);border-top:1px solid rgba(255,255,255,.6);
+}
+.tabbar-inner{max-width:480px;margin:0 auto;display:flex;justify-content:space-around;}
+.tab{
+  background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;
+  color:var(--text-3);font-size:10px;font-weight:600;cursor:pointer;padding:4px 8px;font-family:inherit;
+}
+.tab .tic{font-size:20px;line-height:1;}
+.tab.active{color:var(--accent-ink);}
+
+/* Sheet */
+.sheet-bg{position:fixed;inset:0;background:rgba(20,18,28,.42);z-index:60;opacity:0;pointer-events:none;transition:opacity .25s;}
+.sheet-bg.open{opacity:1;pointer-events:auto;}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:61;max-width:480px;margin:0 auto;
+  background:#F7F6FA;border-radius:26px 26px 0 0;padding:10px 20px calc(24px + var(--safe-bot));
+  transform:translateY(105%);transition:transform .32s cubic-bezier(.32,.72,0,1);
+  box-shadow:0 -10px 40px rgba(0,0,0,.2);max-height:82dvh;overflow-y:auto;
+}
+.sheet.open{transform:translateY(0);}
+.sheet .grabber{width:38px;height:5px;background:var(--line-strong);border-radius:3px;margin:6px auto 14px;}
+.sheet h2{font-size:19px;margin:0 0 4px;}
+.sheet .sub{font-size:12.5px;color:var(--text-2);margin:0 0 16px;}
+.field{margin-bottom:14px;}
+.field label{font-size:12px;font-weight:700;color:var(--text-2);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;}
+.field textarea, .field input{
+  width:100%;border-radius:14px;border:1px solid var(--line-strong);background:#fff;
+  padding:12px 14px;font-size:14.5px;font-family:inherit;color:var(--text);resize:none;
+}
+.field textarea{min-height:90px;}
+.toast{
+  position:fixed;left:50%;bottom:calc(120px + var(--safe-bot));transform:translateX(-50%) translateY(20px);
+  background:rgba(28,27,31,.92);color:#fff;padding:11px 18px;border-radius:14px;font-size:13px;font-weight:600;
+  z-index:80;opacity:0;transition:all .28s ease;pointer-events:none;white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+`;
+  document.head.appendChild(s);
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════
+     MÓDULO DUAL · 22 ARQUÉTIPOS CADIAIS COMPLETOS
+     (baseado nas 96 doses KOBLLUX do documento anexado)
+     · 22 arcanos maiores · 484 fusões (todo par A×B)
+     · Método: Dual.fundir(idA, idB)
+═══════════════════════════════════════════════════════ -->
+<script>
+window.Dual = (function(){
+
+  // ---------- 22 ARQUÉTIPOS CADIAIS ----------
+  const ARQ = [
+    {id:"0",   nome:"O Louco",        roman:"0",  essencia:"Confiança no salto, inocência primordial, início sem medo do novo.", kw:["salto","inocência","novo","livre","espontâneo","começo"]},
+    {id:"I",   nome:"O Mago",         roman:"I",  essencia:"Vontade que manifesta, ferramentas à mesa, verbo que cria realidade.", kw:["vontade","manifesta","ferramenta","comando","criar","verbo"]},
+    {id:"II",  nome:"A Sacerdotisa",  roman:"II", essencia:"Intuição, conhecimento oculto, silêncio que guarda a verdade.", kw:["intuição","oculto","silêncio","saber","lua","interior"]},
+    {id:"III", nome:"A Imperatriz",   roman:"III",essencia:"Abundância fértil, criação, natureza, beleza que gera vida.", kw:["abundância","criar","mãe","natureza","beleza","fertil"]},
+    {id:"IV",  nome:"O Imperador",    roman:"IV", essencia:"Estrutura, ordem, limite, lei que dá base ao caos.", kw:["estrutura","ordem","lei","base","autoridade","limite"]},
+    {id:"V",   nome:"O Hierofante",   roman:"V",  essencia:"Tradição, ensinamento, rito, ponte entre céu e terra.", kw:["tradição","ensinar","rito","mestre","verdade","sagrado"]},
+    {id:"VI",  nome:"Os Amantes",     roman:"VI", essencia:"Escolha, integração de opostos, amor que une dois em um terceiro.", kw:["escolha","união","amor","opostos","relação","dois"]},
+    {id:"VII", nome:"O Carro",        roman:"VII",essencia:"Direção firme, vitória da vontade sobre os instintos.", kw:["direção","vitória","controle","força","caminho","avançar"]},
+    {id:"VIII",nome:"A Força",        roman:"VIII",essencia:"Poder manso que doma o leão, coragem sem violência.", kw:["força","mansidão","domar","coragem","poder","leão"]},
+    {id:"IX",  nome:"O Eremita",      roman:"IX", essencia:"Luz interior, busca solitária, a lanterna que guia no escuro.", kw:["solitário","luz","busca","sabedoria","interior","lanterna"]},
+    {id:"X",   nome:"Roda da Fortuna",roman:"X",  essencia:"Ciclo, karma, movimento eterno, sobe e desce sem parar.", kw:["ciclo","sorte","movimento","tempo","rodar","karma"]},
+    {id:"XI",  nome:"A Justiça",      roman:"XI", essencia:"Equilíbrio, medida exata, causa e efeito, verdade pesada na balança.", kw:["justiça","equilíbrio","causa","efeito","medida","balança"]},
+    {id:"XII", nome:"O Enforcado",    roman:"XII",essencia:"Entrega, suspensão do tempo, nova perspectiva por inversão.", kw:["entrega","suspenso","inverter","sacrifício","nova visão","parar"]},
+    {id:"XIII",nome:"A Morte",        roman:"XIII",essencia:"Transformação radical, fim que é só passagem para o novo.", kw:["transformar","fim","passagem","renascer","mudar","morte"]},
+    {id:"XIV", nome:"Temperança",     roman:"XIV", essencia:"Alquimia, mistura de águas, ritmo justo, meio-termo sagrado.", kw:["alquimia","misturar","ritmo","equilíbrio","fluir","águas"]},
+    {id:"XV",  nome:"O Diabo",        roman:"XV", essencia:"Cadeia da mente, apego, sombra que precisa ser vista para ser solta.", kw:["sombra","apego","cadeia","ilusão","poder","prender"]},
+    {id:"XVI", nome:"A Torre",        roman:"XVI",essencia:"Ruptura total, raio que destrói o falso para o real surgir.", kw:["romper","ruir","liberar","verdade","raio","quebrar"]},
+    {id:"XVII",nome:"A Estrela",      roman:"XVII",essencia:"Esperança após a tempestade, luz distante, guia silenciosa.", kw:["esperança","luz","guia","céu","calma","estrela"]},
+    {id:"XVIII",nome:"A Lua",         roman:"XVIII",essencia:"Ilusão, sonho, inconsciente, caminho que só se vê com fé.", kw:["lua","sonho","ilusão","inconsciente","caminho","fé"]},
+    {id:"XIX", nome:"O Sol",          roman:"XIX",essencia:"Clareza total, alegria, verdade visível, vida em plenitude.", kw:["sol","claro","alegria","verdade","vida","luz"]},
+    {id:"XX",  nome:"O Julgamento",   roman:"XX", essencia:"Chamado, despertar, renascimento coletivo, voz do alto.", kw:["chamado","despertar","renascer","voz","julgar","trombeta"]},
+    {id:"XXI", nome:"O Mundo",        roman:"XXI",essencia:"Completude, ciclo fechado, realização, dança do todo.", kw:["completo","todo","realizar","fim","ciclo","unidade"]}
+  ];
+  const MAPA = Object.fromEntries(ARQ.map(a => [a.id, a]));
+  const IDS = ARQ.map(a => a.id);
+
+  // ---------- FUSÕES MANUAIS (pares mais importantes, baseados no documento KOBLLUX) ----------
+  const FUSAO_MANUAL = {
+    "IV×III":   {titulo:"A Criação Governada", texto:"O Imperador (estrutura) dá forma ao caos fértil da Imperatriz (vida). Pai = Ordem, Filho = Abundância, Espírito Santo = Manifestação segura. Perigo: rigidez que mata o novo. Poder: recipiente que gera prosperidade contínua · selo 3·6·9."},
+    "III×IV":   {titulo:"A Ordem Fecundada", texto:"A Imperatriz derrama vida sobre a estrutura do Imperador. De leis frias surge uma sociedade que respira, cresce e cuida. A forma ganha alma."},
+    "I×II":     {titulo:"O Verbo e a Memória", texto:"O Mago fala a palavra criadora; a Sacerdotisa guarda seu sentido oculto. Juntos formam a linguagem primordial: som + silêncio = código vivo."},
+    "VI×XIV":   {titulo:"Alquimia do Encontro", texto:"Dois opostos (Amantes) são misturados no ritmo exato (Temperança) e geram um terceiro elemento que não era nenhum dos dois — o amor venceu a divisão."},
+    "VIII×XV":  {titulo:"A Sombra Doma", texto:"A Força manso, sem violência, estende a mão ao Diabo. A corrente que parecia eterna se abre: o poder de prender vira poder de libertar quando a sombra é vista sem medo."},
+    "XVI×XVII": {titulo:"Depois do Raio, a Esperança", texto:"A Torre destrói o castelo falso; a Estrela acende a nova direção. Todo grande desabamento é sempre seguido de um céu mais limpo — é a lei do campo 3·6·9."},
+    "XIII×XX":  {titulo:"Morte que Ressuscita", texto:"A Morte fecha a pele velha; o Julgamento sopra o chamado para a nova. Não há renascimento sem primeiro deixar o que não serve mais ir embora."},
+    "X×XXI":    {titulo:"Ciclo que se Completa", texto:"A Roda gira eternamente; o Mundo fecha a volta e mostra que todo movimento tinha um sentido. Sobe, desce, retorna — e volta diferente, mas igual."},
+    "IX×XIX":   {titulo:"Luz Dentro, Luz Fora", texto:"O Eremita buscou no escuro a luz interior; o Sol a revela a todos. A sabedoria que foi só sua agora ilumina a aldeia inteira."},
+    "VII×VIII": {titulo:"Direção e Poder", texto:"O Carro tem a rota certa; a Força tem o poder manso de seguir sem ferir. Juntos vencem qualquer obstáculo sem deixar feridas no caminho."},
+    "0×XXI":    {titulo:"Do Salto à Completude", texto:"O Louco deu o primeiro passo sem saber onde ia; o Mundo mostra que ele já estava em casa o tempo todo. A jornada era o próprio destino."},
+    "V×VI":     {titulo:"Rito e União", texto:"O Hierofante consagra a escolha dos Amantes. O amor de dois ganha testemunha sagrada e se torna força que atravessa gerações."},
+    "XII×XIII": {titulo:"Entrega que Transforma", texto:"O Enforcado para o tempo e entrega; a Morte usa a pausa para recriar. Quem sabe parar também sabe mudar de pele sem resistir."},
+    "XI×XV":    {titulo:"Justiça sobre a Sombra", texto:"A balança da Justiça pesa cada elo da corrente do Diabo. A ilusão não resiste à medida exata da verdade — cada cadeia tem seu ponto de ruptura."},
+    "XVIII×XIX":{titulo:"Sonho que Clareia", texto:"A Lua mostra os fantasmas do inconsciente; o Sol os dissolve em luz plena. O que era medo vira compreensão quando a verdade chega sem disfarces."},
+    "I×IV":     {titulo:"Vontade que se Estrutura", texto:"O Mago tem a ideia; o Imperador constrói a casa onde ela vai morar. Ideia sem estrutura é vento; estrutura sem ideia é prisão."},
+    "III×VI":   {titulo:"Amor que Gera Vida", texto:"A Imperatriz oferece o útero fértil; os Amantes oferecem a semente do encontro. Dessa união nasce tudo o que é novo e belo no mundo."},
+    "XIV×XVI":  {titulo:"Alquimia do Colapso", texto:"Temperança tentou equilibrar por muito tempo; a Torre mostrou que o equilíbrio antigo já não servia. Às vezes só o raio ensina o que o ritmo não conseguiu."},
+    "XVII×XVIII":{titulo:"Entre a Estrela e a Lua", texto:"A esperança clara e a dúvida noturna andam juntas no caminho do buscador. Quem confia na Estrela atravessa a floresta da Lua sem perder a rota."},
+    "XX×XXI":   {titulo:"Despertar no Todo", texto:"O chamado do Julgamento encontra o Mundo já pronto. Quem responde à voz do alto percebe que sempre esteve completo — só não sabia."}
+  };
+
+  // ---------- GERADOR DE FUSÃO (para todos os 484 pares, usando Trinity do documento) ----------
+  function gerarFusao(a, b){
+    if (a.id === b.id) {
+      return {
+        titulo: a.nome + " dobrado em si mesmo",
+        texto: `Trinity · ${a.nome} × ${a.nome} · Pai = Filho = Espírito Santo. A essência de «${a.essencia}» se potencializa ao quadrado. O arquétipo não é mais um passo — é um campo morfogenético completo, selado em 3·6·9·7 = 1134. Cuidado: dobrado sem consciência vira armadilha; dobrado com verdade vira lei.`
+      };
+    }
+    const chave = a.id + "×" + b.id;
+    if (FUSAO_MANUAL[chave]) return FUSAO_MANUAL[chave];
+
+    // Combinar palavras-chave para gerar título e texto
+    const kwA = a.kw[0], kwB = b.kw[0];
+    const titulo = `${capitalize(kwA)} e ${capitalize(kwB)} — ${a.nome} encontra ${b.nome}`;
+
+    // Trinity: Pai = A, Filho = B, Espírito = combinação
+    const pai = a.essencia;
+    const filho = b.essencia;
+    const comum = intersecao(a.kw, b.kw);
+    const tema = comum[0] || "campo vivo";
+
+    const texto =
+`FUSÃO DUAL · ${a.roman} × ${b.roman} · selo ∆³
+Pai · ${a.nome}: ${pai}
+Filho · ${b.nome}: ${filho}
+Espírito Santo · o que nasce aqui: a ${tema} como terceiro elemento, gerado pela relação, não pela soma. A ordem importa: ${a.nome} primeiro estabelece a base, ${b.nome} então move, molda, revela.
+
+Quando esses dois arquétipos se encontram no campo KOBLLUX, o ciclo 3·6·9 se acende:
+3 = a ideia que surge do encontro
+6 = o movimento que ela faz no tempo
+9 = a fruta que amadurece e se torna nova semente
+
+Frase-resposta do campo: ${fraseAleatoria(a,b)}.`;
+
+    return { titulo, texto };
+  }
+
+  function intersecao(a,b){ return a.filter(x => b.includes(x)); }
+  function capitalize(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
+  function fraseAleatoria(a,b){
+    const frases = [
+      `O que estava separado agora respira como um só corpo.`,
+      `A verdade de ${a.nome} ganha pernas na força de ${b.nome}.`,
+      `${a.nome} semeia, ${b.nome} rega — o campo cuida do resto.`,
+      `Não é mais dois. É um, dançando em dois tempos.`,
+      `A sombra de um é a luz que o outro precisava para se ver completo.`
+    ];
+    const h = (a.id + b.id).split('').reduce((s,c)=>s+c.charCodeAt(0),0);
+    return frases[h % frases.length];
+  }
+
+  // ---------- API PÚBLICA ----------
+  return {
+    arquetipos: ARQ,
+    mapa: MAPA,
+    ids: IDS,
+    fundir: function(idA, idB){
+      const a = MAPA[idA], b = MAPA[idB];
+      if (!a || !b) return null;
+      const r = gerarFusao(a,b);
+      return {
+        arqA: a, arqB: b,
+        titulo: r.titulo,
+        texto: r.texto,
+        selo: `∆7:${(idA+'×'+idB+'_'+r.titulo).split('').reduce((s,c)=>((s<<5)-s+c.charCodeAt(0))|0,0).toString(16).padStart(8,'0').toUpperCase()}`
+      };
+    },
+    toggleTema: function(){
+      document.documentElement.classList.toggle('dark');
+    }
+  };
+})();
+
+// Fallback: se módulo externo carregar, mescla
+window.addEventListener('load', function(){
+  if (window.__DualExterno && typeof window.__DualExterno.fundir === 'function') {
+    const _f = window.Dual.fundir;
+    window.Dual.fundir = function(a,b){ return window.__DualExterno.fundir(a,b) || _f(a,b); };
+  }
+});
+</script>
+
+<!-- Módulos complementares (stubs + integração) -->
+<script>window.KODUX = window.KODUX || { play(){}, pause:{} }; window.Bau = window.Bau || { salvar(d){ console.log('[Bau] salvo', d); } }; window.DevOS = window.DevOS || {};</script>
+
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     HEADER GLOBAL DUAL
+═══════════════════════════════════════════════════════ -->
+<header class="topbar header-visible" id="main-header" style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px 0;max-width:480px;margin:0 auto;">
+    <div id="header" class="brand" style="font-weight:800;letter-spacing:.18em;font-size:13px;color:var(--accent-ink);">
+        DUAL <span class="badge" style="font-size:9px;background:var(--accent-soft);color:var(--accent-ink);padding:2px 6px;border-radius:10px;margin-left:4px;">GLOBAL</span>
+    </div>
+    <button id="theme-dot" class="theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--line-strong);background:var(--card-solid);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--accent-ink);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>
+    </button>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════
+     APP · 5 TELAS · 369 · BAÚ · ARQUÉTIPOS · DUAL · KODUX
+═══════════════════════════════════════════════════════ -->
+<div class="app">
+
+  <header class="top" id="topbar">
+    <div class="eyebrow"><span class="dot"></span> KOBLLUX · 3·6·9·7 · 1134</div>
+    <div class="title-row">
+      <h1 class="large" id="screenTitle">Espaço da Mente</h1>
+      <div class="avatar">K</div>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <!-- ===================== TELA 1 · ESPAÇO DA MENTE 369 ===================== -->
+    <section class="screen active" id="screen-espaco">
+
+      <div class="card ring-wrap">
+        <div class="ring">
+          <svg viewBox="0 0 210 210">
+            <defs>
+              <linearGradient id="gradA" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#6C4CE0"/>
+                <stop offset="100%" stop-color="#C7973F"/>
+              </linearGradient>
+              <linearGradient id="gradB" x1="1" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#C7973F"/>
+                <stop offset="100%" stop-color="#6C4CE0"/>
+              </linearGradient>
+            </defs>
+            <circle cx="105" cy="105" r="98" fill="none" stroke="var(--line)" stroke-width="1"/>
+            <circle cx="105" cy="105" r="86" fill="none" stroke="var(--accent-soft)" stroke-width="10" stroke-linecap="round" stroke-dasharray="180 360" transform="rotate(-90 105 105)"/>
+            <g class="spin">
+              <circle cx="105" cy="105" r="74" fill="none" stroke="url(#gradA)" stroke-width="1.5"/>
+              <g fill="#4A2FB5">
+                <circle cx="105" cy="31" r="3"/>
+                <circle cx="179" cy="105" r="3"/>
+                <circle cx="105" cy="179" r="3"/>
+              </g>
+              <text x="105" y="22" text-anchor="middle" font-size="13" font-weight="800" fill="#4A2FB5" class="mono">3</text>
+              <text x="188" y="109" text-anchor="middle" font-size="13" font-weight="800" fill="#4A2FB5" class="mono">6</text>
+              <text x="105" y="196" text-anchor="middle" font-size="13" font-weight="800" fill="#4A2FB5" class="mono">9</text>
+            </g>
+            <g class="spin-rev">
+              <circle cx="105" cy="105" r="58" fill="none" stroke="url(#gradB)" stroke-width="1.2" stroke-dasharray="3 8"/>
+              <g fill="#C7973F">
+                <circle cx="105" cy="47" r="2"/>
+                <circle cx="155" cy="77" r="2"/>
+                <circle cx="155" cy="133" r="2"/>
+                <circle cx="105" cy="163" r="2"/>
+                <circle cx="55" cy="133" r="2"/>
+                <circle cx="55" cy="77" r="2"/>
+              </g>
+            </g>
+          </svg>
+          <div class="core">
+            <div class="num" id="ringCore">369</div>
+            <div class="lab">ASSINATURA</div>
+          </div>
+        </div>
+        <div class="ring-caption">
+          <b>Campo morfogenético ativo</b>
+          <p>Anel girando em 36s e 54s (múltiplos de 9, alinhado 3·6·9). Sua intenção ressona nas 3 camadas: mente · corpo · campo.</p>
+        </div>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric"><b id="m3">03</b><small>INTENÇÕES</small></div>
+        <div class="metric"><b id="m6">12</b><small>MIN. FOCO</small></div>
+        <div class="metric"><b id="m9">07</b><small>SELOS ∆⁷</small></div>
+      </div>
+
+      <div class="section-label">Fluxo 3 · 6 · 9 <span class="count">ativo</span></div>
+      <div class="card">
+        <div class="flow">
+          <div class="fstep active">
+            <div class="rail"><div class="node done">3</div><div class="thread"></div></div>
+            <div class="body"><b>Escreva a intenção 3×</b><p>Manhã. Frase no presente, sem "não". Apenas o que É.</p><span class="tag">CONCLUÍDO</span></div>
+          </div>
+          <div class="fstep active">
+            <div class="rail"><div class="node done">6</div><div class="thread"></div></div>
+            <div class="body"><b>Eleve a emoção 6×</b><p>Respire 6 tempos. Sinta o resultado já acontecendo agora.</p><span class="tag">EM CURSO · 4/6</span></div>
+          </div>
+          <div class="fstep">
+            <div class="rail"><div class="node">9</div></div>
+            <div class="body"><b>Solte e confie 9×</b><p>Entregue ao campo. "Está feito. Gratidão." · 9 vezes.</p><span class="tag">PRÓXIMO</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Intenção ativa <span class="count">hoje</span></div>
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:12;">
+          <div style="width:44px;height:44px;border-radius:11px;background:conic-gradient(from 120deg,var(--accent),var(--gold),var(--accent));"></div>
+          <div style="flex:1;min-width:0;">
+            <b style="display:block;font-size:14px;">O arquétipo certo fala agora</b>
+            <small style="font-size:11.5px;color:var(--text-2);font-family:ui-monospace,monospace;">sincronizado · selo ∆³ · 3·6·9·7 = 1134</small>
+          </div>
+        </div>
+        <div class="btn-row" style="margin-top:14px;">
+          <button class="btn btn-gold" data-action="amplificar">✦ Amplificar</button>
+          <button class="btn btn-ghost" data-action="ancora">⌘ Âncora</button>
+        </div>
+      </div>
+
+      <div class="section-label">Campos rápidos</div>
+      <div class="chips">
+        <div class="chip active">Prosperidade</div>
+        <div class="chip">Saúde</div>
+        <div class="chip">Relação</div>
+        <div class="chip">Clareza</div>
+        <div class="chip">Proteção</div>
+        <div class="chip">Arquétipo</div>
+      </div>
+
+      <button class="fab" id="fabIntent" title="Nova intenção">＋</button>
+    </section>
+
+    <!-- ===================== TELA 2 · BAÚ / DEVOS ===================== -->
+    <section class="screen" id="screen-biblioteca">
+      <div class="section-label">Sementes salvas <span class="count" id="countSeeds">12</span></div>
+      <div class="grid">
+        <div class="item"><div class="kind" style="color:#3E8E5B;">SEMENTE</div><div class="name">Porta aberta para o novo</div><div class="meta"><span>●●● 3/9</span><span>03d</span></div></div>
+        <div class="item"><div class="kind" style="color:#3567C9;">ESPELHO</div><div class="name">Relações que me elevam</div><div class="meta"><span>●●● 6/9</span><span>07d</span></div></div>
+        <div class="item"><div class="kind arq">ARQUÉTIPO · IV</div><div class="name">Imperador — estrutura viva</div><div class="meta"><span>ativo</span><span>21d</span></div></div>
+        <div class="item"><div class="kind" style="color:#3E8E5B;">SEMENTE</div><div class="name">Corpo forte e descansado</div><div class="meta"><span>●●○ 2/9</span><span>01d</span></div></div>
+        <div class="item"><div class="kind" style="color:#3567C9;">ESPELHO</div><div class="name">Renda recorrente estável</div><div class="meta"><span>●●● 9/9</span><span>40d</span></div></div>
+        <div class="item"><div class="kind arq">ARQUÉTIPO · VI</div><div class="name">Amantes — escolha verdadeira</div><div class="meta"><span>pausa</span><span>09d</span></div></div>
+      </div>
+
+      <div class="section-label" style="margin-top:22px;">DevOS · comandos</div>
+      <div class="glist">
+        <div class="grow"><div class="ic" style="background:#EDE9FF;color:var(--accent-ink);">⌘</div><div class="tx"><b>/ancora</b><small>Travar intenção no campo 369</small></div><span class="chev">›</span></div>
+        <div class="grow"><div class="ic" style="background:#FFF4E0;color:var(--gold);">✦</div><div class="tx"><b>/dual IV III</b><small>Fundir 2 arquétipos cadiais</small></div><span class="chev">›</span></div>
+        <div class="grow"><div class="ic" style="background:#E8F5EC;color:#2E7D4F;">◐</div><div class="tx"><b>/sinc</b><small>Sincronizar com batimento cardíaco</small></div><span class="chev">›</span></div>
+        <div class="grow"><div class="ic" style="background:#FBE8E8;color:#A93A37;">⏸</div><div class="tx"><b>/limpa</b><small>Limpar memórias conflitantes</small></div><span class="chev">›</span></div>
+        <div class="grow"><div class="ic" style="background:#F3E8FF;color:#6B21A8;">∆</div><div class="tx"><b>/selo</b><small>Gerar selo ∆⁷ SHA-256</small></div><span class="chev">›</span></div>
+      </div>
+    </section>
+
+    <!-- ===================== TELA 3 · 22 ARQUÉTIPOS CADIAIS ===================== -->
+    <section class="screen" id="screen-arquetipos">
+      <div class="section-label">22 Arquétipos Cadiais · 12 selos ativos <span class="count">0–XXI</span></div>
+      <div class="glist" id="listaArquetipos"></div>
+    </section>
+
+    <!-- ===================== TELA 4 · DUAL · FUSÃO ===================== -->
+    <section class="screen" id="screen-dual">
+      <div class="section-label">Dual · selecione 2 arquétipos <span class="count" id="dualCount">0 / 2</span></div>
+      <div class="card">
+        <div class="pick-grid" id="dualPicks"></div>
+        <button class="btn btn-primary" id="btnFusao" style="margin-top:14px;" disabled>✦ Gerar Fusão Dual</button>
+      </div>
+
+      <div class="result-card" id="dualResult" style="display:none;">
+        <div class="result-seal" id="dualSeal">FUSÃO DUAL</div>
+        <h3 id="dualTitulo">—</h3>
+        <p id="dualTexto">—</p>
+        <div class="action-grid">
+          <div class="aicon" data-a="selo">✦<small>selo</small></div>
+          <div class="aicon" data-a="espelho">◐<small>espelho</small></div>
+          <div class="aicon" data-a="kodux">♪<small>KODUX</small></div>
+          <div class="aicon" data-a="ancora">✓<small>âncora</small></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== TELA 5 · PLAYER KODUX ===================== -->
+    <section class="screen" id="screen-player">
+      <div class="section-label">KODUX · frequência ativa <span class="count">369 Hz</span></div>
+      <div class="card ring-wrap" style="padding-bottom:22px;">
+        <div class="ring">
+          <svg viewBox="0 0 210 210">
+            <circle cx="105" cy="105" r="96" fill="none" stroke="var(--line)"/>
+            <circle cx="105" cy="105" r="80" fill="none" stroke="var(--accent-soft)" stroke-width="12" stroke-linecap="round" id="progRing" stroke-dasharray="502" stroke-dashoffset="120" transform="rotate(-90 105 105)"/>
+            <g class="spin" style="animation-duration:18s;">
+              <circle cx="105" cy="29" r="6" fill="#6C4CE0"/>
+            </g>
+          </svg>
+          <div class="core">
+            <div class="num mono" style="font-size:26px;">369</div>
+            <div class="lab">Hz · batimento</div>
+          </div>
+        </div>
+        <div class="ring-caption">
+          <b>Sessão: Selo da Verdade · 9 min</b>
+          <p>Batimento binaural · voz guiada · campo morfogenético. Alinhado com 3·6·9·7 = 1134.</p>
+        </div>
+
+        <div style="width:100%;margin-top:16px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);font-family:ui-monospace,monospace;margin-bottom:6px;">
+            <span id="tNow">02:14</span><span id="tTot">09:00</span>
+          </div>
+          <div style="height:6px;background:var(--line);border-radius:99px;overflow:hidden;">
+            <div id="bar" style="height:100%;width:25%;background:linear-gradient(90deg,var(--accent),var(--gold));border-radius:99px;"></div>
+          </div>
+        </div>
+
+        <div class="btn-row" style="margin-top:18px;">
+          <button class="btn btn-ghost">⏮</button>
+          <button class="btn btn-primary" id="btnPlay">⏸ Pausar</button>
+          <button class="btn btn-ghost">⏭</button>
+        </div>
+
+        <div class="chips" style="margin-top:16px;justify-content:center;">
+          <div class="chip active">369 Hz</div>
+          <div class="chip">432 Hz</div>
+          <div class="chip">528 Hz</div>
+          <div class="chip">741 Hz</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===================== TAB BAR ===================== -->
+  <nav class="tabbar">
+    <div class="tabbar-inner">
+      <button class="tab active" data-screen="screen-espaco"><span class="tic">◉</span><span>369</span></button>
+      <button class="tab" data-screen="screen-biblioteca"><span class="tic">▦</span><span>Baú</span></button>
+      <button class="tab" data-screen="screen-arquetipos"><span class="tic">✧</span><span>Arquétipos</span></button>
+      <button class="tab" data-screen="screen-dual"><span class="tic">⚭</span><span>Dual</span></button>
+      <button class="tab" data-screen="screen-player"><span class="tic">♪</span><span>KODUX</span></button>
+    </div>
+  </nav>
+</div>
+
+<!-- ===================== SHEET / MODAL ===================== -->
+<div class="sheet-bg" id="sheetBg"></div>
+<div class="sheet" id="sheet">
+  <div class="grabber"></div>
+  <h2>Nova intenção 3·6·9</h2>
+  <p class="sub">Escreva no presente, como já fosse verdade.</p>
+  <div class="field">
+    <label>Intenção</label>
+    <textarea id="seedText" placeholder="Eu sou grato por…"></textarea>
+  </div>
+  <div class="field">
+    <label>Tipo de campo</label>
+    <div class="seedtype chips">
+      <div class="chip active">Prosperidade</div>
+      <div class="chip">Saúde</div>
+      <div class="chip">Relação</div>
+      <div class="chip">Clareza</div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-ghost" id="sheetClose">Cancelar</button>
+    <button class="btn btn-primary" id="seedSave">✦ Salvar no campo</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">Intentação selada no campo 369</div>
+
+<!-- ===================== JAVASCRIPT PRINCIPAL ===================== -->
+<script>
+(function(){
+  const $ = (s, r=document) => r.querySelector(s);
+  const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+  let _tt;
+  const toast = (msg) => {
+    const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(_tt); _tt = setTimeout(()=>t.classList.remove('show'), 1800);
+  };
+
+  // ---------- Montar lista de 22 Arquétipos Cadiais ----------
+  const ARQ = window.Dual.arquetipos;
+  const cores = [
+    "#EDE9FF","#FFF4E0","#FCE7F3","#FEF3C7","#DBEAFE","#F3E8FF",
+    "#ECFDF5","#EFF6FF","#FEF2F2","#F5F3FF","#F0FDFA","#FAF5FF",
+    "#FDF4FF","#FEE2E2","#ECFEFF","#1F2937","#FFF1F2","#EFF6FF",
+    "#FDF2F8","#FFFBEB","#F0FDF4","#FAFAF9"
+  ];
+  const textoCor = ["#4A2FB5","#92400E","#9D174D","#92400E","#1E3A8A","#6B21A8",
+    "#065F46","#1E3A8A","#991B1B","#4C1D95","#134E4A","#581C87",
+    "#831843","#991B1B","#155E75","#F9FAFB","#9F1239","#1E3A8A",
+    "#9D174D","#78350F","#14532D","#18181B"];
+
+  const lista = $('#listaArquetipos');
+  lista.innerHTML = ARQ.map((a,i) => `
+    <div class="grow" data-arq="${a.id}">
+      <div class="ic" style="background:${cores[i%cores.length]};color:${textoCor[i%textoCor.length]};">${a.roman}</div>
+      <div class="tx"><b>${a.nome}</b><small>${a.essencia}</small></div>
+      <span class="chev">›</span>
+    </div>
+  `).join('');
+  $$('#listaArquetipos .grow').forEach(el => el.addEventListener('click', () => {
+    const a = window.Dual.mapa[el.dataset.arq];
+    toast(`${a.roman} · ${a.nome} — carregado`);
+  }));
+
+  // ---------- Montar grid Dual (22 picks) ----------
+  const grid = $('#dualPicks');
+  grid.innerHTML = ARQ.map((a,i) => `
+    <div class="pick" data-arq="${a.id}">
+      <div class="ic" style="background:${cores[i%cores.length]};color:${textoCor[i%textoCor.length]};">${a.roman}</div>
+      <div class="tx"><b>${a.nome}</b><small>${a.kw.slice(0,3).join(' · ')}</small></div>
+      <div class="check"></div>
+    </div>
+  `).join('');
+
+  $$('#dualPicks .pick').forEach(p => p.addEventListener('click', () => {
+    const sel = $$('#dualPicks .pick.sel');
+    if (!p.classList.contains('sel') && sel.length >= 2) sel[0].classList.remove('sel');
+    p.classList.toggle('sel');
+    const agora = $$('#dualPicks .pick.sel').length;
+    $('#dualCount').textContent = `${agora} / 2`;
+    $('#btnFusao').disabled = (agora !== 2);
+  }));
+
+  $('#btnFusao').addEventListener('click', () => {
+    const sel = $$('#dualPicks .pick.sel');
+    if (sel.length !== 2) return;
+    const r = window.Dual.fundir(sel[0].dataset.arq, sel[1].dataset.arq);
+    if (!r) return;
+    $('#dualSeal').textContent = `FUSÃO DUAL · ${r.arqA.roman} × ${r.arqB.roman} · ${r.selo}`;
+    $('#dualTitulo').textContent = r.titulo;
+    $('#dualTexto').textContent = r.texto;
+    $('#dualResult').style.display = 'block';
+    $('#dualResult').scrollIntoView({behavior:'smooth',block:'center'});
+    toast(`Fusão ${r.arqA.roman}×${r.arqB.roman} gerada`);
+  });
+
+  $$('.aicon').forEach(ai => ai.addEventListener('click', () => {
+    const map = { selo:'Selo ∆⁷ gravado', espelho:'Espelho Dual ativado', kodux:'Enviado ao KODUX', ancora:'Âncora 3·6·9 salva' };
+    toast(map[ai.dataset.a] || 'Pronto');
+  }));
+
+  // ---------- Chips ----------
+  document.addEventListener('click', e => {
+    if (e.target.classList.contains('chip') && e.target.closest('.seedtype, .chips')) {
+      const wrap = e.target.closest('.seedtype, .chips');
+      if (!wrap.classList.contains('chips')) $$('.chip', wrap).forEach(c => c.classList.remove('active'));
+      else if (wrap.id === 'freqChips') $$('.chip', wrap).forEach(c => c.classList.remove('active'));
+      e.target.classList.toggle('active');
+    }
+  });
+
+  // ---------- Navegação ----------
+  const titles = {
+    'screen-espaco':'Espaço da Mente',
+    'screen-biblioteca':'Baú / DevOS',
+    'screen-arquetipos':'Arquétipos Cadiais',
+    'screen-dual':'Dual · Fusão',
+    'screen-player':'KODUX Player'
+  };
+  $$('.tab').forEach(t => t.addEventListener('click', () => {
+    $$('.tab').forEach(x => x.classList.remove('active'));
+    $$('.screen').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    $('#'+t.dataset.screen).classList.add('active');
+    $('#screenTitle').textContent = titles[t.dataset.screen] || '';
+    window.scrollTo({top:0,behavior:'smooth'});
+  }));
+
+  // ---------- Header scrolled ----------
+  addEventListener('scroll', () => $('#topbar').classList.toggle('scrolled', scrollY > 8));
+
+  // ---------- Sheet ----------
+  const openSheet = () => { $('#sheet').classList.add('open'); $('#sheetBg').classList.add('open'); };
+  const closeSheet = () => { $('#sheet').classList.remove('open'); $('#sheetBg').classList.remove('open'); };
+  $('#fabIntent')?.addEventListener('click', openSheet);
+  $('#sheetClose')?.addEventListener('click', closeSheet);
+  $('#sheetBg')?.addEventListener('click', closeSheet);
+  $('#seedSave')?.addEventListener('click', () => {
+    const t = $('#seedText').value.trim();
+    if (!t) { toast('Escreva sua intenção primeiro'); return; }
+    if (window.Bau && typeof Bau.salvar === 'function') Bau.salvar({tipo:'seed',texto:t,data:new Date().toISOString()});
+    const n = (parseInt($('#countSeeds').textContent||'0',10)||0)+1;
+    $('#countSeeds').textContent = String(n).padStart(2,'0');
+    closeSheet();
+    toast('Intentação selada no campo 369');
+  });
+
+  // ---------- Tema ----------
+  $('#theme-dot')?.addEventListener('click', () => {
+    if (window.Dual && typeof Dual.toggleTema === 'function') Dual.toggleTema();
+  });
+
+  // ---------- KODUX player ----------
+  let playing = true, prog = 25, t = 134, tot = 540, _pt;
+  const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+  const tick = () => {
+    if (!playing) return;
+    t = Math.min(tot, t+1); prog = (t/tot)*100;
+    $('#bar').style.width = prog+'%';
+    $('#tNow').textContent = fmt(t);
+    const C = 2*Math.PI*80; $('#progRing').setAttribute('stroke-dashoffset', C - (prog/100)*C);
+    if (t >= tot) { playing=false; $('#btnPlay').textContent='▶ Tocar'; toast('Sessão concluída · selada ∆⁷'); }
+  };
+  $('#btnPlay')?.addEventListener('click', () => {
+    playing = !playing;
+    $('#btnPlay').textContent = playing ? '⏸ Pausar' : '▶ Tocar';
+    if (window.KODUX) playing ? KODUX.play?.() : KODUX.pause?.();
+  });
+  _pt = setInterval(tick, 1000);
+
+  // ---------- Ações Espaço da Mente ----------
+  document.addEventListener('click', e => {
+    const a = e.target.dataset?.action;
+    if (!a) return;
+    if (a === 'amplificar') toast('✦ Campo amplificado · +6dB · selo 3·6·9');
+    if (a === 'ancora') toast('⌘ Âncora 369 gravada no Baú');
+  });
+
+  // ---------- Boot ----------
+  addEventListener('load', () => {
+    const mods = { Dual: !!window.Dual?.fundir, KODUX: !!window.KODUX, Bau: !!window.Bau, DevOS: !!window.DevOS };
+    console.log('[KOBLLUX] módulos carregados:', mods);
+    console.log('[KOBLLUX] 22 arquétipos cadiais ·', ARQ.length, '· fusões:', 22*22);
+  });
+})();
+</script>
+<script type="module" src="https://www.infodose.com.br/js/modules/Dual_[Theme]-semDiv.js"></script>
+
+
+</body></html>

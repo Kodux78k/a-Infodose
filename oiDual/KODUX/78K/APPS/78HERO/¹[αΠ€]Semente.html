@@ -1,0 +1,721 @@
+<html><head>
+
+<style>:root { --z-base: 0; --z-content: 100; --z-widget: 500; --z-overlay: 1000; --z-system: 5000; }</style>
+<style>
+  :root{
+    --bg-top:#EDEBF3;
+    --bg-bot:#E4E1EE;
+    --card:rgba(255,255,255,.68);
+    --card-solid:#ffffff;
+    --card-strong:rgba(255,255,255,.86);
+    --line:rgba(60,60,67,.10);
+    --line-strong:rgba(60,60,67,.16);
+    --text:#1c1b1f;
+    --text-2:#6c6a75;
+    --text-3:#9997a3;
+    --accent:#6C4CE0;
+    --accent-ink:#4A2FB5;
+    --accent-soft:rgba(108,76,224,.12);
+    --gold:#C7973F;
+    --gold-soft:rgba(199,151,63,.14);
+    --danger:#D8534F;
+    --radius-lg:26px;
+    --radius-md:18px;
+    --radius-sm:12px;
+    --safe-top:env(safe-area-inset-top);
+    --safe-bot:env(safe-area-inset-bottom);
+    --shadow:0 1px 2px rgba(28,27,31,.04), 0 10px 28px -14px rgba(28,27,31,.28);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(120% 60% at 18% -6%, #F6E9DA 0%, transparent 55%),
+      radial-gradient(140% 70% at 100% 0%, #DCE6F5 0%, transparent 50%),
+      linear-gradient(180deg,var(--bg-top),var(--bg-bot) 60%, #DEDAEA 100%);
+    background-attachment:fixed;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;}
+  .app{max-width:480px; margin:0 auto; min-height:100dvh; display:flex; flex-direction:column; position:relative;}
+
+  /* ---------- Top bar ---------- */
+  header.top{
+    padding:calc(var(--safe-top) + 14px) 20px 6px;
+    position:sticky; top:0; z-index:30;
+    backdrop-filter:blur(22px) saturate(160%);
+    -webkit-backdrop-filter:blur(22px) saturate(160%);
+    background:rgba(237,235,243,.72);
+    border-bottom:1px solid transparent;
+    transition:border-color .25s, background .25s;
+  }
+  header.top.scrolled{border-color:var(--line); background:rgba(237,235,243,.92);}
+  .eyebrow{
+    font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent-ink); font-weight:700; opacity:.75; display:flex; align-items:center; gap:6px;
+  }
+  .eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);}
+  .title-row{display:flex; align-items:flex-end; justify-content:space-between; margin-top:2px;}
+  h1.large{font-size:30px; letter-spacing:-.02em; font-weight:750; margin:0; line-height:1.05;}
+  .avatar{
+    width:34px;height:34px;border-radius:50%;
+    background:conic-gradient(from 210deg, var(--accent), var(--gold), var(--accent));
+    display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;
+    box-shadow:0 2px 8px rgba(108,76,224,.35);
+  }
+
+  /* ---------- Screens ---------- */
+  main{flex:1; padding:14px 16px calc(96px + var(--safe-bot)); }
+  .screen{display:none; animation:rise .35s ease both;}
+  .screen.active{display:block;}
+  @keyframes rise{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
+
+  .section-label{
+    font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--text-3); margin:22px 4px 10px; display:flex; align-items:center; justify-content:space-between;
+  }
+  .section-label span.count{color:var(--text-2); font-weight:600; text-transform:none; letter-spacing:0;}
+
+  /* ---------- Glass card system ---------- */
+  .card{
+    background:var(--card);
+    backdrop-filter:blur(18px) saturate(160%);
+    -webkit-backdrop-filter:blur(18px) saturate(160%);
+    border:1px solid rgba(255,255,255,.55);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow);
+    padding:18px;
+    position:relative;
+    overflow:hidden;
+  }
+  .card::before{
+    content:"";
+    position:absolute; inset:0; border-radius:inherit; padding:1px;
+    background:linear-gradient(160deg, rgba(255,255,255,.9), rgba(255,255,255,0) 40%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude;
+    pointer-events:none;
+  }
+  .stack{display:flex; flex-direction:column; gap:10px;}
+
+  /* Grouped iOS list */
+  .glist{
+    background:var(--card-strong); border-radius:var(--radius-md); overflow:hidden;
+    border:1px solid rgba(255,255,255,.6); box-shadow:var(--shadow);
+    backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+  }
+  .grow{display:flex; align-items:center; gap:12px; padding:13px 14px; border-bottom:1px solid var(--line);}
+  .grow:last-child{border-bottom:none;}
+  .grow .ic{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex:0 0 auto;}
+  .grow .tx{flex:1; min-width:0;}
+  .grow .tx b{display:block; font-size:15px; font-weight:600;}
+  .grow .tx small{display:block; font-size:12.5px; color:var(--text-2); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .chev{color:var(--text-3); font-size:13px;}
+
+  /* ---------- 369 signature ring ---------- */
+  .ring-wrap{display:flex; flex-direction:column; align-items:center; padding:22px 10px 8px;}
+  .ring{width:210px; height:210px; position:relative;}
+  .ring svg{width:100%; height:100%; display:block;}
+  .ring .core{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+  }
+  .ring .core .num{font-size:34px; font-weight:800; letter-spacing:-.02em; font-family:ui-monospace,"SF Mono",Menlo,monospace; color:var(--accent-ink);}
+  .ring .core .lab{font-size:11px; color:var(--text-2); margin-top:2px; letter-spacing:.04em;}
+  .ring-caption{margin-top:14px; text-align:center; max-width:280px;}
+  .ring-caption b{font-size:14px;}
+  .ring-caption p{font-size:12.5px; color:var(--text-2); margin:4px 0 0; line-height:1.4;}
+  @media (prefers-reduced-motion: no-preference){
+    .ring .spin{animation:spin 26s linear infinite; transform-origin:105px 105px;}
+    .ring .spin-rev{animation:spin 34s linear infinite reverse; transform-origin:105px 105px;}
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ---------- Flow stepper ---------- */
+  .flow{display:flex; flex-direction:column; gap:0; margin-top:4px;}
+  .fstep{display:flex; gap:14px; position:relative; padding-bottom:22px;}
+  .fstep:last-child{padding-bottom:0;}
+  .fstep .rail{display:flex; flex-direction:column; align-items:center; flex:0 0 auto;}
+  .fstep .node{
+    width:38px; height:38px; border-radius:12px; background:var(--card-strong);
+    border:1px solid rgba(255,255,255,.7); box-shadow:var(--shadow);
+    display:flex; align-items:center; justify-content:center; font-size:17px; z-index:1;
+  }
+  .fstep .node.done{background:linear-gradient(160deg,var(--accent),var(--accent-ink)); color:#fff;}
+  .fstep .thread{width:2px; flex:1; background:linear-gradient(var(--line-strong),var(--line-strong)); background-size:2px 8px; background-repeat:repeat-y; margin-top:4px;}
+  .fstep .body{flex:1; padding-top:6px;}
+  .fstep .body b{font-size:15px; font-weight:650;}
+  .fstep .body p{margin:3px 0 0; font-size:13px; color:var(--text-2); line-height:1.4;}
+  .fstep .body .tag{
+    display:inline-block; margin-top:8px; font-size:11px; font-weight:700; letter-spacing:.03em;
+    color:var(--accent-ink); background:var(--accent-soft); padding:4px 9px; border-radius:20px;
+  }
+  .fstep.active .node{box-shadow:0 0 0 5px var(--accent-soft), var(--shadow);}
+
+  /* ---------- Buttons ---------- */
+  .btn{
+    appearance:none; border:none; cursor:pointer; font-family:inherit;
+    padding:13px 18px; border-radius:16px; font-size:15px; font-weight:650;
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    transition:transform .12s ease, filter .12s ease; width:100%;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:linear-gradient(160deg,var(--accent),var(--accent-ink)); color:#fff; box-shadow:0 10px 22px -10px rgba(74,47,181,.65);}
+  .btn-ghost{background:var(--card-strong); color:var(--text); border:1px solid var(--line-strong);}
+  .btn-gold{background:linear-gradient(160deg,#DCAE5C,var(--gold)); color:#3a2a08;}
+  .btn-row{display:flex; gap:10px;}
+  .btn-row .btn{width:auto; flex:1;}
+  .fab{
+    position:fixed; right:22px; z-index:35;
+    bottom:calc(96px + var(--safe-bot));
+    width:58px; height:58px; border-radius:50%; border:none;
+    background:linear-gradient(160deg,var(--accent),var(--accent-ink));
+    color:#fff; font-size:22px; box-shadow:0 14px 30px -10px rgba(74,47,181,.6);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    max-width:480px; margin:0 auto;
+  }
+  .fab:active{transform:scale(.94);}
+
+  /* ---------- Chips / filters ---------- */
+  .chips{display:flex; gap:8px; overflow-x:auto; padding:2px 2px 4px; scrollbar-width:none;}
+  .chips::-webkit-scrollbar{display:none;}
+  .chip{
+    flex:0 0 auto; padding:8px 14px; border-radius:20px; font-size:13px; font-weight:600;
+    background:var(--card-strong); color:var(--text-2); border:1px solid var(--line-strong); cursor:pointer;
+    white-space:nowrap;
+  }
+  .chip.active{background:var(--accent); color:#fff; border-color:transparent;}
+
+  /* ---------- Library grid ---------- */
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;}
+  .item{
+    background:var(--card); border-radius:var(--radius-md); padding:14px; cursor:pointer;
+    border:1px solid rgba(255,255,255,.55); box-shadow:var(--shadow);
+    backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    display:flex; flex-direction:column; gap:8px; min-height:132px;
+  }
+  .item .kind{font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--gold);}
+  .item .kind.arq{color:#9b6bff;}
+  .item .name{font-size:14px; font-weight:650; line-height:1.3;}
+  .item .meta{margin-top:auto; display:flex; align-items:center; justify-content:space-between; font-size:11.5px; color:var(--text-3);}
+  .item .frac{display:flex; align-items:center; gap:4px;}
+  .badge-seed{color:#3E8E5B;} .badge-mirror{color:#3567C9;}
+
+  /* ---------- Toggle select cards (fusão) ---------- */
+  .pick{
+    display:flex; align-items:center; gap:12px; padding:14px; border-radius:var(--radius-md);
+    border:1.5px solid var(--line-strong); background:var(--card-strong); cursor:pointer; margin-bottom:8px;
+  }
+  .pick.sel{border-color:var(--accent); background:var(--accent-soft);}
+  .pick .ic{width:36px;height:36px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:16px; box-shadow:var(--shadow);}
+  .pick .tx b{font-size:14px; display:block;}
+  .pick .tx small{font-size:12px; color:var(--text-2);}
+  .pick .check{margin-left:auto; width:20px;height:20px;border-radius:50%; border:1.5px solid var(--text-3);}
+  .pick.sel .check{background:var(--accent); border-color:var(--accent); position:relative;}
+  .pick.sel .check::after{content:"✓"; color:#fff; font-size:12px; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;}
+
+  .result-card{
+    margin-top:16px; padding:20px; border-radius:var(--radius-lg);
+    background:linear-gradient(165deg, rgba(255,255,255,.85), rgba(255,255,255,.55));
+    border:1px solid rgba(255,255,255,.7); box-shadow:var(--shadow);
+    backdrop-filter:blur(20px);
+  }
+  .result-seal{font-family:ui-monospace,monospace; font-size:11px; color:var(--text-3); letter-spacing:.08em;}
+  .result-card h3{margin:6px 0 8px; font-size:18px;}
+  .result-card p{font-size:13.5px; color:var(--text-2); line-height:1.5; margin:0 0 14px;}
+  .action-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:6px;}
+  .aicon{
+    background:var(--card-strong); border-radius:14px; padding:10px 4px; text-align:center;
+    border:1px solid var(--line); cursor:pointer; font-size:18px;
+  }
+  .aicon small{display:block; font-size:9.5px; color:var(--text-2); margin-top:4px; font-weight:600;}
+  .aicon:active{transform:scale(.94);}
+
+  /* ---------- Hub metrics ---------- */
+  .metric-row{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:12px;}
+  .metric{background:var(--card-strong); border-radius:var(--radius-md); padding:14px 10px; text-align:center; border:1px solid rgba(255,255,255,.6); box-shadow:var(--shadow);}
+  .metric b{display:block; font-size:20px; font-weight:800; font-family:ui-monospace,monospace; color:var(--accent-ink);}
+  .metric small{font-size:10.5px; color:var(--text-2); font-weight:600;}
+
+  /* ---------- Snapshot ---------- */
+  .snap-card{display:flex; align-items:center; gap:12px; padding:14px; border-radius:var(--radius-md); background:var(--card-strong); border:1px solid rgba(255,255,255,.6); box-shadow:var(--shadow); margin-bottom:10px;}
+  .snap-thumb{width:44px;height:44px;border-radius:11px; background:conic-gradient(from 120deg,var(--accent),var(--gold),var(--accent)); flex:0 0 auto;}
+  .snap-tx{flex:1; min-width:0;}
+  .snap-tx b{font-size:14px; display:block;}
+  .snap-tx small{font-size:11.5px; color:var(--text-2); font-family:ui-monospace,monospace;}
+
+  /* ---------- Empty state ---------- */
+  .empty{padding:40px 20px; text-align:center; color:var(--text-2);}
+  .empty .glyph{font-size:30px; margin-bottom:8px;}
+  .empty b{display:block; font-size:14.5px; color:var(--text); margin-bottom:4px;}
+  .empty p{font-size:12.5px; margin:0; line-height:1.4;}
+
+  /* ---------- Bottom tab bar ---------- */
+  nav.tabbar{
+    position:fixed; left:0; right:0; bottom:0; z-index:40;
+    padding:8px 10px calc(10px + var(--safe-bot));
+    backdrop-filter:blur(24px) saturate(180%); -webkit-backdrop-filter:blur(24px) saturate(180%);
+    background:rgba(255,255,255,.72);
+    border-top:1px solid rgba(255,255,255,.6);
+  }
+  .tabbar-inner{max-width:480px; margin:0 auto; display:flex; justify-content:space-around;}
+  .tab{
+    background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:3px;
+    color:var(--text-3); font-size:10px; font-weight:600; cursor:pointer; padding:4px 8px; font-family:inherit;
+  }
+  .tab .tic{font-size:20px; line-height:1;}
+  .tab.active{color:var(--accent-ink);}
+
+  /* ---------- Sheet (modal) ---------- */
+  .sheet-bg{position:fixed; inset:0; background:rgba(20,18,28,.42); z-index:60; opacity:0; pointer-events:none; transition:opacity .25s;}
+  .sheet-bg.open{opacity:1; pointer-events:auto;}
+  .sheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:61; max-width:480px; margin:0 auto;
+    background:#F7F6FA; border-radius:26px 26px 0 0; padding:10px 20px calc(24px + var(--safe-bot));
+    transform:translateY(105%); transition:transform .32s cubic-bezier(.32,.72,0,1);
+    box-shadow:0 -10px 40px rgba(0,0,0,.2); max-height:82dvh; overflow-y:auto;
+  }
+  .sheet.open{transform:translateY(0);}
+  .sheet .grabber{width:38px; height:5px; background:var(--line-strong); border-radius:3px; margin:6px auto 14px;}
+  .sheet h2{font-size:19px; margin:0 0 4px;}
+  .sheet .sub{font-size:12.5px; color:var(--text-2); margin:0 0 16px;}
+  .field{margin-bottom:14px;}
+  .field label{font-size:12px; font-weight:700; color:var(--text-2); display:block; margin-bottom:6px; text-transform:uppercase; letter-spacing:.04em;}
+  .field textarea, .field input{
+    width:100%; border-radius:14px; border:1px solid var(--line-strong); background:#fff;
+    padding:12px 14px; font-size:14.5px; font-family:inherit; color:var(--text); resize:none;
+  }
+  .field textarea{min-height:90px;}
+  .seedtype{display:flex; gap:8px; flex-wrap:wrap;}
+  .toast{
+    position:fixed; left:50%; bottom:calc(120px + var(--safe-bot)); transform:translateX(-50%) translateY(20px);
+    background:rgba(28,27,31,.92); color:#fff; padding:11px 18px; border-radius:14px; font-size:13px; font-weight:600;
+    z-index:80; opacity:0; transition:all .28s ease; pointer-events:none; white-space:nowrap;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+</style>
+
+<!-- ═══════════════════════════════════════════════════════
+     MÓDULOS DO SISTEMA (ORDEM CORRETA)
+═══════════════════════════════════════════════════════ -->
+<script type="module" src="https://www.infodose.com.br/js/modules/Dual_[Theme]-semDiv.js"></script>
+
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     HEADER GLOBAL DUAL
+═══════════════════════════════════════════════════════ -->
+<header class="topbar header-visible" id="main-header">
+    <div id="header" class="brand">
+        <span>DUAL</span>
+        <span class="badge">GLOBAL</span>
+    </div>
+    <button id="theme-dot" class="theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>
+    </button>  
+</header>
+
+<!-- ═══════════════════════════════════════════════════════
+     PONTO DE INJEÇÃO AUTOMÁTICA (BAÚ + DEVOS)
+     NÃO COLOQUE NADA AQUI — O LSDev.js injeta tudo sozinho
+═══════════════════════════════════════════════════════ -->
+<main id="main-content">
+    <div id="inject-here" class="content"></div>
+</main>
+
+<!-- ═══════════════════════════════════════════════════════
+     APP · ESPAÇO DA MENTE 369
+═══════════════════════════════════════════════════════ -->
+<div class="app">
+
+  <header class="top" id="topbar">
+    <div class="eyebrow"><span class="dot"></span> INFODOSE · 369</div>
+    <div class="title-row">
+      <h1 class="large" id="screenTitle">Espaço da Mente</h1>
+      <div class="avatar">K</div>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <!-- ===================== ESPAÇO DA MENTE ===================== -->
+    <section class="screen active" id="screen-espaco">
+
+      <div class="card ring-wrap">
+        <div class="ring">
+          <svg viewBox="0 0 210 210">
+            <circle cx="105" cy="105" r="98" fill="none" stroke="var(--line)" stroke-width="1"/>
+            <circle cx="105" cy="105" r="86" fill="none" stroke="var(--accent-soft)" stroke-width="10" stroke-linecap="round" stroke-dasharray="180 360" transform="rotate(-90 105 105)"/>
+            <g class="spin">
+              <circle cx="105" cy="105" r="74" fill="none" stroke="url(#gradA)" stroke-width="1.5"/>
+              <g fill="var(--accent-ink)">
+                <circle cx="105" cy="31" r="3"/>
+                <circle cx="179" cy="105" r="3"/>
+                <circle cx="105" cy="179" r="3"/>
+              </g>
+              <text x="105" y="22" text-anchor="middle" font-size="13" font-weight="800" fill="var(--accent-ink)" class="mono">3</text>
+              <text x="188" y="109" text-anchor="middle" font-size="13" font-weight="800" fill="var(--accent-ink)" class="mono">6</text>
+              <text x="105" y="196" text-anchor="middle" font-size="13" font-weight="800" fill="var(--accent-ink)" class="mono">9</text>
+            </g>
+            <g class="spin-rev">
+              <circle cx="105" cy="105" r="58" fill="none" stroke="url(#gradB)" stroke-width="1.2" stroke-dasharray="3 8"/>
+              <g fill="var(--gold)">
+                <circle cx="105" cy="47" r="2"/>
+                <circle cx="155" cy="77" r="2"/>
+                <circle cx="155" cy="133" r="2"/>
+                <circle cx="105" cy="163" r="2"/>
+                <circle cx="55" cy="133" r="2"/>
+                <circle cx="55" cy="77" r="2"/>
+              </g>
+            </g>
+            <defs>
+              <linearGradient id="gradA" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="var(--accent)"/>
+                <stop offset="100%" stop-color="var(--gold)"/>
+              </linearGradient>
+              <linearGradient id="gradB" x1="1" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--gold)"/>
+                <stop offset="100%" stop-color="var(--accent)"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="core">
+            <div class="num" id="ringCore">369</div>
+            <div class="lab">ASSINATURA</div>
+          </div>
+        </div>
+        <div class="ring-caption">
+          <b>Campo morfogenético ativo</b>
+          <p>Sua intenção está ressonando nas 3 camadas: mente · corpo · campo. O anel atualiza a cada batida cardíaca sincronizada.</p>
+        </div>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric"><b id="m3">03</b><small>INTENÇÕES</small></div>
+        <div class="metric"><b id="m6">12</b><small>MIN. FOCO</small></div>
+        <div class="metric"><b id="m9">9</b><small>DIAS ÂNCORA</small></div>
+      </div>
+
+      <div class="section-label">Fluxo 3 · 6 · 9 <span class="count">ativo</span></div>
+      <div class="card">
+        <div class="flow">
+          <div class="fstep active">
+            <div class="rail"><div class="node done">3</div><div class="thread"></div></div>
+            <div class="body">
+              <b>Escreva a intenção 3×</b>
+              <p>Manhã. Frase no presente, sem "não", sem futuro. Apenas o que É.</p>
+              <span class="tag">PASSO CONCLUÍDO</span>
+            </div>
+          </div>
+          <div class="fstep active">
+            <div class="rail"><div class="node done">6</div><div class="thread"></div></div>
+            <div class="body">
+              <b>Eleve a emoção 6×</b>
+              <p>Respire 6 tempos. Sinta o resultado já acontecendo agora. Essa é a chave.</p>
+              <span class="tag">EM CURSO · 4/6</span>
+            </div>
+          </div>
+          <div class="fstep">
+            <div class="rail"><div class="node">9</div></div>
+            <div class="body">
+              <b>Solte e confie 9×</b>
+              <p>Entregue ao campo. Repita 9 vezes: "Está feito. Gratidão."</p>
+              <span class="tag">PRÓXIMO PASSO</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Intenção ativa <span class="count">hoje</span></div>
+      <div class="card">
+        <div class="snap-card" style="margin:0;border:none;box-shadow:none;background:transparent;padding:0;">
+          <div class="snap-thumb"></div>
+          <div class="snap-tx">
+            <b>Oportunidade certa chega agora</b>
+            <small>sincronizada · 09:03 · selo 3-6-9</small>
+          </div>
+        </div>
+        <div class="btn-row" style="margin-top:14px;">
+          <button class="btn btn-gold" data-action="amplificar">✦ Amplificar</button>
+          <button class="btn btn-ghost" data-action="ancora">⌘ Âncora</button>
+        </div>
+      </div>
+
+      <div class="section-label">Campos rápidos</div>
+      <div class="chips">
+        <div class="chip active">Prosperidade</div>
+        <div class="chip">Saúde</div>
+        <div class="chip">Relacionamento</div>
+        <div class="chip">Clareza</div>
+        <div class="chip">Proteção</div>
+        <div class="chip">Arquétipo</div>
+      </div>
+
+      <button class="fab" id="fabIntent" title="Nova intenção">＋</button>
+    </section>
+
+    <!-- ===================== BIBLIOTECA (BAÚ / DEVOS) ===================== -->
+    <section class="screen" id="screen-biblioteca">
+      <div class="section-label">Sementes salvas <span class="count" id="countSeeds">12</span></div>
+      <div class="grid">
+        <div class="item"><div class="kind badge-seed">SEMENTE</div><div class="name">Porta aberta para o novo</div><div class="meta"><span class="frac">●●● 3/9</span><span>03d</span></div></div>
+        <div class="item"><div class="kind badge-mirror">ESPELHO</div><div class="name">Relações que me elevam</div><div class="meta"><span class="frac">●●● 6/9</span><span>07d</span></div></div>
+        <div class="item"><div class="kind arq">ARQUÉTIPO</div><div class="name">Imperador · estrutura</div><div class="meta"><span>ativo</span><span>21d</span></div></div>
+        <div class="item"><div class="kind badge-seed">SEMENTE</div><div class="name">Corpo forte e descansado</div><div class="meta"><span class="frac">●●○ 2/9</span><span>01d</span></div></div>
+        <div class="item"><div class="kind badge-mirror">ESPELHO</div><div class="name">Renda recorrente estável</div><div class="meta"><span class="frac">●●● 9/9</span><span>40d</span></div></div>
+        <div class="item"><div class="kind arq">ARQUÉTIPO</div><div class="name">Amante · presença</div><div class="meta"><span>pausa</span><span>09d</span></div></div>
+      </div>
+
+      <div class="section-label" style="margin-top:22px;">DevOS · comandos</div>
+      <div class="glist">
+        <div class="grow"><div class="ic" style="background:#EDE9FF;color:var(--accent-ink);">⌘</div><div class="tx"><b>/ancora</b><small>Travar intenção no campo 369</small></div><span class="chev">›</span></div>
+        <div class="grow"><div class="ic" style="background:#FFF4E0;color:var(--gold);">✦</div><div class="tx"><b>/espelho</b><small>Comparar arquétipos (Dual)</small></div><span class="chev">›</span></div>
+        <div class="grow"><div class="ic" style="background:#E8F5EC;color:#2E7D4F;">◐</div><div class="tx"><b>/sinc</b><small>Sincronizar com batimento cardíaco</small></div><span class="chev">›</span></div>
+        <div class="grow"><div class="ic" style="background:#FBE8E8;color:#A93A37;">⏸</div><div class="tx"><b>/limpa</b><small>Limpar memórias conflitantes</small></div><span class="chev">›</span></div>
+      </div>
+    </section>
+
+    <!-- ===================== ARQUÉTIPOS CADIAIS ===================== -->
+    <section class="screen" id="screen-arquetipos">
+      <div class="section-label">22 Arquétipos · 12 selos ativos</div>
+      <div class="glist">
+        <div class="grow"><div class="ic" style="background:#F1ECFF;color:var(--accent-ink);">0</div><div class="tx"><b>Louco</b><small>Confiança · salto no desconhecido</small></div><span class="chev">›</span></div>
+        <div class="grow"><div class="ic" style="background:#FFF4E0;color:var(--gold);">I</div><div class="tx"><b>Mago</b><small>Vontade · manifestação consciente</small></div><span class="chev">›</span></div>
+        <div class="grow"><div class="ic" style="background:#FCE7F3;color:#9D174D;">II</div><div class="tx"><b>Sacerdotisa</b><small>Intuição · conhecimento oculto</small></div><span class="chev">›</span></div>
+        <div class="grow"><div class="ic" style="background:#FEF3C7;color:#92400E;">III</div><div class="tx"><b>Imperatriz</b><small>Criação · abundância · natureza</small></div><span class="chev">›</span></div>
+        <div class="grow"><div class="ic" style="background:#DBEAFE;color:#1E3A8A;">IV</div><div class="tx"><b>Imperador</b><small>Estrutura · autoridade · limite</small></div><span class="chev">›</span></div>
+        <div class="grow"><div class="ic" style="background:#EDE9FF;color:var(--accent-ink);">V</div><div class="tx"><b>Hierofante</b><small>Tradição · ensinamento · rito</small></div><span class="chev">›</span></div>
+        <div class="grow"><div class="ic" style="background:#FCE7F3;color:#9D174D;">VI</div><div class="tx"><b>Amantes</b><small>Escolha · integração · relação</small></div><span class="chev">›</span></div>
+        <div class="grow"><div class="ic" style="background:#E0F2FE;color:#075985;">VII</div><div class="tx"><b>Carro</b><small>Direção · vitória · controle</small></div><span class="chev">›</span></div>
+      </div>
+    </section>
+
+    <!-- ===================== DUAL · FUSÃO ===================== -->
+    <section class="screen" id="screen-dual">
+      <div class="section-label">Dual · comparar 2 arquétipos</div>
+      <div class="card">
+        <div class="pick sel" data-arq="IV"><div class="ic">IV</div><div class="tx"><b>Imperador</b><small>Estrutura · ordem · limite</small></div><div class="check"></div></div>
+        <div class="pick" data-arq="III"><div class="ic">III</div><div class="tx"><b>Imperatriz</b><small>Criação · abundância · vida</small></div><div class="check"></div></div>
+        <div class="pick" data-arq="I"><div class="ic">I</div><div class="tx"><b>Mago</b><small>Vontade · manifestação</small></div><div class="check"></div></div>
+        <div class="pick" data-arq="VI"><div class="ic">VI</div><div class="tx"><b>Amantes</b><small>Escolha · integração</small></div><div class="check"></div></div>
+
+        <button class="btn btn-primary" id="btnFusao" style="margin-top:10px;">✦ Gerar Fusão Dual</button>
+      </div>
+
+      <div class="result-card" id="dualResult" style="display:none;">
+        <div class="result-seal">FUSÃO DUAL · IMPERADOR × IMPERATRIZ</div>
+        <h3>A Criação Governada</h3>
+        <p>A estrutura do Imperador dá forma ao caos fértil da Imperatriz. Você manifesta sonhos grandes porque constrói um recipiente seguro para eles crescerem. Perigo: rigidez que mata a vida. Poder: ordem que gera abundância.</p>
+        <div class="action-grid">
+          <div class="aicon">✦<small>selo</small></div>
+          <div class="aicon">◐<small>espelho</small></div>
+          <div class="aicon">♪<small>KODUX</small></div>
+          <div class="aicon">✓<small>ancora</small></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== PLAYER KODUX ===================== -->
+    <section class="screen" id="screen-player">
+      <div class="section-label">KODUX · frequência ativa <span class="count">369 Hz</span></div>
+      <div class="card ring-wrap" style="padding-bottom:22px;">
+        <div class="ring">
+          <svg viewBox="0 0 210 210">
+            <circle cx="105" cy="105" r="96" fill="none" stroke="var(--line)"/>
+            <circle cx="105" cy="105" r="80" fill="none" stroke="var(--accent-soft)" stroke-width="12" stroke-linecap="round" id="progRing" stroke-dasharray="502" stroke-dashoffset="120" transform="rotate(-90 105 105)"/>
+            <g class="spin" style="animation-duration:14s;">
+              <circle cx="105" cy="29" r="6" fill="var(--accent)"/>
+            </g>
+          </svg>
+          <div class="core">
+            <div class="num mono" style="font-size:26px;">369</div>
+            <div class="lab">Hz · batimento</div>
+          </div>
+        </div>
+        <div class="ring-caption">
+          <b>Sessão: Âncora da Prosperidade</b>
+          <p>Batimento binaural · voz guiada · campo morfogenético. Duração: 9 min.</p>
+        </div>
+
+        <div style="width:100%;margin-top:16px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);font-family:ui-monospace,monospace;margin-bottom:6px;">
+            <span id="tNow">02:14</span><span id="tTot">09:00</span>
+          </div>
+          <div style="height:6px;background:var(--line);border-radius:99px;overflow:hidden;">
+            <div id="bar" style="height:100%;width:25%;background:linear-gradient(90deg,var(--accent),var(--gold));border-radius:99px;"></div>
+          </div>
+        </div>
+
+        <div class="btn-row" style="margin-top:18px;">
+          <button class="btn btn-ghost">⏮</button>
+          <button class="btn btn-primary" id="btnPlay">⏸ Pausar</button>
+          <button class="btn btn-ghost">⏭</button>
+        </div>
+
+        <div class="chips" style="margin-top:16px;justify-content:center;">
+          <div class="chip active">369 Hz</div>
+          <div class="chip">432 Hz</div>
+          <div class="chip">528 Hz</div>
+          <div class="chip">741 Hz</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===================== TAB BAR ===================== -->
+  <nav class="tabbar">
+    <div class="tabbar-inner">
+      <button class="tab active" data-screen="screen-espaco"><span class="tic">◉</span><span>369</span></button>
+      <button class="tab" data-screen="screen-biblioteca"><span class="tic">▦</span><span>Baú</span></button>
+      <button class="tab" data-screen="screen-arquetipos"><span class="tic">✧</span><span>Arquétipos</span></button>
+      <button class="tab" data-screen="screen-dual"><span class="tic">⚭</span><span>Dual</span></button>
+      <button class="tab" data-screen="screen-player"><span class="tic">♪</span><span>KODUX</span></button>
+    </div>
+  </nav>
+</div>
+
+<!-- ===================== SHEET / MODAL ===================== -->
+<div class="sheet-bg" id="sheetBg"></div>
+<div class="sheet" id="sheet">
+  <div class="grabber"></div>
+  <h2>Nova intenção 3·6·9</h2>
+  <p class="sub">Escreva no presente, como já fosse verdade.</p>
+  <div class="field">
+    <label>Intenção</label>
+    <textarea id="seedText" placeholder="Eu sou grato por…"></textarea>
+  </div>
+  <div class="field">
+    <label>Tipo de campo</label>
+    <div class="seedtype">
+      <div class="chip active">Prosperidade</div>
+      <div class="chip">Saúde</div>
+      <div class="chip">Relação</div>
+      <div class="chip">Clareza</div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-ghost" id="sheetClose">Cancelar</button>
+    <button class="btn btn-primary" id="seedSave">✦ Salvar no campo</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">Intentação selada no campo 369</div>
+
+<!-- ===================== JAVASCRIPT · INTEGRAÇÃO ===================== -->
+<script>
+/* ---------- navegação de telas ---------- */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+
+$$('.tab').forEach(t => t.addEventListener('click', () => {
+  $$('.tab').forEach(x => x.classList.remove('active'));
+  $$('.screen').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  $('#'+t.dataset.screen).classList.add('active');
+  const titles = {'screen-espaco':'Espaço da Mente','screen-biblioteca':'Baú / DevOS','screen-arquetipos':'Arquétipos Cadiais','screen-dual':'Dual · Fusão','screen-player':'KODUX Player'};
+  $('#screenTitle').textContent = titles[t.dataset.screen] || '';
+  window.scrollTo({top:0,behavior:'smooth'});
+}));
+
+/* ---------- header scrolled ---------- */
+addEventListener('scroll', () => $('#topbar').classList.toggle('scrolled', scrollY > 8));
+
+/* ---------- Dual: selecionar 2 arquétipos ---------- */
+$$('.pick').forEach(p => p.addEventListener('click', () => {
+  const sel = $$('.pick.sel');
+  if (!p.classList.contains('sel') && sel.length >= 2) sel[0].classList.remove('sel');
+  p.classList.toggle('sel');
+}));
+$('#btnFusao')?.addEventListener('click', () => {
+  const sel = $$('.pick.sel');
+  if (sel.length < 2) { showToast('Selecione 2 arquétipos primeiro'); return; }
+  $('#dualResult').style.display = 'block';
+  $('#dualResult').scrollIntoView({behavior:'smooth',block:'center'});
+  // integração módulo Dual, se carregado
+  if (window.Dual && typeof Dual.fundir === 'function') {
+    const ids = sel.map(s => s.dataset.arq);
+    const r = Dual.fundir(ids[0], ids[1]);
+    if (r) { $('#dualResult h3').textContent = r.titulo; $('#dualResult p').textContent = r.texto; }
+  }
+});
+
+/* ---------- chips ---------- */
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('chip') && e.target.closest('.seedtype, .chips')) {
+    const wrap = e.target.closest('.seedtype, .chips');
+    if (!wrap.classList.contains('chips')) $$('.chip', wrap).forEach(c => c.classList.remove('active'));
+    e.target.classList.toggle('active');
+  }
+});
+
+/* ---------- sheet ---------- */
+const openSheet = () => { $('#sheet').classList.add('open'); $('#sheetBg').classList.add('open'); };
+const closeSheet = () => { $('#sheet').classList.remove('open'); $('#sheetBg').classList.remove('open'); };
+$('#fabIntent')?.addEventListener('click', openSheet);
+$('#sheetClose')?.addEventListener('click', closeSheet);
+$('#sheetBg')?.addEventListener('click', closeSheet);
+$('#seedSave')?.addEventListener('click', () => {
+  const t = $('#seedText').value.trim();
+  if (!t) { showToast('Escreva sua intenção primeiro'); return; }
+  // integração Baú/DevOS, se carregado
+  if (window.Bau && typeof Bau.salvar === 'function') Bau.salvar({tipo:'seed',texto:t,data:new Date().toISOString()});
+  const n = (parseInt($('#countSeeds').textContent||'0',10)||0)+1;
+  $('#countSeeds').textContent = String(n).padStart(2,'0');
+  closeSheet();
+  showToast('Intentação selada no campo 369');
+});
+
+/* ---------- toast ---------- */
+let _tt;
+const showToast = (msg) => {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(_tt); _tt = setTimeout(()=>t.classList.remove('show'), 1800);
+};
+
+/* ---------- KODUX player (mock + integração) ---------- */
+let playing = true, prog = 25, t = 134, tot = 540, _pt;
+const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+const tick = () => {
+  if (!playing) return;
+  t = Math.min(tot, t+1); prog = (t/tot)*100;
+  $('#bar').style.width = prog+'%';
+  $('#tNow').textContent = fmt(t);
+  const C = 2*Math.PI*80; $('#progRing').setAttribute('stroke-dashoffset', C - (prog/100)*C);
+  if (t >= tot) { playing=false; $('#btnPlay').textContent='▶ Tocar'; showToast('Sessão concluída · selada'); }
+};
+$('#btnPlay')?.addEventListener('click', () => {
+  playing = !playing;
+  $('#btnPlay').textContent = playing ? '⏸ Pausar' : '▶ Tocar';
+  if (window.KODUX) playing ? KODUX.play() : KODUX.pause();
+});
+_pt = setInterval(tick, 1000);
+
+/* ---------- botões do Espaço da Mente ---------- */
+document.addEventListener('click', e => {
+  const a = e.target.dataset?.action;
+  if (!a) return;
+  if (a === 'amplificar') showToast('✦ Campo amplificado · +6dB');
+  if (a === 'ancora') showToast('⌘ Âncora 369 gravada');
+});
+
+/* ---------- fallback: se módulos externos não carregarem ---------- */
+addEventListener('load', () => {
+  const mods = { Dual: window.Dual, KODUX: window.KODUX, Bau: window.Bau, DevOS: window.DevOS };
+  const faltam = Object.entries(mods).filter(([,v])=>!v).map(([k])=>k);
+  if (faltam.length) console.warn('[app] módulos não carregados (fallback ativo):', faltam.join(', '));
+  // header global DUAL (se existir) — integração tema
+  const dot = $('#theme-dot');
+  dot?.addEventListener('click', () => {
+    document.documentElement.classList.toggle('dark');
+    if (window.Dual && typeof Dual.toggleTema === 'function') Dual.toggleTema();
+  });
+});
+</script>
+
+</body></html>
