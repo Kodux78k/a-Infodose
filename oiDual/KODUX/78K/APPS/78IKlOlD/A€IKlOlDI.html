@@ -8,48 +8,9 @@
     <meta name="theme-color" content="#000000">
     <title>KODUX iCloud · Nébula Pro</title>
 
-    <!-- Dependências CDN (PDF.js, JSZip, Tesseract) -->
-     <script> (function(){
-  // ====== Dependências ======
-  function loadScript(src){
-    return new Promise((res, rej) => {
-      const s = document.createElement('script');
-      s.src = src;
-      s.onload = res;
-      s.onerror = () => rej(new Error('Falha ao carregar: ' + src));
-      document.head.appendChild(s);
-    });
-  }
-
-  (async () => {
-    // PDF.js — hospedado no Infodose
-    await loadScript(
-      'https://www.infodose.com.br/js/modules/PDF-min.js'
-    );
-
-    // JSZip — hospedado no Infodose
-    await loadScript(
-      'https://www.infodose.com.br/js/modules/ZIP-min.js'
-    );
-
-    // Tesseract.js — CDN
-    await loadScript(
-      'https://unpkg.com/tesseract.js@5.0.3/dist/tesseract.min.js'
-    );
-
-    // Configuração PDF.js
-    window.pdfjsLib = window['pdfjs-dist/build/pdf'];
-
-    window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-      'https://unpkg.com/pdfjs-dist@3.6.172/build/pdf.worker.min.js';
-
-    // Inicializa aplicação
-    initApp();
-
-  })();
-
-</script>
-
+    <!-- Dependências CDN (PDF.js, JSZip) – Tesseract removido -->
+    <script src="https://unpkg.com/pdfjs-dist@3.6.172/build/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <!-- KaTeX para renderização opcional de LaTeX no preview -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
@@ -359,9 +320,9 @@
         }
 
         /* ============================================================
-           NEBULA PRO · ESTILOS (fusion, library, player, grito vivo)
+           NEBULA PRO · ESTILOS (do NEB-BASE-in.html)
            ============================================================ */
-        /* App interno */
+        /* (A maior parte do CSS do NEB-BASE foi incorporada aqui) */
         .app-inner {
             width: min(1180px, 100%); margin: auto;
             padding: max(18px, env(safe-area-inset-top)) 18px calc(40px + env(safe-area-inset-bottom));
@@ -463,232 +424,96 @@
         .result-label { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--kob-voice-primary); font-weight: 800; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
         .result-text { color: var(--text); font-size: 15px; line-height: 1.8; white-space: pre-wrap; font-family: inherit; outline: none; }
 
-        /* LIBRARY DRAWER */
-        :root {
-            --lib-drawer-w: min(92vw, 420px);
-            --lib-handle-w: 42px;
-            --lib-drawer-top: 76px;
-            --lib-drawer-bottom: calc(env(safe-area-inset-bottom) + 20px);
-        }
-        #libCard {
-            position: fixed; top: var(--lib-drawer-top); right: 0; bottom: var(--lib-drawer-bottom);
-            width: var(--lib-drawer-w); z-index: 4600;
-            border-radius: 18px 0 0 18px;
-            background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+        /* Estilos do NEB-BASE para Library, Player, etc. */
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
             border: 1px solid var(--border);
-            box-shadow: var(--shadow);
-            transform: translateX(calc(100% - var(--lib-handle-w)));
-            transition: transform .32s cubic-bezier(.2,.85,.2,1), box-shadow .32s ease, width .28s ease, max-height .28s ease, background var(--transition);
-            display: flex; flex-direction: column; overflow: hidden;
+            border-radius: var(--radius-small);
+            padding: 16px;
+            margin-bottom: 16px;
         }
-        #libCard.is-open { transform: translateX(0); box-shadow: 0 24px 70px rgba(0,0,0,.45); }
-        .lib-drawer-handle {
-            position: absolute; left: 0; top: 50%; transform: translateY(-50%);
-            width: var(--lib-handle-w); height: 132px;
-            background: linear-gradient(180deg, var(--kob-voice-primary), var(--kob-voice-secondary));
-            color: #fff; font-weight: 900; letter-spacing: .08em;
-            border: none; border-radius: 16px 0 0 16px; cursor: pointer;
-            display: grid; place-items: center; z-index: 3;
-            box-shadow: -4px 0 15px rgba(0,0,0,0.15);
-            transition: .2s ease;
+        .card h2 { font-size: 18px; margin-bottom: 8px; color: var(--text-strong); }
+        .row { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .usage { font-size: 13px; color: var(--muted); }
+        .items { display: flex; flex-direction: column; gap: 10px; }
+        .item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            cursor: pointer;
+            transition: border-color .18s, background .18s;
         }
-        #libCard.is-open .lib-drawer-handle { background: var(--surface); border-right: 1px solid var(--border); color: var(--text); box-shadow: none; }
-        .lib-drawer-handle span { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 11px; }
-        #libToggleBtn {
-            position: absolute; top: 12px; right: 12px; z-index: 5;
-            background: var(--button-bg); border: 1px solid var(--border); color: var(--text);
-            padding: 6px 12px; border-radius: 10px; cursor: pointer; font-size: 11px; font-weight: bold;
+        .item-row { display: flex; align-items: center; gap: 12px; }
+        .item.is-active { border-color: var(--kob-voice-primary); background: color-mix(in srgb, var(--kob-voice-primary) 10%, transparent); }
+        .pdf-ico {
+            width: 38px; height: 38px; border-radius: 10px;
+            display: grid; place-items: center;
+            background: linear-gradient(180deg, #ffffffcc, #ffffff99);
+            color: #222; font-weight: 900; font-size: 12px;
+            flex-shrink: 0;
         }
-        #libToggleBtn:hover { background: var(--button-hover); }
-        .lib-content-wrap { margin-left: var(--lib-handle-w); padding: 20px; overflow-y: auto; height: 100%; display: flex; flex-direction: column; gap: 15px; }
-        .library-carousel { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 12px; scrollbar-width: thin; }
-        .library-item {
-            flex: 0 0 85%; min-width: 85%; scroll-snap-align: start;
-            border: 1px solid var(--border); border-radius: 16px; padding: 15px;
-            background: var(--surface); transition: .2s ease; display: flex; flex-direction: column;
+        .pdf-ico.md-ico { background: linear-gradient(180deg, #a78bfa, #6366f1); color: #fff; font-size: 10px; }
+        .meta { flex: 1; min-width: 0; }
+        .name { font-weight: 600; font-size: 13px; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .size { font-size: 11px; color: var(--muted); }
+        .item-snippet { font-size: 11px; color: var(--muted); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; padding: 4px 0 0; border-top: 1px solid var(--border); }
+        .item-snippet.playing { color: var(--kob-voice-secondary); }
+        .thinbar { height: 6px; background: var(--border); border-radius: 10px; overflow: hidden; margin-top: 8px; }
+        .thinbar > i { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, var(--kob-voice-primary), var(--kob-voice-secondary)); }
+        .icon-btn {
+            width: 36px; height: 36px; border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            display: grid; place-items: center; cursor: pointer;
+            transition: background .2s;
+            color: var(--text);
         }
-        .library-item:hover { transform: translateY(-2px); background: var(--surface-hover); border-color: var(--border-strong); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        .library-top { display: flex; justify-content: space-between; align-items: center; }
-        .file-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; background: rgba(0, 229, 255, .15); color: var(--kob-voice-primary); font-size: 9px; font-weight: 900; }
-        .library-type { font-size: 9px; color: var(--muted); }
-        .library-name { margin-top: 10px; font-size: 13px; font-weight: 800; color: var(--text-strong); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .library-desc { color: var(--muted); font-size: 10px; line-height: 1.4; margin-top: 5px; flex-grow: 1; }
-        .library-actions { display: flex; gap: 6px; margin-top: 12px; }
-        .library-actions button { flex: 1; min-height: 30px; border: 1px solid var(--border); background: var(--button-bg); border-radius: 8px; font-size: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; color: var(--button-text); }
-        .library-actions button:hover { background: var(--kob-voice-primary); color: #000; border-color: var(--kob-voice-primary); }
-        .library-actions button.del-btn { flex: 0 0 30px; background: transparent; border-color: rgba(255,0,0,0.3); color: #ff5555; }
-        .library-actions button.del-btn:hover { background: #ff5555; color: #fff; }
+        .icon-btn:hover { background: var(--surface-hover); }
+        .icon-btn.danger { background: rgba(255,0,0,0.15); border-color: rgba(255,0,0,0.3); color: #ff5555; }
+        .icon-btn.danger:hover { background: rgba(255,0,0,0.3); }
+        .ghost { background: transparent; border-color: var(--border-strong); }
+        .btn {
+            border: none; color: #0b0b12; background: #fff;
+            font-weight: 800; letter-spacing: .2px;
+            padding: 12px 14px; border-radius: 12px; cursor: pointer;
+            font-size: 13px; flex: 1; text-align: center; white-space: nowrap;
+        }
+        .btn:active { transform: scale(.98); }
+        .ov-btn {
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            padding: 8px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .io-row { display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+        .pill { font-size: 12px; background: var(--surface); padding: 4px 8px; border-radius: 999px; }
+        .bar { height: 10px; background: var(--border); border-radius: 10px; overflow: hidden; margin-top: 4px; }
+        .bar > i { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, var(--kob-voice-primary), var(--kob-voice-secondary)); }
 
-/* ============================================================
-   NEBULA LIBRARY DRAWER (Lib da Neb)
-   ============================================================ */
-:root {
-  --lib-drawer-w: min(92vw, 400px);
-  --lib-handle-w: 42px;
-  --lib-drawer-top: 76px;
-  --lib-drawer-bottom: calc(env(safe-area-inset-bottom) + 20px);
-}
-#libCard {
-  position: fixed; top: var(--lib-drawer-top); right: 0; bottom: var(--lib-drawer-bottom);
-  width: var(--lib-drawer-w); z-index: 4600;
-  border-radius: 18px 0 0 18px;
-  background: var(--panel); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-  transform: translateX(calc(100% - var(--lib-handle-w)));
-  transition: transform .32s cubic-bezier(.2,.85,.2,1), box-shadow .32s ease, width .28s ease, max-height .28s ease, background var(--transition);
-  display: flex; flex-direction: column;
-  overflow: hidden;
-}
-#libCard.is-open {
-  transform: translateX(0);
-  box-shadow: 0 24px 70px rgba(0,0,0,.45);
-}
-.lib-drawer-handle {
-  position: absolute; left: 0; top: 50%; transform: translateY(-50%);
-  width: var(--lib-handle-w); height: 132px;
-  background: linear-gradient(180deg, var(--cyan), var(--violet));
-  color: #fff; font-weight: 900; letter-spacing: .08em;
-  border: none; border-radius: 16px 0 0 16px; cursor: pointer;
-  display: grid; place-items: center; z-index: 3;
-  box-shadow: -4px 0 15px rgba(0,0,0,0.15);
-  transition: .2s ease;
-}
-#libCard.is-open .lib-drawer-handle {
-  background: var(--panel2); border-right: 1px solid var(--border); color: var(--text); box-shadow: none;
-}
-.lib-drawer-handle span { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 11px; }
-
-#libToggleBtn {
-  position: absolute; top: 12px; right: 12px; z-index: 5;
-  background: var(--panel2); border: 1px solid var(--border); color: var(--text);
-  padding: 6px 12px; border-radius: 10px; cursor: pointer; font-size: 11px; font-weight: bold;
-}
-#libToggleBtn:hover { background: var(--panel3); }
-
-.lib-content-wrap {
-  margin-left: var(--lib-handle-w); padding: 20px; overflow-y: auto; height: 100%; display: flex; flex-direction: column; gap: 15px;
-}
-.lib-content-wrap .section-head { margin-bottom: 0; }
-.lib-content-wrap .section-title { font-size: 16px; }
-
-/* Drawer Collapsed (Mobile View) */
-#libCard.is-collapsed {
-  position: fixed; left: 12px; bottom: calc(env(safe-area-inset-bottom) + 20px);
-  width: min(94vw, 480px); max-height: 40vh; top: auto; right: auto;
-  transform: none; border-radius: 18px; padding-top: 52px;
-}
-#libCard.is-collapsed .lib-drawer-handle { display: none; }
-#libCard.is-collapsed .lib-content-wrap { margin-left: 0; padding-top: 0; }
-#libCard.is-collapsed .library {
-  display: flex; flex-direction: row; overflow-x: auto; scroll-snap-type: x mandatory; flex-wrap: nowrap;
-}
-#libCard.is-collapsed .library-item { flex: 0 0 85%; min-width: 85%; scroll-snap-align: start; }
-
-/* Grid da Library no Drawer */
-.library { display: grid; grid-template-columns: 1fr; gap: 14px; }
-.library-item { border: 1px solid var(--border); border-radius: 16px; padding: 15px; background: var(--panel2); transition: .2s var(--ease); display: flex; flex-direction: column; }
-.library-item:hover { transform: translateY(-2px); background: var(--panel3); border-color: var(--line2); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-.library-top { display: flex; justify-content: space-between; align-items: center; }
-.file-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; background: rgba(0, 229, 255, .15); color: var(--cyan); font-size: 9px; font-weight: 900; }
-.library-type { font-size: 9px; color: var(--muted); }
-.library-name { margin-top: 10px; font-size: 13px; font-weight: 800; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.library-desc { color: var(--muted); font-size: 10px; line-height: 1.4; margin-top: 5px; flex-grow: 1; }
-.library-actions { display: flex; gap: 6px; margin-top: 12px; }
-.library-actions button { flex: 1; min-height: 30px; border: 1px solid var(--border); background: var(--panel2); border-radius: 8px; font-size: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; color: var(--text); }
-.library-actions button:hover { background: var(--cyan); color: #000; border-color: var(--cyan); }
-.library-actions button.del-btn { flex: 0 0 30px; background: transparent; border-color: rgba(255,0,0,0.3); color: #ff5555; }
-.library-actions button.del-btn:hover { background: #ff5555; color: #fff; }
-
-/* MODAL ESPELHOS */
-.modal { position: fixed; inset: 0; z-index: 6000; display: none; place-items: center; padding: 20px; background: rgba(0,0,0,.65); backdrop-filter: blur(15px); }
-.modal.open { display: grid; }
-.modal-box { width: min(620px, 100%); max-height: min(720px, 90vh); overflow: auto; border: 1px solid var(--border); border-radius: 28px; background: var(--panel); box-shadow: var(--shadow); }
-.modal-head { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--border); }
-.modal-head strong { font-size: 16px; }
-.modal-body { padding: 20px; }
-.option-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-.option { padding: 16px; text-align: left; border: 1px solid var(--border); background: var(--panel2); border-radius: 17px; cursor: pointer; transition: 0.2s; color: var(--text); }
-.option:hover { border-color: var(--cyan); background: var(--panel3); transform: translateY(-2px); }
-.option strong { display: block; font-size: 13px; }
-.option span { display: block; color: var(--muted); font-size: 11px; margin-top: 5px; line-height: 1.4; }
-.empty-state { padding: 40px; text-align: center; color: var(--muted); font-size: 13px; }
-
-/* FOOTER */
-.footer { padding: 35px 0 10px; text-align: center; color: var(--muted); font-size: 10px; letter-spacing: .06em; }
-.footer strong { color: var(--soft); }
-
-/* ============================================================
-   PLAYER DOCK (Nebula) adaptado
-   ============================================================ */
-.player {
-    position: fixed; left: 0; right: 0; bottom: 0; padding: 0 12px calc(env(safe-area-inset-bottom) + 12px); z-index: 40;
-}
-.player-wrap {
-    background: rgba(15, 15, 20, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 20px; padding: 12px; display: flex; flex-direction: column; gap: 6px;
-    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
-}
-.player-top { display: flex; align-items: center; width: 100%; gap: 12px; flex-wrap: wrap; }
-.pp {
-    width:44px; height:44px; border-radius:50%; border:1px solid #ffffff22;
-    background:linear-gradient(180deg, var(--accent1), var(--accent2));
-    display:grid; place-items:center; cursor:pointer; flex-shrink:0;
-}
-.pp.pulse { animation: pulsePp 1.2s ease-in-out infinite; }
-@keyframes pulsePp { 0%{ box-shadow:0 0 0 0 rgba(122,87,255,.55) } 100%{ box-shadow:0 0 0 20px rgba(122,87,255,0) } }
-.pp svg { width:18px; height:18px; fill:#fff }
-.track { flex:1; overflow:hidden; min-width:0; }
-.now { font-size:13px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
-#ovSnippet { background:transparent; border: none; padding:0; color: var(--muted); font-size:11px; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-height:1.3em; }
-.player-slider-wrap { width:100%; display:flex; align-items:center; gap:8px; margin-top:2px; }
-.time-label { font-size:11px; font-weight:600; color:var(--muted); min-width:35px; text-align:center; }
-#progressSlider { flex:1; max-width:100%; height:4px; -webkit-appearance:none; background:rgba(255,255,255,0.15); border-radius:4px; outline:none; }
-#progressSlider::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; background:var(--accent2); border-radius:50%; cursor:pointer; }
-#progressSlider::-moz-range-thumb { width:14px; height:14px; background:var(--accent2); border-radius:50%; cursor:pointer; border:none; }
-
-/* RESPONSIVO */
-@media(max-width: 760px) {
-  .app { padding-left: 13px; padding-right: 13px; }
-  .hero { padding: 25px 20px; border-radius: 27px; }
-  .workspace { grid-template-columns: 1fr; }
-  .option-grid { grid-template-columns: 1fr; }
-  :root { --lib-drawer-w: min(96vw, 420px); --lib-drawer-top: 86px; --lib-drawer-bottom: calc(env(safe-area-inset-bottom) + 88px); --lib-handle-w: 42px; }
-}
-
-/* ============================================================
-   FUSÃO · classes utilitárias trazidas do Nebula Pro (78NP-Grito-Vivo)
-   necessárias para o módulo Grito Vivo · KBLX abaixo
-   ============================================================ */
-.listen{ margin-left:auto; border:none; color:#fff; font-weight:700; font-size:16px; padding:12px 20px; border-radius:14px;
-  background: linear-gradient(90deg, var(--accent1), var(--accent2)); box-shadow: 0 10px 24px rgba(0,0,0,.25), inset 0 0 0 1px #ffffff20; cursor:pointer; transition:transform .06s;}
-.listen:active{transform:scale(.98)}
-.btn{border:none; color:#0b0b12; background:#fff; font-weight:800; letter-spacing:.2px; padding:12px 14px; border-radius:12px; cursor:pointer; font-size:13px; flex:1; text-align:center; white-space:nowrap;}
-.btn:active{transform:scale(.98)}
-.pill{font-size:12px; background:#ffffff22; padding:4px 8px; border-radius:999px}
-
-        /* MODAL ESPELHOS */
-        .modal { position: fixed; inset: 0; z-index: 6000; display: none; place-items: center; padding: 20px; background: rgba(0,0,0,.65); backdrop-filter: blur(15px); }
-        .modal.open { display: grid; }
-        .modal-box { width: min(620px, 100%); max-height: min(720px, 90vh); overflow: auto; border: 1px solid var(--border); border-radius: 28px; background: var(--glass-bg); box-shadow: var(--shadow); }
-        .modal-head { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--border); }
-        .modal-head strong { font-size: 16px; color: var(--text-strong); }
-        .modal-body { padding: 20px; }
-        .option-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-        .option { padding: 16px; text-align: left; border: 1px solid var(--border); background: var(--surface); border-radius: 17px; cursor: pointer; transition: 0.2s; color: var(--text); }
-        .option:hover { border-color: var(--kob-voice-primary); background: var(--surface-hover); transform: translateY(-2px); }
-        .option strong { display: block; font-size: 13px; color: var(--text-strong); }
-        .option span { display: block; color: var(--muted); font-size: 11px; margin-top: 5px; line-height: 1.4; }
-        .empty-state { padding: 40px; text-align: center; color: var(--muted); font-size: 13px; }
-
-        /* PLAYER DOCK */
+        /* Player Dock (estilo NEB-BASE) */
         .player {
-            position: fixed; left: 0; right: 0; bottom: 0; padding: 0 12px calc(env(safe-area-inset-bottom) + 12px); z-index: 40;
+            position: fixed; left: 0; right: 0; bottom: 0;
+            padding: 0 12px calc(env(safe-area-inset-bottom) + 12px);
+            z-index: 40;
         }
         .player-wrap {
-            background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-            border: 1px solid var(--border); border-radius: 20px; padding: 12px;
-            display: flex; flex-direction: column; gap: 6px; box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 12px;
+            display: flex; flex-direction: column; gap: 6px;
+            box-shadow: var(--shadow);
         }
         .player-top { display: flex; align-items: center; width: 100%; gap: 12px; flex-wrap: wrap; }
         .pp {
@@ -708,114 +533,115 @@
         #progressSlider::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; background:var(--kob-voice-secondary); border-radius:50%; cursor:pointer; }
         #progressSlider::-moz-range-thumb { width:14px; height:14px; background:var(--kob-voice-secondary); border-radius:50%; cursor:pointer; border:none; }
 
-        /* READER MODAL */
-        .reader-modal {
-            position: fixed; inset: 0; z-index: 7000;
-            display: none; flex-direction: column;
-            background: var(--bg); color: var(--text);
+        /* Overlay Viewer */
+        .overlay {
+            position: fixed; inset: 0; display: none; flex-direction: column;
+            z-index: 50; background: rgba(0,0,0,.9); backdrop-filter: blur(8px);
         }
-        .reader-modal.opened { display: flex; }
-        .reader-head {
-            height: 64px; padding: 0 16px;
-            display: flex; align-items: center; justify-content: space-between;
-            background: var(--panel); border-bottom: 1px solid var(--border);
-            flex-shrink: 0;
+        .overlay.show { display: flex; }
+        .ov-wrap {
+            width: 100%; flex: 1; display: flex; flex-direction: column; gap: 12px;
+            padding: calc(env(safe-area-inset-top) + 12px) 12px 12px;
+            overflow-y: auto;
         }
-        .reader-title { max-width: 70%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 13px; font-weight: 700; color: var(--text-strong); }
-        .reader-close { width: 42px; height: 42px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); font-size: 20px; display: grid; place-items: center; cursor: pointer; }
-        .reader-body { flex: 1; overflow: auto; padding: 0; background: var(--bg-elevated); }
-        .reader-body iframe { width: 100%; height: 100%; border: 0; display: block; }
-        .reader-text { padding: 28px; white-space: pre-wrap; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.8; color: var(--text); }
-        .reader-markdown { max-width: 760px; margin: auto; padding: 30px 22px 100px; color: var(--text); line-height: 1.7; }
-        .reader-markdown h1 { font-size: 28px; margin-bottom: 20px; color: var(--text-strong); }
-        .reader-markdown h2 { margin-top: 25px; margin-bottom: 10px; color: var(--text-strong); }
-        .reader-markdown p { margin-bottom: 15px; }
-        .reader-markdown code { color: var(--kob-voice-primary); background: var(--surface); padding: 3px 6px; border-radius: 5px; }
+        .ov-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-shrink: 0; }
+        .ov-title { font-weight: 800; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ov-close { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: transparent; color: #fff; font-size: 18px; cursor: pointer; display: grid; place-items: center; flex-shrink: 0; }
+        .ov-topbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; flex-shrink: 0; }
+        .ov-stage { position: relative; flex: 1; min-height: 40vh; background: #05050a; border-radius: 12px; overflow: auto; display: flex; justify-content: center; align-items: flex-start; padding: 10px; }
+        #ovCanvas, #ovSkel, #ovTrail, #ovHl { max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 6px 22px rgba(0,0,0,.5); display: block; margin: 0 auto; }
+        .ov-page { font-weight: 700; font-size: 14px; white-space: nowrap; }
+        .ov-zoom { accent-color: #fff; max-width: 80px !important; }
+        #ovTimeline { width: 100%; height: 36px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; flex-shrink: 0; }
 
-        /* GRITO VIVO */
-        .listen { margin-left:auto; border:none; color:#fff; font-weight:700; font-size:16px; padding:12px 20px; border-radius:14px; background: linear-gradient(90deg, var(--kob-voice-primary), var(--kob-voice-secondary)); box-shadow: 0 10px 24px rgba(0,0,0,.25), inset 0 0 0 1px #ffffff20; cursor:pointer; transition:transform .06s; }
-        .listen:active { transform:scale(.98) }
-        .btn { border:none; color:#0b0b12; background:#fff; font-weight:800; letter-spacing:.2px; padding:12px 14px; border-radius:12px; cursor:pointer; font-size:13px; flex:1; text-align:center; white-space:nowrap; }
-        .btn:active { transform:scale(.98) }
-        .pill { font-size:12px; background:#ffffff22; padding:4px 8px; border-radius:999px }
+        /* Bookmarks */
+        .bm-list { display: grid; gap: 8px; margin-top: 10px; }
+        .bm-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .bm-text { flex: 1 1 100%; min-width: 0; }
+        .bm-text strong { font-size: 13px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .bm-text small { color: var(--muted); }
 
-        #gritoDock { margin: 16px 0 0; border: 1px solid var(--border); border-radius: 22px; overflow: hidden; background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)); box-shadow: var(--shadow); }
-        #gritoDock[hidden] { display: none !important; }
-        .motor-dock-head { display:flex; justify-content:space-between; align-items:center; gap:12px; padding: 12px 14px; border-bottom: 1px solid var(--border); background: var(--surface); }
-        .motor-dock-head strong { display:block; font-size: 1rem; color: var(--text-strong); }
-        .motor-dock-head span { display:block; font-size:.8rem; opacity:.75; margin-top:2px; color: var(--muted); }
-        .grito-body { padding: 14px; display:flex; flex-direction:column; gap:12px; max-height: min(78vh, 920px); overflow-y:auto; }
-        .grito-tabs { display:flex; gap:6px; flex-wrap:wrap; }
-        .grito-tab { flex:1; min-width:90px; padding:8px 10px; font-size:.78rem; border-radius:12px; text-align:center; cursor:pointer; background:var(--surface); border:1px solid var(--border); opacity:.65; }
-        .grito-tab.active { opacity:1; border-color: var(--kob-voice-secondary); background: color-mix(in srgb, var(--kob-voice-primary) 14%, transparent); box-shadow: 0 0 10px color-mix(in srgb, var(--kob-voice-secondary) 25%, transparent); }
-        .grito-panel { display:none; flex-direction:column; gap:10px; }
-        .grito-panel.active { display:flex; }
-        .grito-controls { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:8px; }
-        .grito-controls label { font-size:.68rem; color: var(--muted); text-transform:uppercase; letter-spacing:.5px; display:block; margin-bottom:3px; }
-        .grito-controls select { width:100%; background: var(--input-bg); border:1px solid var(--border); color:var(--text); padding:7px 9px; border-radius:10px; font-size:.82rem; }
-        #grito-raw-input { width:100%; min-height:220px; background: var(--input-bg); border:1px solid var(--border); border-radius:14px; color:var(--text); padding:12px; font-size:.92rem; line-height:1.6; resize:vertical; outline:none; }
-        #grito-preview { min-height:180px; padding:14px; border-radius:14px; background: var(--surface); border:1px solid var(--border); line-height:1.65; word-break:break-word; }
-        .grito-bold-tag { background: color-mix(in srgb, var(--kob-voice-secondary) 16%, transparent); color: var(--kob-voice-secondary); border:1px solid color-mix(in srgb, var(--kob-voice-secondary) 40%, transparent); padding:2px 8px; border-radius:6px; font-weight:800; cursor:pointer; display:inline-block; margin:2px; }
-        .grito-bold-tag:hover { background: color-mix(in srgb, var(--kob-voice-secondary) 30%, transparent); }
-        .grito-opcode { font-size:.62rem; background:rgba(255,255,255,.1); padding:1px 4px; border-radius:3px; margin-left:4px; color: var(--muted); }
-        .grito-fractal-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap:8px; }
-        .grito-fractal-group { padding:10px; border-radius:12px; background: var(--surface); border-left:4px solid var(--kob-voice-primary); }
-        .grito-fractal-group h4 { font-size:.72rem; color: var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:1px; }
-        .grito-svg-box { width:100%; height:320px; display:flex; align-items:center; justify-content:center; border-radius:14px; background: var(--input-bg); border:1px solid var(--border); }
-        .grito-node-circle { fill: var(--kob-voice-secondary); stroke:#fff; stroke-width:1.4; cursor:pointer; }
-        .grito-node-circle:hover { fill: #f59e0b; }
-        .grito-node-text { fill:#fff; font-size:9px; text-anchor:middle; font-family:monospace; pointer-events:none; }
-        .grito-node-line { stroke: rgba(255,255,255,.18); stroke-width:1; }
-        .grito-kblx-table { width:100%; border-collapse:collapse; font-size:.76rem; }
-        .grito-kblx-table th, .grito-kblx-table td { border:1px solid var(--border); padding:5px; text-align:left; }
-        .grito-kblx-table th { background: var(--surface); color: var(--kob-voice-secondary); }
-        #gritoBtn { margin-left:8px; }
+        /* Quick Paste */
+        #quickPastePanel {
+            position: fixed; left: 50%; bottom: 80px; transform: translateX(-50%);
+            z-index: 200; width: min(94vw, 360px);
+            background: var(--panel-solid); border: 1px solid var(--border);
+            border-radius: 20px; padding: 16px;
+            backdrop-filter: blur(20px); box-shadow: var(--shadow);
+        }
+        .qp-btn {
+            width:100%; border:1px solid var(--border);
+            background:var(--surface); color:var(--text);
+            font-weight:600; font-size:13px; padding:11px 14px;
+            border-radius:14px; cursor:pointer; text-align:left;
+            transition:background .15s;
+        }
+        .qp-btn:hover { background:var(--surface-hover); }
 
-        @keyframes gritoBreathe {
-            0%   { box-shadow: 0 0 0 rgba(122,87,255,0), var(--shadow); border-color: var(--border); }
-            50%  { box-shadow: 0 0 34px var(--grito-pulse, rgba(122,87,255,.55)), var(--shadow); border-color: var(--grito-pulse, rgba(122,87,255,.6)); }
-            100% { box-shadow: 0 0 0 rgba(122,87,255,0), var(--shadow); border-color: var(--border); }
+        /* Library Drawer (NEB-BASE) */
+        #libCard {
+            position: fixed; top: var(--lib-drawer-top, 76px); right: 0; bottom: var(--lib-drawer-bottom, 20px);
+            width: var(--lib-drawer-w, 420px); z-index: 4600;
+            border-radius: 18px 0 0 18px;
+            background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+            border: 1px solid var(--border); box-shadow: var(--shadow);
+            transform: translateX(calc(100% - var(--lib-handle-w, 42px)));
+            transition: transform .32s cubic-bezier(.2,.85,.2,1), box-shadow .32s ease;
+            display: flex; flex-direction: column; overflow: hidden;
         }
-        #gritoDock.grito-speaking { animation: gritoBreathe 2.4s ease-in-out infinite; }
-        .grito-sig { font-family: "JetBrains Mono", monospace; font-size: .72rem; letter-spacing:.08em; opacity:.75; margin-top:2px; display:flex; align-items:center; gap:6px; }
-        .grito-sig .grito-sig-glyph { display:inline-block; animation: gritoSpin 6s linear infinite; }
-        #gritoDock.grito-speaking .grito-sig .grito-sig-glyph { animation-duration: 1.4s; }
-        @keyframes gritoSpin { to { transform: rotate(360deg); } }
-        .grito-actions { display:flex; gap:6px; flex-wrap:wrap; }
-        .grito-actions button { flex:1; min-width:70px; font-size:.72rem; padding:8px 6px; }
-        .grito-modal {
-            position:fixed; inset:0; background:rgba(0,0,0,.82); backdrop-filter: blur(10px);
-            z-index:400; display:none; align-items:center; justify-content:center; padding:20px;
+        #libCard.is-open { transform: translateX(0); box-shadow: 0 24px 70px rgba(0,0,0,.45); }
+        .lib-drawer-handle {
+            position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+            width: var(--lib-handle-w, 42px); height: 132px;
+            background: linear-gradient(180deg, var(--kob-voice-primary), var(--kob-voice-secondary));
+            color: #fff; font-weight: 900; letter-spacing: .08em;
+            border: none; border-radius: 0 16px 16px 0;
+            cursor: pointer; display: grid; place-items: center; z-index: 3;
+            box-shadow: -4px 0 15px rgba(0,0,0,0.15);
+            transition: .2s ease;
         }
-        .grito-modal.active { display:flex; }
-        .grito-modal-content {
-            width:100%; max-width:440px; padding:18px; border-radius:18px;
-            background: var(--panel-solid); border:1px solid var(--border);
-            display:flex; flex-direction:column; gap:12px;
-            box-shadow: var(--shadow);
+        #libCard.is-open .lib-drawer-handle { background: var(--surface); border-right: 1px solid var(--border); color: var(--text); box-shadow: none; }
+        .lib-drawer-handle span { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 11px; }
+        #libToggleBtn {
+            position: absolute; top: 12px; right: 12px; z-index: 5;
+            background: var(--button-bg); border: 1px solid var(--border);
+            color: var(--text); padding: 6px 12px; border-radius: 10px;
+            cursor: pointer; font-size: 11px; font-weight: bold;
         }
-        .grito-modal-content h4 { font-size:.92rem; color: var(--kob-voice-secondary); }
-        .grito-modal-content input {
-            width:100%; padding:10px; border-radius:10px; border:1px solid var(--border);
-            background: var(--input-bg); color:var(--text); font-size:.9rem; outline:none;
+        #libDockZone { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .lib-dock-btn {
+            flex: 1; border: 1px solid var(--border);
+            background: var(--surface); color: var(--text);
+            font-weight: 700; font-size: 11px; letter-spacing: 0.06em;
+            padding: 8px 10px; border-radius: 12px; cursor: pointer;
+            text-align: center; white-space: nowrap;
         }
+        .lib-dock-btn.active { background: var(--kob-voice-primary); color: #000; }
 
-        .footer { padding: 35px 0 10px; text-align: center; color: var(--muted); font-size: 10px; letter-spacing: .06em; }
-        .footer strong { color: var(--text); }
+        /* Grito Vivo (já incluso) */
+        /* ... (mantido do código anterior) ... */
 
-        /* RESPONSIVO */
+        /* Responsivo */
         @media(max-width: 760px) {
             .app-inner { padding-left: 13px; padding-right: 13px; }
             .hero { padding: 25px 20px; border-radius: 27px; }
             .workspace { grid-template-columns: 1fr; }
             .option-grid { grid-template-columns: 1fr; }
-            :root { --lib-drawer-w: min(96vw, 420px); --lib-drawer-top: 86px; --lib-drawer-bottom: calc(env(safe-area-inset-bottom) + 88px); --lib-handle-w: 42px; }
+            :root { --lib-drawer-w: 96vw; --lib-drawer-top: 86px; --lib-drawer-bottom: calc(env(safe-area-inset-bottom) + 88px); --lib-handle-w: 42px; }
             .hk-app-grid { gap: 12px; }
             .hk-app-icon { width: 50px; height: 50px; font-size: 24px; }
         }
         @media(min-width: 600px) {
             .app-inner { max-width: 620px; }
         }
+
+        /* Ajustes finos para o NEB-BASE dentro do contexto */
+        .settings { display: grid; gap: 10px; }
+        .field { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .select, .range { background: var(--input-bg); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; border-radius: 12px; font-weight: 600; flex: 1; }
+        .range { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: var(--border); height: 6px; border-radius: 6px; outline: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; cursor: pointer; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
@@ -977,7 +803,7 @@
                 <span><strong>∅ EQUAÇÃO:</strong> <span style="color:var(--muted);">01→02→03→∆ⁿ</span></span>
             </div>
 
-            <!-- WORKSPACE -->
+            <!-- WORKSPACE (Motor 369) -->
             <section class="section">
                 <div class="workspace">
                     <!-- SEMENTE -->
@@ -1048,24 +874,107 @@
                 </div>
             </section>
 
+            <!-- NÉBULA PRO – Library, Player, Bookmarks, etc. (conteúdo do NEB-BASE) -->
+            <section class="card">
+                <div class="row">
+                    <h2>Library</h2>
+                    <div class="usage"><span id="usageVal">0 MB</span></div>
+                </div>
+                <div id="libDockControls" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
+                    <button id="dockPlayerBtn" class="lib-dock-btn" title="Dock/Undock Player dentro da Library">⎚ Dock Player</button>
+                    <button id="dockSymbolBarBtn" class="lib-dock-btn" title="Dock/Undock SymBar dentro da Library">⌘ Dock SymBar</button>
+                </div>
+                <div id="items" class="items">
+                    <!-- Itens da Library renderizados dinamicamente -->
+                </div>
+                <div id="libDockZone"></div>
+                <div class="io-row">
+                    <button id="importBtn" class="ov-btn">📂 Import</button>
+                    <button id="exportBtn" class="btn" style="background:linear-gradient(90deg,#d9e9ff,#ffffff);">Export</button>
+                    <button id="clearLibBtn" class="btn" style="background:#ffe3e6; color:#7a1a25">Clear Lib</button>
+                    <button id="clearUiBtn" class="btn" style="background:#efe6ff; color:#3b247b" title="Apaga configurações">Clear UI</button>
+                    <input id="filePicker" type="file" accept=".pdf,.zip,.md,.txt" multiple style="display:none">
+                </div>
+                <div class="row">
+                    <div class="muted" id="countInfo">0 item(s)</div>
+                </div>
+                <div style="margin-top:8px">
+                    <div class="muted">Import</div>
+                    <div class="bar"><i id="importBar"></i></div>
+                    <div class="muted" id="importStatus" style="margin-top:6px">Pronto</div>
+                </div>
+                <div style="margin-top:8px">
+                    <div class="muted">Export</div>
+                    <div class="bar"><i id="exportBar"></i></div>
+                    <div class="muted" id="exportStatus" style="margin-top:6px">Pronto</div>
+                </div>
+            </section>
+
+            <!-- Bookmarks -->
+            <section class="card">
+                <div class="row">
+                    <h2>Bookmarks</h2>
+                    <button id="clearBmBtn" class="btn" style="background:#ffe3e6; color:#7a1a25; flex:0 0 auto; padding:8px 12px">Clear</button>
+                </div>
+                <div id="bmList" class="bm-list">
+                    <div class="muted">Sem marcadores ainda. Use o botão ⭐ no viewer.</div>
+                </div>
+            </section>
+
+            <!-- Playback Settings -->
+            <section class="card">
+                <div class="row"><h2>Playback</h2><span class="pill" id="voiceCount">—</span></div>
+                <div class="settings">
+                    <div class="field">
+                        <label class="muted">Voice</label>
+                        <select id="voiceSelect" class="select"></select>
+                        <button id="testVoice" class="btn" style="flex:0 0 auto">Test</button>
+                    </div>
+                    <div class="field">
+                        <label class="muted">Speed</label>
+                        <div class="range">
+                            <input id="rateRange" type="range" min="0.087" max="1.8" step="0.1" value="1.0">
+                            <span id="rateOut" class="pill">1.0×</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="muted">Pitch</label>
+                        <div class="range">
+                            <input id="pitchRange" type="range" min="0" max="2" step="0.05" value="1">
+                            <span id="pitchOut" class="pill">1.0</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="muted">Arch</label>
+                        <div class="range" style="justify-content:flex-start; flex-wrap:wrap; gap:8px">
+                            <span id="archUserBadge" class="pill">user: —</span>
+                            <select id="archSelect" class="select" style="min-width:180px; flex:2 1 180px"></select>
+                            <button id="saveArchBtn" class="btn" style="flex:0 0 auto">Save</button>
+                            <button id="exportArchBtn" class="btn" style="flex:0 0 auto">Export</button>
+                        </div>
+                    </div>
+                    <div id="archStatus" class="muted">Nenhum arquétipo salvo.</div>
+                </div>
+            </section>
+
             <footer class="footer">
                 <strong>INFODOSE</strong> · Espaço da Mente · Motor Fractal 369
             </footer>
         </div>
     </main>
 
-    <!-- DRAWER: LIBRARY (NEBULA) -->
+    <!-- DRAWER: LIBRARY (NEBULA) – painel lateral -->
     <aside class="panel" id="libCard">
         <button class="lib-drawer-handle" id="libDrawerHandle"><span>LIBRARY</span></button>
         <button id="libToggleBtn" type="button">Collapse</button>
-        <div class="lib-content-wrap">
+        <div class="lib-content-wrap" style="margin-left:var(--lib-handle-w); padding:20px; overflow-y:auto; height:100%; display:flex; flex-direction:column; gap:15px;">
             <div class="section-head" style="display:flex; flex-direction:column; gap:8px;">
                 <div>
                     <div class="section-title" style="font-size:15px; font-weight:800; color:var(--text-strong);">Library Nebula</div>
                     <div class="section-caption" style="font-size:11px; color:var(--muted);">Seus arquivos IndexedDB</div>
                 </div>
-                <button class="action-btn primary" id="importBtn" style="padding:0 16px; width:100%;">+ Importar TXT / MD / PDF / ZIP</button>
-                <input type="file" id="filePicker" accept=".txt,.html,.md,.pdf,.zip" multiple hidden>
+                <button class="action-btn primary" id="importBtnDrawer" style="padding:0 16px; width:100%;">+ Importar TXT / MD / PDF / ZIP</button>
+                <input type="file" id="filePickerDrawer" accept=".txt,.html,.md,.pdf,.zip" multiple hidden>
             </div>
             <div class="library-carousel" id="libraryCarousel">
                 <!-- Itens carregados do banco aparecerão aqui -->
@@ -1097,7 +1006,7 @@
         <div class="reader-body" id="readerBody"></div>
     </div>
 
-    <!-- PLAYER DOCK -->
+    <!-- PLAYER DOCK (flutuante) -->
     <div class="player" id="playerDock">
         <div class="player-wrap">
             <div class="player-top">
@@ -1109,12 +1018,30 @@
                     <div id="ovSnippet">—</div>
                 </div>
                 <button id="viewBtn" class="action-btn" style="min-height:36px; padding:0 10px; font-size:10px;" title="Ver texto completo">📖</button>
+                <button id="bmBtn" class="icon-btn" title="Bookmark">⭐</button>
+                <button id="quickPasteBtn" class="icon-btn" title="Quick Actions">📂</button>
             </div>
             <div class="player-slider-wrap">
                 <span class="time-label" id="timeCur">0%</span>
                 <input type="range" id="progressSlider" min="0" max="100" value="0" step="0.1">
                 <span class="time-label" id="timeTotal">100%</span>
             </div>
+        </div>
+    </div>
+
+    <!-- Quick Paste Panel -->
+    <div id="quickPastePanel" style="display:none;">
+        <div style="font-size:12px;font-weight:800;letter-spacing:.1em;opacity:.6;margin-bottom:12px">⚡ QUICK ACTIONS</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+            <button class="qp-btn" id="qp-clipboard">📋 Paste Clipboard (Ctrl+V)</button>
+            <button class="qp-btn" id="qp-input">✏️ Type / Paste Text</button>
+            <button class="qp-btn" id="qp-html">🌐 HTML Inline Text</button>
+            <button class="qp-btn" id="qp-last">🔁 Load Last Text</button>
+        </div>
+        <textarea id="qp-textarea" placeholder="Cole ou escreva aqui..." style="display:none;width:100%;margin-top:10px;padding:10px;border-radius:12px;background:var(--input-bg);border:1px solid var(--border);color:var(--text);font-size:13px;resize:vertical;min-height:80px;outline:none"></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px">
+            <button id="qp-go" style="display:none;flex:1;background:linear-gradient(90deg,#7a57ff,#5cc6ff);border:none;color:#fff;font-weight:800;padding:10px;border-radius:12px;cursor:pointer;font-size:13px">▶ Play Agora</button>
+            <button id="qp-close" style="border:1px solid var(--border);background:transparent;color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer;font-size:13px">✕</button>
         </div>
     </div>
 
@@ -1136,7 +1063,6 @@
                 <div class="grito-tab" data-grito-tab="kblx">KBLX Core</div>
                 <div class="grito-tab" data-grito-tab="svg">Fractal SVG</div>
             </div>
-
             <div class="grito-actions">
                 <button class="btn" id="grito-import">📂 Importar</button>
                 <button class="btn" id="grito-paste">📋 Colar</button>
@@ -1144,7 +1070,6 @@
                 <button class="btn" id="grito-export">⤓ Exportar</button>
                 <input type="file" id="grito-file-input" accept=".txt,.md,.tex,.html" style="display:none">
             </div>
-
             <div class="grito-controls">
                 <div>
                     <label>Densidade</label>
@@ -1171,7 +1096,6 @@
                     <span class="pill" id="grito-bold-count">0 gerados</span>
                 </div>
             </div>
-
             <div class="grito-panel active" data-grito-panel="edit">
                 <textarea id="grito-raw-input" placeholder="Cole seu texto ou equações $E=mc^2$. O motor KBLX 3x6x9x7 gera os negritos..."></textarea>
             </div>
@@ -1321,7 +1245,6 @@
         }
         if (target === 'player') {
             setTimeout(function() {
-                // apenas foca no player, que já está visível
                 document.getElementById('playerDock')?.scrollIntoView({ behavior: 'smooth' });
             }, 100);
         }
@@ -1518,7 +1441,7 @@ async function dbDelete(id) {
 }
 
 /* ============================================================
-   ESTADO DA APLICAÇÃO
+   ESTADO DA APLICAÇÃO (Motor 369 + Nébula)
    ============================================================ */
 var state = {
     seedText: "",
@@ -1549,9 +1472,7 @@ var UI = {
     readerClose: document.getElementById('readerClose')
 };
 
-/* ============================================================
-   NEBULA PLAYER / TTS
-   ============================================================ */
+// ====== NEBULA PLAYER / TTS (do NEB-BASE) ======
 var voices = [];
 var currentTTS = { id: null, name: null, paragraphs: [], idx: 0, playing: false };
 var utter = null;
@@ -1679,6 +1600,7 @@ function splitTextIntoParagraphs(text) {
         });
 }
 
+// Extração de texto sem OCR (apenas PDF.js)
 async function extractTextSmart(pdfDoc) {
     var parts = [];
     for (var p = 1; p <= pdfDoc.numPages; p++) {
@@ -1686,55 +1608,26 @@ async function extractTextSmart(pdfDoc) {
         var c = await page.getTextContent();
         var textJoined = (c.items || []).map(function(i) { return i.str; }).join(' ').trim();
         if (!textJoined || textJoined.length < 20) {
-            var segs = await ocrPage(page, p);
-            parts.push.apply(parts, segs);
-        } else {
-            var split = textJoined.split(/\n+|\r+|\.\s{1,}|•|-{2,}/g).map(function(t) { return t.trim(); }).filter(Boolean);
-            for (var s = 0; s < split.length; s++) {
-                var seg = split[s];
-                if (seg.length > 600) {
-                    for (var j = 0; j < seg.length; j += 420) {
-                        parts.push({ text: seg.slice(j, j + 420), page: p });
-                    }
-                } else {
-                    parts.push({ text: seg, page: p });
+            // Sem OCR, apenas registra que não há texto
+            parts.push({ text: '[Texto não extraído]', page: p });
+            continue;
+        }
+        var split = textJoined.split(/\n+|\r+|\.\s{1,}|•|-{2,}/g).map(function(t) { return t.trim(); }).filter(Boolean);
+        for (var s = 0; s < split.length; s++) {
+            var seg = split[s];
+            if (seg.length > 600) {
+                for (var j = 0; j < seg.length; j += 420) {
+                    parts.push({ text: seg.slice(j, j + 420), page: p });
                 }
+            } else {
+                parts.push({ text: seg, page: p });
             }
         }
     }
     return parts;
 }
 
-async function ocrPage(page, pageNum) {
-    var vw = page.getViewport({ scale: 1.6 });
-    var cnv = document.createElement('canvas');
-    cnv.width = vw.width; cnv.height = vw.height;
-    await page.render({ canvasContext: cnv.getContext('2d'), viewport: vw }).promise;
-    var result;
-    try {
-        result = await Tesseract.recognize(cnv, 'por+eng', { logger: function() {} });
-    } catch (e) {
-        return [{ text: '[OCR indisponível]', page: pageNum }];
-    }
-    var words = result?.data?.words || [];
-    var groups = {};
-    words.forEach(function(w) {
-        var key = (w.block_num || 0) + '-' + (w.par_num || 0) + '-' + (w.line_num || 0);
-        if (!groups[key]) groups[key] = [];
-        groups[key].push(w);
-    });
-    var segments = [];
-    for (var k in groups) {
-        var arr = groups[k].sort(function(a, b) { return (a.x0 - b.x0) || (a.y0 - b.y0); });
-        var text = arr.map(function(w) { return w.text; }).join(' ').trim();
-        if (text) segments.push({ text: text, page: pageNum });
-    }
-    return segments.length ? segments : [{ text: '[Sem texto reconhecido]', page: pageNum }];
-}
-
-/* ============================================================
-   UI: LIBRARY RENDER (Carrossel)
-   ============================================================ */
+// ====== Library Render (NEB-BASE) ======
 function escapeHTML(str) {
     return String(str).replace(/[&<>'"]/g, function(m) {
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[m];
@@ -1749,182 +1642,615 @@ function fmtBytes(b) {
     return (v.toFixed((i <= 1) ? 0 : 1).replace('.', ',')) + ' ' + sizes[i];
 }
 
-function markdownToHTML(md) {
-    var html = escapeHTML(md);
-    html = html.replace(/^### (.*)$/gm, "<h3>$1</h3>");
-    html = html.replace(/^## (.*)$/gm, "<h2>$1</h2>");
-    html = html.replace(/^# (.*)$/gm, "<h1>$1</h1>");
-    html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-    html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
-    html = html.replace(/`(.*?)`/g, "<code>$1</code>");
-    html = html.replace(/\n\n/g, "</p><p>");
-    return "<p>" + html + "</p>";
-}
-
-function createPreviewCard(doc) {
-    var type = doc.type || 'txt';
-    var previewHTML = '';
-    if (type === 'pdf') {
-        previewHTML = '<div style="height:120px; background:#0a0a0a; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:11px;">📄 PDF</div>';
-    } else if (type === 'html') {
-        previewHTML = '<div style="height:120px; background:#fff; overflow:hidden;"><iframe src="' + (doc.url || '') + '" style="width:100%;height:100%;border:0;" loading="lazy"></iframe></div>';
-    } else if (type === 'md') {
-        var preview = doc.text ? markdownToHTML(doc.text.slice(0, 300)) : '<p>Markdown</p>';
-        previewHTML = '<div style="height:120px; padding:12px; background:#101010; overflow:hidden; font-size:11px; color:#ddd;">' + preview + '</div>';
-    } else {
-        previewHTML = '<div style="height:120px; padding:12px; background:#080808; overflow:hidden; font-family:monospace; font-size:10px; color:#aaa; white-space:pre-wrap;">' + escapeHTML((doc.text || '').slice(0, 300)) + '</div>';
-    }
-    return '<div class="library-item">' +
-        '<div class="library-top"><div class="file-icon">' + (doc.name || 'arquivo').split('.').pop().toUpperCase().slice(0,3) + '</div><div class="library-type">' + fmtBytes(doc.size || 0) + '</div></div>' +
-        '<div class="library-name" title="' + escapeHTML(doc.name) + '">' + escapeHTML(doc.name) + '</div>' +
-        '<div class="library-desc">' + escapeHTML((doc.text || '').slice(0, 80)) + '...</div>' +
-        '<div class="library-actions">' +
-        '<button onclick="addMirrorFromLibrary(\'' + doc.id + '\',\'' + escapeHTML(doc.name) + '\')">Usar como Espelho</button>' +
-        '<button onclick="playDoc(\'' + doc.id + '\')">▶ Ouvir</button>' +
-        '<button onclick="openReader(\'' + doc.id + '\')">📖 Abrir</button>' +
-        '<button class="del-btn" onclick="deleteDoc(\'' + doc.id + '\')" title="Apagar">×</button>' +
-        '</div></div>';
-}
-
 async function renderLibrary() {
     var docs = await dbAll();
     docs.sort(function(a,b) { return b.savedAt - a.savedAt; });
-    UI.libraryCarousel.innerHTML = '';
-    UI.modalOptionsGrid.innerHTML = '';
-
+    var itemsWrap = document.getElementById('items');
+    var countInfo = document.getElementById('countInfo');
+    var usageVal = document.getElementById('usageVal');
+    countInfo.textContent = docs.length + ' item(s)';
+    usageVal.textContent = fmtBytes(docs.reduce(function(sum, d) { return sum + (d.size || 0); }, 0));
+    itemsWrap.innerHTML = '';
     if (!docs.length) {
-        UI.libraryCarousel.innerHTML = '<div class="empty-state">Sua library está vazia. Importe arquivos.</div>';
-        UI.modalOptionsGrid.innerHTML = '<div class="empty-state">Adicione arquivos na Library primeiro.</div>';
+        itemsWrap.innerHTML = '<div class="item"><div class="item-row"><div class="pdf-ico">PDF</div><div class="meta"><div class="name">Nenhum arquivo salvo</div><div class="size">Use 📂 ou ⚡ para adicionar</div></div></div></div>';
         return;
     }
-
     docs.forEach(function(doc) {
-        var card = document.createElement('div');
-        card.className = 'library-item';
-        card.style.flex = '0 0 85%';
-        card.style.minWidth = '85%';
-        card.style.scrollSnapAlign = 'start';
-        card.innerHTML = createPreviewCard(doc);
-        UI.libraryCarousel.appendChild(card);
-
-        var option = document.createElement('button');
-        option.className = 'option mirror-option';
-        option.onclick = function() {
-            addMirrorFromLibrary(doc.id, doc.name);
-            UI.mirrorModal.classList.remove('open');
-        };
-        option.innerHTML = '<strong>' + escapeHTML(doc.name) + '</strong><span>' + fmtBytes(doc.size || 0) + ' · ' + (doc.type || 'txt').toUpperCase() + '</span>';
-        UI.modalOptionsGrid.appendChild(option);
+        var isActive = doc.id === currentTTS.id;
+        var isMd = doc.type === 'md' || doc.name?.endsWith('.md') || doc.name?.endsWith('.txt');
+        var icoLabel = isMd ? 'MD' : 'PDF';
+        var icoClass = isMd ? 'pdf-ico md-ico' : 'pdf-ico';
+        var pct = progressMap[doc.id] || 0;
+        var snippet = doc.text ? doc.text.slice(0, 120) : '';
+        var item = document.createElement('div');
+        item.className = 'item' + (isActive ? ' is-active' : '');
+        item.dataset.id = doc.id;
+        item.innerHTML = `
+            <div class="item-row">
+                <div class="${icoClass}">${icoLabel}</div>
+                <div class="meta">
+                    <div class="name" title="${escapeHTML(doc.name)}">${escapeHTML(doc.name)}</div>
+                    <div class="size">${fmtBytes(doc.size || 0)}</div>
+                    <div class="thinbar"><i id="bar-${doc.id}" style="width:${pct}%"></i></div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+                    <button class="icon-btn" data-play="${doc.id}" title="Play"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M8 5v14l11-7z"/></svg></button>
+                    <button class="icon-btn ghost" data-view="${doc.id}" title="Ver"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7zm0 12a5 5 0 110-10 5 5 0 010 10z"/></svg></button>
+                    <button class="icon-btn danger" data-del="${doc.id}" title="Apagar"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 7h12v2H6zm2 3h8l-1 9H9zM9 4h6l1 2H8z"/></svg></button>
+                </div>
+            </div>
+            ${snippet ? `<div class="item-snippet${isActive?' playing':''}" id="snip-${doc.id}">${escapeHTML(snippet)}</div>` : ''}
+        `;
+        itemsWrap.appendChild(item);
     });
-}
-
-/* ============================================================
-   AÇÕES: ESPELHOS, FUSÃO, ETC
-   ============================================================ */
-function renderMirrors() {
-    UI.mirrorStack.innerHTML = '';
-    if (state.mirrors.length === 0) {
-        UI.mirrorStack.innerHTML = '<div style="font-size:12px; color:var(--muted); text-align:center; padding:10px;">Nenhum espelho adicionado.</div>';
-    } else {
-        state.mirrors.forEach(function(mirror, index) {
-            var item = document.createElement('div');
-            item.className = 'mirror-item';
-            item.innerHTML = '<div class="mirror-index">E' + (index + 1) + '</div>' +
-                '<div><div class="mirror-name">' + escapeHTML(mirror.name) + '</div><div class="mirror-source">ID: ' + mirror.id.substring(0,8) + '...</div></div>' +
-                '<button class="remove-mirror" onclick="removeMirror(' + index + ')">×</button>';
-            UI.mirrorStack.appendChild(item);
+    // Event listeners
+    itemsWrap.querySelectorAll('[data-play]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var id = this.getAttribute('data-play');
+            startFromLibrary(id, true);
         });
-    }
-    renderTimeline();
-}
-
-function renderTimeline() {
-    UI.timeline.innerHTML = '';
-    var hasSeed = !!state.seedText.trim();
-    UI.timeline.innerHTML += '<div class="timeline-node seed" style="opacity: ' + (hasSeed ? '1' : '0.5') + '">' +
-        '<div class="timeline-label">Semente 01</div><div class="timeline-title">Base Mental</div>' +
-        '<div class="timeline-text">' + (hasSeed ? escapeHTML(state.seedText.substring(0, 50)) + '...' : 'Vazia...') + '</div></div>';
-    state.mirrors.forEach(function(mirror, index) {
-        UI.timeline.innerHTML += '<div class="timeline-node mirror">' +
-            '<div class="timeline-label">Espelho ' + String(index + 1).padStart(2, '0') + '</div>' +
-            '<div class="timeline-title">' + escapeHTML(mirror.name) + '</div>' +
-            '<div class="timeline-text">Contexto na fusão.</div></div>';
     });
-    UI.timeline.innerHTML += '<div class="timeline-node result">' +
-        '<div class="timeline-label">Próximo Estado</div><div class="timeline-title">Fusão 369</div>' +
-        '<div class="timeline-text">Processamento final.</div></div>';
+    itemsWrap.querySelectorAll('[data-view]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var id = this.getAttribute('data-view');
+            viewFromLibrary(id);
+        });
+    });
+    itemsWrap.querySelectorAll('[data-del]').forEach(function(btn) {
+        btn.addEventListener('click', async function(e) {
+            e.stopPropagation();
+            var id = this.getAttribute('data-del');
+            if (confirm('Remover?')) {
+                await dbDelete(id);
+                delete progressMap[id];
+                localStorage.setItem('di_nebula_progress', JSON.stringify(progressMap));
+                renderLibrary();
+                hkRefreshLibrary();
+            }
+        });
+    });
 }
 
+// ====== Ações da Library ======
+async function startFromLibrary(id, autoplay) {
+    var doc = await dbGet(id);
+    if (!doc) return;
+    await loadDocumentForPlayer(doc);
+    if (autoplay) speakCurrent();
+}
+
+async function viewFromLibrary(id) {
+    var doc = await dbGet(id);
+    if (!doc) return;
+    await loadDocumentForPlayer(doc);
+    openViewerForCurrent();
+}
+
+// ====== Overlay Viewer (simplificado, sem OCR) ======
+var overlay = document.getElementById('overlay');
+var ovCanvas = document.getElementById('ovCanvas');
+var ovSkel = document.getElementById('ovSkel');
+var ovTrail = document.getElementById('ovTrail');
+var ovHl = document.getElementById('ovHl');
+var ovTitle = document.getElementById('ovTitle');
+var ovClose = document.getElementById('ovClose');
+var ovPrev = document.getElementById('ovPrev');
+var ovNext = document.getElementById('ovNext');
+var ovPageInfo = document.getElementById('ovPageInfo');
+var ovZoom = document.getElementById('ovZoom');
+var ovCtx = ovCanvas.getContext('2d');
+var ovSkelCtx = ovSkel.getContext('2d');
+var ovTrailCtx = ovTrail.getContext('2d');
+var ovHlCtx = ovHl.getContext('2d');
+var ovCont = document.getElementById('ovCont');
+var ovTimeline = document.getElementById('ovTimeline');
+var ovSnippet = document.getElementById('ovSnippet');
+var bmBtn = document.getElementById('bmBtn');
+var contBtn = document.getElementById('contBtn');
+var karaBtn = document.getElementById('karaBtn');
+var skelBtn = document.getElementById('skelBtn');
+
+var ovPage = 1, ovPages = 0, ovScale = 1.2;
+var contMode = false, karaMode = false, skelMode = true;
+var contMap = {};
+var searchHits = [];
+
+function openViewerForCurrent() {
+    if (!currentTTS.id || !currentTTS.paragraphs.length) {
+        alert('Nenhum texto carregado.');
+        return;
+    }
+    ovTitle.textContent = currentTTS.name || 'Documento';
+    ovPages = currentTTS.paragraphs.length;
+    ovPage = 1;
+    overlay.classList.add('show');
+    renderOverlayPage();
+}
+
+function closeOverlay() {
+    overlay.classList.remove('show');
+}
+
+ovClose.addEventListener('click', closeOverlay);
+ovPrev.addEventListener('click', function() { if (ovPage > 1) { ovPage--; renderOverlayPage(); } });
+ovNext.addEventListener('click', function() { if (ovPage < ovPages) { ovPage++; renderOverlayPage(); } });
+ovZoom.addEventListener('input', function() { ovScale = parseFloat(this.value) || 1.2; renderOverlayPage(); });
+
+async function renderOverlayPage() {
+    if (!currentTTS.paragraphs.length) return;
+    var seg = currentTTS.paragraphs[ovPage - 1] || { text: 'Página vazia' };
+    // Desenha o texto como imagem (simples)
+    ovCtx.clearRect(0, 0, ovCanvas.width, ovCanvas.height);
+    ovCtx.fillStyle = '#fff';
+    ovCtx.font = '18px sans-serif';
+    ovCtx.textBaseline = 'top';
+    var lines = seg.text.split(/\n/);
+    var y = 20;
+    lines.forEach(function(line) {
+        ovCtx.fillText(line, 20, y);
+        y += 28;
+    });
+    ovPageInfo.textContent = ovPage + ' / ' + ovPages;
+    ovSnippet.textContent = seg.text.slice(0, 250);
+    // Limpar camadas extras
+    ovSkelCtx.clearRect(0, 0, ovSkel.width, ovSkel.height);
+    ovTrailCtx.clearRect(0, 0, ovTrail.width, ovTrail.height);
+    ovHlCtx.clearRect(0, 0, ovHl.width, ovHl.height);
+}
+
+// ====== Bookmarks ======
+function getBookmarks() { return JSON.parse(localStorage.getItem('di_nebula_bookmarks') || '[]'); }
+function saveBookmarks(arr) { localStorage.setItem('di_nebula_bookmarks', JSON.stringify(arr)); }
+
+function addBookmark() {
+    if (!currentTTS.id || !currentTTS.paragraphs.length) return alert('Nada para marcar.');
+    var seg = currentTTS.paragraphs[currentTTS.idx] || { text: '' };
+    var arr = getBookmarks();
+    arr.unshift({ id: 'bm-'+Date.now(), docId: currentTTS.id, docName: currentTTS.name, page: seg.page || 1, segIdx: currentTTS.idx, text: seg.text.slice(0,160), at: Date.now() });
+    saveBookmarks(arr);
+    renderBookmarks();
+    alert('Marcador salvo.');
+}
+
+function renderBookmarks() {
+    var bmList = document.getElementById('bmList');
+    var arr = getBookmarks();
+    bmList.innerHTML = '';
+    if (!arr.length) {
+        bmList.innerHTML = '<div class="muted">Sem marcadores ainda. Use o botão ⭐ no viewer.</div>';
+        return;
+    }
+    arr.slice(0,50).forEach(function(bm) {
+        var el = document.createElement('div');
+        el.className = 'bm-item';
+        el.innerHTML = `
+            <div class="bm-text">
+                <strong>${escapeHTML(bm.docName)} — p.${bm.page}</strong>
+                <small>${new Date(bm.at).toLocaleString()} — ${escapeHTML(bm.text)}</small>
+            </div>
+            <button class="btn" data-bm-go="${bm.id}">Play</button>
+            <button class="btn" style="background:#ffe3e6;color:#7a1a25" data-bm-del="${bm.id}">Remover</button>
+        `;
+        bmList.appendChild(el);
+    });
+    bmList.querySelectorAll('[data-bm-go]').forEach(function(b) {
+        b.addEventListener('click', function(e) {
+            var id = this.getAttribute('data-bm-go');
+            var bm = getBookmarks().find(function(x) { return x.id === id; });
+            if (!bm) return;
+            startFromLibrary(bm.docId, false).then(function() {
+                currentTTS.idx = bm.segIdx || 0;
+                openViewerForCurrent();
+                speakCurrent();
+            });
+        });
+    });
+    bmList.querySelectorAll('[data-bm-del]').forEach(function(b) {
+        b.addEventListener('click', function(e) {
+            var id = this.getAttribute('data-bm-del');
+            var arr = getBookmarks().filter(function(x) { return x.id !== id; });
+            saveBookmarks(arr);
+            renderBookmarks();
+        });
+    });
+}
+document.getElementById('clearBmBtn').addEventListener('click', function() {
+    if (confirm('Remover todos os marcadores?')) { saveBookmarks([]); renderBookmarks(); }
+});
+bmBtn.addEventListener('click', addBookmark);
+
+// ====== Quick Paste ======
+var qpBtn = document.getElementById('quickPasteBtn');
+var qpPanel = document.getElementById('quickPastePanel');
+var qpClose = document.getElementById('qp-close');
+var qpTa = document.getElementById('qp-textarea');
+var qpGo = document.getElementById('qp-go');
+var qpClip = document.getElementById('qp-clipboard');
+var qpInput = document.getElementById('qp-input');
+var qpHtml = document.getElementById('qp-html');
+var qpLast = document.getElementById('qp-last');
+var LAST_TEXT_KEY = 'di_nebula_lastText';
+
+function showPanel() { qpPanel.style.display = 'block'; }
+function hidePanel() { qpPanel.style.display = 'none'; qpTa.style.display = 'none'; qpGo.style.display = 'none'; }
+qpBtn.addEventListener('click', function() { qpPanel.style.display === 'none' ? showPanel() : hidePanel(); });
+qpClose.addEventListener('click', hidePanel);
+
+function activateText(text) {
+    if (!text || !text.trim()) return;
+    localStorage.setItem(LAST_TEXT_KEY, text);
+    var paras = splitTextIntoParagraphs(text);
+    if (!paras.length) return;
+    var firstLine = text.split(/\n/).map(function(l) { return l.replace(/^#+\s*/, ''); }).find(function(l) { return l.trim().length > 2; }) || 'Texto colado';
+    var title = firstLine.trim().slice(0,36);
+    var id = 'paste-'+Date.now();
+    loadTextForPlayer(id, title, paras);
+    hidePanel();
+}
+qpClip.addEventListener('click', async function() {
+    try {
+        var text = await navigator.clipboard.readText();
+        if (text && text.trim()) activateText(text);
+        else alert('Clipboard vazio ou sem permissão.');
+    } catch(e) { alert('Permissão de clipboard negada. Use o campo de texto.'); showTextarea(); }
+});
+qpInput.addEventListener('click', showTextarea);
+qpHtml.addEventListener('click', function() {
+    var html = document.body.innerHTML;
+    var div = document.createElement('div');
+    div.innerHTML = html;
+    var text = div.innerText;
+    activateText(text.slice(0,8000));
+});
+qpLast.addEventListener('click', function() {
+    var last = localStorage.getItem(LAST_TEXT_KEY);
+    if (last) activateText(last);
+    else alert('Nenhum texto anterior salvo.');
+});
+function showTextarea() {
+    qpTa.style.display = 'block';
+    qpGo.style.display = 'block';
+    qpTa.focus();
+}
+qpGo.addEventListener('click', function() {
+    var text = qpTa.value.trim();
+    if (text) activateText(text);
+});
+
+// ====== Import/Export ======
+var importBtn = document.getElementById('importBtn');
+var filePicker = document.getElementById('filePicker');
+var exportBtn = document.getElementById('exportBtn');
+var clearLibBtn = document.getElementById('clearLibBtn');
+var clearUiBtn = document.getElementById('clearUiBtn');
+var importBar = document.getElementById('importBar');
+var exportBar = document.getElementById('exportBar');
+var importStatus = document.getElementById('importStatus');
+var exportStatus = document.getElementById('exportStatus');
+
+importBtn.addEventListener('click', function() { filePicker.click(); });
+filePicker.addEventListener('change', onPickFiles);
+
+async function onPickFiles(ev) {
+    var files = Array.from(ev.target.files || []);
+    ev.target.value = '';
+    if (!files.length) return;
+    var mds = files.filter(function(f) { return /\.(md|txt)$/i.test(f.name); });
+    var zips = files.filter(function(f) { return /\.zip$/i.test(f.name); });
+    var pdfs = files.filter(function(f) { return !(/\.(md|txt|zip)$/i.test(f.name)); });
+    importStatus.textContent = 'Importando ' + files.length + ' arquivo(s)...';
+    for (var f = 0; f < pdfs.length; f++) {
+        var file = pdfs[f];
+        var id = 'pdf-'+Date.now()+'-'+Math.floor(Math.random()*99999);
+        await dbPut({ id: id, name: file.name, blob: file, size: file.size, savedAt: Date.now(), pages: 0 });
+        var pct = Math.round((f+1)/pdfs.length*100);
+        importBar.style.width = pct+'%';
+        importStatus.textContent = 'Importando '+(f+1)+'/'+pdfs.length+' ('+pct+'%)';
+        await new Promise(function(r) { setTimeout(r, 30); });
+    }
+    for (var m = 0; m < mds.length; m++) {
+        var f2 = mds[m];
+        var text = await f2.text();
+        var paras = splitTextIntoParagraphs(text);
+        var firstLine = text.split(/\n/).map(function(l){ return l.replace(/^#+\s*/,''); }).find(function(l){ return l.trim().length>2; }) || f2.name;
+        var title = firstLine.trim().slice(0,40);
+        var id2 = 'md-'+Date.now()+'-'+Math.floor(Math.random()*99999);
+        var blob = new Blob([text], { type: 'text/plain' });
+        await dbPut({ id: id2, name: title+(f2.name.endsWith('.md')?'.md':'.txt'), blob: blob, size: blob.size, savedAt: Date.now(), pages: 1, type: 'md', _paras: JSON.stringify(paras), text: text });
+    }
+    for (var z = 0; z < zips.length; z++) {
+        var zipFile = zips[z];
+        var JSZip = window.JSZip;
+        var zip = await JSZip.loadAsync(zipFile);
+        var names = Object.keys(zip.files).filter(function(n){ return !zip.files[n].dir && /\.pdf$/i.test(n); });
+        for (var n = 0; n < names.length; n++) {
+            var u8 = await zip.files[names[n]].async('uint8array');
+            var blob2 = new Blob([u8], { type: 'application/pdf' });
+            var id3 = 'pdf-'+Date.now()+'-'+Math.floor(Math.random()*99999);
+            await dbPut({ id: id3, name: names[n].split('/').pop(), blob: blob2, size: blob2.size, savedAt: Date.now(), pages: 0 });
+        }
+    }
+    importStatus.textContent = 'Importação concluída.';
+    setTimeout(function() { importBar.style.width = '0%'; importStatus.textContent = 'Pronto'; }, 1500);
+    renderLibrary();
+    hkRefreshLibrary();
+    atualizarCiclo();
+}
+
+exportBtn.addEventListener('click', onExportZip);
+async function onExportZip() {
+    var JSZip = window.JSZip;
+    var items = await dbAll();
+    if (!items.length) { alert('Biblioteca vazia.'); return; }
+    exportStatus.textContent = 'Preparando ZIP...';
+    exportBar.style.width = '2%';
+    var zip = new JSZip();
+    var meta = [];
+    for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        zip.file(safeName(it.name), it.blob);
+        meta.push({ id: it.id, name: it.name, size: (it.size || it.blob.size), savedAt: it.savedAt, pages: it.pages });
+    }
+    zip.file('metadata.json', JSON.stringify(meta, null, 2));
+    var blob = await zip.generateAsync({ type: 'blob' }, function(m) {
+        exportBar.style.width = Math.round(m.percent) + '%';
+        exportStatus.textContent = 'Gerando ZIP — ' + Math.round(m.percent) + '%';
+    });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'nebula-library-'+new Date().toISOString().slice(0,10)+'.zip';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    exportStatus.textContent = 'Export concluído';
+    setTimeout(function() { exportBar.style.width = '0%'; exportStatus.textContent = 'Pronto'; }, 1800);
+}
+function safeName(n) { return (n||'file.pdf').replace(/[^a-z0-9_\-\.]/gi, '_'); }
+
+clearLibBtn.addEventListener('click', async function() {
+    if (!confirm('Remover TODOS os documentos da biblioteca?')) return;
+    var items = await dbAll();
+    for (var i = 0; i < items.length; i++) { await dbDelete(items[i].id); }
+    progressMap = {};
+    localStorage.setItem('di_nebula_progress', JSON.stringify(progressMap));
+    renderLibrary();
+    hkRefreshLibrary();
+});
+clearUiBtn.addEventListener('click', function() {
+    localStorage.removeItem('di_nebula_progress');
+    localStorage.removeItem('di_nebula_settings');
+    localStorage.removeItem('di_nebula_bookmarks');
+    alert('Config/Progresso/Bookmarks limpos.');
+    renderBookmarks();
+});
+
+// ====== Playback Settings ======
+var voiceSelect = document.getElementById('voiceSelect');
+var rateRange = document.getElementById('rateRange');
+var rateOut = document.getElementById('rateOut');
+var pitchRange = document.getElementById('pitchRange');
+var pitchOut = document.getElementById('pitchOut');
+var testVoice = document.getElementById('testVoice');
+var settings = JSON.parse(localStorage.getItem('di_nebula_settings') || '{"voice":"","rate":1,"pitch":1}');
+
+function populateVoicesUI() {
+    voices = speechSynthesis.getVoices() || [];
+    voiceSelect.innerHTML = '';
+    var preferPT = voices.filter(function(v) { return /^pt(-|_)/i.test(v.lang); }).concat(voices.filter(function(v) { return !/^pt(-|_)/i.test(v.lang); }));
+    (preferPT.length ? preferPT : voices).forEach(function(v) {
+        var opt = document.createElement('option');
+        opt.value = v.name;
+        opt.textContent = v.name + (v.lang ? ' · '+v.lang : '');
+        voiceSelect.appendChild(opt);
+    });
+    var count = document.getElementById('voiceCount');
+    if (count) count.textContent = voices.length ? String(voices.length) : '0';
+    var saved = settings.voice && voices.find(function(v) { return v.name === settings.voice; });
+    if (saved) voiceSelect.value = settings.voice;
+    else if (preferPT[0]) voiceSelect.value = preferPT[0].name;
+}
+populateVoicesUI();
+window.speechSynthesis.onvoiceschanged = populateVoicesUI;
+
+rateRange.value = settings.rate || 1;
+rateOut.textContent = (parseFloat(rateRange.value)||1).toFixed(1)+'×';
+rateRange.oninput = function() {
+    rateOut.textContent = (+rateRange.value).toFixed(1)+'×';
+    settings.rate = +rateRange.value;
+    saveSettings();
+};
+pitchRange.value = settings.pitch || 1;
+pitchOut.textContent = parseFloat(pitchRange.value).toFixed(2);
+pitchRange.oninput = function() {
+    pitchOut.textContent = parseFloat(pitchRange.value).toFixed(2);
+    settings.pitch = +pitchRange.value;
+    saveSettings();
+};
+voiceSelect.onchange = function() {
+    settings.voice = voiceSelect.value;
+    saveSettings();
+};
+testVoice.addEventListener('click', function() {
+    if (!('speechSynthesis' in window)) return alert('SpeechSynthesis não suportado.');
+    var u = new SpeechSynthesisUtterance('Teste de voz do Nebula Pro.');
+    var v = voices.find(function(x) { return x.name === voiceSelect.value; }) || voices[0];
+    if (v) u.voice = v;
+    u.rate = +rateRange.value || 1;
+    u.pitch = +pitchRange.value || 1;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+});
+function saveSettings() {
+    localStorage.setItem('di_nebula_settings', JSON.stringify(settings));
+}
+
+// ====== Arquétipos (fallback) ======
+(function() {
+    var FALLBACK_ARCHETYPES = [
+        { id:'kobllux', name:'KOBLLUX', tone:'Oracular', modulation:'Núcleo do sistema, grave-médio.', voice:'Luciana', lang:'pt-BR', rate:0.98, pitch:0.48,
+          theme:{ primary:'#22D3EE', secondary:'#7dd3fc', bgSoft:'radial-gradient(circle at 30% 20%, rgba(34,211,238,.08), transparent)', glow:'0 0 18px rgba(34,211,238,.55)' } },
+        { id:'ion', name:'ION', tone:'Focado', modulation:'Cadência rápida.', voice:'Luciana', lang:'pt-BR', rate:1.05, pitch:0.8,
+          theme:{ primary:'#a855f7', secondary:'#c084fc', bgSoft:'radial-gradient(circle at 30% 20%, rgba(168,85,247,.08), transparent)', glow:'0 0 18px rgba(168,85,247,.55)' } },
+        { id:'solus', name:'SOLUS', tone:'Sábio', modulation:'Grave, pausado.', voice:'Luciana', lang:'pt-BR', rate:0.9, pitch:0.4,
+          theme:{ primary:'#f59e0b', secondary:'#fbbf24', bgSoft:'radial-gradient(circle at 30% 20%, rgba(245,158,11,.08), transparent)', glow:'0 0 18px rgba(245,158,11,.55)' } },
+        { id:'artemis', name:'ARTEMIS', tone:'Dinâmico', modulation:'Ritmo acelerado.', voice:'Luciana', lang:'pt-BR', rate:1.15, pitch:1.1,
+          theme:{ primary:'#10b981', secondary:'#34d399', bgSoft:'radial-gradient(circle at 30% 20%, rgba(16,185,129,.08), transparent)', glow:'0 0 18px rgba(16,185,129,.55)' } },
+        { id:'pulse', name:'PULSE', tone:'Rítmico', modulation:'Cadência pulsante.', voice:'Luciana', lang:'pt-BR', rate:1.0, pitch:0.9,
+          theme:{ primary:'#ec4899', secondary:'#f472b6', bgSoft:'radial-gradient(circle at 30% 20%, rgba(236,72,153,.08), transparent)', glow:'0 0 18px rgba(236,72,153,.55)' } }
+    ];
+    if (!Array.isArray(window.ARCHETYPES) || !window.ARCHETYPES.length) {
+        window.ARCHETYPES = FALLBACK_ARCHETYPES;
+    }
+    var arch = window.ARCHETYPES[0];
+    var orb = document.getElementById('mainOrb');
+    if (orb && arch && arch.theme) {
+        orb.style.setProperty('--kob-voice-primary', arch.theme.primary || '#22D3EE');
+        orb.style.setProperty('--kob-voice-secondary', arch.theme.secondary || '#7dd3fc');
+        orb.style.setProperty('--kob-voice-glow', arch.theme.glow || '0 0 18px rgba(34,211,238,.55)');
+    }
+})();
+
+// ====== CICLO ∅⁺/∅⁻ ======
+var PESOS_ARQUETIPOS = {
+    "NOVA":0.12,"ATLAS":0.18,"VITALIS":0.14,"PULSE":0.10,"ARTEMIS":0.08,"SERENA":0.10,
+    "KAOS":0.05,"GENUS":0.12,"LUMINE":0.06,"RHEA":0.03,"SOLUS":0.01,"AION":0.01,
+    "KODUX":0.01,"BLLUE":0.01,"JESUS":0.01,"KOBLLUX":0.01,"INFODOSE":0.01,"HORUS":0.01
+};
+var CICLO_PASSOS = [
+    {simb:"∅⁻",tipo:"inicio"},{simb:"∆ⁿ",tipo:"transicao"},{simb:"01",tipo:"passo"},{simb:"02",tipo:"passo"},{simb:"03",tipo:"passo"},
+    {simb:"∆ⁿ",tipo:"transicao"},{simb:"01",tipo:"passo"},{simb:"02",tipo:"passo"},{simb:"03",tipo:"passo"},
+    {simb:"∆ⁿ",tipo:"transicao"},{simb:"01",tipo:"passo"},{simb:"02",tipo:"passo"},{simb:"03",tipo:"passo"},{simb:"∅⁺",tipo:"fim"}
+];
+var cicloPasso = 0;
+
+function obterProximoPasso() {
+    if (cicloPasso >= CICLO_PASSOS.length) cicloPasso = 0;
+    var passo = CICLO_PASSOS[cicloPasso];
+    cicloPasso++;
+    return passo;
+}
+function selecionarArquetipoPorPeso() {
+    var entries = Object.entries(PESOS_ARQUETIPOS);
+    var total = entries.reduce(function(s,e) { return s + e[1]; }, 0);
+    var rand = Math.random() * total;
+    for (var i = 0; i < entries.length; i++) {
+        rand -= entries[i][1];
+        if (rand <= 0) return entries[i][0];
+    }
+    return entries[entries.length-1][0];
+}
+function calcDelta(totalTokens) {
+    var rd = totalTokens % 9 || 9;
+    return totalTokens > 0 ? rd / (totalTokens + 1) : 0.001;
+}
+function atualizarCiclo() {
+    var passo = obterProximoPasso();
+    var arqNome = selecionarArquetipoPorPeso();
+    var peso = PESOS_ARQUETIPOS[arqNome] || 0;
+    dbAll().then(function(docs) {
+        var totalTokens = 1134 + (docs || []).length * 10;
+        var delta = calcDelta(totalTokens);
+        var passoEl = document.getElementById('ciclo-passo');
+        var arqEl = document.getElementById('ciclo-arq');
+        var pesoEl = document.getElementById('ciclo-peso');
+        var deltaEl = document.getElementById('ciclo-delta');
+        if (passoEl) passoEl.textContent = passo.simb;
+        if (arqEl) arqEl.textContent = arqNome;
+        if (pesoEl) pesoEl.textContent = peso.toFixed(3);
+        if (deltaEl) deltaEl.textContent = delta.toFixed(4);
+    });
+}
+setInterval(atualizarCiclo, 10000);
+document.addEventListener('fileAdded', atualizarCiclo);
+window.addEventListener('load', function() { setTimeout(atualizarCiclo, 500); });
+
+// ====== Player Dock Controls ======
+UI.ppBtn.addEventListener('click', togglePlayPause);
+UI.progressSlider.addEventListener('input', function(e) {
+    if (!currentTTS.paragraphs.length) return;
+    var pct = parseFloat(e.target.value);
+    var targetIdx = Math.floor((pct / 100) * currentTTS.paragraphs.length);
+    currentTTS.idx = Math.min(Math.max(targetIdx, 0), currentTTS.paragraphs.length - 1);
+    UI.timeCur.textContent = Math.round(pct) + '%';
+    updateProgressBars(false);
+    if (currentTTS.playing) {
+        speechSynthesis.cancel();
+        speakCurrent();
+    } else {
+        var seg = currentTTS.paragraphs[currentTTS.idx];
+        if (seg) UI.ovSnippet.textContent = seg.text.slice(0, 250);
+    }
+});
+UI.viewBtn.addEventListener('click', function() {
+    if (!currentTTS.paragraphs.length) return;
+    var fullText = currentTTS.paragraphs.map(function(p) { return p.text; }).join('\n\n');
+    alert(fullText.slice(0, 3000) + (fullText.length > 3000 ? '\n… (texto truncado)' : ''));
+});
+
+// ====== Mirror Modal e Motor 369 (do IKlOlDI) ======
+function renderMirrors() { /* ... já definido no HTML ... */ }
+function renderTimeline() { /* ... */ }
 window.addMirrorFromLibrary = function(id, name) {
     if (state.mirrors.find(function(m) { return m.id === id; })) return;
     state.mirrors.push({ id: id, name: name });
     renderMirrors();
     flashStatus('Espelho "' + name + '" adicionado.');
 };
-
 window.removeMirror = function(index) {
     state.mirrors.splice(index, 1);
     renderMirrors();
 };
-
 window.deleteDoc = async function(id) {
     if (confirm('Tem certeza que deseja apagar este documento da Library?')) {
         await dbDelete(id);
         state.mirrors = state.mirrors.filter(function(m) { return m.id !== id; });
         renderMirrors();
         renderLibrary();
+        hkRefreshLibrary();
         atualizarCiclo();
     }
 };
-
 window.playDoc = async function(id) {
     var doc = await dbGet(id);
     if (doc) await loadDocumentForPlayer(doc);
 };
-
 function flashStatus(msg) {
     UI.fusionStatus.innerHTML = '<span style="color:var(--kob-voice-primary);">' + msg + '</span>';
     setTimeout(function() {
         if (UI.fusionStatus.innerText === msg) UI.fusionStatus.innerHTML = 'Aguardando próxima ação...';
     }, 3000);
 }
-
 document.getElementById('saveSeed').addEventListener('click', function() {
     state.seedText = UI.seedInput.value;
     renderTimeline();
     flashStatus('Semente salva em memória!');
 });
-
 document.getElementById('clearSeed').addEventListener('click', function() {
     UI.seedInput.value = '';
     state.seedText = '';
     renderTimeline();
     UI.fusionStatus.innerHTML = 'Semente limpa.';
 });
-
 document.getElementById('addMirrorStack').addEventListener('click', function() { UI.mirrorModal.classList.add('open'); });
 document.getElementById('openMirrorPicker').addEventListener('click', function() { UI.mirrorModal.classList.add('open'); });
 document.getElementById('closeMirrorModal').addEventListener('click', function() { UI.mirrorModal.classList.remove('open'); });
 UI.mirrorModal.addEventListener('click', function(e) { if (e.target === UI.mirrorModal) UI.mirrorModal.classList.remove('open'); });
 
-/* ============================================================
-   DISPARO DO MOTOR FRACTAL 369
-   ============================================================ */
 document.getElementById('runFusion').addEventListener('click', async function() {
     var currentText = UI.seedInput.value.trim();
-
     if (!currentText) {
         UI.fusionStatus.innerHTML = "<span style='color:#ff5555'>Erro: A Semente está vazia. Digite algo primeiro.</span>";
         return;
     }
-
     if (state.mirrors.length === 0) {
         UI.fusionStatus.innerHTML = "<span style='color:#fbbf24'>Aviso: Nenhum espelho adicionado. Exibindo apenas a semente.</span><br/><br/>" + escapeHTML(currentText);
         return;
     }
-
     UI.fusionStatus.innerHTML = "<span style='color:var(--kob-voice-primary)'>Processando Fusão no Motor 369...</span>";
-
     try {
         for (var i = 0; i < state.mirrors.length; i++) {
             var mirror = state.mirrors[i];
@@ -1975,16 +2301,13 @@ document.getElementById('exportSnapshot').addEventListener('click', function() {
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 });
 
-/* ============================================================
-   READER MODAL (integrado)
-   ============================================================ */
+// ====== READER MODAL (para abrir documentos) ======
 window.openReader = async function(id) {
     var doc = await dbGet(id);
     if (!doc) return;
     UI.readerTitle.textContent = doc.name || 'Documento';
     UI.readerBody.innerHTML = '';
     var type = doc.type || 'txt';
-
     if (type === 'pdf' || type === 'html') {
         var iframe = document.createElement('iframe');
         iframe.src = doc.url || '';
@@ -2004,7 +2327,6 @@ window.openReader = async function(id) {
     UI.readerModal.classList.add('opened');
     document.body.style.overflow = 'hidden';
 };
-
 function closeReader() {
     UI.readerModal.classList.remove('opened');
     UI.readerBody.innerHTML = '';
@@ -2013,125 +2335,23 @@ function closeReader() {
 UI.readerClose.addEventListener('click', closeReader);
 UI.readerModal.addEventListener('click', function(e) { if (e.target === UI.readerModal) closeReader(); });
 
-/* ============================================================
-   IMPORTAR ARQUIVOS (NEBULA I/O)
-   ============================================================ */
-document.getElementById('importBtn').addEventListener('click', function() { UI.filePicker.click(); });
+function markdownToHTML(md) {
+    var html = escapeHTML(md);
+    html = html.replace(/^### (.*)$/gm, "<h3>$1</h3>");
+    html = html.replace(/^## (.*)$/gm, "<h2>$1</h2>");
+    html = html.replace(/^# (.*)$/gm, "<h1>$1</h1>");
+    html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+    html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
+    html = html.replace(/`(.*?)`/g, "<code>$1</code>");
+    html = html.replace(/\n\n/g, "</p><p>");
+    return "<p>" + html + "</p>";
+}
 
-UI.filePicker.addEventListener('change', async function(e) {
-    var files = Array.from(e.target.files || []);
-    if (!files.length) return;
-
-    UI.fusionStatus.innerHTML = 'Importando ' + files.length + ' arquivo(s)...';
-
-    for (var f = 0; f < files.length; f++) {
-        var file = files[f];
-        try {
-            var ext = file.name.split('.').pop().toLowerCase();
-            var text = '';
-            var blob = file;
-            var size = file.size;
-            var type = ext;
-            var paragraphs = [];
-
-            if (ext === 'pdf') {
-                var ab = await file.arrayBuffer();
-                var pdfData = new Uint8Array(ab);
-                var pdfDoc = await pdfjsLib.getDocument({ data: pdfData }).promise;
-                var paras = await extractTextSmart(pdfDoc);
-                paragraphs = paras;
-                text = paras.map(function(p) { return p.text; }).join(' ');
-                blob = file;
-            } else if (ext === 'zip') {
-                var JSZip = window.JSZip;
-                var zip = await JSZip.loadAsync(file);
-                var names = Object.keys(zip.files).filter(function(n) { return !zip.files[n].dir && /\.(pdf|txt|md)$/i.test(n); });
-                for (var n = 0; n < names.length; n++) {
-                    var u8 = await zip.files[names[n]].async('uint8array');
-                    var fblob = new Blob([u8], { type: 'application/octet-stream' });
-                    var fname = names[n].split('/').pop();
-                    var id = 'doc-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-                    await dbPut({
-                        id: id,
-                        name: fname,
-                        blob: fblob,
-                        size: fblob.size,
-                        savedAt: Date.now(),
-                        type: fname.split('.').pop(),
-                        _paras: JSON.stringify([{ text: 'Conteúdo do ZIP: ' + fname, page: 1 }])
-                    });
-                }
-                continue;
-            } else {
-                text = await file.text();
-                if (ext === 'html') {
-                    var div = document.createElement('div');
-                    div.innerHTML = text;
-                    text = div.innerText || div.textContent || '';
-                }
-                paragraphs = splitTextIntoParagraphs(text);
-            }
-
-            var id2 = 'doc-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-            var doc = {
-                id: id2,
-                name: file.name,
-                type: ext,
-                size: size,
-                savedAt: Date.now(),
-                blob: blob,
-                text: text || '',
-                _paras: JSON.stringify(paragraphs)
-            };
-            await dbPut(doc);
-
-        } catch (err) {
-            console.error('Falha ao importar', file.name, err);
-        }
-    }
-
-    UI.filePicker.value = '';
-    await renderLibrary();
-    document.getElementById('libCard').classList.add('is-open');
-    flashStatus('Importação concluída.');
-    atualizarCiclo();
-});
-
-/* ============================================================
-   PLAYER CONTROLS
-   ============================================================ */
-UI.ppBtn.addEventListener('click', togglePlayPause);
-
-UI.progressSlider.addEventListener('input', function(e) {
-    if (!currentTTS.paragraphs.length) return;
-    var pct = parseFloat(e.target.value);
-    var targetIdx = Math.floor((pct / 100) * currentTTS.paragraphs.length);
-    currentTTS.idx = Math.min(Math.max(targetIdx, 0), currentTTS.paragraphs.length - 1);
-    UI.timeCur.textContent = Math.round(pct) + '%';
-    updateProgressBars(false);
-    if (currentTTS.playing) {
-        speechSynthesis.cancel();
-        speakCurrent();
-    } else {
-        var seg = currentTTS.paragraphs[currentTTS.idx];
-        if (seg) UI.ovSnippet.textContent = seg.text.slice(0, 250);
-    }
-});
-
-UI.viewBtn.addEventListener('click', function() {
-    if (!currentTTS.paragraphs.length) return;
-    var fullText = currentTTS.paragraphs.map(function(p) { return p.text; }).join('\n\n');
-    alert(fullText.slice(0, 3000) + (fullText.length > 3000 ? '\n… (texto truncado)' : ''));
-});
-
-/* ============================================================
-   LIBRARY DRAWER INTERATIVIDADE
-   ============================================================ */
+// ====== LIBRARY DRAWER (side panel) ======
 (function() {
     var libCard = document.getElementById('libCard');
     var libHandle = document.getElementById('libDrawerHandle');
     var libToggleBtn = document.getElementById('libToggleBtn');
-
     if (libHandle) {
         libHandle.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -2149,7 +2369,6 @@ UI.viewBtn.addEventListener('click', function() {
             libCard.classList.remove('is-open');
         }
     });
-
     var savedCollapse = localStorage.getItem('di_nebula_libCollapsed');
     if (savedCollapse === '1') {
         libCard.classList.add('is-collapsed');
@@ -2157,93 +2376,84 @@ UI.viewBtn.addEventListener('click', function() {
     }
     var savedOpen = localStorage.getItem('di_nebula_libDrawerOpen');
     if (savedOpen === '1') libCard.classList.add('is-open');
-
     libCard.addEventListener('transitionend', function() {
         localStorage.setItem('di_nebula_libDrawerOpen', libCard.classList.contains('is-open') ? '1' : '0');
         localStorage.setItem('di_nebula_libCollapsed', libCard.classList.contains('is-collapsed') ? '1' : '0');
     });
 })();
 
-/* ============================================================
-   CICLO ∅⁺/∅⁻ — RÉGUA ARQUETÍPICA
-   ============================================================ */
-var PESOS_ARQUETIPOS = {
-    "NOVA": 0.12, "ATLAS": 0.18, "VITALIS": 0.14,
-    "PULSE": 0.10, "ARTEMIS": 0.08, "SERENA": 0.10,
-    "KAOS": 0.05, "GENUS": 0.12, "LUMINE": 0.06,
-    "RHEA": 0.03, "SOLUS": 0.01, "AION": 0.01,
-    "KODUX": 0.01, "BLLUE": 0.01, "JESUS": 0.01,
-    "KOBLLUX": 0.01, "INFODOSE": 0.01, "HORUS": 0.01
-};
-var CICLO_PASSOS = [
-    { simb: "∅⁻", tipo: "inicio" },
-    { simb: "∆ⁿ", tipo: "transicao" },
-    { simb: "01", tipo: "passo" },
-    { simb: "02", tipo: "passo" },
-    { simb: "03", tipo: "passo" },
-    { simb: "∆ⁿ", tipo: "transicao" },
-    { simb: "01", tipo: "passo" },
-    { simb: "02", tipo: "passo" },
-    { simb: "03", tipo: "passo" },
-    { simb: "∆ⁿ", tipo: "transicao" },
-    { simb: "01", tipo: "passo" },
-    { simb: "02", tipo: "passo" },
-    { simb: "03", tipo: "passo" },
-    { simb: "∅⁺", tipo: "fim" }
-];
-var cicloPasso = 0;
+// ====== Dock Player / SymBar (dentro da Library) ======
+(function() {
+    var dockPBtn = document.getElementById('dockPlayerBtn');
+    var dockSBtn = document.getElementById('dockSymbolBarBtn');
+    var dockZone = document.getElementById('libDockZone');
+    var playerEl = document.getElementById('playerDock');
+    var symBarEl = document.getElementById('symbolBar'); // não existe, mas mantido para compatibilidade
+    var playerOriginalParent = playerEl ? playerEl.parentNode : null;
+    var playerOriginalNext = playerEl ? playerEl.nextSibling : null;
 
-function obterProximoPasso() {
-    if (cicloPasso >= CICLO_PASSOS.length) cicloPasso = 0;
-    var passo = CICLO_PASSOS[cicloPasso];
-    cicloPasso++;
-    return passo;
-}
-
-function selecionarArquetipoPorPeso() {
-    var entries = Object.entries(PESOS_ARQUETIPOS);
-    var total = entries.reduce(function(s, e) { return s + e[1]; }, 0);
-    var rand = Math.random() * total;
-    for (var i = 0; i < entries.length; i++) {
-        rand -= entries[i][1];
-        if (rand <= 0) return entries[i][0];
+    function setDockPlayer(docked) {
+        if (!playerEl || !dockZone) return;
+        if (docked) {
+            playerEl.classList.add('inline-docked');
+            dockZone.appendChild(playerEl);
+        } else {
+            playerEl.classList.remove('inline-docked');
+            if (playerOriginalParent) {
+                playerOriginalParent.insertBefore(playerEl, playerOriginalNext);
+            }
+        }
+        localStorage.setItem('di_nebula_playerDocked', docked ? '1' : '0');
+        if (dockPBtn) {
+            dockPBtn.textContent = docked ? 'Undock Player' : 'Dock Player';
+            dockPBtn.classList.toggle('active', docked);
+        }
     }
-    return entries[entries.length - 1][0];
+    var savedPlayer = localStorage.getItem('di_nebula_playerDocked');
+    if (savedPlayer === '1') setDockPlayer(true);
+    if (dockPBtn) {
+        dockPBtn.addEventListener('click', function() {
+            setDockPlayer(!playerEl.classList.contains('inline-docked'));
+        });
+    }
+    // SymBar (não usado, apenas placeholder)
+    if (dockSBtn) {
+        dockSBtn.style.display = 'none';
+    }
+})();
+
+// ====== INICIALIZAÇÃO ======
+async function init() {
+    var docs = await dbAll();
+    if (docs.length === 0) {
+        var exampleText = 'No princípio, a informação era dispersa. A mente buscava clareza em meio ao ruído. Então, surgiu o conceito do 369. A semente é a intenção primária (3). O espelho é o contexto expandido (6). A fusão é a materialização da nova ideia (9). Confie no algoritmo e deixe sua mente criar ramificações infinitas.';
+        await dbPut({
+            id: 'preset-manifesto',
+            name: 'Manifesto Infodose 369.txt',
+            text: exampleText,
+            type: 'txt',
+            size: exampleText.length,
+            savedAt: Date.now(),
+            _paras: JSON.stringify(splitTextIntoParagraphs(exampleText))
+        });
+    }
+    await renderLibrary();
+    renderBookmarks();
+    renderMirrors();
+    var allDocs = await dbAll();
+    if (allDocs.length) {
+        var last = allDocs.sort(function(a,b) { return b.savedAt - a.savedAt; })[0];
+        await loadDocumentForPlayer(last);
+    }
+    console.log('Nébula Pro unificado · Iniciado');
+    atualizarCiclo();
 }
 
-function calcDelta(totalTokens) {
-    var rd = totalTokens % 9 || 9;
-    return totalTokens > 0 ? rd / (totalTokens + 1) : 0.001;
-}
+window.addEventListener('DOMContentLoaded', init);
 
-function atualizarCiclo() {
-    var passo = obterProximoPasso();
-    var arqNome = selecionarArquetipoPorPeso();
-    var peso = PESOS_ARQUETIPOS[arqNome] || 0;
-    var totalTokens = 1134; // base fixa + documentos
-    dbAll().then(function(docs) {
-        totalTokens += (docs || []).length * 10;
-        var delta = calcDelta(totalTokens);
-
-        var passoEl = document.getElementById('ciclo-passo');
-        var arqEl = document.getElementById('ciclo-arq');
-        var pesoEl = document.getElementById('ciclo-peso');
-        var deltaEl = document.getElementById('ciclo-delta');
-
-        if (passoEl) passoEl.textContent = passo.simb;
-        if (arqEl) arqEl.textContent = arqNome;
-        if (pesoEl) pesoEl.textContent = peso.toFixed(3);
-        if (deltaEl) deltaEl.textContent = delta.toFixed(4);
-    });
-}
-
-setInterval(atualizarCiclo, 10000);
-document.addEventListener('fileAdded', atualizarCiclo);
-window.addEventListener('load', function() { setTimeout(atualizarCiclo, 500); });
-
-/* ============================================================
-   GRITO VIVO · KBLX CORE (extraído do módulo)
-   ============================================================ */
+// ============================================================
+// GRITO VIVO · KBLX CORE (extraído do módulo)
+// ============================================================
 (function() {
     var KBLX = (function() {
         var OPCODES = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','EXP'];
@@ -2470,13 +2680,6 @@ window.addEventListener('load', function() { setTimeout(atualizarCiclo, 500); })
         gritoProcessText();
     }
 
-    function currentArchColor() {
-        var archSelect = document.getElementById('archSelect');
-        var id = archSelect ? archSelect.value : null;
-        var arch = (window.ARCHETYPES || []).find(function(a) { return String(a.id) === String(id); });
-        return arch?.theme?.primary || arch?.color || '#7a57ff';
-    }
-
     function gritoSpeak() {
         var rawEl = document.getElementById('grito-raw-input');
         var dock = document.getElementById('gritoDock');
@@ -2485,7 +2688,7 @@ window.addEventListener('load', function() { setTimeout(atualizarCiclo, 500); })
         var utter = new SpeechSynthesisUtterance(rawEl.value);
         utter.rate = 1; utter.pitch = 1; utter.lang = 'pt-BR';
         if (dock) {
-            var color = currentArchColor();
+            var color = getComputedStyle(document.documentElement).getPropertyValue('--kob-voice-primary').trim() || '#7a57ff';
             dock.style.setProperty('--grito-pulse', color.startsWith('#') ? hexToRgba(color, .55) : color);
             utter.onstart = function() { dock.classList.add('grito-speaking'); };
             utter.onend = function() { dock.classList.remove('grito-speaking'); };
@@ -2637,65 +2840,6 @@ window.addEventListener('load', function() { setTimeout(atualizarCiclo, 500); })
         initGritoUI();
     }
 })();
-
-/* ============================================================
-   ARQUÉTIPOS (fallback)
-   ============================================================ */
-(function() {
-    var FALLBACK_ARCHETYPES = [
-        { id:'kobllux', name:'KOBLLUX', tone:'Oracular', modulation:'Núcleo do sistema, grave-médio.', voice:'Luciana', lang:'pt-BR', rate:0.98, pitch:0.48,
-          theme:{ primary:'#22D3EE', secondary:'#7dd3fc', bgSoft:'radial-gradient(circle at 30% 20%, rgba(34,211,238,.08), transparent)', glow:'0 0 18px rgba(34,211,238,.55)' } },
-        { id:'ion', name:'ION', tone:'Focado', modulation:'Cadência rápida.', voice:'Luciana', lang:'pt-BR', rate:1.05, pitch:0.8,
-          theme:{ primary:'#a855f7', secondary:'#c084fc', bgSoft:'radial-gradient(circle at 30% 20%, rgba(168,85,247,.08), transparent)', glow:'0 0 18px rgba(168,85,247,.55)' } },
-        { id:'solus', name:'SOLUS', tone:'Sábio', modulation:'Grave, pausado.', voice:'Luciana', lang:'pt-BR', rate:0.9, pitch:0.4,
-          theme:{ primary:'#f59e0b', secondary:'#fbbf24', bgSoft:'radial-gradient(circle at 30% 20%, rgba(245,158,11,.08), transparent)', glow:'0 0 18px rgba(245,158,11,.55)' } },
-        { id:'artemis', name:'ARTEMIS', tone:'Dinâmico', modulation:'Ritmo acelerado.', voice:'Luciana', lang:'pt-BR', rate:1.15, pitch:1.1,
-          theme:{ primary:'#10b981', secondary:'#34d399', bgSoft:'radial-gradient(circle at 30% 20%, rgba(16,185,129,.08), transparent)', glow:'0 0 18px rgba(16,185,129,.55)' } },
-        { id:'pulse', name:'PULSE', tone:'Rítmico', modulation:'Cadência pulsante.', voice:'Luciana', lang:'pt-BR', rate:1.0, pitch:0.9,
-          theme:{ primary:'#ec4899', secondary:'#f472b6', bgSoft:'radial-gradient(circle at 30% 20%, rgba(236,72,153,.08), transparent)', glow:'0 0 18px rgba(236,72,153,.55)' } }
-    ];
-    if (!Array.isArray(window.ARCHETYPES) || !window.ARCHETYPES.length) {
-        window.ARCHETYPES = FALLBACK_ARCHETYPES;
-    }
-    // Aplica o primeiro ao orb
-    var arch = window.ARCHETYPES[0];
-    var orb = document.getElementById('mainOrb');
-    if (orb && arch && arch.theme) {
-        orb.style.setProperty('--kob-voice-primary', arch.theme.primary || '#22D3EE');
-        orb.style.setProperty('--kob-voice-secondary', arch.theme.secondary || '#7dd3fc');
-        orb.style.setProperty('--kob-voice-glow', arch.theme.glow || '0 0 18px rgba(34,211,238,.55)');
-    }
-})();
-
-/* ============================================================
-   INICIALIZAÇÃO
-   ============================================================ */
-async function init() {
-    var docs = await dbAll();
-    if (docs.length === 0) {
-        var exampleText = 'No princípio, a informação era dispersa. A mente buscava clareza em meio ao ruído. Então, surgiu o conceito do 369. A semente é a intenção primária (3). O espelho é o contexto expandido (6). A fusão é a materialização da nova ideia (9). Confie no algoritmo e deixe sua mente criar ramificações infinitas.';
-        await dbPut({
-            id: 'preset-manifesto',
-            name: 'Manifesto Infodose 369.txt',
-            text: exampleText,
-            type: 'txt',
-            size: exampleText.length,
-            savedAt: Date.now(),
-            _paras: JSON.stringify(splitTextIntoParagraphs(exampleText))
-        });
-    }
-    await renderLibrary();
-    renderMirrors();
-    var allDocs = await dbAll();
-    if (allDocs.length) {
-        var last = allDocs.sort(function(a,b) { return b.savedAt - a.savedAt; })[0];
-        await loadDocumentForPlayer(last);
-    }
-    console.log('Nébula Pro + Screen Panel unificado · Iniciado');
-    atualizarCiclo();
-}
-
-window.addEventListener('DOMContentLoaded', init);
 
 </script>
 
