@@ -137,22 +137,9 @@
         }
         .hero-card-preview {
             position: absolute; inset: 0; bottom: 84px; background: #070707; overflow: hidden;
-            display: flex; align-items: center; justify-content: center; cursor: pointer;
-        }
-        .preview-placeholder {
-            text-align: center; color: var(--muted); padding: 20px;
-        }
-        .preview-placeholder span {
-            display: block; font-size: 32px; margin-bottom: 6px;
         }
         .hero-card-preview iframe, .hero-card-preview .preview-text, .hero-card-preview .preview-markdown {
             width: 100%; height: 100%; border: 0;
-        }
-        .close-preview-btn {
-            position: absolute; top: 12px; right: 12px; z-index: 10;
-            background: rgba(0,0,0,0.7); color: #fff; border: 1px solid rgba(255,255,255,0.2);
-            width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
-            font-size: 14px; cursor: pointer; backdrop-filter: blur(10px);
         }
         .hero-card-info {
             position: relative; z-index: 2; padding: 14px 18px; background: rgba(12,12,12,0.92);
@@ -211,7 +198,6 @@
         .slide:hover { border-color: rgba(35,172,81,.35); }
         .file-preview {
             height: 195px; padding: 0; background: #080808; position: relative; overflow: hidden;
-            display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
         .preview-pdf, .preview-html {
             width: 100%; height: 100%; border: 0; background: #111;
@@ -451,17 +437,19 @@
 
     <script>
         // ═══════════════════════════════════════════════════════════════════
-        // KBLX: SISTEMA NEBULA PRO — SCREEN PANEL (OCULTAR PREVIEW & STOP PROPAGATION)
+        // KBLX: SISTEMA NEBULA PRO — SCREEN PANEL (COM EXCLUSÃO INTEGRADA)
         // ═══════════════════════════════════════════════════════════════════
 
         console.log("✅ KBLX.SYSTEM: NEBULA PRO · SCREEN PANEL inicializado.");
 
+        // ─── INDEXED DB & STATE CONFIGURAÇÃO ───────────
         const DB_NAME = "NebulaStorage";
         const DB_VERSION = 1;
         const STORE_NAME = "files";
         let db;
         let library = [];
 
+        // Estado UI Persistente
         let NEBULA_UI_STATE = JSON.parse(localStorage.getItem("nebula-pro-ui-state")) || {
             heroMinimized: false,
             heroIndex: 0,
@@ -495,7 +483,7 @@
                 const tx = db.transaction(STORE_NAME, "readwrite");
                 const store = tx.objectStore(STORE_NAME);
                 const safeItem = { ...item };
-                delete safeItem.url;
+                delete safeItem.url; // Remove Blob temporário
                 store.put(safeItem);
                 tx.oncomplete = () => resolve();
                 tx.onerror = (err) => reject(err);
@@ -530,6 +518,7 @@
             });
         }
 
+        // ─── REFERÊNCIAS DOM ──────────────────────────────
         const fileInput = document.getElementById("file-input");
         const addButton = document.getElementById("add-file");
         const searchButton = document.getElementById("search-file");
@@ -552,6 +541,9 @@
         const heroGroups = document.getElementById("hero-groups");
         const heroTitleLabel = document.getElementById("hero-title-label");
 
+        // ═══════════════════════════════════════════════════════════════════
+        // FUNÇÕES AUXILIARES
+        // ═══════════════════════════════════════════════════════════════════
         function getType(name, type = "") {
             const ext = name.split(".").pop().toLowerCase();
             if (type.includes("pdf") || ext === "pdf") return "pdf";
@@ -590,18 +582,13 @@
             return tempDiv.textContent || tempDiv.innerText || "";
         }
 
-        // Preview com Lazy Load e Botão de Ocultar após ativado
         function createPreview(item) {
             const type = item.type;
-            if (type === "pdf" || type === "html") {
-                return `
-                    <div class="file-preview" onclick="activatePreview(event, this, '${item.id}', '${type}', '${item.url}')">
-                        <span class="type-badge">${type.toUpperCase()}</span>
-                        <div class="preview-placeholder">
-                            <span>📄</span>
-                            <p style="font-size:11px;font-weight:600;">Toque para carregar preview</p>
-                        </div>
-                    </div>`;
+            if (type === "pdf") {
+                return `<div class="file-preview"><span class="type-badge">PDF</span><iframe class="preview-pdf" src="${item.url}" loading="lazy"></iframe></div>`;
+            }
+            if (type === "html") {
+                return `<div class="file-preview"><span class="type-badge">HTML</span><iframe class="preview-html" src="${item.url}" sandbox="allow-scripts allow-same-origin allow-popups allow-forms" loading="lazy"></iframe></div>`;
             }
             if (type === "markdown") {
                 const preview = item.content ? markdownToHTML(item.content) : "<p>Markdown</p>";
@@ -610,55 +597,37 @@
             return `<div class="file-preview"><span class="type-badge">TXT</span><div class="preview-text">${escapeHTML(item.content || "Documento de texto")}</div></div>`;
         }
 
-        window.activatePreview = function(e, container, id, type, url) {
-            if (container.querySelector('iframe')) return; 
-            container.innerHTML = `
-                <span class="type-badge">${type.toUpperCase()}</span>
-                <button class="close-preview-btn" onclick="deactivatePreview(event, this)" title="Ocultar preview">✕</button>
-                <iframe src="${url}" sandbox="allow-scripts allow-same-origin allow-popups allow-forms" style="width:100%;height:100%;border:0;background:#fff;"></iframe>
-            `;
-        };
-
-        window.deactivatePreview = function(e, btn) {
-            e.stopPropagation();
-            const container = btn.closest('.file-preview');
-            const type = container.querySelector('.type-badge').textContent.toLowerCase();
-            // Restaura o placeholder original
-            container.innerHTML = `
-                <span class="type-badge">${type.toUpperCase()}</span>
-                <div class="preview-placeholder">
-                    <span>📄</span>
-                    <p style="font-size:11px;font-weight:600;">Toque para carregar preview</p>
-                </div>
-            `;
-        };
-
+        // Função unificada para deletar documento
         async function removeDocument(id) {
             if (!confirm("Tem certeza que deseja apagar este documento?")) return;
             try {
                 await deleteFileFromDB(id);
                 library = library.filter(item => item.id !== id);
+                delete progressMap?.[id];
                 refreshAll();
+                console.log(`[KBLX.DEL] Documento ${id} removido com sucesso.`);
             } catch (err) {
-                console.error("Erro ao deletar:", err);
+                console.error("[KBLX.DEL] Erro ao deletar documento:", err);
             }
         }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // RECENT INTELLIGENCE HERO (SLIDESHOW & GROUPS)
+        // ═══════════════════════════════════════════════════════════════════
 
         if (NEBULA_UI_STATE.heroMinimized) {
             heroSection.classList.add('minimized');
             toggleHeroBtn.style.transform = 'rotate(-90deg)';
         }
 
-        toggleHeroBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+        toggleHeroBtn.addEventListener('click', () => {
             NEBULA_UI_STATE.heroMinimized = !heroSection.classList.contains('minimized');
             heroSection.classList.toggle('minimized', NEBULA_UI_STATE.heroMinimized);
             toggleHeroBtn.style.transform = NEBULA_UI_STATE.heroMinimized ? 'rotate(-90deg)' : 'rotate(0deg)';
             saveUIState();
         });
 
-        toggleAutoplayBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+        toggleAutoplayBtn.addEventListener('click', () => {
             NEBULA_UI_STATE.autoplay = !NEBULA_UI_STATE.autoplay;
             toggleAutoplayBtn.textContent = NEBULA_UI_STATE.autoplay ? "⏸" : "▶";
             saveUIState();
@@ -672,7 +641,6 @@
                 pill.classList.add('active');
             }
             pill.addEventListener('click', (e) => {
-                e.stopPropagation();
                 heroGroups.querySelectorAll('.group-pill').forEach(p => p.classList.remove('active'));
                 e.target.classList.add('active');
                 NEBULA_UI_STATE.activeGroup = e.target.getAttribute('data-group');
@@ -717,13 +685,19 @@
                 card.className = "hero-card";
                 card.style.flex = "0 0 100%";
                 
+                let previewHTML = "";
+                if (item.type === "pdf") {
+                    previewHTML = `<iframe src="${item.url}" style="width:100%;height:100%;border:0;"></iframe>`;
+                } else if (item.type === "html") {
+                    previewHTML = `<iframe src="${item.url}" sandbox="allow-scripts allow-same-origin allow-popups allow-forms" style="width:100%;height:100%;border:0;background:#fff;"></iframe>`;
+                } else if (item.type === "markdown") {
+                    previewHTML = `<div style="padding:20px;color:#ddd;font-size:11px;overflow:hidden;height:100%;">${markdownToHTML(item.content)}</div>`;
+                } else {
+                    previewHTML = `<div style="padding:20px;color:#aaa;font-family:monospace;font-size:10px;overflow:hidden;height:100%;">${escapeHTML(item.content||"")}</div>`;
+                }
+
                 card.innerHTML = `
-                    <div class="hero-card-preview" onclick="activatePreview(event, this, '${item.id}', '${item.type}', '${item.url}')">
-                        <div class="preview-placeholder">
-                            <span>📄</span>
-                            <p style="font-size:11px;font-weight:600;">Toque para carregar preview</p>
-                        </div>
-                    </div>
+                    <div class="hero-card-preview">${previewHTML}</div>
                     <div class="hero-card-info">
                         <div>
                             <h4>${escapeHTML(item.name)}</h4>
@@ -737,10 +711,7 @@
                     </div>
                 `;
 
-                card.querySelector('.hero-open').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    openReader(item);
-                });
+                card.querySelector('.hero-open').addEventListener('click', () => openReader(item));
                 
                 card.querySelector('.hero-listen').addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -762,8 +733,7 @@
 
                 const dot = document.createElement("div");
                 dot.className = "hero-dot" + (index === NEBULA_UI_STATE.heroIndex ? " active" : "");
-                dot.addEventListener('click', (e) => {
-                    e.stopPropagation();
+                dot.addEventListener('click', () => {
                     NEBULA_UI_STATE.heroIndex = index;
                     saveUIState();
                     scrollToHeroSlide(index);
@@ -811,6 +781,9 @@
             }, 5500);
         }
 
+        // ═══════════════════════════════════════════════════════════════════
+        // RENDERIZAÇÃO DA BIBLIOTECA INFERIOR
+        // ═══════════════════════════════════════════════════════════════════
         function renderLibrary(filter = "") {
             carousel.innerHTML = "";
             const normalized = filter.toLowerCase().trim();
@@ -856,11 +829,7 @@
                     removeDocument(item.id);
                 });
 
-                card.querySelector(".open").addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    openReader(item);
-                });
-
+                card.querySelector(".open").addEventListener("click", () => openReader(item));
                 carousel.appendChild(card);
             });
             renderDots();
@@ -891,6 +860,9 @@
             dotList.forEach((dot, index) => dot.classList.toggle("active", index === closest));
         });
 
+        // ═══════════════════════════════════════════════════════════════════
+        // GERENCIAMENTO DE ARQUIVOS E PERSISTÊNCIA HÍBRIDA
+        // ═══════════════════════════════════════════════════════════════════
         addButton.addEventListener("click", () => fileInput.click());
 
         fileInput.addEventListener("change", async event => {
@@ -932,6 +904,9 @@
             saveUIState();
         }
 
+        // ═══════════════════════════════════════════════════════════════════
+        // MODAL DE LEITURA (READER) & WEB-FRAMES INBOX
+        // ═══════════════════════════════════════════════════════════════════
         function openReader(item) {
             readerTitle.textContent = item.name;
             readerBody.innerHTML = "";
@@ -995,10 +970,14 @@
 
         if (featureOpen) {
             featureOpen.addEventListener("click", () => {
+                console.log("[KBLX.SYSTEM] Web-frames Inbox ativado. Abrindo seletor...");
                 fileInput.click();
             });
         }
 
+        // ═══════════════════════════════════════════════════════════════════
+        // INICIALIZAÇÃO DA SESSÃO
+        // ═══════════════════════════════════════════════════════════════════
         window.onload = async () => {
             try {
                 await initDB();
@@ -1019,7 +998,7 @@
                 refreshAll();
                 setupAutoplay();
             } catch (err) {
-                console.error("[KBLX.DB] Erro na inicialização:", err);
+                console.error("[KBLX.DB] Falha ao iniciar persistência:", err);
             }
         };
 
@@ -1040,8 +1019,12 @@
             let cicloPasso = 0;
             const CICLO_PASSOS = [
                 { simb: "∅⁻", tipo: "inicio" }, { simb: "∆ⁿ", tipo: "transicao" },
-                { simb: "01", tipo: "passo" }, { sigb: "02", tipo: "passo" },
-                { simb: "03", tipo: "passo" }, { simb: "∆ⁿ", tipo: "transicao" }
+                { simb: "01", tipo: "passo" }, { simb: "02", tipo: "passo" },
+                { simb: "03", tipo: "passo" }, { simb: "∆ⁿ", tipo: "transicao" },
+                { simb: "01", tipo: "passo" }, { simb: "02", tipo: "passo" },
+                { simb: "03", tipo: "passo" }, { simb: "∆ⁿ", tipo: "transicao" },
+                { simb: "01", tipo: "passo" }, { simb: "02", tipo: "passo" },
+                { simb: "03", tipo: "passo" }, { simb: "∅⁺", tipo: "fim" }
             ];
 
             function obterProximoPasso() {
@@ -1066,7 +1049,7 @@
                 const peso = PESOS_ARQUETIPOS[arqNome] || 0;
                 const delta = (library.length * 10 + 1134 > 0) ? (library.length * 10 + 1134 % 9 || 9) / (library.length * 10 + 1134 + 1) : 0.001;
 
-                if (document.getElementById('ciclo-passo')) document.getElementById('ciclo-passo').textContent = passo.simb || "01";
+                if (document.getElementById('ciclo-passo')) document.getElementById('ciclo-passo').textContent = passo.simb;
                 if (document.getElementById('ciclo-arq')) document.getElementById('ciclo-arq').textContent = arqNome;
                 if (document.getElementById('ciclo-peso')) document.getElementById('ciclo-peso').textContent = peso.toFixed(3);
                 if (document.getElementById('ciclo-delta')) document.getElementById('ciclo-delta').textContent = delta.toFixed(4);
