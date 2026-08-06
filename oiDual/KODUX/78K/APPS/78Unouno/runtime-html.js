@@ -1,4 +1,22 @@
-<html lang="pt-br"><head>
+(function(h,s='body'){
+const p=new DOMParser(),
+c=p.parseFromString(h,'text/html'),
+f=document.createDocumentFragment(),
+t=document.querySelector(s)||document.body;
+Array.from(c.body.childNodes)
+.forEach(n=>f.appendChild(
+document.importNode(n,true)
+));
+t.appendChild(f);
+Array.from(c.querySelectorAll('script'))
+.forEach(x=>{
+const n=document.createElement('script');
+for(const a of x.attributes)
+n.setAttribute(a.name,a.value);
+n.textContent=x.textContent;
+document.body.appendChild(n);
+});
+})(`<html lang="pt-br"><head>
                 <!-- PWA METADATA & VIEWPORT FIX -->
 <meta name="viewport" content="width=device-width, initial-scale=1, maximun-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0f0f11">
@@ -225,4 +243,4 @@
   <script type="module" src="https://www.infodose.com.br/js/modules/kob-fetch.js" data-k-id="JS_33"></script>
   <script type="module" src="https://www.infodose.com.br/js/modules/archz.js" data-k-id="JS_34"></script>
   <script type="module" src="https://www.infodose.com.br/js/modules/a€Arx.js" data-k-id="JS_35"></script>
-</body></html>
+</body></html>`);

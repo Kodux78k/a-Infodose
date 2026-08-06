@@ -1,0 +1,2703 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <title>KODUX iCloud · Nébula Pro</title>
+
+    <!-- Dependências CDN (PDF.js, JSZip, Tesseract) -->
+     <script> (function(){
+  // ====== Dependências ======
+  function loadScript(src){
+    return new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = res;
+      s.onerror = () => rej(new Error('Falha ao carregar: ' + src));
+      document.head.appendChild(s);
+    });
+  }
+
+  (async () => {
+    // PDF.js — hospedado no Infodose
+    await loadScript(
+      'https://www.infodose.com.br/js/modules/PDF-min.js'
+    );
+
+    // JSZip — hospedado no Infodose
+    await loadScript(
+      'https://www.infodose.com.br/js/modules/ZIP-min.js'
+    );
+
+    // Tesseract.js — CDN
+    await loadScript(
+      'https://unpkg.com/tesseract.js@5.0.3/dist/tesseract.min.js'
+    );
+
+    // Configuração PDF.js
+    window.pdfjsLib = window['pdfjs-dist/build/pdf'];
+
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://unpkg.com/pdfjs-dist@3.6.172/build/pdf.worker.min.js';
+
+    // Inicializa aplicação
+    initApp();
+
+  })();
+
+</script>
+
+    <!-- KaTeX para renderização opcional de LaTeX no preview -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+
+    <style>
+        /* ============================================================
+           DUAL CORE · GLOBAL TOKENS & TEMA (HERO‑MASTER BASE)
+           ============================================================ */
+        :root {
+            color-scheme: dark;
+            /* BASE */
+            --bg: #050507;
+            --bg-elevated: #0a0a0e;
+            --panel: rgba(18, 18, 22, .68);
+            --panel-solid: #121216;
+            --surface: rgba(255, 255, 255, .045);
+            --surface-hover: rgba(255, 255, 255, .08);
+            /* TEXTO */
+            --text: #f5f5f7;
+            --text-strong: #ffffff;
+            --muted: rgba(255, 255, 255, .58);
+            --subtle: rgba(255, 255, 255, .38);
+            /* BORDAS */
+            --border: rgba(255, 255, 255, .08);
+            --border-strong: rgba(255, 255, 255, .15);
+            /* INPUT */
+            --input-bg: rgba(255, 255, 255, .055);
+            --input-text: var(--text);
+            --placeholder: rgba(255, 255, 255, .35);
+            /* BUTTON */
+            --button-bg: rgba(255, 255, 255, .07);
+            --button-hover: rgba(255, 255, 255, .12);
+            --button-text: var(--text);
+            /* GLASS */
+            --glass-bg: rgba(255, 255, 255, .055);
+            --glass-border: rgba(255, 255, 255, .08);
+            --glass-blur: 24px;
+            --glass-saturate: 150%;
+            /* SHADOW */
+            --shadow: 0 20px 60px rgba(0, 0, 0, .28);
+            /* GEOMETRIA */
+            --radius: 39px;
+            --radius-small: 20px;
+            /* SISTEMA */
+            --transition: .25s ease;
+            /* NEBULA EXTRAS */
+            --accent1: #7a57ff;
+            --accent2: #5cc6ff;
+            --stroke: rgba(255, 255, 255, .12);
+            --card-bg: rgba(255, 255, 255, .06);
+            /* Variáveis do Orb e Arquétipos */
+            --kob-voice-primary: #85f;
+            --kob-voice-secondary: #8cf;
+            --kob-voice-glow: 0 0 22px #7bd4ff66;
+            --kob-voice-bg-soft: transparent;
+        }
+
+        html[data-theme="light"] {
+            color-scheme: light;
+            --bg: #f5f5f7;
+            --bg-elevated: #ffffff;
+            --panel: rgba(255, 255, 255, .72);
+            --panel-solid: #ffffff;
+            --surface: rgba(0, 0, 0, .025);
+            --surface-hover: rgba(0, 0, 0, .055);
+            --text: #1c1c1e;
+            --text-strong: #000000;
+            --muted: rgba(28, 28, 30, .60);
+            --subtle: rgba(28, 28, 30, .38);
+            --border: rgba(0, 0, 0, .07);
+            --border-strong: rgba(0, 0, 0, .12);
+            --input-bg: rgba(0, 0, 0, .035);
+            --input-text: #1c1c1e;
+            --placeholder: rgba(28, 28, 30, .38);
+            --button-bg: rgba(0, 0, 0, .045);
+            --button-hover: rgba(0, 0, 0, .08);
+            --button-text: #1c1c1e;
+            --glass-bg: rgba(255, 255, 255, .64);
+            --glass-border: rgba(0, 0, 0, .07);
+            --shadow: 0 20px 60px rgba(0, 0, 0, .10);
+            --accent1: #7a57ff;
+            --accent2: #5cc6ff;
+            --stroke: rgba(0, 0, 0, .10);
+            --card-bg: rgba(0, 0, 0, .04);
+            --kob-voice-primary: #7a57ff;
+            --kob-voice-secondary: #5cc6ff;
+            --kob-voice-glow: 0 0 22px rgba(122,87,255,.4);
+            --kob-voice-bg-soft: rgba(122,87,255,.06);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        html, body {
+            width: 100%; min-height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif;
+            transition: background var(--transition), color var(--transition);
+            overflow-x: hidden;
+        }
+        button, input, textarea { font: inherit; color: inherit; }
+        button:focus-visible, textarea:focus-visible, input:focus-visible {
+            outline: 2px solid var(--kob-voice-primary);
+            outline-offset: 3px;
+        }
+
+        /* ============================================================
+           HEADER GLOBAL (DUAL SYSTEM)
+           ============================================================ */
+        .topbar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 5000;
+            height: 56px; width: 100%;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 16px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+            border-bottom: 1px solid var(--border);
+            transform: translateY(0);
+            transition: transform .32s cubic-bezier(.22, 1, .36, 1), opacity .25s ease, background var(--transition), border-color var(--transition);
+            cursor: pointer;
+        }
+        .topbar.header-hidden {
+            transform: translateY(calc(-100% - 12px)); opacity: .15; pointer-events: none;
+        }
+        .topbar.header-visible {
+            transform: translateY(0); opacity: 1; pointer-events: auto;
+        }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .08em; }
+        .badge { padding: 5px 9px; border-radius: 999px; background: var(--button-bg); color: var(--muted); font-size: 10px; letter-spacing: .08em; }
+
+        .theme-dot {
+            position: relative; width: 30px; height: 30px; padding: 0;
+            border: 0 !important; border-radius: 50% !important;
+            background: var(--surface); color: var(--text);
+            cursor: pointer; display: grid; place-items: center;
+            transition: transform .2s ease, background var(--transition), box-shadow var(--transition);
+        }
+        .theme-dot::before {
+            content: ""; width: 10px; height: 10px; border-radius: 50%;
+            background: var(--kob-voice-primary);
+            box-shadow: 0 0 12px var(--kob-voice-primary);
+            transition: all var(--transition);
+        }
+        .theme-dot:hover { transform: scale(1.08); box-shadow: 0 0 20px color-mix(in srgb, var(--kob-voice-primary) 20%, transparent); }
+
+        #main-content {
+            padding-top: 56px;
+            opacity: 1; visibility: visible; pointer-events: auto; max-height: 50000px; overflow: hidden;
+            transition: opacity .35s ease, max-height .35s ease, visibility .35s ease, padding .35s ease;
+        }
+        #main-content.hidden {
+            opacity: 0; visibility: hidden; pointer-events: none; max-height: 0; padding-top: 0; padding-bottom: 0;
+        }
+
+        /* ============================================================
+           HK · HOME (iCloud) — sempre visível por padrão
+           ============================================================ */
+        :root {
+            --hk-bg-dark: #0a0a0c;
+            --hk-glass-bg: rgba(28,28,30,.7);
+            --hk-glass-border: rgba(255,255,255,.1);
+            --hk-accent-purple: #8e44ad;
+            --hk-accent-blue: #007aff;
+            --hk-text-main: #ffffff;
+            --hk-text-secondary: rgba(255,255,255,.6);
+        }
+        html[data-theme="light"] {
+            --hk-bg-dark: #f5f5f7;
+            --hk-glass-bg: rgba(255,255,255,.7);
+            --hk-glass-border: rgba(0,0,0,.08);
+            --hk-text-main: #1c1c1e;
+            --hk-text-secondary: rgba(0,0,0,.5);
+        }
+        #hkHome {
+            position: fixed; inset: 0; z-index: 9000;
+            background-color: var(--hk-bg-dark);
+            background-image: radial-gradient(at 0% 0%, rgba(80,40,120,.3) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(40,60,150,.2) 0px, transparent 50%);
+            color: var(--hk-text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif;
+            overflow-y: auto; -webkit-overflow-scrolling: touch;
+            display: flex; flex-direction: column; align-items: center;
+            transition: opacity .32s ease, transform .32s ease;
+        }
+        #hkHome.hk-hidden { opacity: 0; transform: scale(.98); pointer-events: none; }
+        #hkHome * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        .hk-header-vision { width: 100%; max-width: 500px; padding: 15px 20px; display: flex; flex-direction: column; gap: 10px; position: sticky; top: 0; z-index: 10; }
+        .hk-status-bar { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; padding: 0 5px; }
+        .hk-nav-glass {
+            background: var(--hk-glass-bg); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--hk-glass-border); border-radius: 40px; padding: 8px 15px;
+            display: flex; align-items: center; justify-content: space-between; box-shadow: 0 10px 30px rgba(0,0,0,.5);
+        }
+        .hk-nav-left { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 16px; }
+        .hk-brand-logo { width: 20px; fill: var(--hk-text-main); }
+        .hk-nav-right { display: flex; align-items: center; gap: 12px; }
+        .hk-icon-btn { background: none; border: none; color: var(--hk-text-secondary); font-size: 18px; cursor: pointer; padding: 4px; }
+        .hk-avatar-vinyl {
+            width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--hk-glass-border);
+            background: radial-gradient(circle at 30% 30%, #333, #000);
+            position: relative; animation: hkSpin 4s linear infinite;
+        }
+        .hk-avatar-vinyl::after {
+            content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 8px; height: 8px; background: var(--kob-voice-primary); border-radius: 50%;
+        }
+        @keyframes hkSpin { to { transform: rotate(360deg); } }
+        @media (prefers-reduced-motion: reduce) { .hk-avatar-vinyl { animation: none; } }
+
+        .hk-dashboard { width: 100%; max-width: 500px; padding: 20px; display: flex; flex-direction: column; gap: 20px; padding-bottom: 150px; }
+
+        .hk-card {
+            background: var(--hk-glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--hk-glass-border); border-radius: 28px; overflow: hidden;
+            transition: transform .2s ease;
+        }
+        .hk-card:active { transform: scale(.98); }
+
+        .hk-profile-card {
+            padding: 30px; background: linear-gradient(135deg, rgba(142,68,173,.2), rgba(41,128,185,.2));
+            display: flex; flex-direction: column; align-items: flex-start; position: relative; cursor: pointer;
+        }
+        .hk-vinyl-large { width: 88px; height: 88px; margin-bottom: 16px; box-shadow: 0 10px 40px rgba(0,0,0,.8); }
+        .hk-profile-info h1 { font-size: 26px; margin: 0 0 4px; color: var(--hk-text-main); }
+        .hk-profile-info p { color: var(--hk-text-secondary); font-size: 13px; margin: 0; }
+        .hk-badge-icloud { margin-top: 14px; font-size: 11px; font-weight: 700; letter-spacing: .5px; color: var(--kob-voice-primary); }
+
+        .hk-list-card .hk-card-header {
+            padding: 18px 20px; display: flex; align-items: center; gap: 12px;
+        }
+        .hk-icon-box {
+            width: 40px; height: 40px; background: rgba(0,122,255,.12); border-radius: 10px;
+            display: grid; place-items: center; flex: 0 0 auto;
+        }
+        .hk-icon-box svg { width: 22px; height: 22px; fill: var(--hk-accent-blue); }
+        .hk-card-title-group h3 { font-size: 17px; margin: 0; color: var(--hk-text-main); }
+        .hk-card-title-group span { font-size: 11.5px; color: var(--hk-accent-blue); }
+        .hk-card-content {
+            padding: 6px 20px 16px; border-top: 1px solid var(--hk-glass-border);
+            color: var(--hk-text-secondary); font-size: 13px;
+        }
+        .hk-list-item {
+            display: flex; align-items: center; gap: 12px; padding: 8px 0;
+            border-bottom: 1px solid var(--hk-glass-border);
+        }
+        .hk-list-item:last-child { border-bottom: none; }
+        .hk-item-icon { font-size: 18px; }
+        .hk-item-info { flex: 1; min-width: 0; }
+        .hk-item-name { font-weight: 600; color: var(--hk-text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .hk-item-meta { font-size: 10.5px; text-transform: uppercase; letter-spacing: .03em; color: var(--hk-text-secondary); }
+        .hk-empty-row { padding: 12px 0; color: var(--hk-text-secondary); font-size: 13px; }
+
+        .hk-app-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; padding: 4px 0;
+        }
+        .hk-app-item {
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+            background: none; border: none; color: var(--hk-text-main); font: inherit; cursor: pointer;
+        }
+        .hk-app-icon {
+            width: 58px; height: 58px; border-radius: 16px;
+            background: var(--hk-glass-bg); border: 1px solid var(--hk-glass-border);
+            display: grid; place-items: center; font-size: 28px;
+            box-shadow: 0 8px 20px rgba(0,0,0,.3); transition: transform .15s ease;
+        }
+        .hk-app-item:active .hk-app-icon { transform: scale(.92); }
+        .hk-app-label { font-size: 10.5px; color: var(--hk-text-secondary); }
+
+        .hk-storage-card { padding: 18px 20px; }
+        .hk-storage-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 10px; }
+        .hk-storage-bar { width: 100%; height: 6px; background: var(--hk-glass-border); border-radius: 3px; overflow: hidden; display: flex; }
+        .hk-storage-bar div { height: 100%; border-radius: 3px; }
+        .hk-storage-bar .seg1 { width: 40%; background: #FFCC00; }
+        .hk-storage-bar .seg2 { width: 30%; background: #AF52DE; }
+        .hk-storage-bar .seg3 { width: 15%; background: #34C759; }
+
+        .hk-footer-vision {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            background: var(--hk-glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--hk-glass-border); border-radius: 30px; padding: 6px;
+            display: flex; gap: 5px; z-index: 9010; max-width: calc(100vw - 32px);
+            box-shadow: 0 8px 30px rgba(0,0,0,.4);
+        }
+        .hk-footer-btn {
+            background: transparent; border: none; color: var(--hk-text-secondary);
+            padding: 10px 18px; border-radius: 25px; font-size: 13px; font-weight: 500;
+            cursor: pointer; font-family: inherit; transition: all .3s ease; white-space: nowrap;
+        }
+        .hk-footer-btn.hk-active { background: rgba(255,255,255,.15); color: var(--hk-text-main); }
+
+        #hkBackBtn {
+            position: fixed; top: calc(env(safe-area-inset-top) + 14px); left: 14px; z-index: 9500;
+            width: 42px; height: 42px; border-radius: 50%; border: 1px solid rgba(255,255,255,.14);
+            background: rgba(18,18,22,.78); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            color: #fff; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+            box-shadow: 0 8px 22px rgba(0,0,0,.4); transition: opacity .25s, transform .25s;
+        }
+        #hkBackBtn:active { transform: scale(.92); }
+        #hkBackBtn.hk-hidden { opacity: 0; pointer-events: none; transform: scale(.9); }
+
+        #nebulaApp {
+            transition: opacity .3s ease;
+        }
+        #nebulaApp.hk-hidden {
+            opacity: 0; pointer-events: none; position: fixed; inset: 0; overflow: hidden; height: 0;
+        }
+
+        /* ============================================================
+           NEBULA PRO · ESTILOS (fusion, library, player, grito vivo)
+           ============================================================ */
+        /* App interno */
+        .app-inner {
+            width: min(1180px, 100%); margin: auto;
+            padding: max(18px, env(safe-area-inset-top)) 18px calc(40px + env(safe-area-inset-bottom));
+        }
+        .header-app {
+            display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 10px 0 28px;
+        }
+        .brand-app { display: flex; align-items: center; gap: 12px; }
+        .orb {
+            width: 42px; height: 42px; border-radius: 50%; position: relative;
+            background: radial-gradient(circle at 32% 25%, #fff, var(--kob-voice-secondary) 9%, var(--kob-voice-primary) 27%, transparent 60%);
+            box-shadow: var(--kob-voice-glow);
+            animation: pulse 4s ease-in-out infinite;
+        }
+        .orb:after { content: ""; position: absolute; inset: -7px; border: 1px solid rgba(255,255,255,.15); border-radius: 50%; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+
+        .hero {
+            position: relative; overflow: hidden; border: 1px solid var(--border); border-radius: 34px; padding: 34px;
+            background: linear-gradient(135deg, var(--surface), rgba(255,255,255,.01));
+            box-shadow: var(--shadow), 0 0 40px rgba(0,229,255,.06);
+        }
+        .hero-content { position: relative; z-index: 2; max-width: 760px; }
+        .eyebrow { color: var(--kob-voice-primary); text-transform: uppercase; letter-spacing: .16em; font-size: 10px; font-weight: 800; margin-bottom: 12px; }
+        .hero h1 { font-size: clamp(28px, 5vw, 56px); line-height: 1.05; letter-spacing: -.03em; max-width: 700px; color: var(--text-strong); }
+        .hero p { margin-top: 18px; color: var(--muted); line-height: 1.65; max-width: 680px; font-size: 15px; }
+        .hero-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 25px; }
+        .flow-node { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: 9px 13px; font-size: 12px; font-weight: 700; }
+        .flow-node.seed { border-color: rgba(236, 72, 153, .4); }
+        .flow-node.mirror { border-color: rgba(0, 229, 255, .4); }
+        .flow-node.result { border-color: rgba(191, 90, 242, .4); }
+        .flow-arrow { color: var(--muted); }
+
+        #ciclo-painel {
+            margin-top: 18px; padding: 12px 16px; border-radius: 18px;
+            background: var(--surface); border: 1px solid var(--border);
+            display: flex; flex-wrap: wrap; gap: 8px 16px;
+            font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--muted);
+        }
+        #ciclo-painel strong { color: var(--kob-voice-primary); font-weight: 700; }
+        .ciclo-valor { color: var(--text-strong); font-weight: 600; }
+
+        .section { margin-top: 26px; }
+        .workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+        .panel {
+            border: 1px solid var(--border); border-radius: var(--radius-small);
+            background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+            box-shadow: var(--shadow); overflow: hidden;
+            transition: background var(--transition), border-color var(--transition);
+        }
+        .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 19px 20px; border-bottom: 1px solid var(--border); }
+        .panel-title { display: flex; align-items: center; gap: 10px; }
+        .panel-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--kob-voice-primary); box-shadow: 0 0 15px currentColor; }
+        .panel.seed-panel .panel-dot { background: #ec4899; }
+        .panel-title strong { font-size: 14px; color: var(--text-strong); }
+        .panel-title span { display: block; color: var(--muted); font-size: 10px; margin-top: 3px; }
+        .panel-body { padding: 20px; }
+
+        textarea {
+            width: 100%; min-height: 220px; resize: vertical; border: 1px solid var(--border);
+            border-radius: 20px; padding: 18px; color: var(--text); background: var(--input-bg);
+            line-height: 1.65; font-size: 14px; outline: none; transition: border-color var(--transition);
+        }
+        textarea:focus { border-color: var(--kob-voice-primary); }
+        textarea::placeholder { color: var(--placeholder); }
+
+        .action-btn {
+            border: 1px solid var(--border); background: var(--button-bg); border-radius: 13px;
+            min-height: 40px; padding: 0 13px; cursor: pointer; font-size: 11px; font-weight: 700;
+            transition: .2s ease; color: var(--button-text);
+        }
+        .action-btn:hover { background: var(--button-hover); transform: translateY(-2px); border-color: var(--border-strong); }
+        .action-btn.primary { border-color: rgba(0, 229, 255, .4); background: linear-gradient(135deg, rgba(0, 229, 255, .15), rgba(191, 90, 242, .12)); }
+        .action-btn.pink { border-color: rgba(236, 72, 153, .4); }
+
+        .mirror-stack { display: flex; flex-direction: column; gap: 10px; }
+        .mirror-item { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px; border: 1px solid var(--border); border-radius: 17px; background: var(--surface); }
+        .mirror-index { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; background: linear-gradient(135deg, rgba(0, 229, 255, .18), rgba(191, 90, 242, .16)); color: var(--kob-voice-primary); font-weight: 800; font-size: 12px; }
+        .mirror-name { font-size: 13px; font-weight: 800; color: var(--text-strong); }
+        .mirror-source { color: var(--muted); font-size: 10px; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .remove-mirror { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 10px; background: transparent; color: var(--muted); cursor: pointer; transition: 0.2s; }
+        .remove-mirror:hover { background: rgba(255,0,0,0.2); color: #ff5555; }
+        .add-mirror { width: 100%; min-height: 46px; border: 1px dashed rgba(0, 229, 255, .4); border-radius: 15px; background: var(--surface); color: var(--kob-voice-primary); cursor: pointer; font-size: 12px; font-weight: 800; margin-top: 10px; transition: 0.2s; }
+        .add-mirror:hover { background: var(--surface-hover); }
+
+        .fusion-panel { grid-column: 1 / -1; }
+        .timeline { display: flex; gap: 0; overflow-x: auto; padding: 8px 2px 14px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+        .timeline-node { min-width: 180px; position: relative; padding: 15px; border: 1px solid var(--border); background: var(--surface); border-radius: 18px; }
+        .timeline-node + .timeline-node { margin-left: 28px; }
+        .timeline-node + .timeline-node:before { content: "→"; position: absolute; left: -23px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+        .timeline-label { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .1em; }
+        .timeline-title { margin-top: 7px; font-weight: 800; font-size: 12px; color: var(--text-strong); }
+        .timeline-text { margin-top: 6px; color: var(--muted); font-size: 10px; line-height: 1.4; }
+        .timeline-node.seed { border-color: rgba(236, 72, 153, .4); }
+        .timeline-node.mirror { border-color: rgba(0, 229, 255, .4); }
+        .timeline-node.result { border-color: rgba(191, 90, 242, .5); }
+
+        .result-box { margin-top: 17px; padding: 22px; min-height: 150px; border-radius: 20px; border: 1px solid rgba(191, 90, 242, .4); background: radial-gradient(circle at 80% 20%, rgba(191, 90, 242, .12), transparent 35%), var(--surface); box-shadow: inset 0 0 20px rgba(0,0,0,0.15); }
+        .result-label { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--kob-voice-primary); font-weight: 800; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .result-text { color: var(--text); font-size: 15px; line-height: 1.8; white-space: pre-wrap; font-family: inherit; outline: none; }
+
+        /* LIBRARY DRAWER */
+        :root {
+            --lib-drawer-w: min(92vw, 420px);
+            --lib-handle-w: 42px;
+            --lib-drawer-top: 76px;
+            --lib-drawer-bottom: calc(env(safe-area-inset-bottom) + 20px);
+        }
+        #libCard {
+            position: fixed; top: var(--lib-drawer-top); right: 0; bottom: var(--lib-drawer-bottom);
+            width: var(--lib-drawer-w); z-index: 4600;
+            border-radius: 18px 0 0 18px;
+            background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            transform: translateX(calc(100% - var(--lib-handle-w)));
+            transition: transform .32s cubic-bezier(.2,.85,.2,1), box-shadow .32s ease, width .28s ease, max-height .28s ease, background var(--transition);
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        #libCard.is-open { transform: translateX(0); box-shadow: 0 24px 70px rgba(0,0,0,.45); }
+        .lib-drawer-handle {
+            position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+            width: var(--lib-handle-w); height: 132px;
+            background: linear-gradient(180deg, var(--kob-voice-primary), var(--kob-voice-secondary));
+            color: #fff; font-weight: 900; letter-spacing: .08em;
+            border: none; border-radius: 16px 0 0 16px; cursor: pointer;
+            display: grid; place-items: center; z-index: 3;
+            box-shadow: -4px 0 15px rgba(0,0,0,0.15);
+            transition: .2s ease;
+        }
+        #libCard.is-open .lib-drawer-handle { background: var(--surface); border-right: 1px solid var(--border); color: var(--text); box-shadow: none; }
+        .lib-drawer-handle span { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 11px; }
+        #libToggleBtn {
+            position: absolute; top: 12px; right: 12px; z-index: 5;
+            background: var(--button-bg); border: 1px solid var(--border); color: var(--text);
+            padding: 6px 12px; border-radius: 10px; cursor: pointer; font-size: 11px; font-weight: bold;
+        }
+        #libToggleBtn:hover { background: var(--button-hover); }
+        .lib-content-wrap { margin-left: var(--lib-handle-w); padding: 20px; overflow-y: auto; height: 100%; display: flex; flex-direction: column; gap: 15px; }
+        .library-carousel { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 12px; scrollbar-width: thin; }
+        .library-item {
+            flex: 0 0 85%; min-width: 85%; scroll-snap-align: start;
+            border: 1px solid var(--border); border-radius: 16px; padding: 15px;
+            background: var(--surface); transition: .2s ease; display: flex; flex-direction: column;
+        }
+        .library-item:hover { transform: translateY(-2px); background: var(--surface-hover); border-color: var(--border-strong); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .library-top { display: flex; justify-content: space-between; align-items: center; }
+        .file-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; background: rgba(0, 229, 255, .15); color: var(--kob-voice-primary); font-size: 9px; font-weight: 900; }
+        .library-type { font-size: 9px; color: var(--muted); }
+        .library-name { margin-top: 10px; font-size: 13px; font-weight: 800; color: var(--text-strong); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .library-desc { color: var(--muted); font-size: 10px; line-height: 1.4; margin-top: 5px; flex-grow: 1; }
+        .library-actions { display: flex; gap: 6px; margin-top: 12px; }
+        .library-actions button { flex: 1; min-height: 30px; border: 1px solid var(--border); background: var(--button-bg); border-radius: 8px; font-size: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; color: var(--button-text); }
+        .library-actions button:hover { background: var(--kob-voice-primary); color: #000; border-color: var(--kob-voice-primary); }
+        .library-actions button.del-btn { flex: 0 0 30px; background: transparent; border-color: rgba(255,0,0,0.3); color: #ff5555; }
+        .library-actions button.del-btn:hover { background: #ff5555; color: #fff; }
+
+/* ============================================================
+   NEBULA LIBRARY DRAWER (Lib da Neb)
+   ============================================================ */
+:root {
+  --lib-drawer-w: min(92vw, 400px);
+  --lib-handle-w: 42px;
+  --lib-drawer-top: 76px;
+  --lib-drawer-bottom: calc(env(safe-area-inset-bottom) + 20px);
+}
+#libCard {
+  position: fixed; top: var(--lib-drawer-top); right: 0; bottom: var(--lib-drawer-bottom);
+  width: var(--lib-drawer-w); z-index: 4600;
+  border-radius: 18px 0 0 18px;
+  background: var(--panel); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  transform: translateX(calc(100% - var(--lib-handle-w)));
+  transition: transform .32s cubic-bezier(.2,.85,.2,1), box-shadow .32s ease, width .28s ease, max-height .28s ease, background var(--transition);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+#libCard.is-open {
+  transform: translateX(0);
+  box-shadow: 0 24px 70px rgba(0,0,0,.45);
+}
+.lib-drawer-handle {
+  position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: var(--lib-handle-w); height: 132px;
+  background: linear-gradient(180deg, var(--cyan), var(--violet));
+  color: #fff; font-weight: 900; letter-spacing: .08em;
+  border: none; border-radius: 16px 0 0 16px; cursor: pointer;
+  display: grid; place-items: center; z-index: 3;
+  box-shadow: -4px 0 15px rgba(0,0,0,0.15);
+  transition: .2s ease;
+}
+#libCard.is-open .lib-drawer-handle {
+  background: var(--panel2); border-right: 1px solid var(--border); color: var(--text); box-shadow: none;
+}
+.lib-drawer-handle span { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 11px; }
+
+#libToggleBtn {
+  position: absolute; top: 12px; right: 12px; z-index: 5;
+  background: var(--panel2); border: 1px solid var(--border); color: var(--text);
+  padding: 6px 12px; border-radius: 10px; cursor: pointer; font-size: 11px; font-weight: bold;
+}
+#libToggleBtn:hover { background: var(--panel3); }
+
+.lib-content-wrap {
+  margin-left: var(--lib-handle-w); padding: 20px; overflow-y: auto; height: 100%; display: flex; flex-direction: column; gap: 15px;
+}
+.lib-content-wrap .section-head { margin-bottom: 0; }
+.lib-content-wrap .section-title { font-size: 16px; }
+
+/* Drawer Collapsed (Mobile View) */
+#libCard.is-collapsed {
+  position: fixed; left: 12px; bottom: calc(env(safe-area-inset-bottom) + 20px);
+  width: min(94vw, 480px); max-height: 40vh; top: auto; right: auto;
+  transform: none; border-radius: 18px; padding-top: 52px;
+}
+#libCard.is-collapsed .lib-drawer-handle { display: none; }
+#libCard.is-collapsed .lib-content-wrap { margin-left: 0; padding-top: 0; }
+#libCard.is-collapsed .library {
+  display: flex; flex-direction: row; overflow-x: auto; scroll-snap-type: x mandatory; flex-wrap: nowrap;
+}
+#libCard.is-collapsed .library-item { flex: 0 0 85%; min-width: 85%; scroll-snap-align: start; }
+
+/* Grid da Library no Drawer */
+.library { display: grid; grid-template-columns: 1fr; gap: 14px; }
+.library-item { border: 1px solid var(--border); border-radius: 16px; padding: 15px; background: var(--panel2); transition: .2s var(--ease); display: flex; flex-direction: column; }
+.library-item:hover { transform: translateY(-2px); background: var(--panel3); border-color: var(--line2); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+.library-top { display: flex; justify-content: space-between; align-items: center; }
+.file-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; background: rgba(0, 229, 255, .15); color: var(--cyan); font-size: 9px; font-weight: 900; }
+.library-type { font-size: 9px; color: var(--muted); }
+.library-name { margin-top: 10px; font-size: 13px; font-weight: 800; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.library-desc { color: var(--muted); font-size: 10px; line-height: 1.4; margin-top: 5px; flex-grow: 1; }
+.library-actions { display: flex; gap: 6px; margin-top: 12px; }
+.library-actions button { flex: 1; min-height: 30px; border: 1px solid var(--border); background: var(--panel2); border-radius: 8px; font-size: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; color: var(--text); }
+.library-actions button:hover { background: var(--cyan); color: #000; border-color: var(--cyan); }
+.library-actions button.del-btn { flex: 0 0 30px; background: transparent; border-color: rgba(255,0,0,0.3); color: #ff5555; }
+.library-actions button.del-btn:hover { background: #ff5555; color: #fff; }
+
+/* MODAL ESPELHOS */
+.modal { position: fixed; inset: 0; z-index: 6000; display: none; place-items: center; padding: 20px; background: rgba(0,0,0,.65); backdrop-filter: blur(15px); }
+.modal.open { display: grid; }
+.modal-box { width: min(620px, 100%); max-height: min(720px, 90vh); overflow: auto; border: 1px solid var(--border); border-radius: 28px; background: var(--panel); box-shadow: var(--shadow); }
+.modal-head { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--border); }
+.modal-head strong { font-size: 16px; }
+.modal-body { padding: 20px; }
+.option-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.option { padding: 16px; text-align: left; border: 1px solid var(--border); background: var(--panel2); border-radius: 17px; cursor: pointer; transition: 0.2s; color: var(--text); }
+.option:hover { border-color: var(--cyan); background: var(--panel3); transform: translateY(-2px); }
+.option strong { display: block; font-size: 13px; }
+.option span { display: block; color: var(--muted); font-size: 11px; margin-top: 5px; line-height: 1.4; }
+.empty-state { padding: 40px; text-align: center; color: var(--muted); font-size: 13px; }
+
+/* FOOTER */
+.footer { padding: 35px 0 10px; text-align: center; color: var(--muted); font-size: 10px; letter-spacing: .06em; }
+.footer strong { color: var(--soft); }
+
+/* ============================================================
+   PLAYER DOCK (Nebula) adaptado
+   ============================================================ */
+.player {
+    position: fixed; left: 0; right: 0; bottom: 0; padding: 0 12px calc(env(safe-area-inset-bottom) + 12px); z-index: 40;
+}
+.player-wrap {
+    background: rgba(15, 15, 20, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px; padding: 12px; display: flex; flex-direction: column; gap: 6px;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+}
+.player-top { display: flex; align-items: center; width: 100%; gap: 12px; flex-wrap: wrap; }
+.pp {
+    width:44px; height:44px; border-radius:50%; border:1px solid #ffffff22;
+    background:linear-gradient(180deg, var(--accent1), var(--accent2));
+    display:grid; place-items:center; cursor:pointer; flex-shrink:0;
+}
+.pp.pulse { animation: pulsePp 1.2s ease-in-out infinite; }
+@keyframes pulsePp { 0%{ box-shadow:0 0 0 0 rgba(122,87,255,.55) } 100%{ box-shadow:0 0 0 20px rgba(122,87,255,0) } }
+.pp svg { width:18px; height:18px; fill:#fff }
+.track { flex:1; overflow:hidden; min-width:0; }
+.now { font-size:13px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+#ovSnippet { background:transparent; border: none; padding:0; color: var(--muted); font-size:11px; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-height:1.3em; }
+.player-slider-wrap { width:100%; display:flex; align-items:center; gap:8px; margin-top:2px; }
+.time-label { font-size:11px; font-weight:600; color:var(--muted); min-width:35px; text-align:center; }
+#progressSlider { flex:1; max-width:100%; height:4px; -webkit-appearance:none; background:rgba(255,255,255,0.15); border-radius:4px; outline:none; }
+#progressSlider::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; background:var(--accent2); border-radius:50%; cursor:pointer; }
+#progressSlider::-moz-range-thumb { width:14px; height:14px; background:var(--accent2); border-radius:50%; cursor:pointer; border:none; }
+
+/* RESPONSIVO */
+@media(max-width: 760px) {
+  .app { padding-left: 13px; padding-right: 13px; }
+  .hero { padding: 25px 20px; border-radius: 27px; }
+  .workspace { grid-template-columns: 1fr; }
+  .option-grid { grid-template-columns: 1fr; }
+  :root { --lib-drawer-w: min(96vw, 420px); --lib-drawer-top: 86px; --lib-drawer-bottom: calc(env(safe-area-inset-bottom) + 88px); --lib-handle-w: 42px; }
+}
+
+/* ============================================================
+   FUSÃO · classes utilitárias trazidas do Nebula Pro (78NP-Grito-Vivo)
+   necessárias para o módulo Grito Vivo · KBLX abaixo
+   ============================================================ */
+.listen{ margin-left:auto; border:none; color:#fff; font-weight:700; font-size:16px; padding:12px 20px; border-radius:14px;
+  background: linear-gradient(90deg, var(--accent1), var(--accent2)); box-shadow: 0 10px 24px rgba(0,0,0,.25), inset 0 0 0 1px #ffffff20; cursor:pointer; transition:transform .06s;}
+.listen:active{transform:scale(.98)}
+.btn{border:none; color:#0b0b12; background:#fff; font-weight:800; letter-spacing:.2px; padding:12px 14px; border-radius:12px; cursor:pointer; font-size:13px; flex:1; text-align:center; white-space:nowrap;}
+.btn:active{transform:scale(.98)}
+.pill{font-size:12px; background:#ffffff22; padding:4px 8px; border-radius:999px}
+
+        /* MODAL ESPELHOS */
+        .modal { position: fixed; inset: 0; z-index: 6000; display: none; place-items: center; padding: 20px; background: rgba(0,0,0,.65); backdrop-filter: blur(15px); }
+        .modal.open { display: grid; }
+        .modal-box { width: min(620px, 100%); max-height: min(720px, 90vh); overflow: auto; border: 1px solid var(--border); border-radius: 28px; background: var(--glass-bg); box-shadow: var(--shadow); }
+        .modal-head { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--border); }
+        .modal-head strong { font-size: 16px; color: var(--text-strong); }
+        .modal-body { padding: 20px; }
+        .option-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+        .option { padding: 16px; text-align: left; border: 1px solid var(--border); background: var(--surface); border-radius: 17px; cursor: pointer; transition: 0.2s; color: var(--text); }
+        .option:hover { border-color: var(--kob-voice-primary); background: var(--surface-hover); transform: translateY(-2px); }
+        .option strong { display: block; font-size: 13px; color: var(--text-strong); }
+        .option span { display: block; color: var(--muted); font-size: 11px; margin-top: 5px; line-height: 1.4; }
+        .empty-state { padding: 40px; text-align: center; color: var(--muted); font-size: 13px; }
+
+        /* PLAYER DOCK */
+        .player {
+            position: fixed; left: 0; right: 0; bottom: 0; padding: 0 12px calc(env(safe-area-inset-bottom) + 12px); z-index: 40;
+        }
+        .player-wrap {
+            background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+            border: 1px solid var(--border); border-radius: 20px; padding: 12px;
+            display: flex; flex-direction: column; gap: 6px; box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+        }
+        .player-top { display: flex; align-items: center; width: 100%; gap: 12px; flex-wrap: wrap; }
+        .pp {
+            width:44px; height:44px; border-radius:50%; border:1px solid var(--border);
+            background:linear-gradient(180deg, var(--kob-voice-primary), var(--kob-voice-secondary));
+            display:grid; place-items:center; cursor:pointer; flex-shrink:0;
+        }
+        .pp.pulse { animation: pulsePp 1.2s ease-in-out infinite; }
+        @keyframes pulsePp { 0%{ box-shadow:0 0 0 0 rgba(122,87,255,.55) } 100%{ box-shadow:0 0 0 20px rgba(122,87,255,0) } }
+        .pp svg { width:18px; height:18px; fill:#fff }
+        .track { flex:1; overflow:hidden; min-width:0; }
+        .now { font-size:13px; font-weight:600; color:var(--text-strong); white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+        #ovSnippet { background:transparent; border: none; padding:0; color: var(--muted); font-size:11px; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-height:1.3em; }
+        .player-slider-wrap { width:100%; display:flex; align-items:center; gap:8px; margin-top:2px; }
+        .time-label { font-size:11px; font-weight:600; color:var(--muted); min-width:35px; text-align:center; }
+        #progressSlider { flex:1; max-width:100%; height:4px; -webkit-appearance:none; background:rgba(255,255,255,0.15); border-radius:4px; outline:none; }
+        #progressSlider::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; background:var(--kob-voice-secondary); border-radius:50%; cursor:pointer; }
+        #progressSlider::-moz-range-thumb { width:14px; height:14px; background:var(--kob-voice-secondary); border-radius:50%; cursor:pointer; border:none; }
+
+        /* READER MODAL */
+        .reader-modal {
+            position: fixed; inset: 0; z-index: 7000;
+            display: none; flex-direction: column;
+            background: var(--bg); color: var(--text);
+        }
+        .reader-modal.opened { display: flex; }
+        .reader-head {
+            height: 64px; padding: 0 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            background: var(--panel); border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .reader-title { max-width: 70%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 13px; font-weight: 700; color: var(--text-strong); }
+        .reader-close { width: 42px; height: 42px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); font-size: 20px; display: grid; place-items: center; cursor: pointer; }
+        .reader-body { flex: 1; overflow: auto; padding: 0; background: var(--bg-elevated); }
+        .reader-body iframe { width: 100%; height: 100%; border: 0; display: block; }
+        .reader-text { padding: 28px; white-space: pre-wrap; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.8; color: var(--text); }
+        .reader-markdown { max-width: 760px; margin: auto; padding: 30px 22px 100px; color: var(--text); line-height: 1.7; }
+        .reader-markdown h1 { font-size: 28px; margin-bottom: 20px; color: var(--text-strong); }
+        .reader-markdown h2 { margin-top: 25px; margin-bottom: 10px; color: var(--text-strong); }
+        .reader-markdown p { margin-bottom: 15px; }
+        .reader-markdown code { color: var(--kob-voice-primary); background: var(--surface); padding: 3px 6px; border-radius: 5px; }
+
+        /* GRITO VIVO */
+        .listen { margin-left:auto; border:none; color:#fff; font-weight:700; font-size:16px; padding:12px 20px; border-radius:14px; background: linear-gradient(90deg, var(--kob-voice-primary), var(--kob-voice-secondary)); box-shadow: 0 10px 24px rgba(0,0,0,.25), inset 0 0 0 1px #ffffff20; cursor:pointer; transition:transform .06s; }
+        .listen:active { transform:scale(.98) }
+        .btn { border:none; color:#0b0b12; background:#fff; font-weight:800; letter-spacing:.2px; padding:12px 14px; border-radius:12px; cursor:pointer; font-size:13px; flex:1; text-align:center; white-space:nowrap; }
+        .btn:active { transform:scale(.98) }
+        .pill { font-size:12px; background:#ffffff22; padding:4px 8px; border-radius:999px }
+
+        #gritoDock { margin: 16px 0 0; border: 1px solid var(--border); border-radius: 22px; overflow: hidden; background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)); box-shadow: var(--shadow); }
+        #gritoDock[hidden] { display: none !important; }
+        .motor-dock-head { display:flex; justify-content:space-between; align-items:center; gap:12px; padding: 12px 14px; border-bottom: 1px solid var(--border); background: var(--surface); }
+        .motor-dock-head strong { display:block; font-size: 1rem; color: var(--text-strong); }
+        .motor-dock-head span { display:block; font-size:.8rem; opacity:.75; margin-top:2px; color: var(--muted); }
+        .grito-body { padding: 14px; display:flex; flex-direction:column; gap:12px; max-height: min(78vh, 920px); overflow-y:auto; }
+        .grito-tabs { display:flex; gap:6px; flex-wrap:wrap; }
+        .grito-tab { flex:1; min-width:90px; padding:8px 10px; font-size:.78rem; border-radius:12px; text-align:center; cursor:pointer; background:var(--surface); border:1px solid var(--border); opacity:.65; }
+        .grito-tab.active { opacity:1; border-color: var(--kob-voice-secondary); background: color-mix(in srgb, var(--kob-voice-primary) 14%, transparent); box-shadow: 0 0 10px color-mix(in srgb, var(--kob-voice-secondary) 25%, transparent); }
+        .grito-panel { display:none; flex-direction:column; gap:10px; }
+        .grito-panel.active { display:flex; }
+        .grito-controls { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:8px; }
+        .grito-controls label { font-size:.68rem; color: var(--muted); text-transform:uppercase; letter-spacing:.5px; display:block; margin-bottom:3px; }
+        .grito-controls select { width:100%; background: var(--input-bg); border:1px solid var(--border); color:var(--text); padding:7px 9px; border-radius:10px; font-size:.82rem; }
+        #grito-raw-input { width:100%; min-height:220px; background: var(--input-bg); border:1px solid var(--border); border-radius:14px; color:var(--text); padding:12px; font-size:.92rem; line-height:1.6; resize:vertical; outline:none; }
+        #grito-preview { min-height:180px; padding:14px; border-radius:14px; background: var(--surface); border:1px solid var(--border); line-height:1.65; word-break:break-word; }
+        .grito-bold-tag { background: color-mix(in srgb, var(--kob-voice-secondary) 16%, transparent); color: var(--kob-voice-secondary); border:1px solid color-mix(in srgb, var(--kob-voice-secondary) 40%, transparent); padding:2px 8px; border-radius:6px; font-weight:800; cursor:pointer; display:inline-block; margin:2px; }
+        .grito-bold-tag:hover { background: color-mix(in srgb, var(--kob-voice-secondary) 30%, transparent); }
+        .grito-opcode { font-size:.62rem; background:rgba(255,255,255,.1); padding:1px 4px; border-radius:3px; margin-left:4px; color: var(--muted); }
+        .grito-fractal-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap:8px; }
+        .grito-fractal-group { padding:10px; border-radius:12px; background: var(--surface); border-left:4px solid var(--kob-voice-primary); }
+        .grito-fractal-group h4 { font-size:.72rem; color: var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:1px; }
+        .grito-svg-box { width:100%; height:320px; display:flex; align-items:center; justify-content:center; border-radius:14px; background: var(--input-bg); border:1px solid var(--border); }
+        .grito-node-circle { fill: var(--kob-voice-secondary); stroke:#fff; stroke-width:1.4; cursor:pointer; }
+        .grito-node-circle:hover { fill: #f59e0b; }
+        .grito-node-text { fill:#fff; font-size:9px; text-anchor:middle; font-family:monospace; pointer-events:none; }
+        .grito-node-line { stroke: rgba(255,255,255,.18); stroke-width:1; }
+        .grito-kblx-table { width:100%; border-collapse:collapse; font-size:.76rem; }
+        .grito-kblx-table th, .grito-kblx-table td { border:1px solid var(--border); padding:5px; text-align:left; }
+        .grito-kblx-table th { background: var(--surface); color: var(--kob-voice-secondary); }
+        #gritoBtn { margin-left:8px; }
+
+        @keyframes gritoBreathe {
+            0%   { box-shadow: 0 0 0 rgba(122,87,255,0), var(--shadow); border-color: var(--border); }
+            50%  { box-shadow: 0 0 34px var(--grito-pulse, rgba(122,87,255,.55)), var(--shadow); border-color: var(--grito-pulse, rgba(122,87,255,.6)); }
+            100% { box-shadow: 0 0 0 rgba(122,87,255,0), var(--shadow); border-color: var(--border); }
+        }
+        #gritoDock.grito-speaking { animation: gritoBreathe 2.4s ease-in-out infinite; }
+        .grito-sig { font-family: "JetBrains Mono", monospace; font-size: .72rem; letter-spacing:.08em; opacity:.75; margin-top:2px; display:flex; align-items:center; gap:6px; }
+        .grito-sig .grito-sig-glyph { display:inline-block; animation: gritoSpin 6s linear infinite; }
+        #gritoDock.grito-speaking .grito-sig .grito-sig-glyph { animation-duration: 1.4s; }
+        @keyframes gritoSpin { to { transform: rotate(360deg); } }
+        .grito-actions { display:flex; gap:6px; flex-wrap:wrap; }
+        .grito-actions button { flex:1; min-width:70px; font-size:.72rem; padding:8px 6px; }
+        .grito-modal {
+            position:fixed; inset:0; background:rgba(0,0,0,.82); backdrop-filter: blur(10px);
+            z-index:400; display:none; align-items:center; justify-content:center; padding:20px;
+        }
+        .grito-modal.active { display:flex; }
+        .grito-modal-content {
+            width:100%; max-width:440px; padding:18px; border-radius:18px;
+            background: var(--panel-solid); border:1px solid var(--border);
+            display:flex; flex-direction:column; gap:12px;
+            box-shadow: var(--shadow);
+        }
+        .grito-modal-content h4 { font-size:.92rem; color: var(--kob-voice-secondary); }
+        .grito-modal-content input {
+            width:100%; padding:10px; border-radius:10px; border:1px solid var(--border);
+            background: var(--input-bg); color:var(--text); font-size:.9rem; outline:none;
+        }
+
+        .footer { padding: 35px 0 10px; text-align: center; color: var(--muted); font-size: 10px; letter-spacing: .06em; }
+        .footer strong { color: var(--text); }
+
+        /* RESPONSIVO */
+        @media(max-width: 760px) {
+            .app-inner { padding-left: 13px; padding-right: 13px; }
+            .hero { padding: 25px 20px; border-radius: 27px; }
+            .workspace { grid-template-columns: 1fr; }
+            .option-grid { grid-template-columns: 1fr; }
+            :root { --lib-drawer-w: min(96vw, 420px); --lib-drawer-top: 86px; --lib-drawer-bottom: calc(env(safe-area-inset-bottom) + 88px); --lib-handle-w: 42px; }
+            .hk-app-grid { gap: 12px; }
+            .hk-app-icon { width: 50px; height: 50px; font-size: 24px; }
+        }
+        @media(min-width: 600px) {
+            .app-inner { max-width: 620px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ============================================================
+     HK HOME (iCloud) – tela inicial
+     ============================================================ -->
+<div id="hkHome" class="hk-home">
+    <header class="hk-header-vision">
+        <div class="hk-status-bar">
+            <span id="hkClock">--:--</span>
+            <div style="display:flex; gap:6px; align-items:center;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21l-12-18h24z"/></svg>
+                <span>369</span>
+                <div style="width:25px; height:12px; border:1px solid currentColor; border-radius:3px; padding:1px; opacity:0.5;">
+                    <div style="width:70%; height:100%; background:currentColor;"></div>
+                </div>
+            </div>
+        </div>
+        <nav class="hk-nav-glass">
+            <div class="hk-nav-left">
+                <svg class="hk-brand-logo" viewBox="0 0 24 24"><path d="M17.5,19c-3.6,0-6.5-2.9-6.5-6.5s2.9-6.5,6.5-6.5s6.5,2.9,6.5,6.5S21.1,19,17.5,19z M17.5,8c-2.5,0-4.5,2-4.5,4.5 s2,4.5,4.5,4.5s4.5-2,4.5-4.5S20,8,17.5,8z"/></svg>
+                <span>KODUX iCloud</span>
+            </div>
+            <div class="hk-nav-right">
+                <button class="hk-icon-btn" id="hkExport" title="Exportar log">⇧</button>
+                <button class="hk-icon-btn" id="hkGrid" title="Ver todos os apps">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h4v4H4V4zm6 0h4v4h-4V4zm6 0h4v4h-4V4zM4 10h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4zM4 16h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4z"/></svg>
+                </button>
+                <div class="hk-avatar-vinyl" id="hkAvatar"></div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="hk-dashboard">
+        <!-- Perfil / abre Nébula -->
+        <section class="hk-card hk-profile-card" data-hk-open="nebula">
+            <div class="hk-avatar-vinyl hk-vinyl-large"></div>
+            <div class="hk-profile-info">
+                <h1>Espaço da Mente</h1>
+                <p>Nébula Pro · Grito Vivo · KBLX 3×6×9×7</p>
+                <div class="hk-badge-icloud" id="hkArchBadge">KOBLLUX · toque para entrar</div>
+            </div>
+        </section>
+
+        <!-- Drive / Library -->
+        <section class="hk-card hk-list-card" data-hk-open="nebula">
+            <div class="hk-card-header">
+                <div class="hk-icon-box">
+                    <svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+                </div>
+                <div class="hk-card-title-group">
+                    <h3>Library</h3>
+                    <span id="hkLibCount">● carregando…</span>
+                </div>
+            </div>
+            <div class="hk-card-content" id="hkLibList">
+                <div class="hk-empty-row">Abrindo IndexedDB…</div>
+            </div>
+        </section>
+
+        <!-- Apps -->
+        <div class="hk-app-grid">
+            <button class="hk-app-item" data-hk-open="nebula">
+                <div class="hk-app-icon" style="background:linear-gradient(to bottom,#22D3EE,#0a7ea4);">✦</div>
+                <span class="hk-app-label">Nébula</span>
+            </button>
+            <button class="hk-app-item" data-hk-open="grito">
+                <div class="hk-app-icon" style="background:linear-gradient(to bottom,#7a57ff,#5cc6ff);">◈</div>
+                <span class="hk-app-label">Grito Vivo</span>
+            </button>
+            <button class="hk-app-item" data-hk-open="library">
+                <div class="hk-app-icon" style="background:#1C1C1E;">📁</div>
+                <span class="hk-app-label">Library</span>
+            </button>
+            <button class="hk-app-item" data-hk-open="player">
+                <div class="hk-app-icon" style="background:#FF9500;">🎧</div>
+                <span class="hk-app-label">Player</span>
+            </button>
+        </div>
+
+        <!-- Storage -->
+        <section class="hk-card hk-storage-card">
+            <div class="hk-storage-row">
+                <span>Sementes fundidas</span>
+                <span style="color:var(--hk-text-secondary);" id="hkStorageLabel">0 documentos</span>
+            </div>
+            <div class="hk-storage-bar">
+                <div class="seg1"></div>
+                <div class="seg2"></div>
+                <div class="seg3"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="hk-footer-vision">
+        <button class="hk-footer-btn hk-active" data-hk-open="nebula">Abrir Nébula</button>
+        <button class="hk-footer-btn" data-hk-open="grito">Grito Vivo</button>
+    </footer>
+</div>
+
+<!-- Botão de voltar para a Home -->
+<button id="hkBackBtn" class="hk-hidden" title="Voltar para o Início">←</button>
+
+<!-- ============================================================
+     NÉBULA PRO (oculto por padrão)
+     ============================================================ -->
+<div id="nebulaApp" class="hk-hidden">
+    <!-- HEADER GLOBAL (DUAL) – herdado do sistema -->
+    <header class="topbar header-visible" id="main-header" title="Clique para colapsar o conteúdo">
+        <div class="brand">
+            <span>DUAL</span>
+            <span class="badge">NEBULA</span>
+        </div>
+        <button id="theme-dot" class="theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        </button>
+    </header>
+
+    <main id="main-content">
+        <div class="app-inner">
+            <!-- HEADER APP -->
+            <header class="header-app">
+                <div class="brand-app">
+                    <div class="orb" id="mainOrb"></div>
+                    <div>
+                        <div class="brand-title" style="font-weight:800; font-size:16px; letter-spacing:.04em; color:var(--text-strong);">Espaço da Mente</div>
+                        <div class="brand-sub" style="font-size:11px; color:var(--muted); margin-top:3px;">Motor 369 · Nebula Pro</div>
+                    </div>
+                </div>
+                <div class="header-actions" style="display:flex; gap:8px;">
+                    <button id="gritoBtn" class="listen" style="margin-left:0; background:linear-gradient(90deg,#22D3EE,#7dd3fc); color:#04141a; padding:0 16px; font-size:13px; min-height:42px;" title="Abrir Grito Vivo · KBLX 3×6×9×7">Grito Vivo</button>
+                    <button class="action-btn" id="exportSnapshot" style="border:1px solid var(--border); background:var(--button-bg); border-radius:14px; min-height:42px; padding:0 14px; cursor:pointer; transition:.2s ease; font-weight:600; font-size:13px; color:var(--button-text);">Exportar Log</button>
+                </div>
+            </header>
+
+            <!-- HERO -->
+            <section class="hero">
+                <div class="hero-content">
+                    <div class="eyebrow">369 · Fusão com Nebula</div>
+                    <h1>Uma ideia entra.<br/>Uma nova possibilidade emerge.</h1>
+                    <p>Escreva sua semente, selecione espelhos da <strong>Library</strong> (importe PDFs, MD, TXT) e acione o <strong>Motor Fractal 369</strong>. A fusão contextual criará uma nova jornada.</p>
+                    <div class="hero-flow">
+                        <div class="flow-node seed">◉ Semente</div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-node mirror">◇ Espelho(s)</div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-node result">✦ Fusão</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Painel de Ciclo -->
+            <div id="ciclo-painel">
+                <span><strong>∅ PASSO:</strong> <span class="ciclo-valor" id="ciclo-passo">01</span></span>
+                <span><strong>⍟ ARQ:</strong> <span class="ciclo-valor" id="ciclo-arq">ATLAS</span></span>
+                <span><strong>∅ PESO:</strong> <span class="ciclo-valor" id="ciclo-peso">0.180</span></span>
+                <span><strong>∆:</strong> <span class="ciclo-valor" id="ciclo-delta">0.001</span></span>
+                <span><strong>∅ EQUAÇÃO:</strong> <span style="color:var(--muted);">01→02→03→∆ⁿ</span></span>
+            </div>
+
+            <!-- WORKSPACE -->
+            <section class="section">
+                <div class="workspace">
+                    <!-- SEMENTE -->
+                    <article class="panel seed-panel">
+                        <div class="panel-head">
+                            <div class="panel-title">
+                                <div class="panel-dot"></div>
+                                <div>
+                                    <strong>01 · Semente</strong>
+                                    <span>O que você traz para a experiência</span>
+                                </div>
+                            </div>
+                            <button class="action-btn" id="clearSeed" title="Limpar" style="min-height:auto; padding:0 10px; font-size:16px;">×</button>
+                        </div>
+                        <div class="panel-body">
+                            <textarea id="seedInput" placeholder="Escreva, cole ou registre aqui sua ideia ou pergunta...&#10;&#10;Exemplo:&#10;'Quero transformar meu conhecimento em um produto digital, mas ainda não sei como organizar tudo.'"></textarea>
+                            <div class="text-tools" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:11px;">
+                                <button class="action-btn pink" id="saveSeed">☆ Salvar semente em memória</button>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- ESPELHOS -->
+                    <article class="panel">
+                        <div class="panel-head">
+                            <div class="panel-title">
+                                <div class="panel-dot"></div>
+                                <div>
+                                    <strong>02 · Espelhos</strong>
+                                    <span>Contextos da Library</span>
+                                </div>
+                            </div>
+                            <button class="action-btn" id="openMirrorPicker" title="Adicionar Espelho" style="min-height:auto; padding:0 10px; font-size:16px;">+</button>
+                        </div>
+                        <div class="panel-body">
+                            <div class="mirror-stack" id="mirrorStack">
+                                <!-- Espelhos renderizados aqui -->
+                            </div>
+                            <button class="add-mirror" id="addMirrorStack">+ Adicionar espelho da Library</button>
+                        </div>
+                    </article>
+
+                    <!-- FUSION -->
+                    <article class="panel fusion-panel">
+                        <div class="panel-head">
+                            <div class="panel-title">
+                                <div class="panel-dot"></div>
+                                <div>
+                                    <strong>03 · Sarau de Fusão</strong>
+                                    <span>A sequência processada pelo Motor</span>
+                                </div>
+                            </div>
+                            <button class="action-btn primary" id="runFusion" style="padding:0 20px; font-size:13px;">✦ Disparar Motor 369</button>
+                        </div>
+                        <div class="panel-body">
+                            <div class="timeline" id="fusionTimeline">
+                                <!-- Timeline Nodes -->
+                            </div>
+                            <div class="result-box">
+                                <div class="result-label">
+                                    <span>Estado da Fusão</span>
+                                    <button class="action-btn" id="copyResult" style="min-height:24px; padding:0 10px; font-size:10px;">Copiar</button>
+                                </div>
+                                <div class="result-text" id="fusionStatus">Aguardando inserção da semente e dos espelhos para processar a fusão.</div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <footer class="footer">
+                <strong>INFODOSE</strong> · Espaço da Mente · Motor Fractal 369
+            </footer>
+        </div>
+    </main>
+
+    <!-- DRAWER: LIBRARY (NEBULA) -->
+    <aside class="panel" id="libCard">
+        <button class="lib-drawer-handle" id="libDrawerHandle"><span>LIBRARY</span></button>
+        <button id="libToggleBtn" type="button">Collapse</button>
+        <div class="lib-content-wrap">
+            <div class="section-head" style="display:flex; flex-direction:column; gap:8px;">
+                <div>
+                    <div class="section-title" style="font-size:15px; font-weight:800; color:var(--text-strong);">Library Nebula</div>
+                    <div class="section-caption" style="font-size:11px; color:var(--muted);">Seus arquivos IndexedDB</div>
+                </div>
+                <button class="action-btn primary" id="importBtn" style="padding:0 16px; width:100%;">+ Importar TXT / MD / PDF / ZIP</button>
+                <input type="file" id="filePicker" accept=".txt,.html,.md,.pdf,.zip" multiple hidden>
+            </div>
+            <div class="library-carousel" id="libraryCarousel">
+                <!-- Itens carregados do banco aparecerão aqui -->
+            </div>
+        </div>
+    </aside>
+
+    <!-- MODAL DE ESPELHOS -->
+    <div class="modal" id="mirrorModal">
+        <div class="modal-box">
+            <div class="modal-head">
+                <strong>Escolher Espelho da Library</strong>
+                <button class="action-btn" id="closeMirrorModal" style="min-height:auto; padding:0 10px; font-size:16px;">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="option-grid" id="modalOptionsGrid">
+                    <!-- Renderizado dinamicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- READER MODAL -->
+    <div class="reader-modal" id="readerModal">
+        <div class="reader-head">
+            <div class="reader-title" id="readerTitle">Título do Documento</div>
+            <button class="reader-close" id="readerClose">×</button>
+        </div>
+        <div class="reader-body" id="readerBody"></div>
+    </div>
+
+    <!-- PLAYER DOCK -->
+    <div class="player" id="playerDock">
+        <div class="player-wrap">
+            <div class="player-top">
+                <button id="ppBtn" class="pp" title="Play/Pause">
+                    <svg viewBox="0 0 24 24" id="ppIcon"><path d="M8 5v14l11-7z"/></svg>
+                </button>
+                <div class="track">
+                    <div id="nowPlaying" class="now">Nenhum texto carregado</div>
+                    <div id="ovSnippet">—</div>
+                </div>
+                <button id="viewBtn" class="action-btn" style="min-height:36px; padding:0 10px; font-size:10px;" title="Ver texto completo">📖</button>
+            </div>
+            <div class="player-slider-wrap">
+                <span class="time-label" id="timeCur">0%</span>
+                <input type="range" id="progressSlider" min="0" max="100" value="0" step="0.1">
+                <span class="time-label" id="timeTotal">100%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRITO VIVO -->
+    <section id="gritoDock" aria-label="Grito Vivo KBLX" hidden>
+        <div class="motor-dock-head">
+            <div>
+                <strong>Grito Vivo · KBLX Core</strong>
+                <span>· motor 3×6×9×7 · usa a voz/arquétipo ativos do Nebula Pro</span>
+                <div class="grito-sig" id="grito-sig"><span class="grito-sig-glyph">◈</span> assinatura rd(Σ) = —</div>
+            </div>
+            <button type="button" id="gritoDockClose" class="action-btn" style="padding:0 16px;">Fechar</button>
+        </div>
+        <div class="grito-body">
+            <div class="grito-tabs">
+                <div class="grito-tab active" data-grito-tab="edit">Texto Bruto</div>
+                <div class="grito-tab" data-grito-tab="preview">Grito Vivo</div>
+                <div class="grito-tab" data-grito-tab="fractal">Fluxo 3×6×9×7</div>
+                <div class="grito-tab" data-grito-tab="kblx">KBLX Core</div>
+                <div class="grito-tab" data-grito-tab="svg">Fractal SVG</div>
+            </div>
+
+            <div class="grito-actions">
+                <button class="btn" id="grito-import">📂 Importar</button>
+                <button class="btn" id="grito-paste">📋 Colar</button>
+                <button class="btn" id="grito-copy">📄 Copiar</button>
+                <button class="btn" id="grito-export">⤓ Exportar</button>
+                <input type="file" id="grito-file-input" accept=".txt,.md,.tex,.html" style="display:none">
+            </div>
+
+            <div class="grito-controls">
+                <div>
+                    <label>Densidade</label>
+                    <select id="grito-density">
+                        <option value="balanced">Equilibrado (3-6-9-7)</option>
+                        <option value="dense">Intenso (3× Cadência)</option>
+                        <option value="light">Suave (9× Pulsos)</option>
+                        <option value="sephiroth">Ressonância KBLX rd(n)</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Estilo</label>
+                    <select id="grito-style">
+                        <option value="markdown">Markdown (**texto**)</option>
+                        <option value="mathbf">LaTeX (\mathbf{...})</option>
+                        <option value="html">HTML (&lt;strong&gt;)</option>
+                    </select>
+                </div>
+                <div style="display:flex; align-items:flex-end; gap:6px;">
+                    <button class="btn" id="grito-synth" style="flex:1">✨ Sintetizar</button>
+                    <button class="btn" id="grito-speak" style="flex:1; background:linear-gradient(90deg,#7a57ff,#5cc6ff); color:#fff;">🔊 Falar</button>
+                </div>
+                <div style="display:flex; align-items:flex-end;">
+                    <span class="pill" id="grito-bold-count">0 gerados</span>
+                </div>
+            </div>
+
+            <div class="grito-panel active" data-grito-panel="edit">
+                <textarea id="grito-raw-input" placeholder="Cole seu texto ou equações $E=mc^2$. O motor KBLX 3x6x9x7 gera os negritos..."></textarea>
+            </div>
+            <div class="grito-panel" data-grito-panel="preview">
+                <div id="grito-preview"></div>
+            </div>
+            <div class="grito-panel" data-grito-panel="fractal">
+                <div id="grito-fractal-container" class="grito-fractal-grid"></div>
+            </div>
+            <div class="grito-panel" data-grito-panel="kblx">
+                <div id="grito-kblx-metrics" class="muted" style="font-size:.8rem; margin-bottom:8px;"></div>
+                <div id="grito-kblx-opcodes" style="max-height:220px; overflow-y:auto;"></div>
+            </div>
+            <div class="grito-panel" data-grito-panel="svg">
+                <div class="grito-svg-box">
+                    <svg id="grito-fractal-svg" viewBox="0 0 400 350" style="width:100%; height:100%;"></svg>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modal de edição dos negritos do Grito -->
+    <div id="grito-edit-modal" class="grito-modal">
+        <div class="grito-modal-content">
+            <h4>Editar palavra no fluxo</h4>
+            <input type="text" id="grito-modal-input">
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button class="btn" id="grito-modal-cancel" style="flex:0 0 auto; background:transparent; color:#fff; border:1px solid var(--border);">Cancelar</button>
+                <button class="btn" id="grito-modal-save" style="flex:0 0 auto;">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ============================================================
+   DUAL MONOLITH · THEME + HEADER COLLAPSE + SMART SCROLL
+   ============================================================ */
+(function() {
+    "use strict";
+    const ROOT = document.documentElement;
+    const HEADER = document.getElementById('main-header');
+    const MAIN = document.getElementById('main-content');
+    const THEME_DOT = document.getElementById('theme-dot');
+
+    const STORAGE_KEY = 'dual-theme';
+
+    function applyTheme(theme) {
+        const nextTheme = theme === 'light' ? 'light' : 'dark';
+        ROOT.dataset.theme = nextTheme;
+        try { localStorage.setItem(STORAGE_KEY, nextTheme); } catch(e) {}
+        window.dispatchEvent(new CustomEvent('dual:theme-change', { detail: { theme: nextTheme } }));
+    }
+
+    function getInitialTheme() {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved === 'light' || saved === 'dark') return saved;
+        } catch(e) {}
+        return 'dark';
+    }
+
+    window.DualTheme = {
+        set: applyTheme,
+        toggle: function() {
+            const current = ROOT.dataset.theme || 'dark';
+            applyTheme(current === 'light' ? 'dark' : 'light');
+        },
+        get: function() { return ROOT.dataset.theme || 'dark'; }
+    };
+
+    if (THEME_DOT) {
+        THEME_DOT.addEventListener('click', function(e) {
+            e.stopPropagation();
+            DualTheme.toggle();
+        });
+    }
+
+    if (HEADER && MAIN) {
+        HEADER.addEventListener('click', function(e) {
+            if (e.target.closest('#theme-dot')) return;
+            MAIN.classList.toggle('hidden');
+            const collapsed = MAIN.classList.contains('hidden');
+            HEADER.classList.toggle('is-collapsed', collapsed);
+            window.dispatchEvent(new CustomEvent('dual:content-collapse', { detail: { collapsed } }));
+        });
+    }
+
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+    const SCROLL_THRESHOLD = 8;
+    function updateHeader() {
+        const currentScrollY = window.scrollY;
+        if (currentScrollY <= 10) {
+            HEADER.classList.remove('header-hidden');
+            HEADER.classList.add('header-visible');
+            lastScrollY = currentScrollY;
+            ticking = false;
+            return;
+        }
+        if (currentScrollY > lastScrollY + SCROLL_THRESHOLD) {
+            HEADER.classList.remove('header-visible');
+            HEADER.classList.add('header-hidden');
+        } else if (currentScrollY < lastScrollY - SCROLL_THRESHOLD) {
+            HEADER.classList.remove('header-hidden');
+            HEADER.classList.add('header-visible');
+        }
+        lastScrollY = currentScrollY;
+        ticking = false;
+    }
+    window.addEventListener('scroll', function() {
+        if (!ticking) {
+            window.requestAnimationFrame(updateHeader);
+            ticking = true;
+        }
+    }, { passive: true });
+
+    applyTheme(getInitialTheme());
+    console.log('DUAL · GLOBAL SYSTEM READY');
+})();
+
+/* ============================================================
+   HK HOME · iCLOUD — PONTE ENTRE HOME E NÉBULA
+   ============================================================ */
+(function() {
+    var homeEl = document.getElementById('hkHome');
+    var appEl = document.getElementById('nebulaApp');
+    var backBtn = document.getElementById('hkBackBtn');
+
+    function openApp(target) {
+        homeEl.classList.add('hk-hidden');
+        appEl.classList.remove('hk-hidden');
+        backBtn.classList.remove('hk-hidden');
+        try { localStorage.setItem('di_kodux_home_last', target || 'nebula'); } catch(e) {}
+
+        if (target === 'grito') {
+            setTimeout(function() {
+                var btn = document.getElementById('gritoBtn');
+                if (btn) btn.click();
+            }, 60);
+        }
+        if (target === 'library') {
+            setTimeout(function() {
+                var lib = document.getElementById('libCard');
+                if (lib) lib.classList.add('is-open');
+            }, 60);
+        }
+        if (target === 'player') {
+            setTimeout(function() {
+                // apenas foca no player, que já está visível
+                document.getElementById('playerDock')?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+    }
+
+    function goHome() {
+        appEl.classList.add('hk-hidden');
+        homeEl.classList.remove('hk-hidden');
+        backBtn.classList.add('hk-hidden');
+        try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch(e) {}
+        var dock = document.getElementById('gritoDock');
+        if (dock && !dock.hidden) { dock.hidden = true; dock.classList.remove('grito-speaking'); }
+        hkRefreshLibrary();
+    }
+
+    window.KOBLLUX = window.KOBLLUX || {};
+    window.KOBLLUX.Home = { openApp: openApp, goHome: goHome };
+
+    document.addEventListener('click', function(e) {
+        var trigger = e.target.closest('[data-hk-open]');
+        if (trigger) {
+            e.preventDefault();
+            openApp(trigger.getAttribute('data-hk-open'));
+        }
+    });
+
+    backBtn.addEventListener('click', goHome);
+
+    // Export e Grid
+    var exportBtn = document.getElementById('hkExport');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function() {
+            openApp('nebula');
+            setTimeout(function() {
+                var snap = document.getElementById('exportSnapshot');
+                if (snap) snap.click();
+            }, 120);
+        });
+    }
+    var gridBtn = document.getElementById('hkGrid');
+    if (gridBtn) {
+        gridBtn.addEventListener('click', function() { goHome(); });
+    }
+
+    // Relógio
+    function tickClock() {
+        var el = document.getElementById('hkClock');
+        if (!el) return;
+        var d = new Date();
+        el.textContent = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    }
+    tickClock();
+    setInterval(tickClock, 15000);
+
+    // Arquétipo no avatar
+    function applyArchToHome() {
+        var arch = (window.ARCHETYPES || [])[0];
+        if (!arch) return;
+        var avatar = document.getElementById('hkAvatar');
+        var badge = document.getElementById('hkArchBadge');
+        var primary = (arch.theme && arch.theme.primary) || '#7a57ff';
+        if (avatar) avatar.style.setProperty('--kob-voice-primary', primary);
+        if (badge) badge.textContent = (arch.name || 'KOBLLUX') + ' · toque para entrar';
+    }
+    applyArchToHome();
+    window.addEventListener('dual:theme-change', applyArchToHome);
+
+    // Atualizar a lista da Library na home
+    function escapeHkHtml(s) {
+        return String(s).replace(/[&<>"']/g, function(c) {
+            return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+        });
+    }
+    function fmtHkBytes(b) {
+        if (!b) return '0 B';
+        var u = ['B','KB','MB','GB']; var i = 0;
+        while (b >= 1024 && i < u.length-1) { b /= 1024; i++; }
+        return b.toFixed(b < 10 && i > 0 ? 1 : 0) + ' ' + u[i];
+    }
+    var kindIcon = {txt:'📄', md:'📝', pdf:'📕', html:'🌐', zip:'🗂️'};
+
+    async function hkRefreshLibrary() {
+        var countEl = document.getElementById('hkLibCount');
+        var listEl = document.getElementById('hkLibList');
+        var storageLabel = document.getElementById('hkStorageLabel');
+        if (typeof dbAll !== 'function' || !listEl) return;
+        try {
+            var docs = await dbAll();
+            docs = (docs || []).sort(function(a,b) { return (b.savedAt||0) - (a.savedAt||0); });
+            if (countEl) countEl.textContent = '● ' + docs.length + (docs.length === 1 ? ' item' : ' itens');
+            if (storageLabel) storageLabel.textContent = docs.length + ' documento' + (docs.length === 1 ? '' : 's') + ' na Library';
+            if (docs.length === 0) {
+                listEl.innerHTML = '<div class="hk-empty-row">Nenhum documento ainda. Toque para abrir a Library.</div>';
+                return;
+            }
+            listEl.innerHTML = docs.slice(0,3).map(function(d) {
+                var ic = kindIcon[d.type] || '📄';
+                return '<div class="hk-list-item"><span class="hk-item-icon">'+ic+'</span>' +
+                    '<div class="hk-item-info"><span class="hk-item-name">'+escapeHkHtml(d.name || 'sem título')+'</span>' +
+                    '<span class="hk-item-meta">'+(d.type||'txt').toUpperCase()+' · '+fmtHkBytes(d.size||0)+'</span></div></div>';
+            }).join('');
+        } catch(err) {
+            listEl.innerHTML = '<div class="hk-empty-row">Library indisponível.</div>';
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', function() {
+        setTimeout(hkRefreshLibrary, 300);
+        setTimeout(hkRefreshLibrary, 900);
+    });
+})();
+
+/* ============================================================
+   MOTOR FRACTAL 369
+   ============================================================ */
+const motor369 = {
+    merge: function(a, b) {
+        if (!a || !b) return a || b || "";
+        var s1 = a.split(/(?<=[.!?\n])\s+/).filter(function(s) { return s.trim().length > 0; });
+        var s2 = b.split(/(?<=[.!?\n])\s+/).filter(function(s) { return s.trim().length > 0; });
+        var max = Math.max(s1.length, s2.length);
+        var res = '';
+        for (var i = 0; i < max; i++) {
+            var padrao = i % 3;
+            if (padrao === 0 && s1[i]) res += s1[i].trim() + ' ';
+            else if (padrao === 1 && s2[i]) res += s2[i].trim() + ' ';
+            else if (padrao === 2 && s1[i]) res += s1[i].trim() + ' ';
+            else if (s2[i]) res += s2[i].trim() + ' ';
+        }
+        return res.trim();
+    }
+};
+
+/* ============================================================
+   INDEXEDDB (Nebula)
+   ============================================================ */
+var DB_NAME = 'nebula-db';
+var STORE_NAME = 'docs';
+var VER = 2;
+
+function openDB() {
+    return new Promise(function(resolve, reject) {
+        var req = indexedDB.open(DB_NAME, VER);
+        req.onupgradeneeded = function(e) {
+            var db = e.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                var store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                store.createIndex('by_name', 'name', { unique: false });
+            }
+        };
+        req.onsuccess = function() { resolve(req.result); };
+        req.onerror = function() { reject(req.error); };
+    });
+}
+
+async function dbPut(obj) {
+    var db = await openDB();
+    return new Promise(function(res, rej) {
+        var tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).put(obj);
+        tx.oncomplete = function() { db.close(); res(true); };
+        tx.onerror = function() { db.close(); rej(tx.error); };
+    });
+}
+
+async function dbAll() {
+    var db = await openDB();
+    return new Promise(function(res, rej) {
+        var tx = db.transaction(STORE_NAME, 'readonly');
+        var req = tx.objectStore(STORE_NAME).getAll();
+        req.onsuccess = function() { db.close(); res(req.result || []); };
+        req.onerror = function() { db.close(); rej(req.error); };
+    });
+}
+
+async function dbGet(id) {
+    var db = await openDB();
+    return new Promise(function(res, rej) {
+        var tx = db.transaction(STORE_NAME, 'readonly');
+        var req = tx.objectStore(STORE_NAME).get(id);
+        req.onsuccess = function() { db.close(); res(req.result || null); };
+        req.onerror = function() { db.close(); rej(req.error); };
+    });
+}
+
+async function dbDelete(id) {
+    var db = await openDB();
+    return new Promise(function(res, rej) {
+        var tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).delete(id);
+        tx.oncomplete = function() { db.close(); res(true); };
+        tx.onerror = function() { db.close(); rej(tx.error); };
+    });
+}
+
+/* ============================================================
+   ESTADO DA APLICAÇÃO
+   ============================================================ */
+var state = {
+    seedText: "",
+    mirrors: [] // array de { id, name }
+};
+
+var UI = {
+    seedInput: document.getElementById('seedInput'),
+    mirrorStack: document.getElementById('mirrorStack'),
+    timeline: document.getElementById('fusionTimeline'),
+    fusionStatus: document.getElementById('fusionStatus'),
+    libraryCarousel: document.getElementById('libraryCarousel'),
+    modalOptionsGrid: document.getElementById('modalOptionsGrid'),
+    filePicker: document.getElementById('filePicker'),
+    mirrorModal: document.getElementById('mirrorModal'),
+    nowPlaying: document.getElementById('nowPlaying'),
+    ovSnippet: document.getElementById('ovSnippet'),
+    ppBtn: document.getElementById('ppBtn'),
+    ppIcon: document.getElementById('ppIcon'),
+    progressSlider: document.getElementById('progressSlider'),
+    timeCur: document.getElementById('timeCur'),
+    timeTotal: document.getElementById('timeTotal'),
+    playerDock: document.getElementById('playerDock'),
+    viewBtn: document.getElementById('viewBtn'),
+    readerModal: document.getElementById('readerModal'),
+    readerTitle: document.getElementById('readerTitle'),
+    readerBody: document.getElementById('readerBody'),
+    readerClose: document.getElementById('readerClose')
+};
+
+/* ============================================================
+   NEBULA PLAYER / TTS
+   ============================================================ */
+var voices = [];
+var currentTTS = { id: null, name: null, paragraphs: [], idx: 0, playing: false };
+var utter = null;
+var progressMap = JSON.parse(localStorage.getItem('di_nebula_progress') || '{}');
+
+function populateVoices() {
+    voices = speechSynthesis.getVoices() || [];
+}
+populateVoices();
+window.speechSynthesis.onvoiceschanged = populateVoices;
+
+function setPP(isPlaying) {
+    UI.ppIcon.innerHTML = isPlaying ? '<path d="M8 5h3v14H8zm5 0h3v14h-3z"/>' : '<path d="M8 5v14l11-7z"/>';
+    UI.ppBtn.classList.toggle('pulse', isPlaying);
+    document.body.classList.toggle('playing', isPlaying);
+}
+
+function updateProgressBars(finished) {
+    if (!currentTTS.id || !currentTTS.paragraphs.length) return;
+    var pct = finished ? 100 : ((currentTTS.idx + 1) / currentTTS.paragraphs.length * 100);
+    UI.progressSlider.value = pct.toFixed(1);
+    UI.timeCur.textContent = Math.round(pct) + '%';
+    progressMap[currentTTS.id] = pct;
+    localStorage.setItem('di_nebula_progress', JSON.stringify(progressMap));
+}
+
+function speakCurrent() {
+    if (utter) { speechSynthesis.cancel(); utter = null; }
+    var seg = currentTTS.paragraphs[currentTTS.idx];
+    if (!seg) { currentTTS.playing = false; setPP(false); return; }
+    UI.ovSnippet.textContent = seg.text.slice(0, 250);
+    var utterObj = new SpeechSynthesisUtterance(seg.text);
+    var v = voices.find(function(x) { return x.name === (localStorage.getItem('di_nebula_voice') || ''); }) || voices[0];
+    if (v) utterObj.voice = v;
+    utterObj.rate = parseFloat(localStorage.getItem('di_nebula_rate') || '1') || 1;
+    utterObj.pitch = parseFloat(localStorage.getItem('di_nebula_pitch') || '1') || 1;
+    utterObj.onend = function() {
+        if (currentTTS.idx < currentTTS.paragraphs.length - 1) {
+            currentTTS.idx++;
+            updateProgressBars(false);
+            speakCurrent();
+        } else {
+            currentTTS.playing = false;
+            setPP(false);
+            updateProgressBars(true);
+        }
+    };
+    speechSynthesis.speak(utterObj);
+    utter = utterObj;
+    currentTTS.playing = true;
+    setPP(true);
+    updateProgressBars(false);
+}
+
+function togglePlayPause() {
+    if (!currentTTS.id || !currentTTS.paragraphs.length) {
+        loadLastFromLibrary();
+        return;
+    }
+    if (speechSynthesis.speaking && !speechSynthesis.paused) {
+        speechSynthesis.pause();
+        currentTTS.playing = false;
+        setPP(false);
+    } else if (speechSynthesis.paused) {
+        speechSynthesis.resume();
+        currentTTS.playing = true;
+        setPP(true);
+    } else {
+        speakCurrent();
+    }
+}
+
+function loadTextForPlayer(id, name, paragraphs) {
+    currentTTS.id = id;
+    currentTTS.name = name;
+    currentTTS.paragraphs = paragraphs;
+    currentTTS.idx = 0;
+    UI.nowPlaying.textContent = name;
+    var pct = progressMap[id] || 0;
+    currentTTS.idx = Math.floor((pct / 100) * paragraphs.length);
+    if (currentTTS.idx >= paragraphs.length) currentTTS.idx = 0;
+    updateProgressBars(false);
+    if (paragraphs.length) UI.ovSnippet.textContent = paragraphs[currentTTS.idx]?.text.slice(0, 250) || '—';
+    if (currentTTS.playing) { speechSynthesis.cancel(); speakCurrent(); }
+}
+
+async function loadLastFromLibrary() {
+    var docs = await dbAll();
+    if (!docs.length) return;
+    var doc = docs.sort(function(a,b) { return b.savedAt - a.savedAt; })[0];
+    await loadDocumentForPlayer(doc);
+}
+
+async function loadDocumentForPlayer(doc) {
+    var paragraphs = [];
+    if (doc.type === 'md' && doc._paras) {
+        paragraphs = JSON.parse(doc._paras);
+    } else if (doc.blob) {
+        var ab = await doc.blob.arrayBuffer();
+        var pdfData = new Uint8Array(ab);
+        var pdfDoc = await pdfjsLib.getDocument({ data: pdfData }).promise;
+        paragraphs = await extractTextSmart(pdfDoc);
+    } else if (doc.text) {
+        paragraphs = splitTextIntoParagraphs(doc.text);
+    } else {
+        paragraphs = [{ text: 'Conteúdo não disponível', page: 1 }];
+    }
+    if (!paragraphs.length) paragraphs = [{ text: 'Sem texto extraído', page: 1 }];
+    loadTextForPlayer(doc.id, doc.name, paragraphs);
+}
+
+function splitTextIntoParagraphs(text) {
+    return text.split(/\n{2,}|(?<=[.!?])\s{1,}(?=[A-ZÁÉÍÓÚ])/g)
+        .map(function(t) { return t.replace(/^#+\s*/, '').trim(); })
+        .filter(function(t) { return t.length > 2; })
+        .flatMap(function(t) {
+            if (t.length > 500) {
+                var arr = [];
+                for (var i = 0; i < t.length; i += 420) {
+                    arr.push({ text: t.slice(i, i + 420), page: 1 });
+                }
+                return arr;
+            }
+            return [{ text: t, page: 1 }];
+        });
+}
+
+async function extractTextSmart(pdfDoc) {
+    var parts = [];
+    for (var p = 1; p <= pdfDoc.numPages; p++) {
+        var page = await pdfDoc.getPage(p);
+        var c = await page.getTextContent();
+        var textJoined = (c.items || []).map(function(i) { return i.str; }).join(' ').trim();
+        if (!textJoined || textJoined.length < 20) {
+            var segs = await ocrPage(page, p);
+            parts.push.apply(parts, segs);
+        } else {
+            var split = textJoined.split(/\n+|\r+|\.\s{1,}|•|-{2,}/g).map(function(t) { return t.trim(); }).filter(Boolean);
+            for (var s = 0; s < split.length; s++) {
+                var seg = split[s];
+                if (seg.length > 600) {
+                    for (var j = 0; j < seg.length; j += 420) {
+                        parts.push({ text: seg.slice(j, j + 420), page: p });
+                    }
+                } else {
+                    parts.push({ text: seg, page: p });
+                }
+            }
+        }
+    }
+    return parts;
+}
+
+async function ocrPage(page, pageNum) {
+    var vw = page.getViewport({ scale: 1.6 });
+    var cnv = document.createElement('canvas');
+    cnv.width = vw.width; cnv.height = vw.height;
+    await page.render({ canvasContext: cnv.getContext('2d'), viewport: vw }).promise;
+    var result;
+    try {
+        result = await Tesseract.recognize(cnv, 'por+eng', { logger: function() {} });
+    } catch (e) {
+        return [{ text: '[OCR indisponível]', page: pageNum }];
+    }
+    var words = result?.data?.words || [];
+    var groups = {};
+    words.forEach(function(w) {
+        var key = (w.block_num || 0) + '-' + (w.par_num || 0) + '-' + (w.line_num || 0);
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(w);
+    });
+    var segments = [];
+    for (var k in groups) {
+        var arr = groups[k].sort(function(a, b) { return (a.x0 - b.x0) || (a.y0 - b.y0); });
+        var text = arr.map(function(w) { return w.text; }).join(' ').trim();
+        if (text) segments.push({ text: text, page: pageNum });
+    }
+    return segments.length ? segments : [{ text: '[Sem texto reconhecido]', page: pageNum }];
+}
+
+/* ============================================================
+   UI: LIBRARY RENDER (Carrossel)
+   ============================================================ */
+function escapeHTML(str) {
+    return String(str).replace(/[&<>'"]/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[m];
+    });
+}
+
+function fmtBytes(b) {
+    if (!b) return '0 B';
+    var k = 1024, sizes = ['B', 'KB', 'MB', 'GB'];
+    var i = 0, v = b;
+    while (v >= k && i < sizes.length - 1) { v /= k; i++; }
+    return (v.toFixed((i <= 1) ? 0 : 1).replace('.', ',')) + ' ' + sizes[i];
+}
+
+function markdownToHTML(md) {
+    var html = escapeHTML(md);
+    html = html.replace(/^### (.*)$/gm, "<h3>$1</h3>");
+    html = html.replace(/^## (.*)$/gm, "<h2>$1</h2>");
+    html = html.replace(/^# (.*)$/gm, "<h1>$1</h1>");
+    html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+    html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
+    html = html.replace(/`(.*?)`/g, "<code>$1</code>");
+    html = html.replace(/\n\n/g, "</p><p>");
+    return "<p>" + html + "</p>";
+}
+
+function createPreviewCard(doc) {
+    var type = doc.type || 'txt';
+    var previewHTML = '';
+    if (type === 'pdf') {
+        previewHTML = '<div style="height:120px; background:#0a0a0a; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:11px;">📄 PDF</div>';
+    } else if (type === 'html') {
+        previewHTML = '<div style="height:120px; background:#fff; overflow:hidden;"><iframe src="' + (doc.url || '') + '" style="width:100%;height:100%;border:0;" loading="lazy"></iframe></div>';
+    } else if (type === 'md') {
+        var preview = doc.text ? markdownToHTML(doc.text.slice(0, 300)) : '<p>Markdown</p>';
+        previewHTML = '<div style="height:120px; padding:12px; background:#101010; overflow:hidden; font-size:11px; color:#ddd;">' + preview + '</div>';
+    } else {
+        previewHTML = '<div style="height:120px; padding:12px; background:#080808; overflow:hidden; font-family:monospace; font-size:10px; color:#aaa; white-space:pre-wrap;">' + escapeHTML((doc.text || '').slice(0, 300)) + '</div>';
+    }
+    return '<div class="library-item">' +
+        '<div class="library-top"><div class="file-icon">' + (doc.name || 'arquivo').split('.').pop().toUpperCase().slice(0,3) + '</div><div class="library-type">' + fmtBytes(doc.size || 0) + '</div></div>' +
+        '<div class="library-name" title="' + escapeHTML(doc.name) + '">' + escapeHTML(doc.name) + '</div>' +
+        '<div class="library-desc">' + escapeHTML((doc.text || '').slice(0, 80)) + '...</div>' +
+        '<div class="library-actions">' +
+        '<button onclick="addMirrorFromLibrary(\'' + doc.id + '\',\'' + escapeHTML(doc.name) + '\')">Usar como Espelho</button>' +
+        '<button onclick="playDoc(\'' + doc.id + '\')">▶ Ouvir</button>' +
+        '<button onclick="openReader(\'' + doc.id + '\')">📖 Abrir</button>' +
+        '<button class="del-btn" onclick="deleteDoc(\'' + doc.id + '\')" title="Apagar">×</button>' +
+        '</div></div>';
+}
+
+async function renderLibrary() {
+    var docs = await dbAll();
+    docs.sort(function(a,b) { return b.savedAt - a.savedAt; });
+    UI.libraryCarousel.innerHTML = '';
+    UI.modalOptionsGrid.innerHTML = '';
+
+    if (!docs.length) {
+        UI.libraryCarousel.innerHTML = '<div class="empty-state">Sua library está vazia. Importe arquivos.</div>';
+        UI.modalOptionsGrid.innerHTML = '<div class="empty-state">Adicione arquivos na Library primeiro.</div>';
+        return;
+    }
+
+    docs.forEach(function(doc) {
+        var card = document.createElement('div');
+        card.className = 'library-item';
+        card.style.flex = '0 0 85%';
+        card.style.minWidth = '85%';
+        card.style.scrollSnapAlign = 'start';
+        card.innerHTML = createPreviewCard(doc);
+        UI.libraryCarousel.appendChild(card);
+
+        var option = document.createElement('button');
+        option.className = 'option mirror-option';
+        option.onclick = function() {
+            addMirrorFromLibrary(doc.id, doc.name);
+            UI.mirrorModal.classList.remove('open');
+        };
+        option.innerHTML = '<strong>' + escapeHTML(doc.name) + '</strong><span>' + fmtBytes(doc.size || 0) + ' · ' + (doc.type || 'txt').toUpperCase() + '</span>';
+        UI.modalOptionsGrid.appendChild(option);
+    });
+}
+
+/* ============================================================
+   AÇÕES: ESPELHOS, FUSÃO, ETC
+   ============================================================ */
+function renderMirrors() {
+    UI.mirrorStack.innerHTML = '';
+    if (state.mirrors.length === 0) {
+        UI.mirrorStack.innerHTML = '<div style="font-size:12px; color:var(--muted); text-align:center; padding:10px;">Nenhum espelho adicionado.</div>';
+    } else {
+        state.mirrors.forEach(function(mirror, index) {
+            var item = document.createElement('div');
+            item.className = 'mirror-item';
+            item.innerHTML = '<div class="mirror-index">E' + (index + 1) + '</div>' +
+                '<div><div class="mirror-name">' + escapeHTML(mirror.name) + '</div><div class="mirror-source">ID: ' + mirror.id.substring(0,8) + '...</div></div>' +
+                '<button class="remove-mirror" onclick="removeMirror(' + index + ')">×</button>';
+            UI.mirrorStack.appendChild(item);
+        });
+    }
+    renderTimeline();
+}
+
+function renderTimeline() {
+    UI.timeline.innerHTML = '';
+    var hasSeed = !!state.seedText.trim();
+    UI.timeline.innerHTML += '<div class="timeline-node seed" style="opacity: ' + (hasSeed ? '1' : '0.5') + '">' +
+        '<div class="timeline-label">Semente 01</div><div class="timeline-title">Base Mental</div>' +
+        '<div class="timeline-text">' + (hasSeed ? escapeHTML(state.seedText.substring(0, 50)) + '...' : 'Vazia...') + '</div></div>';
+    state.mirrors.forEach(function(mirror, index) {
+        UI.timeline.innerHTML += '<div class="timeline-node mirror">' +
+            '<div class="timeline-label">Espelho ' + String(index + 1).padStart(2, '0') + '</div>' +
+            '<div class="timeline-title">' + escapeHTML(mirror.name) + '</div>' +
+            '<div class="timeline-text">Contexto na fusão.</div></div>';
+    });
+    UI.timeline.innerHTML += '<div class="timeline-node result">' +
+        '<div class="timeline-label">Próximo Estado</div><div class="timeline-title">Fusão 369</div>' +
+        '<div class="timeline-text">Processamento final.</div></div>';
+}
+
+window.addMirrorFromLibrary = function(id, name) {
+    if (state.mirrors.find(function(m) { return m.id === id; })) return;
+    state.mirrors.push({ id: id, name: name });
+    renderMirrors();
+    flashStatus('Espelho "' + name + '" adicionado.');
+};
+
+window.removeMirror = function(index) {
+    state.mirrors.splice(index, 1);
+    renderMirrors();
+};
+
+window.deleteDoc = async function(id) {
+    if (confirm('Tem certeza que deseja apagar este documento da Library?')) {
+        await dbDelete(id);
+        state.mirrors = state.mirrors.filter(function(m) { return m.id !== id; });
+        renderMirrors();
+        renderLibrary();
+        atualizarCiclo();
+    }
+};
+
+window.playDoc = async function(id) {
+    var doc = await dbGet(id);
+    if (doc) await loadDocumentForPlayer(doc);
+};
+
+function flashStatus(msg) {
+    UI.fusionStatus.innerHTML = '<span style="color:var(--kob-voice-primary);">' + msg + '</span>';
+    setTimeout(function() {
+        if (UI.fusionStatus.innerText === msg) UI.fusionStatus.innerHTML = 'Aguardando próxima ação...';
+    }, 3000);
+}
+
+document.getElementById('saveSeed').addEventListener('click', function() {
+    state.seedText = UI.seedInput.value;
+    renderTimeline();
+    flashStatus('Semente salva em memória!');
+});
+
+document.getElementById('clearSeed').addEventListener('click', function() {
+    UI.seedInput.value = '';
+    state.seedText = '';
+    renderTimeline();
+    UI.fusionStatus.innerHTML = 'Semente limpa.';
+});
+
+document.getElementById('addMirrorStack').addEventListener('click', function() { UI.mirrorModal.classList.add('open'); });
+document.getElementById('openMirrorPicker').addEventListener('click', function() { UI.mirrorModal.classList.add('open'); });
+document.getElementById('closeMirrorModal').addEventListener('click', function() { UI.mirrorModal.classList.remove('open'); });
+UI.mirrorModal.addEventListener('click', function(e) { if (e.target === UI.mirrorModal) UI.mirrorModal.classList.remove('open'); });
+
+/* ============================================================
+   DISPARO DO MOTOR FRACTAL 369
+   ============================================================ */
+document.getElementById('runFusion').addEventListener('click', async function() {
+    var currentText = UI.seedInput.value.trim();
+
+    if (!currentText) {
+        UI.fusionStatus.innerHTML = "<span style='color:#ff5555'>Erro: A Semente está vazia. Digite algo primeiro.</span>";
+        return;
+    }
+
+    if (state.mirrors.length === 0) {
+        UI.fusionStatus.innerHTML = "<span style='color:#fbbf24'>Aviso: Nenhum espelho adicionado. Exibindo apenas a semente.</span><br/><br/>" + escapeHTML(currentText);
+        return;
+    }
+
+    UI.fusionStatus.innerHTML = "<span style='color:var(--kob-voice-primary)'>Processando Fusão no Motor 369...</span>";
+
+    try {
+        for (var i = 0; i < state.mirrors.length; i++) {
+            var mirror = state.mirrors[i];
+            var doc = await dbGet(mirror.id);
+            if (doc) {
+                var text = '';
+                if (doc.type === 'md' && doc._paras) {
+                    var paras = JSON.parse(doc._paras);
+                    text = paras.map(function(p) { return p.text; }).join(' ');
+                } else if (doc.text) {
+                    text = doc.text;
+                } else if (doc.blob) {
+                    var ab = await doc.blob.arrayBuffer();
+                    var pdfData = new Uint8Array(ab);
+                    var pdfDoc = await pdfjsLib.getDocument({ data: pdfData }).promise;
+                    var paras2 = await extractTextSmart(pdfDoc);
+                    text = paras2.map(function(p) { return p.text; }).join(' ');
+                }
+                if (text) {
+                    currentText = motor369.merge(currentText, text);
+                }
+            }
+        }
+        UI.fusionStatus.innerText = currentText;
+        UI.fusionStatus.parentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (err) {
+        console.error(err);
+        UI.fusionStatus.innerHTML = "<span style='color:#ff5555'>Erro durante o processamento da fusão.</span>";
+    }
+});
+
+document.getElementById('copyResult').addEventListener('click', function() {
+    var text = UI.fusionStatus.innerText;
+    if (!text || text.includes('Processando') || text.includes('Aguardando')) return;
+    navigator.clipboard.writeText(text).then(function() {
+        alert('Texto fundido copiado para a área de transferência!');
+    });
+});
+
+document.getElementById('exportSnapshot').addEventListener('click', function() {
+    var content = UI.fusionStatus.innerText;
+    if (!content || content.includes('Aguardando')) return alert('Nada para exportar.');
+    var blob = new Blob([content], { type: 'text/plain' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'fusao-369-' + new Date().toISOString().slice(0,10) + '.txt';
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+});
+
+/* ============================================================
+   READER MODAL (integrado)
+   ============================================================ */
+window.openReader = async function(id) {
+    var doc = await dbGet(id);
+    if (!doc) return;
+    UI.readerTitle.textContent = doc.name || 'Documento';
+    UI.readerBody.innerHTML = '';
+    var type = doc.type || 'txt';
+
+    if (type === 'pdf' || type === 'html') {
+        var iframe = document.createElement('iframe');
+        iframe.src = doc.url || '';
+        if (type === 'html') iframe.setAttribute('sandbox', 'allow-scripts');
+        UI.readerBody.appendChild(iframe);
+    } else if (type === 'md') {
+        var article = document.createElement('article');
+        article.className = 'reader-markdown';
+        article.innerHTML = markdownToHTML(doc.text || '');
+        UI.readerBody.appendChild(article);
+    } else {
+        var pre = document.createElement('pre');
+        pre.className = 'reader-text';
+        pre.textContent = doc.text || '';
+        UI.readerBody.appendChild(pre);
+    }
+    UI.readerModal.classList.add('opened');
+    document.body.style.overflow = 'hidden';
+};
+
+function closeReader() {
+    UI.readerModal.classList.remove('opened');
+    UI.readerBody.innerHTML = '';
+    document.body.style.overflow = '';
+}
+UI.readerClose.addEventListener('click', closeReader);
+UI.readerModal.addEventListener('click', function(e) { if (e.target === UI.readerModal) closeReader(); });
+
+/* ============================================================
+   IMPORTAR ARQUIVOS (NEBULA I/O)
+   ============================================================ */
+document.getElementById('importBtn').addEventListener('click', function() { UI.filePicker.click(); });
+
+UI.filePicker.addEventListener('change', async function(e) {
+    var files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    UI.fusionStatus.innerHTML = 'Importando ' + files.length + ' arquivo(s)...';
+
+    for (var f = 0; f < files.length; f++) {
+        var file = files[f];
+        try {
+            var ext = file.name.split('.').pop().toLowerCase();
+            var text = '';
+            var blob = file;
+            var size = file.size;
+            var type = ext;
+            var paragraphs = [];
+
+            if (ext === 'pdf') {
+                var ab = await file.arrayBuffer();
+                var pdfData = new Uint8Array(ab);
+                var pdfDoc = await pdfjsLib.getDocument({ data: pdfData }).promise;
+                var paras = await extractTextSmart(pdfDoc);
+                paragraphs = paras;
+                text = paras.map(function(p) { return p.text; }).join(' ');
+                blob = file;
+            } else if (ext === 'zip') {
+                var JSZip = window.JSZip;
+                var zip = await JSZip.loadAsync(file);
+                var names = Object.keys(zip.files).filter(function(n) { return !zip.files[n].dir && /\.(pdf|txt|md)$/i.test(n); });
+                for (var n = 0; n < names.length; n++) {
+                    var u8 = await zip.files[names[n]].async('uint8array');
+                    var fblob = new Blob([u8], { type: 'application/octet-stream' });
+                    var fname = names[n].split('/').pop();
+                    var id = 'doc-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+                    await dbPut({
+                        id: id,
+                        name: fname,
+                        blob: fblob,
+                        size: fblob.size,
+                        savedAt: Date.now(),
+                        type: fname.split('.').pop(),
+                        _paras: JSON.stringify([{ text: 'Conteúdo do ZIP: ' + fname, page: 1 }])
+                    });
+                }
+                continue;
+            } else {
+                text = await file.text();
+                if (ext === 'html') {
+                    var div = document.createElement('div');
+                    div.innerHTML = text;
+                    text = div.innerText || div.textContent || '';
+                }
+                paragraphs = splitTextIntoParagraphs(text);
+            }
+
+            var id2 = 'doc-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+            var doc = {
+                id: id2,
+                name: file.name,
+                type: ext,
+                size: size,
+                savedAt: Date.now(),
+                blob: blob,
+                text: text || '',
+                _paras: JSON.stringify(paragraphs)
+            };
+            await dbPut(doc);
+
+        } catch (err) {
+            console.error('Falha ao importar', file.name, err);
+        }
+    }
+
+    UI.filePicker.value = '';
+    await renderLibrary();
+    document.getElementById('libCard').classList.add('is-open');
+    flashStatus('Importação concluída.');
+    atualizarCiclo();
+});
+
+/* ============================================================
+   PLAYER CONTROLS
+   ============================================================ */
+UI.ppBtn.addEventListener('click', togglePlayPause);
+
+UI.progressSlider.addEventListener('input', function(e) {
+    if (!currentTTS.paragraphs.length) return;
+    var pct = parseFloat(e.target.value);
+    var targetIdx = Math.floor((pct / 100) * currentTTS.paragraphs.length);
+    currentTTS.idx = Math.min(Math.max(targetIdx, 0), currentTTS.paragraphs.length - 1);
+    UI.timeCur.textContent = Math.round(pct) + '%';
+    updateProgressBars(false);
+    if (currentTTS.playing) {
+        speechSynthesis.cancel();
+        speakCurrent();
+    } else {
+        var seg = currentTTS.paragraphs[currentTTS.idx];
+        if (seg) UI.ovSnippet.textContent = seg.text.slice(0, 250);
+    }
+});
+
+UI.viewBtn.addEventListener('click', function() {
+    if (!currentTTS.paragraphs.length) return;
+    var fullText = currentTTS.paragraphs.map(function(p) { return p.text; }).join('\n\n');
+    alert(fullText.slice(0, 3000) + (fullText.length > 3000 ? '\n… (texto truncado)' : ''));
+});
+
+/* ============================================================
+   LIBRARY DRAWER INTERATIVIDADE
+   ============================================================ */
+(function() {
+    var libCard = document.getElementById('libCard');
+    var libHandle = document.getElementById('libDrawerHandle');
+    var libToggleBtn = document.getElementById('libToggleBtn');
+
+    if (libHandle) {
+        libHandle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            libCard.classList.toggle('is-open');
+        });
+    }
+    if (libToggleBtn) {
+        libToggleBtn.addEventListener('click', function() {
+            libCard.classList.toggle('is-collapsed');
+            libToggleBtn.textContent = libCard.classList.contains('is-collapsed') ? 'Expandir' : 'Collapse';
+        });
+    }
+    document.addEventListener('click', function(e) {
+        if (libCard && libCard.classList.contains('is-open') && !libCard.contains(e.target) && !e.target.closest('#importBtn')) {
+            libCard.classList.remove('is-open');
+        }
+    });
+
+    var savedCollapse = localStorage.getItem('di_nebula_libCollapsed');
+    if (savedCollapse === '1') {
+        libCard.classList.add('is-collapsed');
+        if (libToggleBtn) libToggleBtn.textContent = 'Expandir';
+    }
+    var savedOpen = localStorage.getItem('di_nebula_libDrawerOpen');
+    if (savedOpen === '1') libCard.classList.add('is-open');
+
+    libCard.addEventListener('transitionend', function() {
+        localStorage.setItem('di_nebula_libDrawerOpen', libCard.classList.contains('is-open') ? '1' : '0');
+        localStorage.setItem('di_nebula_libCollapsed', libCard.classList.contains('is-collapsed') ? '1' : '0');
+    });
+})();
+
+/* ============================================================
+   CICLO ∅⁺/∅⁻ — RÉGUA ARQUETÍPICA
+   ============================================================ */
+var PESOS_ARQUETIPOS = {
+    "NOVA": 0.12, "ATLAS": 0.18, "VITALIS": 0.14,
+    "PULSE": 0.10, "ARTEMIS": 0.08, "SERENA": 0.10,
+    "KAOS": 0.05, "GENUS": 0.12, "LUMINE": 0.06,
+    "RHEA": 0.03, "SOLUS": 0.01, "AION": 0.01,
+    "KODUX": 0.01, "BLLUE": 0.01, "JESUS": 0.01,
+    "KOBLLUX": 0.01, "INFODOSE": 0.01, "HORUS": 0.01
+};
+var CICLO_PASSOS = [
+    { simb: "∅⁻", tipo: "inicio" },
+    { simb: "∆ⁿ", tipo: "transicao" },
+    { simb: "01", tipo: "passo" },
+    { simb: "02", tipo: "passo" },
+    { simb: "03", tipo: "passo" },
+    { simb: "∆ⁿ", tipo: "transicao" },
+    { simb: "01", tipo: "passo" },
+    { simb: "02", tipo: "passo" },
+    { simb: "03", tipo: "passo" },
+    { simb: "∆ⁿ", tipo: "transicao" },
+    { simb: "01", tipo: "passo" },
+    { simb: "02", tipo: "passo" },
+    { simb: "03", tipo: "passo" },
+    { simb: "∅⁺", tipo: "fim" }
+];
+var cicloPasso = 0;
+
+function obterProximoPasso() {
+    if (cicloPasso >= CICLO_PASSOS.length) cicloPasso = 0;
+    var passo = CICLO_PASSOS[cicloPasso];
+    cicloPasso++;
+    return passo;
+}
+
+function selecionarArquetipoPorPeso() {
+    var entries = Object.entries(PESOS_ARQUETIPOS);
+    var total = entries.reduce(function(s, e) { return s + e[1]; }, 0);
+    var rand = Math.random() * total;
+    for (var i = 0; i < entries.length; i++) {
+        rand -= entries[i][1];
+        if (rand <= 0) return entries[i][0];
+    }
+    return entries[entries.length - 1][0];
+}
+
+function calcDelta(totalTokens) {
+    var rd = totalTokens % 9 || 9;
+    return totalTokens > 0 ? rd / (totalTokens + 1) : 0.001;
+}
+
+function atualizarCiclo() {
+    var passo = obterProximoPasso();
+    var arqNome = selecionarArquetipoPorPeso();
+    var peso = PESOS_ARQUETIPOS[arqNome] || 0;
+    var totalTokens = 1134; // base fixa + documentos
+    dbAll().then(function(docs) {
+        totalTokens += (docs || []).length * 10;
+        var delta = calcDelta(totalTokens);
+
+        var passoEl = document.getElementById('ciclo-passo');
+        var arqEl = document.getElementById('ciclo-arq');
+        var pesoEl = document.getElementById('ciclo-peso');
+        var deltaEl = document.getElementById('ciclo-delta');
+
+        if (passoEl) passoEl.textContent = passo.simb;
+        if (arqEl) arqEl.textContent = arqNome;
+        if (pesoEl) pesoEl.textContent = peso.toFixed(3);
+        if (deltaEl) deltaEl.textContent = delta.toFixed(4);
+    });
+}
+
+setInterval(atualizarCiclo, 10000);
+document.addEventListener('fileAdded', atualizarCiclo);
+window.addEventListener('load', function() { setTimeout(atualizarCiclo, 500); });
+
+/* ============================================================
+   GRITO VIVO · KBLX CORE (extraído do módulo)
+   ============================================================ */
+(function() {
+    var KBLX = (function() {
+        var OPCODES = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','EXP'];
+        var TRIADE_MAP = {
+            A:'T01',B:'T02',C:'T03',D:'T01',E:'T02',F:'T03',G:'T03',H:'T02',I:'T01',
+            J:'T05',K:'T05',L:'T05',M:'T06',N:'T06',O:'T06',P:'T04',Q:'T07',R:'T08',
+            S:'T08',T:'T04',U:'T08',V:'T07',W:'T09',X:'T09',Y:'T09',Z:'T09',EXP:'T09'
+        };
+        function rd(n) { if (n === 0) return 0; var r = n % 9; return r === 0 ? 9 : r; }
+        function tokenizar(code) {
+            var tokens = [];
+            var words = code.split(/(\s+)/);
+            var line = 1;
+            words.forEach(function(w, idx) {
+                if (w.trim().length > 0) {
+                    var op = OPCODES[idx % OPCODES.length];
+                    tokens.push({ tipo: 'WORD', valor: w, opcode: op, triade: TRIADE_MAP[op], linha: line });
+                }
+            });
+            return tokens;
+        }
+        return { OPCODES: OPCODES, TRIADE_MAP: TRIADE_MAP, rd: rd, tokenizar: tokenizar };
+    })();
+
+    var boldItems = [];
+    var processedTokens = [];
+
+    function gritoProcessText() {
+        var rawEl = document.getElementById('grito-raw-input');
+        var densityEl = document.getElementById('grito-density');
+        var boldCountEl = document.getElementById('grito-bold-count');
+        if (!rawEl) return;
+        var text = rawEl.value;
+        var densityMode = densityEl ? densityEl.value : 'balanced';
+        updateGritoSignature(text);
+
+        if (!text.trim()) {
+            if (boldCountEl) boldCountEl.innerText = '0 gerados';
+            var pv = document.getElementById('grito-preview'); if (pv) pv.innerHTML = '';
+            var fc = document.getElementById('grito-fractal-container'); if (fc) fc.innerHTML = '';
+            var km = document.getElementById('grito-kblx-metrics'); if (km) km.innerHTML = '';
+            boldItems = []; processedTokens = [];
+            return;
+        }
+
+        var kTokens = KBLX.tokenizar(text);
+        renderKBLXAnalytics(kTokens);
+
+        var words = text.split(/(\s+)/);
+        var currentWordIndex = 0;
+        boldItems = []; processedTokens = [];
+
+        words.forEach(function(token) {
+            if (/\w+/.test(token) && token.length > 2) {
+                currentWordIndex++;
+                var charSum = 0;
+                for (var i = 0; i < token.length; i++) charSum += token.charCodeAt(i);
+                var base9 = KBLX.rd(charSum + currentWordIndex);
+                var shouldBold = false;
+                if (densityMode === 'balanced') {
+                    if ((currentWordIndex % 3 === 0 || currentWordIndex % 6 === 0 || currentWordIndex % 9 === 0 || currentWordIndex % 7 === 0) && token.length > 3) shouldBold = true;
+                } else if (densityMode === 'dense') {
+                    if (currentWordIndex % 3 === 0 || base9 === 3 || base9 === 6 || base9 === 9) shouldBold = true;
+                } else if (densityMode === 'light') {
+                    if (currentWordIndex % 9 === 0 || currentWordIndex % 7 === 0) shouldBold = true;
+                } else if (densityMode === 'sephiroth') {
+                    if ([3,6,9].includes(base9) && token.length > 3) shouldBold = true;
+                }
+                if (shouldBold) {
+                    var boldIdx = boldItems.length;
+                    boldItems.push({ text: token, index: currentWordIndex, base9: base9 });
+                    processedTokens.push({ type: 'bold', text: token, index: boldIdx, base9: base9 });
+                } else {
+                    processedTokens.push({ type: 'text', text: token });
+                }
+            } else {
+                processedTokens.push({ type: 'text', text: token });
+            }
+        });
+
+        if (boldCountEl) boldCountEl.innerText = boldItems.length + ' gerados';
+        renderGritoPreview();
+        renderGritoFractal();
+        renderGritoSVG();
+    }
+
+    function renderGritoPreview() {
+        var container = document.getElementById('grito-preview');
+        if (!container) return;
+        var styleEl = document.getElementById('grito-style');
+        var styleMode = styleEl ? styleEl.value : 'markdown';
+        var html = '';
+        processedTokens.forEach(function(tok) {
+            if (tok.type === 'bold') {
+                var isMath = styleMode === 'mathbf';
+                var prefix = isMath ? '\\mathbf{' : '';
+                var suffix = isMath ? '}' : '';
+                html += '<span class="grito-bold-tag" data-grito-idx="' + tok.index + '">' + prefix + escapeHTML(tok.text) + suffix + '<span class="grito-opcode">' + tok.base9 + '</span></span>';
+            } else {
+                html += escapeHTML(tok.text).replace(/\n/g, '<br>');
+            }
+        });
+        container.innerHTML = html;
+        if (window.katex) {
+            try {
+                var mathRegex = /\$(.*?)\$/g;
+                container.innerHTML = container.innerHTML.replace(mathRegex, function(m, mathStr) {
+                    return katex.renderToString(mathStr, { throwOnError: false });
+                });
+            } catch (err) { console.warn('[GRITO] KaTeX render ignorado', err); }
+        }
+    }
+
+    function renderGritoFractal() {
+        var container = document.getElementById('grito-fractal-container');
+        if (!container) return;
+        container.innerHTML = '';
+        if (boldItems.length === 0) {
+            container.innerHTML = '<div class="muted" style="padding:16px; text-align:center;">Nenhum destaque gerado. Ajuste a densidade.</div>';
+            return;
+        }
+        var pattern = [3,6,9,7];
+        var itemIdx = 0;
+        pattern.forEach(function(size) {
+            if (itemIdx >= boldItems.length) return;
+            var groupDiv = document.createElement('div');
+            groupDiv.className = 'grito-fractal-group';
+            var title = document.createElement('h4');
+            title.innerText = 'Nó ' + size + ' (' + Math.min(size, boldItems.length - itemIdx) + ' itens)';
+            groupDiv.appendChild(title);
+            var list = document.createElement('div');
+            list.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px';
+            for (var i = 0; i < size && itemIdx < boldItems.length; i++) {
+                var item = boldItems[itemIdx];
+                var tag = document.createElement('span');
+                tag.className = 'grito-bold-tag';
+                tag.innerText = item.text;
+                tag.dataset.gritoIdx = String(itemIdx);
+                list.appendChild(tag);
+                itemIdx++;
+            }
+            groupDiv.appendChild(list);
+            container.appendChild(groupDiv);
+        });
+    }
+
+    function renderGritoSVG() {
+        var svg = document.getElementById('grito-fractal-svg');
+        if (!svg) return;
+        svg.innerHTML = '';
+        var centerX = 200, centerY = 175, baseRadius = 110;
+        var primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--kob-voice-primary').trim() || '#7a57ff';
+        createSVGNode(svg, centerX, centerY, 16, primaryColor, 'KBLX 3×6×9×7');
+        if (boldItems.length === 0) return;
+        var total = boldItems.length;
+        boldItems.forEach(function(item, i) {
+            var angle = (i / total) * 2 * Math.PI;
+            var x = centerX + baseRadius * Math.cos(angle);
+            var y = centerY + baseRadius * Math.sin(angle);
+            var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', centerX); line.setAttribute('y1', centerY);
+            line.setAttribute('x2', x); line.setAttribute('y2', y);
+            line.setAttribute('class', 'grito-node-line');
+            svg.appendChild(line);
+            var nodeColor = item.base9 === 9 ? '#10b981' : (item.base9 === 6 ? '#3b82f6' : '#ec4899');
+            createSVGNode(svg, x, y, 7, nodeColor, item.text.substring(0, 7));
+        });
+    }
+
+    function createSVGNode(svg, cx, cy, r, fill, labelText) {
+        var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', cx); circle.setAttribute('cy', cy); circle.setAttribute('r', r);
+        circle.setAttribute('class', 'grito-node-circle');
+        circle.setAttribute('style', 'fill:' + fill);
+        var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', cx); text.setAttribute('y', cy + r + 11);
+        text.setAttribute('class', 'grito-node-text');
+        text.textContent = labelText;
+        g.appendChild(circle); g.appendChild(text); svg.appendChild(g);
+    }
+
+    function updateGritoSignature(text) {
+        var sigEl = document.getElementById('grito-sig');
+        if (!sigEl) return;
+        if (!text || !text.trim()) {
+            sigEl.innerHTML = '<span class="grito-sig-glyph">◈</span> assinatura rd(Σ) = —';
+            return;
+        }
+        var charSum = 0;
+        for (var i = 0; i < text.length; i++) charSum += text.charCodeAt(i);
+        var sig = KBLX.rd(charSum);
+        var glyphs = ['◈','∴','✦','⟐','◇','✧','◈','∴','✦'];
+        var glyph = glyphs[sig - 1] || '◈';
+        sigEl.innerHTML = '<span class="grito-sig-glyph">' + glyph + '</span> assinatura rd(Σ) = ' + sig + ' · ' + text.trim().split(/\s+/).length + ' palavras';
+    }
+
+    function renderKBLXAnalytics(kTokens) {
+        var metricsDiv = document.getElementById('grito-kblx-metrics');
+        var opcodesDiv = document.getElementById('grito-kblx-opcodes');
+        if (!metricsDiv || !opcodesDiv) return;
+        metricsDiv.innerHTML = 'Total Tokens: <strong>' + kTokens.length + '</strong> | Algoritmo rd(n) Base-9 Ativo';
+        var tableHtml = '<table class="grito-kblx-table"><thead><tr><th>Opcode</th><th>Palavra</th><th>Tríade</th></tr></thead><tbody>';
+        kTokens.slice(0, 15).forEach(function(t) {
+            tableHtml += '<tr><td><strong>' + t.opcode + '</strong></td><td>' + escapeHTML(t.valor) + '</td><td>' + t.triade + '</td></tr>';
+        });
+        tableHtml += '</tbody></table>';
+        opcodesDiv.innerHTML = tableHtml;
+    }
+
+    function gritoApplyAutoBold() {
+        var styleEl = document.getElementById('grito-style');
+        var styleMode = styleEl ? styleEl.value : 'markdown';
+        var newText = '';
+        processedTokens.forEach(function(tok) {
+            if (tok.type === 'bold') {
+                if (styleMode === 'markdown') newText += '**' + tok.text + '**';
+                else if (styleMode === 'mathbf') newText += '\\mathbf{' + tok.text + '}';
+                else newText += '<strong>' + tok.text + '</strong>';
+            } else newText += tok.text;
+        });
+        var rawEl = document.getElementById('grito-raw-input');
+        if (rawEl) rawEl.value = newText;
+        gritoProcessText();
+    }
+
+    function currentArchColor() {
+        var archSelect = document.getElementById('archSelect');
+        var id = archSelect ? archSelect.value : null;
+        var arch = (window.ARCHETYPES || []).find(function(a) { return String(a.id) === String(id); });
+        return arch?.theme?.primary || arch?.color || '#7a57ff';
+    }
+
+    function gritoSpeak() {
+        var rawEl = document.getElementById('grito-raw-input');
+        var dock = document.getElementById('gritoDock');
+        if (!rawEl || !rawEl.value.trim() || !window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        var utter = new SpeechSynthesisUtterance(rawEl.value);
+        utter.rate = 1; utter.pitch = 1; utter.lang = 'pt-BR';
+        if (dock) {
+            var color = currentArchColor();
+            dock.style.setProperty('--grito-pulse', color.startsWith('#') ? hexToRgba(color, .55) : color);
+            utter.onstart = function() { dock.classList.add('grito-speaking'); };
+            utter.onend = function() { dock.classList.remove('grito-speaking'); };
+            utter.onerror = function() { dock.classList.remove('grito-speaking'); };
+        }
+        window.speechSynthesis.speak(utter);
+    }
+
+    function hexToRgba(hex, alpha) {
+        var h = hex.replace('#', '');
+        var bigint = parseInt(h.length === 3 ? h.split('').map(function(c) { return c + c; }).join('') : h, 16);
+        var r = (bigint >> 16) & 255, g = (bigint >> 8) & 255, b = bigint & 255;
+        return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+    }
+
+    var gritoEditIndex = -1;
+    function gritoOpenModal(idx) {
+        if (idx < 0 || idx >= boldItems.length) return;
+        gritoEditIndex = idx;
+        var input = document.getElementById('grito-modal-input');
+        var modal = document.getElementById('grito-edit-modal');
+        if (input) input.value = boldItems[idx].text;
+        if (modal) modal.classList.add('active');
+    }
+    function gritoCloseModal() {
+        var modal = document.getElementById('grito-edit-modal');
+        if (modal) modal.classList.remove('active');
+        gritoEditIndex = -1;
+    }
+    function gritoSaveModal() {
+        if (gritoEditIndex === -1) return;
+        var input = document.getElementById('grito-modal-input');
+        var newVal = input ? input.value : '';
+        boldItems[gritoEditIndex].text = newVal;
+        var counter = 0;
+        processedTokens.forEach(function(tok) {
+            if (tok.type === 'bold') { if (counter === gritoEditIndex) tok.text = newVal; counter++; }
+        });
+        gritoCloseModal();
+        renderGritoPreview();
+        renderGritoFractal();
+        renderGritoSVG();
+    }
+
+    function gritoTriggerImport() { document.getElementById('grito-file-input')?.click(); }
+    function gritoHandleFile(ev) {
+        var file = ev.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var rawEl = document.getElementById('grito-raw-input');
+            if (rawEl) { rawEl.value = e.target.result; gritoProcessText(); }
+        };
+        reader.readAsText(file);
+    }
+    function gritoPasteClipboard() {
+        if (navigator.clipboard && navigator.clipboard.readText) {
+            navigator.clipboard.readText().then(function(t) {
+                var rawEl = document.getElementById('grito-raw-input');
+                if (rawEl) { rawEl.value = t; gritoProcessText(); }
+            }).catch(function() { alert('Não foi possível ler a área de transferência — cole diretamente no campo.'); });
+        } else {
+            alert('Cole diretamente na área de texto.');
+        }
+    }
+    function gritoCopyResult() {
+        var styleEl = document.getElementById('grito-style');
+        var styleMode = styleEl ? styleEl.value : 'markdown';
+        var textToCopy = '';
+        processedTokens.forEach(function(tok) {
+            if (tok.type === 'bold') {
+                if (styleMode === 'markdown') textToCopy += '**' + tok.text + '**';
+                else if (styleMode === 'mathbf') textToCopy += '\\mathbf{' + tok.text + '}';
+                else textToCopy += '<strong>' + tok.text + '</strong>';
+            } else textToCopy += tok.text;
+        });
+        var ta = document.createElement('textarea');
+        ta.value = textToCopy;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch(e) {}
+        document.body.removeChild(ta);
+    }
+    function gritoExportTXT() {
+        var rawEl = document.getElementById('grito-raw-input');
+        var text = rawEl ? rawEl.value : '';
+        var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'kblx-grito-vivo-nebula.txt';
+        a.click();
+    }
+
+    function initGritoUI() {
+        var btn = document.getElementById('gritoBtn');
+        var dock = document.getElementById('gritoDock');
+        var closeBtn = document.getElementById('gritoDockClose');
+        if (btn && dock) btn.addEventListener('click', function() { dock.hidden = !dock.hidden; if (!dock.hidden) gritoProcessText(); });
+        if (closeBtn && dock) closeBtn.addEventListener('click', function() { dock.hidden = true; window.speechSynthesis?.cancel(); dock.classList.remove('grito-speaking'); });
+
+        document.querySelectorAll('.grito-tab').forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.grito-tab').forEach(function(t) { t.classList.remove('active'); });
+                document.querySelectorAll('.grito-panel').forEach(function(p) { p.classList.remove('active'); });
+                tab.classList.add('active');
+                var panel = document.querySelector('.grito-panel[data-grito-panel="' + tab.dataset.gritoTab + '"]');
+                if (panel) panel.classList.add('active');
+            });
+        });
+
+        var rawEl = document.getElementById('grito-raw-input');
+        if (rawEl) rawEl.addEventListener('input', gritoProcessText);
+        var densityEl = document.getElementById('grito-density');
+        if (densityEl) densityEl.addEventListener('change', gritoProcessText);
+        var styleEl = document.getElementById('grito-style');
+        if (styleEl) styleEl.addEventListener('change', function() { renderGritoPreview(); });
+        var synthBtn = document.getElementById('grito-synth');
+        if (synthBtn) synthBtn.addEventListener('click', gritoApplyAutoBold);
+        var speakBtn = document.getElementById('grito-speak');
+        if (speakBtn) speakBtn.addEventListener('click', gritoSpeak);
+
+        document.getElementById('grito-import')?.addEventListener('click', gritoTriggerImport);
+        document.getElementById('grito-file-input')?.addEventListener('change', gritoHandleFile);
+        document.getElementById('grito-paste')?.addEventListener('click', gritoPasteClipboard);
+        document.getElementById('grito-copy')?.addEventListener('click', gritoCopyResult);
+        document.getElementById('grito-export')?.addEventListener('click', gritoExportTXT);
+
+        ['grito-preview', 'grito-fractal-container'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('click', function(e) {
+                var tag = e.target.closest('.grito-bold-tag');
+                if (!tag) return;
+                if (tag.dataset.gritoIdx !== undefined) {
+                    gritoOpenModal(+tag.dataset.gritoIdx);
+                } else {
+                    var idx = boldItems.findIndex(function(b) { return b.text === tag.textContent.trim(); });
+                    if (idx !== -1) gritoOpenModal(idx);
+                }
+            });
+        });
+        document.getElementById('grito-modal-cancel')?.addEventListener('click', gritoCloseModal);
+        document.getElementById('grito-modal-save')?.addEventListener('click', gritoSaveModal);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initGritoUI, { once: true });
+    } else {
+        initGritoUI();
+    }
+})();
+
+/* ============================================================
+   ARQUÉTIPOS (fallback)
+   ============================================================ */
+(function() {
+    var FALLBACK_ARCHETYPES = [
+        { id:'kobllux', name:'KOBLLUX', tone:'Oracular', modulation:'Núcleo do sistema, grave-médio.', voice:'Luciana', lang:'pt-BR', rate:0.98, pitch:0.48,
+          theme:{ primary:'#22D3EE', secondary:'#7dd3fc', bgSoft:'radial-gradient(circle at 30% 20%, rgba(34,211,238,.08), transparent)', glow:'0 0 18px rgba(34,211,238,.55)' } },
+        { id:'ion', name:'ION', tone:'Focado', modulation:'Cadência rápida.', voice:'Luciana', lang:'pt-BR', rate:1.05, pitch:0.8,
+          theme:{ primary:'#a855f7', secondary:'#c084fc', bgSoft:'radial-gradient(circle at 30% 20%, rgba(168,85,247,.08), transparent)', glow:'0 0 18px rgba(168,85,247,.55)' } },
+        { id:'solus', name:'SOLUS', tone:'Sábio', modulation:'Grave, pausado.', voice:'Luciana', lang:'pt-BR', rate:0.9, pitch:0.4,
+          theme:{ primary:'#f59e0b', secondary:'#fbbf24', bgSoft:'radial-gradient(circle at 30% 20%, rgba(245,158,11,.08), transparent)', glow:'0 0 18px rgba(245,158,11,.55)' } },
+        { id:'artemis', name:'ARTEMIS', tone:'Dinâmico', modulation:'Ritmo acelerado.', voice:'Luciana', lang:'pt-BR', rate:1.15, pitch:1.1,
+          theme:{ primary:'#10b981', secondary:'#34d399', bgSoft:'radial-gradient(circle at 30% 20%, rgba(16,185,129,.08), transparent)', glow:'0 0 18px rgba(16,185,129,.55)' } },
+        { id:'pulse', name:'PULSE', tone:'Rítmico', modulation:'Cadência pulsante.', voice:'Luciana', lang:'pt-BR', rate:1.0, pitch:0.9,
+          theme:{ primary:'#ec4899', secondary:'#f472b6', bgSoft:'radial-gradient(circle at 30% 20%, rgba(236,72,153,.08), transparent)', glow:'0 0 18px rgba(236,72,153,.55)' } }
+    ];
+    if (!Array.isArray(window.ARCHETYPES) || !window.ARCHETYPES.length) {
+        window.ARCHETYPES = FALLBACK_ARCHETYPES;
+    }
+    // Aplica o primeiro ao orb
+    var arch = window.ARCHETYPES[0];
+    var orb = document.getElementById('mainOrb');
+    if (orb && arch && arch.theme) {
+        orb.style.setProperty('--kob-voice-primary', arch.theme.primary || '#22D3EE');
+        orb.style.setProperty('--kob-voice-secondary', arch.theme.secondary || '#7dd3fc');
+        orb.style.setProperty('--kob-voice-glow', arch.theme.glow || '0 0 18px rgba(34,211,238,.55)');
+    }
+})();
+
+/* ============================================================
+   INICIALIZAÇÃO
+   ============================================================ */
+async function init() {
+    var docs = await dbAll();
+    if (docs.length === 0) {
+        var exampleText = 'No princípio, a informação era dispersa. A mente buscava clareza em meio ao ruído. Então, surgiu o conceito do 369. A semente é a intenção primária (3). O espelho é o contexto expandido (6). A fusão é a materialização da nova ideia (9). Confie no algoritmo e deixe sua mente criar ramificações infinitas.';
+        await dbPut({
+            id: 'preset-manifesto',
+            name: 'Manifesto Infodose 369.txt',
+            text: exampleText,
+            type: 'txt',
+            size: exampleText.length,
+            savedAt: Date.now(),
+            _paras: JSON.stringify(splitTextIntoParagraphs(exampleText))
+        });
+    }
+    await renderLibrary();
+    renderMirrors();
+    var allDocs = await dbAll();
+    if (allDocs.length) {
+        var last = allDocs.sort(function(a,b) { return b.savedAt - a.savedAt; })[0];
+        await loadDocumentForPlayer(last);
+    }
+    console.log('Nébula Pro + Screen Panel unificado · Iniciado');
+    atualizarCiclo();
+}
+
+window.addEventListener('DOMContentLoaded', init);
+
+</script>
+
+</body>
+</html>
