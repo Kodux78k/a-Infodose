@@ -35,6 +35,7 @@
 }
 
 #nb-sw-dock{
+    flex-direction:column;
     position:fixed;
     left:10px;
     bottom:calc(10px + env(safe-area-inset-bottom,0px));
