@@ -1,0 +1,787 @@
+<!-- =====================================================================
+     SCRIPT ÚNICO · MemoryCore + Explorer + Baú Bruto + DevOS + Orb
+     ===================================================================== -->
+<script>
+(function() {
+  'use strict';
+
+  // ============================================================
+  //  CONFIGURAÇÕES COMPARTILHADAS
+  // ============================================================
+  const DISABLED_KEY = 'infodose:presets.disabled';
+  const PRESETS = [
+    { key: 'di_userName', label: 'Usuário' },
+    { key: 'di_assistantName', label: 'Assistente' },
+    { key: 'di_apiKey', label: 'Chave OpenRouter (legacy)' },
+    { key: 'di_modelName', label: 'Modelo IA' },
+    { key: 'uno:theme', label: 'Tema' },
+    { key: 'uno:bg', label: 'Fundo Custom' },
+    { key: 'infodose:cssCustom', label: 'CSS Custom' },
+    { key: 'infodose:voices', label: 'Vozes Arquetípicas' }
+  ];
+
+  // ============================================================
+  //  MEMORY CORE (índice invertido sobre o localStorage)
+  // ============================================================
+  const MemoryCore = {
+    cache: new Map(),
+    invertedIndex: new Map(),
+    ready: false,
+
+    load() {
+      this.cache.clear();
+      this.invertedIndex.clear();
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        const val = localStorage.getItem(key) || '';
+        this.cache.set(key, val);
+        this._indexDocument(key, val);
+      }
+      this.ready = true;
+    },
+
+    _indexDocument(key, text) {
+      const words = this._tokenize(text);
+      for (const w of words) {
+        if (!this.invertedIndex.has(w)) this.invertedIndex.set(w, new Set());
+        this.invertedIndex.get(w).add(key);
+      }
+    },
+
+    _tokenize(text) {
+      return text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .split(/\s+/)
+        .filter(w => w.length > 1);
+    },
+
+    search(query) {
+      if (!this.ready) this.load();
+      if (!query || query.trim() === '') return [];
+      const terms = this._tokenize(query);
+      if (terms.length === 0) return [];
+      const scores = new Map();
+      for (const term of terms) {
+        const docs = this.invertedIndex.get(term);
+        if (docs) for (const key of docs) scores.set(key, (scores.get(key) || 0) + 1);
+      }
+      return Array.from(scores.entries())
+        .sort((a, b) => b[1] - a[1])
+        .map(([key, score]) => ({ key, value: this.cache.get(key) || '', score: score / terms.length }));
+    },
+
+    set(key, value) {
+      localStorage.setItem(key, String(value));
+      this.cache.set(key, String(value));
+      this.invertedIndex.forEach(set => { if (set.has(key)) set.delete(key); });
+      this._indexDocument(key, String(value));
+    },
+
+    delete(key) {
+      localStorage.removeItem(key);
+      this.cache.delete(key);
+      this.invertedIndex.forEach(set => set.delete(key));
+    },
+
+    reload() { this.load(); }
+  };
+  window.MemoryCore = MemoryCore;
+  MemoryCore.load();
+
+  // ============================================================
+  //  UTILITÁRIOS
+  // ============================================================
+  function prettyBytes(n) {
+    if (!Number.isFinite(n) || n <= 0) return '0 B';
+    const u = ['B', 'KB', 'MB', 'GB'];
+    let i = 0;
+    while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+    return n.toFixed(2) + ' ' + u[i];
+  }
+
+  function saveFile(name, str) {
+    const blob = new Blob([str], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 800);
+  }
+
+  function isJson(v) {
+    try { JSON.parse(v); return true; } catch { return false; }
+  }
+
+  function inferType(v) {
+    if (v == null || v === '') return 'empty';
+    if (isJson(v)) {
+      const p = JSON.parse(v);
+      if (Array.isArray(p)) return 'json[array]';
+      if (p && typeof p === 'object') return 'json[object]';
+      return 'json[' + (typeof p) + ']';
+    }
+    if (/^data:image\//i.test(v) || /\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(v)) return 'image';
+    if (/^(true|false|1|0)$/i.test(v)) return 'boolean-like';
+    if (/^https?:\/\//i.test(v)) return 'url';
+    if (/^data:/i.test(v)) return 'data-url';
+    return 'string';
+  }
+
+  function disabledSet() {
+    try { return new Set(JSON.parse(localStorage.getItem(DISABLED_KEY) || '[]')); }
+    catch { return new Set(); }
+  }
+  function saveDisabled(set) { localStorage.setItem(DISABLED_KEY, JSON.stringify(Array.from(set))); }
+
+  function toggleDisabled(k) {
+    const s = disabledSet();
+    s.has(k) ? s.delete(k) : s.add(k);
+    saveDisabled(s);
+    renderPresets();
+    renderRaw();
+    refreshAllTabs();
+  }
+
+  function lsEntries() {
+    const out = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      out.push({ key: k, val: localStorage.getItem(k) || '' });
+    }
+    return out.sort((a, b) => a.key.localeCompare(b.key));
+  }
+
+  function lsSizeBytes() {
+    let sum = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      sum += k.length + (localStorage.getItem(k) || '').length;
+    }
+    return sum;
+  }
+
+  // ============================================================
+  //  GRUPOS AUTOMÁTICOS (por prefixo "grupo:chave")
+  // ============================================================
+  function getGroups() {
+    const groups = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key === DISABLED_KEY) continue;
+      let prefix = 'outros';
+      const idx = key.indexOf(':');
+      if (idx > 0) prefix = key.substring(0, idx);
+      if (!groups[prefix]) groups[prefix] = [];
+      groups[prefix].push(key);
+    }
+    const sorted = Object.keys(groups).sort((a, b) => groups[b].length - groups[a].length);
+    const result = {};
+    for (const g of sorted) result[g] = groups[g];
+    return result;
+  }
+
+  // ============================================================
+  //  DASHBOARD
+  // ============================================================
+  function renderDashboard() {
+    const user = localStorage.getItem('di_userName') || '—';
+    const assistant = localStorage.getItem('di_assistantName') || '—';
+    const total = localStorage.length;
+    let size = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      size += (k + (localStorage.getItem(k) || '')).length;
+    }
+    document.getElementById('statUser').textContent = user;
+    document.getElementById('statAssistant').textContent = assistant;
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statSize').textContent = prettyBytes(size);
+
+    const groups = getGroups();
+    const container = document.getElementById('groupStats');
+    container.innerHTML = '';
+    for (const [prefix, keys] of Object.entries(groups)) {
+      const div = document.createElement('div');
+      div.className = 'group-stat';
+      div.innerHTML = `<div class="count">${keys.length}</div><div class="label">${prefix}</div>`;
+      container.appendChild(div);
+    }
+    if (Object.keys(groups).length === 0) {
+      container.innerHTML = '<p style="color:#6a7a92;">Nenhum grupo encontrado.</p>';
+    }
+  }
+
+  // ============================================================
+  //  CARDS (Biblioteca / Rascunhos / Vault / Fractais / Arquétipos)
+  // ============================================================
+  function renderCards(containerId, filterFn) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k === DISABLED_KEY) continue;
+      if (filterFn(k)) keys.push(k);
+    }
+    if (keys.length === 0) {
+      container.innerHTML = '<p style="color:#6a7a92;">Nenhum item encontrado.</p>';
+      return;
+    }
+    for (const key of keys) {
+      const val = localStorage.getItem(key) || '';
+      const card = document.createElement('div');
+      card.className = 'card-item';
+      card.innerHTML = `
+        <div class="title">${key}</div>
+        <div class="meta">${val.length > 60 ? val.slice(0, 60) + '…' : val}</div>
+        <div class="preview">${val.length > 120 ? val.slice(0, 120) + '…' : val}</div>
+        <div class="actions">
+          <button data-action="view" data-key="${key}">👁️ Ver</button>
+          <button data-action="copy" data-key="${key}">📋 Copiar</button>
+        </div>
+      `;
+      container.appendChild(card);
+    }
+    container.querySelectorAll('[data-action="view"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const k = btn.dataset.key;
+        alert(`🔍 ${k}\n\n${localStorage.getItem(k) || ''}`);
+      });
+    });
+    container.querySelectorAll('[data-action="copy"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const k = btn.dataset.key;
+        const v = localStorage.getItem(k) || '';
+        navigator.clipboard?.writeText(v).then(() => alert('Copiado!')).catch(() => {
+          const ta = document.createElement('textarea');
+          ta.value = v;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          ta.remove();
+          alert('Copiado!');
+        });
+      });
+    });
+  }
+
+  // ============================================================
+  //  BAÚ BRUTO — editor granular (switch / editar / apagar / imagem)
+  // ============================================================
+  function renderRaw() {
+    const list = document.getElementById('rawList');
+    const imgGrid = document.getElementById('rawImgGrid');
+    if (!list) return;
+
+    list.innerHTML = '';
+    imgGrid.innerHTML = '';
+
+    const entries = lsEntries();
+    document.getElementById('rawCount').textContent = entries.length + ' chave(s)';
+    document.getElementById('rawSize').textContent = prettyBytes(lsSizeBytes());
+
+    const dis = disabledSet();
+
+    entries.forEach(({ key, val }) => {
+      if (key === DISABLED_KEY) return;
+
+      const it = document.createElement('div');
+      it.className = 'raw-item';
+
+      const head = document.createElement('div');
+      head.className = 'raw-head';
+
+      const left = document.createElement('div');
+      left.innerHTML = `
+        <div class="raw-key">${key}${dis.has(key) ? ' <span class="raw-type">(desativado)</span>' : ''}</div>
+        <div class="raw-type">${inferType(val)} · ${prettyBytes((val || '').length)}</div>
+      `;
+
+      const ctr = document.createElement('div');
+      ctr.className = 'raw-ctr';
+
+      const sw = document.createElement('div');
+      sw.className = 'raw-switch' + (!dis.has(key) ? ' on' : '');
+      sw.title = !dis.has(key) ? 'Desativar' : 'Ativar';
+      sw.addEventListener('click', () => toggleDisabled(key));
+
+      const bEdit = document.createElement('button');
+      bEdit.className = 'raw-btn';
+      bEdit.textContent = '✎ Editar';
+      bEdit.addEventListener('click', () => {
+        const next = prompt(`Editar valor de\n${key}`, val ?? '');
+        if (next == null) return;
+        MemoryCore.set(key, String(next));
+        renderRaw();
+        refreshAllTabs();
+      });
+
+      const bDel = document.createElement('button');
+      bDel.className = 'raw-btn';
+      bDel.textContent = '🗑 Apagar';
+      bDel.addEventListener('click', () => {
+        if (confirm('Apagar ' + key + '?')) {
+          MemoryCore.delete(key);
+          renderRaw();
+          refreshAllTabs();
+        }
+      });
+
+      ctr.append(sw, bEdit, bDel);
+
+      if (inferType(val) === 'image') {
+        const bImg = document.createElement('button');
+        bImg.className = 'raw-btn';
+        bImg.textContent = '🖼 Ver imagem';
+        bImg.addEventListener('click', () => addImagePreview(key, val));
+        ctr.append(bImg);
+      }
+
+      head.append(left, ctr);
+
+      const v = document.createElement('div');
+      v.className = 'raw-val';
+      v.textContent = inferType(val).startsWith('json') ? JSON.stringify(JSON.parse(val), null, 2) : (val ?? '—');
+
+      it.append(head, v);
+      list.append(it);
+    });
+  }
+
+  function addImagePreview(key, src) {
+    const g = document.getElementById('rawImgGrid');
+    const card = document.createElement('div');
+    card.className = 'raw-img-card';
+
+    const cap = document.createElement('div');
+    cap.className = 'raw-type';
+    cap.textContent = key;
+
+    const im = new Image();
+    im.src = src;
+    im.loading = 'lazy';
+    im.style.maxWidth = '100%';
+
+    card.append(cap, im);
+    g.append(card);
+  }
+
+  // ============================================================
+  //  PRESETS (aba Ferramentas)
+  // ============================================================
+  function renderPresets() {
+    const grid = document.getElementById('presetsGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    const dis = disabledSet();
+    PRESETS.forEach(p => {
+      const on = !dis.has(p.key);
+      const item = document.createElement('div');
+      item.className = 'preset-item';
+      item.innerHTML = `
+        <div class="info">
+          <div class="label">${p.label}</div>
+          <div class="key">${p.key}</div>
+        </div>
+        <div class="switch ${on ? 'on' : ''}" data-key="${p.key}"></div>
+      `;
+      const sw = item.querySelector('.switch');
+      sw.addEventListener('click', () => toggleDisabled(p.key));
+      grid.appendChild(item);
+    });
+  }
+
+  function refreshAllTabs() {
+    renderDashboard();
+    renderCards('libraryGrid', k => k.includes('doc') || k.includes('note') || k.includes('prompt') || k.includes('text') || k.includes('article'));
+    renderCards('draftsGrid', k => k.includes('draft') || k.includes('rascunho') || k.includes('wip'));
+    renderCards('vaultGrid', k => k.includes('html') || k.includes('css') || k.includes('json') || k.includes('template') || k.includes('asset'));
+    renderCards('fractalsGrid', k => k.includes('fractal') || k.includes('ciclo') || k.includes('369'));
+    renderCards('archetypesGrid', k => k.includes('archetype') || k.includes('arquétipo') || k.includes('persona'));
+  }
+
+  // ============================================================
+  //  BUSCA SEMÂNTICA
+  // ============================================================
+  const searchInput = document.getElementById('semanticSearchInput');
+  const resultsContainer = document.getElementById('searchResultsContainer');
+
+  function performSearch(query) {
+    if (!query.trim()) { resultsContainer.innerHTML = ''; return; }
+    const results = MemoryCore.search(query);
+    if (results.length === 0) {
+      resultsContainer.innerHTML = `<div style="color:#6a7a92; text-align:center; padding:20px;">Nenhum resultado para "${query}"</div>`;
+      return;
+    }
+    let html = '';
+    for (const item of results) {
+      const scorePct = Math.round(item.score * 100);
+      html += `
+        <div class="search-result-item">
+          <div>
+            <div class="key">${item.key}</div>
+            <div class="value-preview">${item.value.length > 100 ? item.value.slice(0, 100) + '…' : item.value}</div>
+          </div>
+          <div class="score">${scorePct}% relevância</div>
+        </div>
+      `;
+    }
+    resultsContainer.innerHTML = html;
+  }
+
+  let debounceTimer;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => performSearch(searchInput.value), 200);
+  });
+
+  // ============================================================
+  //  NAVEGAÇÃO POR ABAS
+  // ============================================================
+  const tabButtons = document.querySelectorAll('#bau-tabs button');
+  const tabPanes = {
+    dashboard: document.getElementById('tab-dashboard'),
+    library: document.getElementById('tab-library'),
+    drafts: document.getElementById('tab-drafts'),
+    vault: document.getElementById('tab-vault'),
+    fractals: document.getElementById('tab-fractals'),
+    archetypes: document.getElementById('tab-archetypes'),
+    raw: document.getElementById('tab-raw'),
+    search: document.getElementById('tab-search'),
+    tools: document.getElementById('tab-tools'),
+    orb: document.getElementById('tab-orb')
+  };
+
+  function switchTab(tabId) {
+    tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabId));
+    Object.entries(tabPanes).forEach(([id, pane]) => pane.classList.toggle('active', id === tabId));
+    if (tabId === 'search') { searchInput.focus(); performSearch(searchInput.value); }
+    if (tabId === 'dashboard') renderDashboard();
+    if (tabId === 'library') renderCards('libraryGrid', k => k.includes('doc') || k.includes('note') || k.includes('prompt') || k.includes('text') || k.includes('article'));
+    if (tabId === 'drafts') renderCards('draftsGrid', k => k.includes('draft') || k.includes('rascunho') || k.includes('wip'));
+    if (tabId === 'vault') renderCards('vaultGrid', k => k.includes('html') || k.includes('css') || k.includes('json') || k.includes('template') || k.includes('asset'));
+    if (tabId === 'fractals') renderCards('fractalsGrid', k => k.includes('fractal') || k.includes('ciclo') || k.includes('369'));
+    if (tabId === 'archetypes') renderCards('archetypesGrid', k => k.includes('archetype') || k.includes('arquétipo') || k.includes('persona'));
+    if (tabId === 'raw') renderRaw();
+    if (tabId === 'tools') renderPresets();
+    // Orb não precisa de refresh, é estático
+  }
+
+  tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+
+  // ============================================================
+  //  MODAL E BOTÃO FLUTUANTE (BAÚ)
+  // ============================================================
+  const modal = document.getElementById('bau-modal');
+  const fab = document.getElementById('bau-fab');
+  const closeBtn = document.getElementById('bau-close');
+
+  function openModal() {
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    refreshAllTabs();
+    switchTab('dashboard');
+  }
+  function closeModal() {
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+  fab.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('open')) closeModal(); });
+
+  // ============================================================
+  //  AÇÕES DAS FERRAMENTAS
+  // ============================================================
+  document.getElementById('bau-export').addEventListener('click', () => {
+    const dump = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k === DISABLED_KEY) continue;
+      dump[k] = localStorage.getItem(k);
+    }
+    saveFile('localstorage_export.json', JSON.stringify(dump, null, 2));
+  });
+
+  document.getElementById('bau-import-file').addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result || '{}');
+        Object.entries(data).forEach(([k, v]) => MemoryCore.set(k, String(v)));
+        alert('Importado com sucesso.');
+        refreshAllTabs();
+        renderRaw();
+      } catch (err) {
+        alert('JSON inválido.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  document.getElementById('bau-clear-disabled').addEventListener('click', () => {
+    localStorage.setItem(DISABLED_KEY, '[]');
+    refreshAllTabs();
+    renderRaw();
+  });
+
+  document.getElementById('bau-refresh').addEventListener('click', () => {
+    MemoryCore.reload();
+    refreshAllTabs();
+    const activeTab = document.querySelector('#bau-tabs .active');
+    if (activeTab && activeTab.dataset.tab === 'raw') renderRaw();
+  });
+
+  // ============================================================
+  //  ORB — FILTROS
+  // ============================================================
+  const filterButtons = document.querySelectorAll('#orbFilters button');
+  const cards = document.querySelectorAll('#orbCardsGrid .orb-func-card');
+
+  function filterOrb(filter) {
+    filterButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.filter === filter));
+    cards.forEach(card => {
+      const type = card.dataset.type;
+      const show = filter === 'all' || type === filter;
+      card.style.display = show ? 'block' : 'none';
+    });
+  }
+
+  filterButtons.forEach(btn => {
+    btn.addEventListener('click', () => filterOrb(btn.dataset.filter));
+  });
+
+  // Inicializa com "all"
+  filterOrb('all');
+
+  // ============================================================
+  //  INICIALIZAÇÃO
+  // ============================================================
+  refreshAllTabs();
+
+  window.addEventListener('storage', () => {
+    MemoryCore.reload();
+    refreshAllTabs();
+    const activeTab = document.querySelector('#bau-tabs .active');
+    if (activeTab) {
+      if (activeTab.dataset.tab === 'search') performSearch(searchInput.value);
+      if (activeTab.dataset.tab === 'raw') renderRaw();
+      if (activeTab.dataset.tab === 'tools') renderPresets();
+    }
+  });
+
+  // Exposto para qualquer widget externo que precise forçar atualização
+  window.__refreshExplorer = () => {
+    refreshAllTabs();
+    const activeTab = document.querySelector('#bau-tabs .active');
+    if (activeTab) {
+      if (activeTab.dataset.tab === 'search') performSearch(searchInput.value);
+      if (activeTab.dataset.tab === 'raw') renderRaw();
+      if (activeTab.dataset.tab === 'tools') renderPresets();
+    }
+  };
+
+  console.log('📦 KOBLLUX Explorer + Baú Bruto + Orb carregado.');
+})();
+
+// ============================================================
+//  78 DEVOS — PAINEL DE RECURSOS CSS/JS + VARIÁVEIS DE TEMA
+//  (mantido como objeto global independente)
+// ============================================================
+const KDevPanel = {
+  isOpen: false,
+  resources: [],
+
+  init() {
+    this.scan();
+  },
+
+  toggle() {
+    const panel = document.getElementById('dev-panel');
+    this.isOpen = !this.isOpen;
+    if (this.isOpen) {
+      this.scan();
+      panel.classList.add('kdev-panel--open');
+    } else {
+      panel.classList.remove('kdev-panel--open');
+    }
+  },
+
+  updateVar(varName, value) {
+    document.documentElement.style.setProperty(varName, value);
+    const displaySpan = document.getElementById(`val${varName}`);
+    if (displaySpan) displaySpan.innerText = value;
+  },
+
+  scan() {
+    this.resources = [];
+    const elements = document.querySelectorAll('link[rel="stylesheet"], script[src]');
+    elements.forEach((el) => {
+      const type = el.tagName.toLowerCase() === 'link' ? 'css' : 'js';
+      const url = type === 'css' ? el.href : el.src;
+      const isCore = url.includes('tailwindcss') || url.includes('lucide') || url.includes('jsdelivr') || url.includes('jszip');
+      const isKodux = url.includes('kodux') || url.includes('infodose');
+      let active = true;
+      if (type === 'css') active = !el.disabled;
+      else active = el.getAttribute('data-dev-disabled') !== 'true';
+      this.resources.push({ el, type, url, active, isCore, isKodux });
+    });
+    this.render();
+  },
+
+  render() {
+    const container = document.getElementById('dev-resources-list');
+    container.innerHTML = '';
+    if (this.resources.length === 0) {
+      container.innerHTML = '<p class="kdev-res-empty">Nenhum recurso encontrado.</p>';
+      return;
+    }
+    this.resources.forEach((res, i) => {
+      const isCSS = res.type === 'css';
+      const bgClass = res.isKodux ? 'kdev-card--kodux' : 'kdev-card--normal';
+      const badgeClass = isCSS ? 'kdev-badge--css' : 'kdev-badge--js';
+      const statusClass = !res.active ? 'kdev-card--disabled' : '';
+      const shieldSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="kdev-icon kdev-icon-sm" style="display:inline; padding-bottom:1px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>`;
+      const trashSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="kdev-icon kdev-icon-sm"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
+      const html = `
+        <div class="kdev-card ${bgClass} ${statusClass}" id="res-card-${i}">
+          <div class="kdev-card-top">
+            <div class="kdev-badges">
+              <span class="kdev-badge ${badgeClass}">${res.type}</span>
+              ${res.isKodux ? `<span class="kdev-badge-kodux">${shieldSvg} Kodux</span>` : ''}
+            </div>
+            <label class="kdev-toggle">
+              <input type="checkbox" class="kdev-toggle-input" ${res.active ? 'checked' : ''} onchange="KDevPanel.toggleResource(${i}, this.checked)">
+              <div class="kdev-toggle-bg"></div>
+            </label>
+          </div>
+          <div class="kdev-card-bottom">
+            <input type="text" value="${res.url}" onchange="KDevPanel.updateUrl(${i}, this.value)" class="kdev-res-input kdev-font-mono">
+            <button onclick="KDevPanel.deleteResource(${i})" class="kdev-delete" title="Remover Tag">${trashSvg}</button>
+          </div>
+        </div>
+      `;
+      container.insertAdjacentHTML('beforeend', html);
+    });
+  },
+
+  toggleResource(i, isActive) {
+    const res = this.resources[i];
+    res.active = isActive;
+    if (res.type === 'css') {
+      res.el.disabled = !isActive;
+    } else {
+      if (!isActive) {
+        res.el.setAttribute('data-dev-disabled', 'true');
+        res.el.type = 'javascript/blocked';
+      } else {
+        res.el.removeAttribute('data-dev-disabled');
+        res.el.type = 'text/javascript';
+        const newScript = document.createElement('script');
+        newScript.src = res.url;
+        res.el.parentNode.replaceChild(newScript, res.el);
+        res.el = newScript;
+      }
+    }
+    const card = document.getElementById(`res-card-${i}`);
+    if (isActive) card.classList.remove('kdev-card--disabled');
+    else card.classList.add('kdev-card--disabled');
+  },
+
+  updateUrl(i, newUrl) {
+    const res = this.resources[i];
+    res.url = newUrl;
+    if (res.type === 'css') {
+      res.el.href = newUrl;
+    } else {
+      const newScript = document.createElement('script');
+      newScript.src = newUrl;
+      res.el.parentNode.replaceChild(newScript, res.el);
+      res.el = newScript;
+    }
+    this.scan();
+  },
+
+  addResource() {
+    const type = document.getElementById('dev-new-type').value;
+    const url = document.getElementById('dev-new-url').value;
+    if (!url) return;
+    if (type === 'css') {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = url;
+      document.head.appendChild(link);
+    } else {
+      const script = document.createElement('script');
+      script.src = url;
+      document.body.appendChild(script);
+    }
+    document.getElementById('dev-new-url').value = '';
+    this.scan();
+  },
+
+  deleteResource(i) {
+    const res = this.resources[i];
+    res.el.remove();
+    this.scan();
+  },
+
+  exportHTML() {
+    const cloneDoc = document.documentElement.cloneNode(true);
+
+    // Remove os dois widgets KOBLLUX do HTML exportado
+    ['.kdev-wrapper', '#bau-fab', '#bau-modal'].forEach(sel => {
+      const el = cloneDoc.querySelector(sel);
+      if (el) el.remove();
+    });
+
+    const scriptTags = cloneDoc.querySelectorAll('script');
+    scriptTags.forEach(script => {
+      if (script.innerHTML.includes('KDevPanel') || script.innerHTML.includes('MemoryCore')) {
+        script.remove();
+      }
+    });
+
+    const blockedScripts = cloneDoc.querySelectorAll('script[data-dev-disabled="true"]');
+    blockedScripts.forEach(s => s.remove());
+
+    const computedBg = document.documentElement.style.getPropertyValue('--bg');
+    if (computedBg) {
+      const styleTag = document.createElement('style');
+      styleTag.innerHTML = `
+        :root {
+          --bg: ${document.documentElement.style.getPropertyValue('--bg')};
+          --bg-dark: ${document.documentElement.style.getPropertyValue('--bg-dark')};
+          --active-color: ${document.documentElement.style.getPropertyValue('--active-color')};
+        }
+      `;
+      cloneDoc.querySelector('head').appendChild(styleTag);
+    }
+
+    const htmlContent = '<!DOCTYPE html>\n' + cloneDoc.outerHTML;
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'FusionOS_Export.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  KDevPanel.init();
+});
+</script>
