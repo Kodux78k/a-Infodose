@@ -195,8 +195,7 @@ body {
         0;
     right:
         0;
-    z-index:
-        1000;
+  
     display:
         flex;
     align-items:
