@@ -115,7 +115,7 @@
     position:fixed !important;
 
     /* continua sendo um estado maximized */
-    z-index:2147483000 !important;
+    z-index:8790 !important;
 
     /* posição padrão do maximized */
     top:0 !important;
@@ -414,74 +414,123 @@
     // ───────────────────────────────────────────────────────────────
     // BODY (MODIFICADO: suporte a srcdoc)
     // ───────────────────────────────────────────────────────────────
-    function renderBody(doc) {
-
-        // HTML com conteúdo inline (srcdoc)
-        if (doc.type === "html" && doc.content && !doc.url) {
-            return `
-                <iframe
-                    srcdoc="${escapeHTMLLocal(doc.content)}"
-                    sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-                    loading="lazy"
-                    style="width:100%;height:100%;border:0;background:#fff;">
-                </iframe>
-            `;
-        }
-
-        // PDF ou HTML com URL (src)
-        if (
-            (doc.type === "pdf" || doc.type === "html") &&
-            doc.url
-        ) {
-            return `
-                <iframe
-                    src="${escapeHTMLLocal(doc.url)}"
-                    sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-                    loading="lazy">
-                </iframe>
-            `;
-        }
-
-        // Markdown
-        if (
-            doc.type === "markdown" &&
-            typeof window.markdownToHTML === "function"
-        ) {
-            return `
-                <div class="nb-md-view">
-                    ${window.markdownToHTML(doc.content || "")}
-                </div>
-            `;
-        }
-
-        // JSON
-        if (doc.type === "json") {
-
-            let pretty = doc.content || "";
-
-            try {
-                pretty = JSON.stringify(
-                    JSON.parse(doc.content),
-                    null,
-                    2
-                );
-            } catch (e) {}
-
-            return `
-                <div class="nb-text-view">
-                    ${escapeHTMLLocal(pretty)}
-                </div>
-            `;
-        }
-
-        // TXT / fallback
-        return `
-            <div class="nb-text-view">
-                ${escapeHTMLLocal(doc.content || "Sem conteúdo.")}
+   // ───────────────────────────────────────────────────────────────
+// BODY — WEBFRAME LIBERADO / FULL POWER
+// ───────────────────────────────────────────────────────────────
+function renderBody(doc) {
+  
+  // HTML inline — srcdoc
+  if (doc.type === "html" && doc.content && !doc.url) {
+    return `
+            <iframe
+                srcdoc="${escapeHTMLLocal(doc.content)}"
+                allow="
+                    fullscreen;
+                    autoplay;
+                    clipboard-read;
+                    clipboard-write;
+                    camera;
+                    microphone;
+                    geolocation;
+                    payment;
+                    usb;
+                    serial;
+                    bluetooth;
+                    display-capture;
+                    screen-wake-lock
+                "
+                allowfullscreen
+                loading="eager"
+                referrerpolicy="no-referrer-when-downgrade"
+                style="
+                    width:100%;
+                    height:100%;
+                    min-height:100%;
+                    border:0;
+                    display:block;
+                    background:#fff;
+                ">
+            </iframe>
+        `;
+  }
+  
+  // PDF / HTML externo — WebFrame totalmente liberado
+  if (
+    (doc.type === "pdf" || doc.type === "html") &&
+    doc.url
+  ) {
+    return `
+            <iframe
+                src="${escapeHTMLLocal(doc.url)}"
+                allow="
+                    fullscreen;
+                    autoplay;
+                    clipboard-read;
+                    clipboard-write;
+                    camera;
+                    microphone;
+                    geolocation;
+                    payment;
+                    usb;
+                    serial;
+                    bluetooth;
+                    display-capture;
+                    screen-wake-lock
+                "
+                allowfullscreen
+                loading="eager"
+                referrerpolicy="no-referrer-when-downgrade"
+                style="
+                    width:100%;
+                    height:100%;
+                    min-height:100%;
+                    border:0;
+                    display:block;
+                    background:#fff;
+                ">
+            </iframe>
+        `;
+  }
+  
+  // Markdown
+  if (
+    doc.type === "markdown" &&
+    typeof window.markdownToHTML === "function"
+  ) {
+    return `
+            <div class="nb-md-view">
+                ${window.markdownToHTML(doc.content || "")}
             </div>
         `;
-    }
-
+  }
+  
+  // JSON
+  if (doc.type === "json") {
+    
+    let pretty = doc.content || "";
+    
+    try {
+      pretty = JSON.stringify(
+        JSON.parse(doc.content),
+        null,
+        2
+      );
+    } catch (e) {}
+    
+    return `
+            <div class="nb-text-view">
+                ${escapeHTMLLocal(pretty)}
+            </div>
+        `;
+  }
+  
+  // TXT / fallback
+  return `
+        <div class="nb-text-view">
+            ${escapeHTMLLocal(doc.content || "Sem conteúdo.")
+        }
+    `;
+}
     // ───────────────────────────────────────────────────────────────
     // HEADER
     // ───────────────────────────────────────────────────────────────
