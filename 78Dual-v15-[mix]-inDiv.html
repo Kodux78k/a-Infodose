@@ -1,20 +1,604 @@
-<!DOCTYPE html>
-<html lang="pt-BR"><head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f6f7fb">
-  <title>Almasliber OS — Dual Infodose</title>
+<script>
+const BASE = 'https://infodose.com.br/oiDual/KODUX/78K/APPS/78Dual/';
 
-<script type="module" src="https://www.infodose.com.br/js/modules/Dual_[Theme].js"></script>
 
-  <script src="https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78HERO/js/modules/nebula-unified-v1.js"></script>
+const styles = ['main'];
 
-  <!-- CDNs KODUX (opcional, mas mantido para compatibilidade) -->
-  <link rel="stylesheet" href="https://kodux78k.github.io/oi-Dual/css/mainn.css">
-  
-  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/css/kob-glass-0.css">
-  
-<link rel="stylesheet" href="https://infodose.com.br/oiDual/KODUX/78K/APPS/78Dual/css/main.css">
+styles.forEach(name => {
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = `${BASE}css/${name}.css`;
+  document.head.appendChild(link);
+});
+
+/* ============================================================
+   KODUX BOOTLOADER
+   Almasliber OS / Dual Infodose
+   ------------------------------------------------------------
+   - JS / CSS por arrays
+   - deduplicação
+   - ordem garantida
+   - dependências
+   - eventos
+   - override / patch
+   - iframe friendly
+   - targets: head / body / seletor
+   ============================================================ */
+(() => {
+  'use strict';
+  const ROOT = 'https://infodose.com.br/oiDual/KODUX/78K/APPS/78Dual/';
+  const CONFIG = {
+    /* ----------------------------------------------------------
+       JS
+       ---------------------------------------------------------- */
+    js: {
+      /*
+       * Basta colocar os números que deseja.
+       *
+       * [0, 1, 2, 3]
+       * [0, 2]
+       * [1, 3]
+       */
+      inline: [0, 1, 2, 3],
+      /*
+       * Módulos adicionais.
+       *
+       * Exemplo:
+       * {
+       *   src: 'https://...',
+       *   id: 'dual-theme',
+       *   type: 'module',
+       *   target: 'head'
+       * }
+       */
+      modules: [
+        // {
+        //   src: 'https://www.infodose.com.br/js/main-2.js',
+        //   id: 'main-2',
+        //   type: 'module'
+        // }
+      ]
+    },
+    /* ----------------------------------------------------------
+       CSS
+       ---------------------------------------------------------- */
+    css: {
+      /*
+       * CSS remoto.
+       *
+       * Você pode simplesmente colocar:
+       *
+       * files: ['main', 'kob-glass-0']
+       */
+      files: [],
+      /*
+       * Arquivos CSS externos especiais.
+       */
+      external: [
+        'https://kodux78k.github.io/oi-Dual/css/main.css',
+        'https://kodux78k.github.io/oiDual--Y-/css/kob-glass-0.css'
+      ]
+    },
+    /* ----------------------------------------------------------
+       ALVOS
+       ---------------------------------------------------------- */
+    targets: {
+      js: 'head',
+      css: 'head'
+    },
+    /* ----------------------------------------------------------
+       COMPORTAMENTO
+       ---------------------------------------------------------- */
+    options: {
+      /*
+       * true:
+       *   cada JS espera o anterior terminar.
+       *
+       * Isso é o que eu recomendo para seu sistema,
+       * porque você está trabalhando com módulos que podem
+       * criar funções que os próximos módulos usam.
+       */
+      sequential: true,
+      /*
+       * Se false, um erro não derruba o boot inteiro.
+       */
+      continueOnError: true,
+      /*
+       * Mostra logs no console.
+       */
+      debug: true
+    }
+  };
+  /* ==========================================================
+     ESTADO GLOBAL
+     ========================================================== */
+  const STATE = {
+    started: false,
+    ready: false,
+    loading: new Map(),
+    loaded: new Set(),
+    failed: new Set(),
+    modules: new Map(),
+    overrides: new Map()
+  };
+  /* ==========================================================
+     NAMESPACE
+     ========================================================== */
+  const KODUX = window.KODUX = window.KODUX || {};
+  KODUX.version = '1.0.0';
+  KODUX.root = ROOT;
+  KODUX.config = CONFIG;
+  KODUX.state = STATE;
+  /* ==========================================================
+     LOG
+     ========================================================== */
+  function log(...args) {
+    if (!CONFIG.options.debug) return;
+    console.log('[KODUX]', ...args);
+  }
+  function warn(...args) {
+    console.warn('[KODUX]', ...args);
+  }
+  function error(...args) {
+    console.error('[KODUX]', ...args);
+  }
+  /* ==========================================================
+     EVENTOS
+     ========================================================== */
+  function emit(name, detail = {}) {
+    document.dispatchEvent(
+      new CustomEvent(`KODUX:${name}`, {
+        detail: {
+          ...detail,
+          state: STATE
+        }
+      })
+    );
+  }
+  /* ==========================================================
+     TARGET
+     ========================================================== */
+  function resolveTarget(target) {
+    if (!target || target === 'head') {
+      return document.head;
+    }
+    if (target === 'body') {
+      return document.body || document.documentElement;
+    }
+    if (target instanceof Element) {
+      return target;
+    }
+    const el = document.querySelector(target);
+    if (el) return el;
+    warn(`Target não encontrado: ${target}`);
+    return document.head;
+  }
+  /* ==========================================================
+     URL
+     ========================================================== */
+  function moduleURL(index) {
+    return `${ROOT}js/modules/inline-${index}.js`;
+  }
+  function cssURL(name) {
+    return `${ROOT}css/${name}.css`;
+  }
+  /* ==========================================================
+     NORMALIZAÇÃO
+     ========================================================== */
+  function normalizeURL(url) {
+    try {
+      return new URL(url, document.baseURI).href;
+    } catch {
+      return String(url);
+    }
+  }
+  /* ==========================================================
+     DUPLICAÇÃO
+     ========================================================== */
+  function alreadyExists(url) {
+    const normalized = normalizeURL(url);
+    if (STATE.loaded.has(normalized)) {
+      return true;
+    }
+    if (STATE.loading.has(normalized)) {
+      return true;
+    }
+    const existingScript = [
+      ...document.scripts
+    ].some(script =>
+      normalizeURL(script.src) === normalized
+    );
+    if (existingScript) {
+      STATE.loaded.add(normalized);
+      return true;
+    }
+    const existingCSS = [
+      ...document.querySelectorAll('link[rel="stylesheet"]')
+    ].some(link =>
+      normalizeURL(link.href) === normalized
+    );
+    if (existingCSS) {
+      STATE.loaded.add(normalized);
+      return true;
+    }
+    return false;
+  }
+  /* ==========================================================
+     JS
+     ========================================================== */
+  function loadJS(src, options = {}) {
+    const url = normalizeURL(src);
+    if (alreadyExists(url)) {
+      log('↻ já carregado:', url);
+      return Promise.resolve({
+        src: url,
+        cached: true
+      });
+    }
+    if (STATE.loading.has(url)) {
+      return STATE.loading.get(url);
+    }
+    const promise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = url;
+      if (options.type) {
+        script.type = options.type;
+      }
+      /*
+       * Para scripts clássicos criados dinamicamente,
+       * async=false mantém a ordem de execução.
+       */
+      if (script.type !== 'module') {
+        script.async = false;
+      }
+      if (options.defer !== undefined) {
+        script.defer = Boolean(options.defer);
+      }
+      script.dataset.kodux = 'true';
+      if (options.id) {
+        script.dataset.koduxId = options.id;
+      }
+      script.onload = () => {
+        STATE.loaded.add(url);
+        STATE.loading.delete(url);
+        if (options.id) {
+          STATE.modules.set(options.id, {
+            src: url,
+            loaded: true,
+            element: script
+          });
+        }
+        log('✓ JS:', url);
+        emit('js:loaded', {
+          src: url,
+          id: options.id
+        });
+        resolve({
+          src: url,
+          element: script
+        });
+      };
+      script.onerror = () => {
+        STATE.loading.delete(url);
+        STATE.failed.add(url);
+        error('✕ JS:', url);
+        emit('js:error', {
+          src: url,
+          id: options.id
+        });
+        const err = new Error(
+          `Falha ao carregar JS: ${url}`
+        );
+        if (CONFIG.options.continueOnError) {
+          resolve({
+            src: url,
+            error: err
+          });
+        } else {
+          reject(err);
+        }
+      };
+      resolveTarget(
+        options.target || CONFIG.targets.js
+      ).appendChild(script);
+    });
+    STATE.loading.set(url, promise);
+    return promise;
+  }
+  /* ==========================================================
+     CSS
+     ========================================================== */
+  function loadCSS(href, options = {}) {
+    const url = normalizeURL(href);
+    if (alreadyExists(url)) {
+      log('↻ CSS já carregado:', url);
+      return Promise.resolve({
+        src: url,
+        cached: true
+      });
+    }
+    if (STATE.loading.has(url)) {
+      return STATE.loading.get(url);
+    }
+    const promise = new Promise((resolve, reject) => {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = url;
+      link.dataset.kodux = 'true';
+      if (options.id) {
+        link.dataset.koduxId = options.id;
+      }
+      link.onload = () => {
+        STATE.loaded.add(url);
+        STATE.loading.delete(url);
+        log('✓ CSS:', url);
+        emit('css:loaded', {
+          src: url,
+          id: options.id
+        });
+        resolve({
+          src: url,
+          element: link
+        });
+      };
+      link.onerror = () => {
+        STATE.loading.delete(url);
+        STATE.failed.add(url);
+        error('✕ CSS:', url);
+        emit('css:error', {
+          src: url,
+          id: options.id
+        });
+        const err = new Error(
+          `Falha ao carregar CSS: ${url}`
+        );
+        if (CONFIG.options.continueOnError) {
+          resolve({
+            src: url,
+            error: err
+          });
+        } else {
+          reject(err);
+        }
+      };
+      resolveTarget(
+        options.target || CONFIG.targets.css
+      ).appendChild(link);
+    });
+    STATE.loading.set(url, promise);
+    return promise;
+  }
+  /* ==========================================================
+     OVERRIDE
+     ========================================================== */
+  function override(name, replacement) {
+    const previous = window[name];
+    STATE.overrides.set(name, {
+      previous,
+      replacement
+    });
+    window[name] = replacement;
+    log('⚡ override:', name);
+    emit('override', {
+      name,
+      previous,
+      replacement
+    });
+    return previous;
+  }
+  /* ==========================================================
+     PATCH
+     ========================================================== */
+  function patch(name, wrapper) {
+    const original = window[name];
+    if (typeof original !== 'function') {
+      warn(`patch ignorado: ${name} não é função`);
+      return false;
+    }
+    if (original.__koduxPatched) {
+      return false;
+    }
+    const patched = wrapper(original);
+    if (typeof patched !== 'function') {
+      warn(`patch inválido para: ${name}`);
+      return false;
+    }
+    Object.defineProperty(patched, '__koduxPatched', {
+      value: true,
+      configurable: false
+    });
+    Object.defineProperty(patched, '__koduxOriginal', {
+      value: original,
+      configurable: false
+    });
+    window[name] = patched;
+    STATE.overrides.set(name, {
+      previous: original,
+      replacement: patched
+    });
+    log('⚡ patch:', name);
+    emit('patch', {
+      name,
+      original,
+      patched
+    });
+    return patched;
+  }
+  /* ==========================================================
+     ESPERAR FUNÇÃO
+     ========================================================== */
+  function waitFor(name, timeout = 10000) {
+    return new Promise((resolve, reject) => {
+      const start = Date.now();
+      function check() {
+        if (typeof window[name] === 'function') {
+          resolve(window[name]);
+          return;
+        }
+        if (Date.now() - start >= timeout) {
+          reject(
+            new Error(`Timeout esperando ${name}`)
+          );
+          return;
+        }
+        requestAnimationFrame(check);
+      }
+      check();
+    });
+  }
+  /* ==========================================================
+     CARREGAMENTO DOS INLINE MODULES
+     ========================================================== */
+  async function loadInlineModules() {
+    const list = Array.isArray(CONFIG.js.inline)
+      ? CONFIG.js.inline
+      : [];
+    for (const index of list) {
+      const src = moduleURL(index);
+      await loadJS(src, {
+        id: `inline-${index}`,
+        target: CONFIG.targets.js
+      });
+    }
+  }
+  /* ==========================================================
+     CARREGAMENTO DOS MÓDULOS EXTRAS
+     ========================================================== */
+  async function loadExtraModules() {
+    const modules = Array.isArray(CONFIG.js.modules)
+      ? CONFIG.js.modules
+      : [];
+    for (const mod of modules) {
+      if (!mod || !mod.src) continue;
+      await loadJS(mod.src, {
+        id: mod.id,
+        type: mod.type,
+        target: mod.target || CONFIG.targets.js,
+        defer: mod.defer
+      });
+    }
+  }
+  /* ==========================================================
+     CARREGAMENTO CSS
+     ========================================================== */
+  async function loadStyles() {
+    const cssFiles = Array.isArray(CONFIG.css.files)
+      ? CONFIG.css.files
+      : [];
+    const external = Array.isArray(CONFIG.css.external)
+      ? CONFIG.css.external
+      : [];
+    /*
+     * CSS independente pode baixar em paralelo.
+     */
+    await Promise.all([
+      ...cssFiles.map(name =>
+        loadCSS(cssURL(name), {
+          id: `css-${name}`,
+          target: CONFIG.targets.css
+        })
+      ),
+      ...external.map((url, index) =>
+        loadCSS(url, {
+          id: `css-external-${index}`,
+          target: CONFIG.targets.css
+        })
+      )
+    ]);
+  }
+  /* ==========================================================
+     BOOT
+     ========================================================== */
+  async function boot() {
+    if (STATE.started) {
+      return KODUX.ready;
+    }
+    STATE.started = true;
+    emit('boot:start');
+    log('━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    log('KODUX BOOT');
+    log('━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    /*
+     * CSS começa imediatamente.
+     *
+     * JS espera sua vez.
+     */
+    const cssPromise = loadStyles();
+    try {
+      /*
+       * 1. CSS
+       */
+      await cssPromise;
+      emit('phase:css');
+      /*
+       * 2. JS em ordem
+       */
+      if (CONFIG.options.sequential) {
+        await loadInlineModules();
+        await loadExtraModules();
+      } else {
+        await Promise.all([
+          loadInlineModules(),
+          loadExtraModules()
+        ]);
+      }
+      /*
+       * 3. DOM pronto
+       */
+      if (
+        document.readyState === 'loading'
+      ) {
+        await new Promise(resolve => {
+          document.addEventListener(
+            'DOMContentLoaded',
+            resolve,
+            { once: true }
+          );
+        });
+      }
+      STATE.ready = true;
+      emit('boot:ready');
+      log('━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      log('✓ KODUX READY');
+      log('━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      return KODUX;
+    } catch (err) {
+      error('BOOT ERROR:', err);
+      emit('boot:error', {
+        error: err
+      });
+      throw err;
+    }
+  }
+  /* ==========================================================
+     API PÚBLICA
+     ========================================================== */
+  KODUX.loadJS = loadJS;
+  KODUX.loadCSS = loadCSS;
+  KODUX.override = override;
+  KODUX.patch = patch;
+  KODUX.waitFor = waitFor;
+  KODUX.isLoaded = src =>
+    STATE.loaded.has(normalizeURL(src));
+  KODUX.status = () => ({
+    started: STATE.started,
+    ready: STATE.ready,
+    loaded: [...STATE.loaded],
+    failed: [...STATE.failed],
+    modules: [...STATE.modules.keys()]
+  });
+  KODUX.boot = boot;
+  /* ==========================================================
+     EXPOSIÇÃO PARA IFRAME / NÓS
+     ========================================================== */
+  window.KODUX_BOOT = boot;
+  /* ==========================================================
+     START
+     ========================================================== */
+  boot();
+})();
+
+</script>
 
 </head>
 
@@ -42,7 +626,7 @@
 -->
   
 
-
+<script type="module" src="https://www.infodose.com.br/js/modules/Dual_[Theme]-semDiv.js"></script>
 
      <div class="dual-app">
 <!-- ═══════════════════════════════════════════════════════
@@ -56,7 +640,9 @@
      4. ROLAR PARA CIMA
         → HEADER VOLTA
 ═══════════════════════════════════════════════════════ -->
-<header class="topbar header-visible" id="main-header">
+<header
+    class="topbar header-visible"
+    id="main-header">
     <!-- ÁREA DO SISTEMA -->
     <div class="brand">
         <span>
@@ -68,8 +654,13 @@
     </div>
     <!-- ÚNICO CONTROLE DE TEMA -->
 
-  <button id="theme-dot" class="theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>
+  <button
+        id="theme-dot"
+        class="theme-dot"
+        type="button"
+        aria-label="Alternar tema"
+        title="Alternar tema">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
        </button>  
 
 
@@ -176,7 +767,7 @@
          <!-- =========================================================
                LIBRARY — NÉBULA (substituída pela V7)
                ========================================================= -->
-          <details class="al-accordion" data-collapse="library" open="">
+          <details class="al-accordion" data-collapse="library" open>
             <summary>
               <div class="al-summary-main">
                 <span class="al-summary-icon">📚</span>
@@ -207,7 +798,8 @@
                 <div class="nebula-search-box" id="nebulaSearchBox">
                   <input type="text" id="nebulaSearchInput" placeholder="Buscar documentos...">
                 </div>
-</details>
+</details
+                <!-- Group pills -->
                 <div class="scroller nebula-groups" id="nebulaGroups" data-carousel="nebula-groups">
                   <button class="group-pill snap active" data-group="recentes">Recentes</button>
                   <button class="group-pill snap" data-group="favoritos">Favoritos</button>
@@ -269,7 +861,8 @@
               </div>
               <div class="spark" aria-label="Linha de evolução">
                 <svg viewBox="0 0 600 90" preserveAspectRatio="none" role="img">
-                  <path d="M0 68 C35 54,58 72,86 48 S137 57,164 42 S217 63,244 35 S302 55,330 42 S386 65,412 27 S463 48,493 31 S551 43,600 18" fill="none" stroke="#a855ff" stroke-width="4" stroke-linecap="round"></path>
+                  <path d="M0 68 C35 54,58 72,86 48 S137 57,164 42 S217 63,244 35 S302 55,330 42 S386 65,412 27 S463 48,493 31 S551 43,600 18"
+                    fill="none" stroke="#a855ff" stroke-width="4" stroke-linecap="round"/>
                 </svg>
               </div>
               <div class="timeline">
@@ -364,7 +957,7 @@
                 </article>
                 <article class="dose snap" data-dose="pulse">
                   <span class="dose-tag">Pulse</span>
-                  <div class="dose-bottom"><h3>Ressonância</h3><p>Som &amp; emoção</p><span class="dose-status">◉ 62%</span></div>
+                  <div class="dose-bottom"><h3>Ressonância</h3><p>Som & emoção</p><span class="dose-status">◉ 62%</span></div>
                 </article>
                 <article class="dose snap" data-dose="artemis">
                   <span class="dose-tag">Artemis</span>
@@ -388,7 +981,7 @@
                 </article>
                 <article class="dose snap" data-dose="rhea">
                   <span class="dose-tag">Rhea</span>
-                  <div class="dose-bottom"><h3>Raízes</h3><p>Memória &amp; vínculos</p><span class="dose-status">◉ 48%</span></div>
+                  <div class="dose-bottom"><h3>Raízes</h3><p>Memória & vínculos</p><span class="dose-status">◉ 48%</span></div>
                 </article>
                 <article class="dose snap" data-dose="solus">
                   <span class="dose-tag">Solus</span>
@@ -432,7 +1025,7 @@
           </div>
         </details>
 </details>
-      </details></main>
+      </main>
 
       <!-- ===== BOTTOM NAV ===== -->
       <nav style="display:none" class="bottom-nav" data-module="navigation" aria-label="Navegação principal">
@@ -449,11 +1042,11 @@
   <!-- TOASTER -->
   <div class="toaster-wrap" id="toasterWrap"></div>
 
-  <input type="file" id="nebulaFileInput" multiple="" accept=".txt,.md,.html,.pdf" style="display:none">
+  <input type="file" id="nebulaFileInput" multiple accept=".txt,.md,.html,.pdf" style="display:none">
 
   <!-- ============================================================
        NÉBULA: input file + reader (elementos HTML)
-       ============================================================ 
+       ============================================================ -->
 
   <div class="reader" id="nebulaReader">
     <div class="reader-head">
@@ -462,35 +1055,7 @@
     </div>
     <div class="reader-body" id="nebulaReaderBody"></div>
   </div>
--->
-  <!-- ============================================================
-       SCRIPTS (V10 + Nébula)
-       ============================================================ -->
-  
 
-  <!-- ============================================================
-       NÉBULA UNIFICADO — motor de biblioteca (fundido da V7)
-       ============================================================ -->
-  
-
-  <!-- ============================================================
-       SCRIPTS ADICIONAIS (KODUX / INFODOSE)
-       ============================================================ -->
-  
-
-  
-
-  
-  
-
-</div>
-
-<script src="https://infodose.com.br/oiDual/KODUX/78K/APPS/78Dual/js/modules/inline-0.js"></script>
-<script src="https://infodose.com.br/oiDual/KODUX/78K/APPS/78Dual/js/modules/inline-1.js"></script>
-<script src="https://infodose.com.br/oiDual/KODUX/78K/APPS/78Dual/js/modules/inline-2.js"></script>
-<script src="https://infodose.com.br/oiDual/KODUX/78K/APPS/78Dual/js/modules/inline-3.js"></script>
-
-
-<!-- <script type="module" src="https://infodose.com.br/oiDual/KODUX/78K/APPS/78Dual/js/main.js"></script> -->
-
-</body></html>
+  <script src="https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78HERO/js/modules/nebula-unified-mix.js">
+  </script>
+  <script src="https://www.infodose.com.br/js/Beauty-v3.js"></script>
