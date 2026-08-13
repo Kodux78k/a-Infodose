@@ -1,0 +1,10 @@
+import "./modules/animacoes.js";
+import "./modules/module.js";
+import "./modules/www-infodose-com-br-js-main-2-js.js";
+import "./modules/fallbackarchetypes.js";
+import "./modules/helper-pega-o-primeiro-id-existente.js";
+import "./modules/global-hook.js";
+import "./modules/lucide-removido-portanto-nao-chamamos-createicons.js";
+import "./modules/www-infodose-com-br-js-main-js.js";
+import "./modules/aplicacao-visual-das-variaveis-no-css-do-root-para-o-orb.js";
+import "./modules/varre-o-dom-e-injeta-css-encontrado-em-blocos-comuns.js";
