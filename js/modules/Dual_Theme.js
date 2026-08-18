@@ -178,6 +178,8 @@ body {
 .dual-app {
     min-height:
         100vh;
+          width:
+      100 % ;
     background:
         var(--bg);
     color:
