@@ -1,0 +1,3127 @@
+<html lang="pt-BR"><head>
+<meta charset="UTF-8">
+<title>Nos.S°lar — Stack Solar Dinâmica</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- 🔥 Cabeçalho PWA / Manifest / Ícones -->
+<link rel="manifest" href="manifest.webmanifest">
+
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&amp;display=swap" rel="stylesheet">
+
+<style>
+/* MOBILE-FIRST VERTICAL HARD-LOCK */
+
+/* Tokens Nebula Pro Solar */
+:root {
+  --bg-day: radial-gradient(circle at 20% 10%, #fff9c4 0%, #ffe082 35%, #ffb74d 70%, #ff9800 100%);
+  --bg-sunset: radial-gradient(circle at 10% 0%, #ffd180 0%, #ff8a65 30%, #f06292 60%, #7e57c2 100%);
+  --bg-night: radial-gradient(circle at 20% 0%, #0b1020 0%, #121c3b 40%, #1a237e 80%, #000000 100%);
+
+  --panel: #050d18cc;
+  --ink: #eafcff;
+  --muted: #9fb3cc;
+
+  --accent: #7dd3fc;
+  --accent-soft: rgba(125, 211, 252, 0.18);
+
+  --sun-scale: 1;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  background: var(--bg-day);
+  transition: background 4s ease-in-out;
+  overflow-x: hidden;
+}
+
+/* SPLASH / LOADER NOS.S°LAR (SplashFake v2 style) */
+#splash-nosolar {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: radial-gradient(circle at 20% 0%, #ffe082 0%, #ffb74d 20%, #ff7043 45%, #311b92 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+#splash-nosolar.hide {
+  opacity: 0;
+  transform: scale(1.02);
+  pointer-events: none;
+}
+
+.splash-inner {
+  text-align: center;
+  color: #fffde7;
+}
+
+.splash-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+  box-shadow:
+    0 0 40px rgba(255, 241, 118, 0.9),
+    0 0 0 1px rgba(255, 255, 255, 0.15);
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 40%, #fffde7 0%, #ffca28 40%, #f57c00 80%);
+}
+
+.splash-circle::after {
+  content: "";
+  position: absolute;
+  bottom: -10%;
+  left: 50%;
+  width: 140%;
+  height: 70%;
+  transform: translateX(-50%);
+  background: radial-gradient(circle at 50% 120%, rgba(0,0,0,0.7) 0%, transparent 70%);
+  opacity: 0.65;
+}
+
+.splash-portal {
+  width: 46px;
+  height: 68px;
+  border-radius: 46px 46px 20px 20px;
+  border: 2px solid rgba(33, 33, 33, 0.9);
+  background: radial-gradient(circle at 50% 0%, #fff9c4 0%, #ffb74d 35%, #4a148c 100%);
+  box-shadow:
+    0 0 18px rgba(255, 241, 118, 0.9),
+    0 0 0 1px rgba(255, 255, 255, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.splash-portal::before {
+  content: "";
+  position: absolute;
+  inset: 18% 22%;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.7);
+}
+
+.splash-text {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.splash-sub {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  opacity: 0.9;
+}
+
+/* Loader operacional (aparece se demorar > 600ms) */
+#nv-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: radial-gradient(circle at 20% 0%, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.35));
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 32px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+#nv-loader.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.nv-loader-inner {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+  color: #e5e7eb;
+  font-size: 0.78rem;
+}
+
+.nv-loader-orbit {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 2px solid rgba(148, 163, 184, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.nv-loader-dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #facc15;
+  box-shadow: 0 0 8px rgba(250, 204, 21, 0.9);
+  animation: loader-orbit 1.1s linear infinite;
+}
+
+/* Camada de céu e partículas */
+.sky-layer {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.sun {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fffde7 0%, #fff176 40%, #ffb300 100%);
+  filter: blur(0.5px);
+  opacity: 0.9;
+  animation: sun-orbit 24s linear infinite;
+  box-shadow: 0 0 60px rgba(255, 236, 179, 0.85);
+}
+
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.9);
+  opacity: 0.8;
+  animation: float-particle 14s linear infinite;
+}
+
+.p1 { left: 10%; top: 70%; animation-delay: -2s; }
+.p2 { left: 30%; top: 80%; animation-delay: -6s; }
+.p3 { left: 55%; top: 65%; animation-delay: -10s;}
+.p4 { left: 75%; top: 85%; animation-delay: -4s; }
+.p5 { left: 90%; top: 75%; animation-delay: -8s; }
+
+/* Shell principal */
+.app-shell {
+  position: relative;
+  z-index: 1;
+  padding: 18px 12px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+}
+
+/* Header */
+.app-header {
+  text-align: center;
+}
+
+.tag-solar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(255, 235, 59, 0.08);
+  border: 1px solid rgba(255, 235, 59, 0.45);
+  color: #fffde7;
+}
+
+.app-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-shadow: 0 0 18px rgba(0, 0, 0, 0.6);
+  margin: 6px 0 4px;
+}
+
+.app-subtitle {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* STACK DE CARDS (SANFONA) */
+.card-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Card / Sanfona – CSS refinado v3 */
+.card {
+  background: var(--panel);
+  border-radius: 14px;
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+}
+
+/* Header de card estilo Markdown visual */
+.card-header {
+  padding: 14px 14px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.card-title {
+  font-size: 0.98rem;
+  font-weight: 600;
+}
+
+.card-header small {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.card-toggle {
+  font-size: 1.1rem;
+  opacity: 0.7;
+}
+
+/* Corpo dos cards */
+.card-body {
+  max-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 14px;
+  transition:
+    max-height 0.4s ease,
+    padding-top 0.3s ease,
+    padding-bottom 0.3s ease;
+}
+
+.card-body-inner {
+  padding: 8px 0 14px;
+  line-height: 1.5;
+}
+
+/* BLOCO ESTILO MARKDOWN */
+.card-body-inner p:first-of-type {
+  position: relative;
+  margin: 0 0 8px;
+  padding-left: 10px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.card-body-inner p:first-of-type::before {
+  content: "#";
+  position: absolute;
+  left: -2px;
+  top: 0;
+  font-size: 0.78rem;
+  color: var(--accent);
+  opacity: 0.9;
+}
+
+/* Parágrafos seguintes */
+.card-body-inner p + p {
+  margin-top: 4px;
+  font-size: 0.88rem;
+}
+
+/* Tagzinha tipo ::info */
+.md-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  color: #e5e7eb;
+}
+
+/* Linha de botões */
+.btn-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn {
+  display: inline-flex;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--ink);
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition:
+    background 0.3s ease,
+    transform 0.2s ease,
+    box-shadow 0.3s ease;
+}
+
+.btn span {
+  margin-left: 6px;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn:hover {
+  background: rgba(255, 255, 255, 0.26);
+  box-shadow: 0 0 22px rgba(255, 255, 255, 0.18);
+}
+
+/* Indicadores */
+.mode-indicator,
+.geo-indicator,
+.tips-indicator {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+
+/* Ondas sonoras visuais */
+.wave-container {
+  position: relative;
+  margin-top: 10px;
+  height: 40px;
+  overflow: hidden;
+}
+
+.wave {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to right,
+    rgba(144, 202, 249, 0.2) 0,
+    rgba(144, 202, 249, 0.8) 2px,
+    transparent 4px
+  );
+  opacity: 0.7;
+  transform-origin: left center;
+  animation: wave-move 3s linear infinite;
+}
+
+.wave.wave2 {
+  opacity: 0.4;
+  animation-duration: 5s;
+}
+
+/* Área do template do Livro Vivo */
+#nv-template-output {
+  width: 100%;
+  min-height: 120px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(2,6,23,0.7);
+  color: var(--ink);
+  padding: 8px 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.85rem;
+  resize: vertical;
+}
+
+/* Resultado LS */
+#nv-ls-output {
+  width: 100%;
+  min-height: 80px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(2,6,23,0.7);
+  color: var(--ink);
+  padding: 8px 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+}
+
+/* Card de métricas de ambiente */
+.env-metrics {
+  margin-top: 10px;
+}
+
+.env-card {
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.75),
+    0 0 0 1px rgba(15, 23, 42, 0.8);
+}
+
+.env-card h4 {
+  margin: 0 0 6px;
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #e5e7eb;
+}
+
+.env-card small {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.env-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.82rem;
+}
+
+.env-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.env-label {
+  color: var(--muted);
+}
+
+.env-value {
+  font-weight: 600;
+}
+
+/* Blocos de dicas estilo InfoDocs */
+.tip-block {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.82rem;
+}
+.tip-block strong {
+  font-size: 0.84rem;
+}
+
+/* Modos de fundo & sol/lua */
+body.mode-day {
+  background: var(--bg-day);
+  --sun-scale: 1;
+}
+
+body.mode-sunset {
+  background: var(--bg-sunset);
+  --sun-scale: 0.9;
+}
+
+body.mode-night {
+  background: var(--bg-night);
+  --sun-scale: 0.65;
+}
+
+body.mode-day .sun,
+body.mode-sunset .sun {
+  background: radial-gradient(circle at 30% 30%, #fffde7 0%, #fff176 40%, #ffb300 100%);
+  box-shadow: 0 0 60px rgba(255, 236, 179, 0.85);
+}
+
+body.mode-night .sun {
+  background: radial-gradient(circle at 30% 30%, #e8f5ff 0%, #bbdefb 45%, #90caf9 100%);
+  box-shadow: 0 0 40px rgba(187, 222, 251, 0.85);
+}
+
+/* Campo galáctico baseado em lat/long */
+#galaxy-field {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity .6s ease;
+}
+
+.star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: white;
+  border-radius: 999px;
+  opacity: .8;
+  filter: drop-shadow(0 0 6px white);
+  animation: star-float 14s linear infinite;
+}
+
+#galaxy-info {
+  position: fixed;
+  bottom: 18px;
+  left: 0;
+  right: 0;
+  margin: auto;
+  width: calc(100% - 24px);
+  max-width: 360px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(0,0,0,0.55);
+  color: #d0e7ff;
+  font-size: .8rem;
+  text-align: center;
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all .6s ease;
+  z-index: 2;
+}
+#galaxy-info.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Estado visual extra para arpejo solar */
+.wave-container.is-arp-active {
+  box-shadow:
+    0 0 0 1px rgba(190, 242, 100, 0.75),
+    0 22px 40px rgba(15, 23, 42, 0.98);
+}
+
+.wave-container.is-arp-active .wave-dot {
+  background: rgba(190, 242, 100, 0.95);
+  box-shadow: 0 0 14px rgba(190, 242, 100, 0.9);
+}
+
+/* Toast */
+#nv-toast {
+  position: fixed;
+  bottom: 222px;
+  left: 50%;
+  transform: translateX(-50%) translateY(40px);
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  font-size: .85rem;
+  opacity: 0;
+  transition: all .4s ease;
+  z-index: 9999;
+}
+#nv-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Animações */
+@keyframes sun-orbit {
+  0% {
+    transform: translate(-20%, 10%) scale(var(--sun-scale));
+  }
+  25% {
+    transform: translate(40%, -10%) scale(var(--sun-scale));
+  }
+  50% {
+    transform: translate(80%, 15%) scale(var(--sun-scale));
+  }
+  75% {
+    transform: translate(40%, 35%) scale(var(--sun-scale));
+  }
+  100% {
+    transform: translate(-20%, 10%) scale(var(--sun-scale));
+  }
+}
+
+@keyframes float-particle {
+  0% {
+    transform: translateY(0px) scale(1);
+    opacity: 0.2;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-40px) scale(1.2);
+  }
+  80% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateY(-80px) scale(0.9);
+    opacity: 0;
+  }
+}
+
+@keyframes wave-move {
+  0% { transform: translateX(0) skewX(-8deg); }
+  100% { transform: translateX(-40px) skewX(-8deg); }
+}
+
+@keyframes loader-orbit {
+  0% { transform: rotate(0deg) translateX(7px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(7px) rotate(-360deg); }
+}
+
+@keyframes star-float {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-120px); opacity: 0; }
+}
+
+/* Responsive */
+@media (min-height: 780px) {
+  .app-shell {
+    padding-top: 26px;
+  }
+}
+</style>
+<style>:root { --z-base: 0; --z-content: 100; --z-widget: 500; --z-overlay: 1000; --z-system: 5000; }</style><link rel="stylesheet" href="https://kodux78k.github.io/oi-Dual/css/main.css"><link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/css/kob-glass-0.css"><link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/M0D/FSWIN/css/iFSw-fix.css"><link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/M0D/LV/css/main.css" data-k-id="L_1"><link rel="stylesheet" href="./css/main.css"><style> @import url("https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78Almas/css/main.css"); </style></head>
+<body class="mode-day">
+  <!-- SplashFake / holar -->
+  <div id="splash-nosolar">
+    <div class="splash-inner">
+      <div class="splash-circle">
+        <div class="splash-portal"></div>
+      </div>
+      <div class="splash-text">Nos.S°lar — dual.infodose</div>
+      <div class="splash-sub">(carregando o holar &amp; o pôr do sol na oca...)</div>
+    </div>
+  </div>
+
+  <!-- Loader operacional -->
+  <div id="nv-loader">
+    <div class="nv-loader-inner">
+      <div class="nv-loader-orbit">
+        <div class="nv-loader-dot"></div>
+      </div>
+      <span>Sincronizando Nos.S°lar…</span>
+    </div>
+  </div>
+
+  <div class="sky-layer">
+    <div class="sun"></div>
+    <div class="particle p1"></div>
+    <div class="particle p2"></div>
+    <div class="particle p3"></div>
+    <div class="particle p4"></div>
+    <div class="particle p5"></div>
+  </div>
+
+  <!-- Campo galáctico + info -->
+  <div id="galaxy-field"></div>
+  <div id="galaxy-info"></div>
+
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="tag-solar">
+        ☀️ <span>Nos.S°lar · Rede Solar Simbólica</span>
+      </div>
+      <h1 class="app-title">Stack Solar Dinâmica</h1>
+      <p class="app-subtitle">
+        Dia → Pôr do Sol → Noite · Estado solar local · Dicas Meta-Humano-Máquina · Livro Vivo
+      </p>
+    </header>
+
+    <main class="card-stack">
+
+      <!-- CARD 0: Boas-vindas / Livro Vivo / Gerador + TTS -->
+      <section class="card" data-card="welcome">
+        <div class="card-header" onclick="toggleCard(this)">
+          <div>
+            <div class="card-title">Boas-vindas · Livro Vivo &amp; InfoDocs</div>
+            <small>(gerador · TTS · ponte com o Hub)</small>
+          </div>
+          <div class="card-toggle">⌄</div>
+        </div>
+        <div class="card-body">
+          <div class="card-body-inner">
+            <p>
+              <span class="md-tag">::info</span>
+              Este card é a porta de entrada do <strong>Nos.S°lar</strong> com o
+              <strong>Livro Vivo / InfoDocs</strong>: aqui você gera templates de documentos,
+              testa voz (TTS) e copia o conteúdo direto para o Hub principal.
+            </p>
+
+            <div class="btn-row">
+              <button class="btn" onclick="nvGenerateTemplate('basico'); event.stopPropagation();">
+                ✨<span>Gerar template — Documento Solar Básico</span>
+              </button>
+              <button class="btn" onclick="nvGenerateTemplate('escola'); event.stopPropagation();">
+                🏫<span>Gerar template — Educação Solar em Escolas</span>
+              </button>
+              <button class="btn" onclick="nvGenerateTemplate('parque'); event.stopPropagation();">
+                🏭<span>Gerar template — Parque Tecnológico &amp; Micro Data Center</span>
+              </button>
+              <button class="btn" onclick="nvSpeakWelcome(); event.stopPropagation();">
+                🔊<span>Ouvir boas-vindas (TTS)</span>
+              </button>
+            </div>
+
+            <p style="font-size:0.8rem;color:var(--muted);margin-top:8px;">
+              Copie o conteúdo abaixo e cole no painel principal do InfoDocs / Livro Vivo para
+              continuar a edição completa.
+            </p>
+
+            <textarea id="nv-template-output" placeholder="# Seu template Livro Vivo aparecerá aqui..."></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- CARD 0.5: LS Status interno do Nos.S°lar -->
+      <section class="card" data-card="ls">
+        <div class="card-header" onclick="toggleCard(this)">
+          <div>
+            <div class="card-title">LocalStorage · Estado interno do Nos.S°lar</div>
+            <small>(debug leve · chaves · espaço)</small>
+          </div>
+          <div class="card-toggle">⌄</div>
+        </div>
+        <div class="card-body">
+          <div class="card-body-inner">
+            <p>
+              <span class="md-tag">::ls</span>
+              Leitura simbólica do <strong>localStorage</strong> deste micro-app:
+              quantas chaves existem, quais são e quanto espaço aproximado ocupam.
+            </p>
+
+            <div class="btn-row">
+              <button class="btn" onclick="nvLsScan(); event.stopPropagation();">
+                🔍<span>Ver estado atual do LS</span>
+              </button>
+              <button class="btn" onclick="nvLsClear(); event.stopPropagation();">
+                🧹<span>Limpar chaves do Nos.S°lar</span>
+              </button>
+            </div>
+
+            <p style="font-size:0.8rem;color:var(--muted);margin-top:8px;">
+              Este card é o “espelho local” do armazenamento: perfeito para debug leve sem
+              abrir o painel LS_STATUS completo.
+            </p>
+
+            <div id="nv-ls-output" aria-label="Saída de LocalStorage"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CARD 1: CICLO SOLAR -->
+      <section class="card" data-card="solar">
+        <div class="card-header" onclick="toggleCard(this)">
+          <div>
+            <div class="card-title">Painel Solar Dinâmico</div>
+            <small>(dia · pôr do sol · noite)</small>
+          </div>
+          <div class="card-toggle">⌄</div>
+        </div>
+        <div class="card-body">
+          <div class="card-body-inner">
+            <p>
+              <span class="md-tag">::ciclo</span>
+              Controle visual do ciclo solar: de <strong>captação máxima</strong> à
+              <strong>rede de dados iluminada</strong>.
+            </p>
+            <div class="btn-row">
+              <button class="btn" onclick="setMode('day'); event.stopPropagation();">
+                ☀️<span>Dia — Captação Solar Máxima</span>
+              </button>
+              <button class="btn" onclick="setMode('sunset'); event.stopPropagation();">
+                🌇<span>Pôr do Sol — Transição Energia → Dados</span>
+              </button>
+              <button class="btn" onclick="setMode('night'); event.stopPropagation();">
+                🌙<span>Noite — Lua · Rede de Dados Ativa</span>
+              </button>
+            </div>
+            <div class="mode-indicator" id="modeIndicator">
+              MODO ATUAL: DIA · CAPTAÇÃO &amp; CARREGAMENTO
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CARD 2: LOCALIZAÇÃO & ONDAS SONORAS (binaural + arpejo) -->
+      <section class="card" data-card="geo">
+        <div class="card-header" onclick="toggleCard(this)">
+          <div>
+            <div class="card-title">Painel Sonoro · Estado Solar Local</div>
+            <small>(lat/long simbólicas + ondas gêmeas)</small>
+          </div>
+          <div class="card-toggle">⌄</div>
+        </div>
+        <div class="card-body">
+          <div class="card-body-inner">
+            <p>
+              <span class="md-tag">::geo</span>
+              Detecta sua posição na Terra, exibe <strong>lat/long simbólicas</strong> e
+              ativa duas ondas sonoras que dançam com o seu estado solar (binaural simbólico),
+              com opção de arpejo harmônico ligado à latitude.
+            </p>
+            <div class="btn-row">
+              <button class="btn" onclick="pedirLocalizacao(event)">
+                📍<span>Descobrir minha posição solar</span>
+              </button>
+              <button class="btn" onclick="toggleOndas(event)">
+                🔊<span>Tocar / Pausar binaural detectado</span>
+              </button>
+              <button class="btn" onclick="tocarArpejo(event)">
+                🎼<span>Ativar / Pausar arpejo harmônico</span>
+              </button>
+            </div>
+            <div class="geo-indicator" id="geoIndicator">
+              LOCALIZAÇÃO: Aguardando permissão...
+            </div>
+
+            <div class="wave-container">
+              <div class="wave"></div>
+              <div class="wave wave2"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CARD 3: DICAS META-HUMANO-MÁQUINA -->
+      <section class="card" data-card="tips">
+        <div class="card-header" onclick="toggleCard(this)">
+          <div>
+            <div class="card-title">Painel de Dicas · Meta-Humano-Máquina</div>
+            <small>(manhã · tarde · noite)</small>
+          </div>
+          <div class="card-toggle">⌄</div>
+        </div>
+        <div class="card-body">
+          <div class="card-body-inner">
+            <p>
+              <span class="md-tag">::dicas</span>
+              Gera três dicas: <strong>manhã, tarde e noite</strong>, correlacionando o
+              seu corpo com o corpo simbiótico da rede Nos.S°lar.
+            </p>
+            <div class="btn-row">
+              <button class="btn" onclick="gerarDicas(event)">
+                💫<span>Gerar dicas para hoje</span>
+              </button>
+            </div>
+            <div class="tips-indicator" id="tipsIndicator">
+              DICAS: Toque para gerar o ciclo de hoje.
+            </div>
+
+            <div id="tipsContainer">
+              <!-- Dicas aparecem aqui -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CARD 4: Análise de Ambiente (com loader + métricas) -->
+      <section class="card" data-card="env">
+        <div class="card-header" onclick="toggleCard(this)">
+          <div>
+            <div class="card-title">Analisar meu ambiente solar</div>
+            <small>(hora · modo · geo · recomendação)</small>
+          </div>
+          <div class="card-toggle">⌄</div>
+        </div>
+        <div class="card-body">
+          <div class="card-body-inner">
+            <p>
+              <span class="md-tag">::ambiente</span>
+              Faz uma leitura simbólica rápida do seu ambiente: horário, ciclo solar atual,
+              latitude/longitude base e uma recomendação de ajuste de rotina.
+            </p>
+            <div class="btn-row">
+              <button class="btn" onclick="nvAnalyzeEnv(event)">
+                📊<span>Analisar meu ambiente agora</span>
+              </button>
+            </div>
+            <div class="env-metrics" id="envMetrics">
+              <!-- Card de métricas aparece aqui -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div id="nv-toast"></div>
+
+<script>
+/* SPLASH HANDLER */
+window.addEventListener('load', function() {
+  var splash = document.getElementById('splash-nosolar');
+  if (!splash) return;
+  setTimeout(function() {
+    splash.classList.add('hide');
+    setTimeout(function() {
+      splash.style.display = 'none';
+    }, 900);
+  }, 900);
+});
+
+/* LOADER >600ms */
+let nvLoaderTimer = null;
+function nvStartLoading() {
+  const el = document.getElementById('nv-loader');
+  if (!el) return;
+  if (nvLoaderTimer) clearTimeout(nvLoaderTimer);
+  nvLoaderTimer = setTimeout(function() {
+    el.classList.add('visible');
+  }, 600);
+}
+function nvStopLoading() {
+  const el = document.getElementById('nv-loader');
+  if (!el) return;
+  if (nvLoaderTimer) {
+    clearTimeout(nvLoaderTimer);
+    nvLoaderTimer = null;
+  }
+  el.classList.remove('visible');
+}
+
+/* SANFONA DE CARDS */
+function toggleCard(headerEl) {
+  var card = headerEl.closest('.card');
+  var body = card.querySelector('.card-body');
+  var toggleIcon = card.querySelector('.card-toggle');
+
+  var isOpen = card.classList.contains('open');
+  if (isOpen) {
+    card.classList.remove('open');
+    body.style.maxHeight = '0px';
+    toggleIcon.textContent = '⌄';
+  } else {
+    card.classList.add('open');
+    body.style.maxHeight = body.scrollHeight + 'px';
+    toggleIcon.textContent = '⌃';
+  }
+}
+
+/* Ajusta maxHeight ao redimensionar */
+window.addEventListener('resize', function() {
+  document.querySelectorAll('.card.open .card-body').forEach(function(body) {
+    body.style.maxHeight = body.scrollHeight + 'px';
+  });
+});
+
+/* CICLO SOLAR */
+function setMode(mode) {
+  document.body.classList.remove('mode-day', 'mode-sunset', 'mode-night');
+  var indicator = document.getElementById('modeIndicator');
+
+  if (mode === 'day') {
+    document.body.classList.add('mode-day');
+    indicator.textContent = 'MODO ATUAL: DIA · CAPTAÇÃO & CARREGAMENTO';
+  } else if (mode === 'sunset') {
+    document.body.classList.add('mode-sunset');
+    indicator.textContent = 'MODO ATUAL: PÔR DO SOL · TRANSIÇÃO ENERGIA → DADOS';
+  } else if (mode === 'night') {
+    document.body.classList.add('mode-night');
+    indicator.textContent =
+      'MODO ATUAL: NOITE · LUA MENOR · REDE DE DADOS ILUMINADA PELA ENERGIA DO DIA';
+  }
+}
+
+/* Helper para label do modo atual */
+function nvGetSolarModeLabel() {
+  if (document.body.classList.contains('mode-night')) return 'NOITE · REDE DE DADOS';
+  if (document.body.classList.contains('mode-sunset')) return 'PÔR DO SOL · TRANSIÇÃO';
+  return 'DIA · CAPTAÇÃO & CARGA';
+}
+
+/* Tema automático baseado no horário do usuário */
+function nvAutoTheme() {
+  const h = new Date().getHours();
+  if (h >= 19 || h < 6) {
+    setMode('night');
+    nvToast('Modo solar ajustado automaticamente para NOITE.');
+  } else if (h >= 16) {
+    setMode('sunset');
+    nvToast('Modo solar ajustado automaticamente para PÔR DO SOL.');
+  } else {
+    setMode('day');
+    nvToast('Modo solar ajustado automaticamente para DIA.');
+  }
+}
+window.addEventListener('load', nvAutoTheme);
+
+/* GEO + ONDAS SONORAS (Web Audio / binaural) */
+let geoLat = null;
+let geoLng = null;
+let audioCtx = null;
+let osc1 = null;
+let osc2 = null;
+let ondasAtivas = false;
+let arpOsc = null;
+
+/* TOAST */
+function nvToast(msg) {
+  const t = document.getElementById('nv-toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function pedirLocalizacao(ev) {
+  ev.stopPropagation();
+  nvStartLoading();
+  const indicator = document.getElementById('geoIndicator');
+  const galaxy = document.getElementById('galaxy-field');
+  const galaxyInfo = document.getElementById('galaxy-info');
+
+  if (!navigator.geolocation) {
+    indicator.textContent = 'LOCALIZAÇÃO: navegador não suporta.';
+    nvStopLoading();
+    nvToast('Navegador não suporta geolocalização.');
+    return;
+  }
+
+  indicator.textContent = 'LOCALIZAÇÃO: pedindo permissão...';
+
+  navigator.geolocation.getCurrentPosition(pos => {
+    geoLat = pos.coords.latitude;
+    geoLng = pos.coords.longitude;
+
+    indicator.textContent =
+      'LOCALIZAÇÃO: ' +
+      geoLat.toFixed(4) + ' · ' +
+      geoLng.toFixed(4) +
+      ' — estado galáctico detectado';
+
+    // 🌟 ATIVA animação galáctica
+    if (galaxy) {
+      galaxy.innerHTML = '';
+      for (let i = 0; i < 80; i++) {
+        const s = document.createElement('div');
+        s.className = 'star';
+        s.style.left = Math.random()*100 + '%';
+        s.style.top = (100 + Math.random()*50) + '%';
+        s.style.animationDelay = (Math.random()*-12) + 's';
+        galaxy.appendChild(s);
+      }
+      galaxy.style.opacity = 1;
+    }
+
+    // 🌞 PERÍODO DO ANO / ESTAÇÃO SIMBÓLICA
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 0);
+    const diff = now - start;
+    const oneDay = 1000 * 60 * 60 * 24;
+    const dayOfYear = Math.floor(diff / oneDay);
+    const m = now.getMonth(); // 0-11
+
+    let estacao = 'transição';
+    // Hemisfério Sul simbólico
+    if (m === 11 || m <= 1) estacao = 'VERÃO simbólico';
+    else if (m >= 2 && m <= 4) estacao = 'OUTONO simbólico';
+    else if (m >= 5 && m <= 7) estacao = 'INVERNO simbólico';
+    else estacao = 'PRIMAVERA simbólica';
+
+    if (galaxyInfo) {
+      galaxyInfo.textContent =
+        'Dia ' + dayOfYear + ' do ano · ' +
+        estacao + ' · Lat ' + geoLat.toFixed(2) +
+        ' · Lng ' + geoLng.toFixed(2);
+      galaxyInfo.classList.add('show');
+    }
+
+    nvStopLoading();
+    nvToast('Posição solar detectada com sucesso.');
+
+  }, err => {
+    indicator.textContent = 'LOCALIZAÇÃO: negada.';
+    nvStopLoading();
+    nvToast('Permissão de localização negada.');
+  }, {
+    enableHighAccuracy: false,
+    timeout: 8000,
+    maximumAge: 60000
+  });
+}
+
+/* Garante que o AudioContext esteja “resumed” (iOS / mobile) */
+function nvEnsureAudioCtx() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    return audioCtx.resume();
+  }
+  return Promise.resolve();
+}
+
+/* Binaural detectado – com loader e fix */
+async function toggleOndas(ev) {
+  ev.stopPropagation();
+  nvStartLoading();
+  var indicator = document.getElementById('geoIndicator');
+
+  try {
+    await nvEnsureAudioCtx();
+
+    if (!ondasAtivas) {
+      // base binaural simbólica
+      let baseLat = geoLat != null ? Math.abs(geoLat) : 23.5;
+      let baseLng = geoLng != null ? Math.abs(geoLng) : 47.5;
+
+      // frequência base em torno de 200Hz e diferença ~ 8–12Hz
+      let base = 190 + (baseLat % 20);
+      let diff = 8 + (baseLng % 4);
+
+      let freq1 = base - diff / 2;
+      let freq2 = base + diff / 2;
+
+      osc1 = audioCtx.createOscillator();
+      osc2 = audioCtx.createOscillator();
+
+      osc1.type = 'sine';
+      osc2.type = 'sine';
+
+      osc1.frequency.value = freq1;
+      osc2.frequency.value = freq2;
+
+      const gain = audioCtx.createGain();
+      gain.gain.value = 0.07; // volume baixo
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc1.start();
+      osc2.start();
+
+      ondasAtivas = true;
+      indicator.textContent +=
+        ' · ONDAS ATIVAS (binaural simbólico ' +
+        freq1.toFixed(1) + 'Hz / ' + freq2.toFixed(1) + 'Hz).';
+      nvToast('Binaural solar ativado.');
+    } else {
+      if (osc1) osc1.stop();
+      if (osc2) osc2.stop();
+      osc1 = null;
+      osc2 = null;
+      ondasAtivas = false;
+
+      indicator.textContent = indicator.textContent.replace(/ · ONDAS ATIVAS.*$/, '');
+      nvToast('Binaural solar pausado.');
+    }
+  } catch (e) {
+    indicator.textContent =
+      'LOCALIZAÇÃO / ÁUDIO: não foi possível iniciar o som (permissão / política do navegador).';
+    nvToast('Não foi possível tocar o áudio neste navegador.');
+  } finally {
+    nvStopLoading();
+  }
+}
+
+/* Arpejo harmônico ligado à latitude */
+function tocarArpejo(ev) {
+  ev.stopPropagation();
+  nvEnsureAudioCtx().then(() => {
+    if (arpOsc) {
+      try { arpOsc.stop(); } catch(e) {}
+      arpOsc = null;
+      nvToast('Arpejo harmônico desligado.');
+      return;
+    }
+
+    arpOsc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    gain.gain.value = 0.14;
+
+    // escala harmônica baseada na latitude
+    const scale = [1, 1.2, 1.25, 1.33, 1.5, 1.6, 2];
+    let base = 200 + ((geoLat ?? 23.4) % 40);
+
+    let i = 0;
+    const intervalId = setInterval(() => {
+      if (!arpOsc) {
+        clearInterval(intervalId);
+        return;
+      }
+      arpOsc.frequency.value = base * scale[i % scale.length];
+      i++;
+    }, 480);
+
+    arpOsc.type = "sine";
+    arpOsc.connect(gain);
+    gain.connect(audioCtx.destination);
+    arpOsc.start();
+
+    nvToast('Arpejo harmônico solar ativado.');
+  });
+}
+
+/* DICAS META-HUMANO-MÁQUINA */
+function gerarDicas(ev) {
+  ev.stopPropagation();
+  nvStartLoading();
+  var tipsIndicator = document.getElementById('tipsIndicator');
+  var container = document.getElementById('tipsContainer');
+
+  const agora = new Date();
+  const hora = agora.getHours();
+
+  let periodo;
+  if (hora < 12) periodo = 'manhã';
+  else if (hora < 18) periodo = 'tarde';
+  else periodo = 'noite';
+
+  tipsIndicator.textContent =
+    'DICAS: Ciclo gerado para o período atual (' + periodo.toUpperCase() + ').';
+
+  const latInfo = geoLat != null ? geoLat.toFixed(2) : 'lat não definida';
+  const lngInfo = geoLng != null ? geoLng.toFixed(2) : 'lng não definida';
+
+  const dicas = [
+    {
+      titulo: 'Manhã — Corpo & Painel',
+      texto:
+        'Alongar ombros e coluna por 3 minutos olhando para a luz natural. ' +
+        'Checar mentalmente: “meu corpo está recebendo luz como o telhado recebe o sol?”. ' +
+        'Se possível, abrir uma janela e imaginar os painéis carregando junto com você.',
+    },
+    {
+      titulo: 'Tarde — Foco & Processamento',
+      texto:
+        'Escolher uma tarefa importante e executá-la em bloco de 25 minutos. ' +
+        'Pensar nos micro data centers locais: processar o que é essencial agora, ' +
+        'deixar o resto para outro ciclo. Menos abas abertas, mais qualidade de energia mental.',
+    },
+    {
+      titulo: 'Noite — Descarregar & Armazenar',
+      texto:
+        'Reduzir luz forte 1h antes de dormir. Registrar em 3 linhas o que você “carregou” hoje: ' +
+        'aprendizados, decisões, sensações. Assim como a bateria do sistema solar, ' +
+        'você armazena o essencial para o dia seguinte sem sobrecarregar o corpo.',
+    }
+  ];
+
+  container.innerHTML = '';
+
+  dicas.forEach(function(d) {
+    const div = document.createElement('div');
+    div.className = 'tip-block';
+    div.innerHTML =
+      '<strong>' + d.titulo + '</strong>' +
+      '<span>' + d.texto + '</span>';
+    container.appendChild(div);
+  });
+
+  const extra = document.createElement('p');
+  extra.style.marginTop = '8px';
+  extra.style.fontSize = '0.78rem';
+  extra.style.color = 'var(--muted)';
+  extra.textContent =
+    'Geo base simbólica atual: ' + latInfo + ' / ' + lngInfo +
+    ' · corpo humano e corpo da rede aprendendo juntos.';
+  container.appendChild(extra);
+
+  nvStopLoading();
+  nvToast('Dicas Meta-Humano-Máquina geradas.');
+}
+
+/* MOTION: captura acelerômetro para modular o arpejo */
+function nvHandleMotion(ev) {
+  if (!ev || !ev.accelerationIncludingGravity) return;
+  const ax = ev.accelerationIncludingGravity.x || 0;
+  const ay = ev.accelerationIncludingGravity.y || 0;
+  const az = ev.accelerationIncludingGravity.z || 0;
+
+  const mag = Math.sqrt(ax*ax + ay*ay + az*az);
+  // Normaliza em algo entre 0 e ~1
+  motionIntensity = Math.max(0, Math.min(1, mag / 20));
+}
+
+function nvInitMotion() {
+  if (motionInitialized) return;
+  motionInitialized = true;
+
+  if (typeof DeviceMotionEvent !== 'undefined' &&
+      typeof DeviceMotionEvent.requestPermission === 'function') {
+    // iOS-style permission
+    DeviceMotionEvent.requestPermission()
+      .then(state => {
+        if (state === 'granted') {
+          window.addEventListener('devicemotion', nvHandleMotion);
+        }
+      })
+      .catch(() => {
+        // se negar, só ignora; arpejo usa movimento 0
+      });
+  } else if (typeof DeviceMotionEvent !== 'undefined') {
+    // Android / outros
+    window.addEventListener('devicemotion', nvHandleMotion);
+  }
+}
+
+/* Escalas solares básicas (em semitons) */
+const NV_SOLAR_SCALES = [
+  { name: 'Dórica',  steps: [0, 2, 3, 5, 7, 9, 10] },
+  { name: 'Maior',   steps: [0, 2, 4, 5, 7, 9, 11] },
+  { name: 'Menor',   steps: [0, 2, 3, 5, 7, 8, 10] },
+  { name: 'Lócria',  steps: [0, 1, 3, 5, 6, 8, 10] },
+  { name: 'Mixolídia', steps: [0, 2, 4, 5, 7, 9, 10] }
+];
+
+function nvPickSolarScale() {
+  let lat = geoLat != null ? geoLat : -23.5;
+  let lng = geoLng != null ? geoLng : -47.5;
+
+  // índice da escala a partir de lat/lng (modo super simples, mas simbólico)
+  const mix = Math.abs(Math.round(lat) + Math.round(lng));
+  const idx = mix % NV_SOLAR_SCALES.length;
+  return NV_SOLAR_SCALES[idx];
+}
+
+/* ARPEJO SOLAR: lat/long + movimento (acelerômetro) */
+async function toggleArpejo(ev) {
+  ev.stopPropagation();
+  nvStartLoading();
+
+  const indicator = document.getElementById('geoIndicator');
+  const waveBox = document.querySelector('.wave-container');
+
+  try {
+    await nvEnsureAudioCtx();
+    nvInitMotion();
+
+    if (!arpActive) {
+      // LIGAR ARPEJO
+      const scale = nvPickSolarScale();
+
+      // base em torno de 220–320 Hz, dependendo da latitude
+      const latBase = geoLat != null ? Math.abs(geoLat) : 23.5;
+      const lngBase = geoLng != null ? Math.abs(geoLng) : 47.5;
+      const baseFreq = 200 + (latBase % 30) * 2; // 200–260 Hz
+
+      arpGain = audioCtx.createGain();
+      arpGain.gain.value = 0.0; // sobe suave
+
+      arpOscMain = audioCtx.createOscillator();
+      arpOscOct  = audioCtx.createOscillator();
+
+      arpOscMain.type = 'sine';
+      arpOscOct.type  = 'sine';
+
+      arpOscMain.connect(arpGain);
+      arpOscOct.connect(arpGain);
+      arpGain.connect(audioCtx.destination);
+
+      const stepCount = scale.steps.length;
+      let step = 0;
+
+      const updateNote = () => {
+        // velocidade em função do movimento (0 = lento, 1 = rápido)
+        const speedFactor = 1 - Math.min(0.9, motionIntensity * 0.8); 
+        // base 320ms -> 120ms
+        const intervalMs = 120 + speedFactor * 200;
+
+        const semitones = scale.steps[step % stepCount];
+        const freqMain = baseFreq * Math.pow(2, semitones / 12);
+        const freqOct  = freqMain * 2;
+
+        arpOscMain.frequency.setValueAtTime(freqMain, audioCtx.currentTime);
+        arpOscOct.frequency.setValueAtTime(freqOct, audioCtx.currentTime);
+
+        // attack/decay suave no ganho
+        const now = audioCtx.currentTime;
+        const targetGain = 0.04 + motionIntensity * 0.08; // aumenta com movimento
+        arpGain.gain.cancelScheduledValues(now);
+        arpGain.gain.linearRampToValueAtTime(targetGain, now + 0.03);
+        arpGain.gain.linearRampToValueAtTime(0.01, now + (intervalMs / 1000) * 0.9);
+
+        step++;
+
+        // re-agenda o próximo passo respeitando intensidade atual
+        arpTimer = setTimeout(updateNote, intervalMs);
+      };
+
+      // iniciar osciladores e primeira nota
+      arpOscMain.start();
+      arpOscOct.start();
+      arpActive = true;
+      updateNote();
+
+      // feedback textual
+      const chosenScale = nvPickSolarScale();
+      indicator.textContent +=
+        ' · ARPEJO ATIVO (' +
+        chosenScale.name + ' · base ~' + baseFreq.toFixed(1) + 'Hz).';
+
+      // feedback visual
+      if (waveBox) {
+        waveBox.classList.add('is-arp-active');
+        const prev = waveBox.getAttribute('data-freq-label') || 'binaural nos.s°lar';
+        if (!/arpejo/i.test(prev)) {
+          waveBox.setAttribute('data-freq-label', prev + ' · + arpejo');
+        }
+      }
+    } else {
+      // DESLIGAR ARPEJO
+      if (arpTimer) {
+        clearTimeout(arpTimer);
+        arpTimer = null;
+      }
+      if (arpOscMain) {
+        arpOscMain.stop();
+        arpOscMain.disconnect();
+      }
+      if (arpOscOct) {
+        arpOscOct.stop();
+        arpOscOct.disconnect();
+      }
+      if (arpGain) {
+        arpGain.disconnect();
+      }
+
+      arpOscMain = null;
+      arpOscOct = null;
+      arpGain = null;
+      arpActive = false;
+
+      // limpa texto
+      indicator.textContent = indicator.textContent.replace(/ · ARPEJO ATIVO.*$/, '');
+
+      // feedback visual off
+      if (waveBox) {
+        waveBox.classList.remove('is-arp-active');
+        // mantém o label do binaural, só tira o " + arpejo"
+        const prev = waveBox.getAttribute('data-freq-label');
+        if (prev) {
+          waveBox.setAttribute('data-freq-label', prev.replace(/ · \+ arpejo/i, ''));
+        }
+      }
+    }
+  } catch (e) {
+    const indicator = document.getElementById('geoIndicator');
+    if (indicator) {
+      indicator.textContent =
+        'ARPEJO: não foi possível iniciar (áudio / motion / política do navegador).';
+    }
+  } finally {
+    nvStopLoading();
+  }
+}
+
+/* GERADOR DE TEMPLATES LIVRO VIVO + TTS */
+function nvGenerateTemplate(tipo) {
+  nvStartLoading();
+  const ta = document.getElementById('nv-template-output');
+  if (!ta) {
+    nvStopLoading();
+    return;
+  }
+
+  let md = '';
+
+  if (tipo === 'basico') {
+    md = [
+      '# ☀️ Projeto Solar Básico — Nos.S°lar · dual.infodose',
+      '',
+      '::info',
+      'Proposta inicial de micro-usina solar conectada à camada simbólica do Nos.S°lar.',
+      'Este documento pode ser expandido no InfoDocs / Livro Vivo.',
+      '::',
+      '',
+      '## 🎯 Objetivo',
+      '- Reduzir custos de energia;',
+      '- Criar base para micro data center local;',
+      '- Conectar o imóvel à rede simbólica Nos.S°lar.',
+      '',
+      '## 📍 Local & Perfil de Consumo',
+      '- Endereço / Bairro:',
+      '- Consumo médio (kWh/mês):',
+      '- Telhado disponível (m²) / orientação:',
+      '',
+      '## ⚙️ Dimensionamento Inicial',
+      '- Potência estimada (kWp):',
+      '- Nº de módulos:',
+      '- Inversor / microinversores:',
+      '',
+      '## 🤝 Modelo de Parceria',
+      '- Tipo: Equity / Serviço / Híbrido;',
+      '- Participação proposta;',
+      '- Benefícios para o cliente;',
+      '- Benefícios para a rede Nos.S°lar.',
+      '',
+      '## 📡 Camada Digital & Simbólica',
+      '- Integração com painel Nos.S°lar;',
+      '- Monitoramento simbólico (estado solar, dicas);',
+      '- Rotina 3·6·9 de revisão energética.',
+      ''
+    ].join('\n');
+  } else if (tipo === 'escola') {
+    md = [
+      '# 🏫 Educação Solar em Escolas — Nos.S°lar · dual.infodose',
+      '',
+      '::info',
+      'Documento-modelo para projetos de educação solar em escolas,',
+      'conectando energia, tecnologia e formação de estudantes.',
+      '::',
+      '',
+      '## 🎯 Objetivos do Programa',
+      '- Ensinar fundamentos de energia solar;',
+      '- Integrar laboratório vivo (telhado da escola);',
+      '- Conectar trilhas 3·6·9 de formação (alunos, professores, comunidade).',
+      '',
+      '## 🧩 Componentes do Projeto',
+      '- Instalação de sistema fotovoltaico (mini-usina);',
+      '- Painel Nos.S°lar na escola (visualização em tempo real);',
+      '- Atividades didáticas (experimentos, desafios, jogos).',
+      '',
+      '## 📚 Trilhas 3·6·9',
+      '- 3 encontros introdutórios (energia, sol, comunidade);',
+      '- 6 encontros práticos (medição, dados, projeto);',
+      '- 9 atividades abertas (feiras, apresentações, mentorias).',
+      '',
+      '## 🤝 Parcerias',
+      '- Empresa de solar / Parque Tecnológico;',
+      '- Secretaria de Educação / Prefeitura;',
+      '- Comunidade local / associações.',
+      '',
+      '## 🔁 Monitoramento & Expansão',
+      '- Métricas de aprendizado;',
+      '- Economia de energia;',
+      '- Rotas para expansão a outros bairros / escolas.',
+      ''
+    ].join('\n');
+  } else if (tipo === 'parque') {
+    md = [
+      '# 🏭 Parque Tecnológico & Micro Data Center Solar — Nos.S°lar',
+      '',
+      '::info',
+      'Modelo de documento para integrar parque tecnológico, empresas residentes e',
+      'micro data centers alimentados por energia solar distribuída.',
+      '::',
+      '',
+      '## 🎯 Visão Geral',
+      '- Transformar o parque em nó central da rede Nos.S°lar;',
+      '- Alojar micro data centers dedicados a IA / serviços digitais;',
+      '- Construir spin-off cooperativa com empresas parceiras.',
+      '',
+      '## 🧱 Componentes de Infraestrutura',
+      '- Telhados e áreas disponíveis para painéis;',
+      '- Sala técnica / contêiner de dados (micro data center);',
+      '- Conectividade (fibra, redundância, monitoramento).',
+      '',
+      '## 🤝 Modelo de Participação (Equity / Receita)',
+      '- Percentual de participação por empresa;',
+      '- Regras de entrada / saída;',
+      '- Uso da marca “Nos.S°lar — dual.infodose";',
+      '- Mecanismos de reinvestimento no próprio parque.',
+      '',
+      '## 🔧 Stack Digital & Simbólica',
+      '- Painéis web / apps móveis (como este Nos.S°lar);',
+      '- Monitoramento de energia + uso de servidores;',
+      '- Integração com Livro Vivo / InfoDocs para documentação contínua.',
+      '',
+      '## 🔭 Roadmap 5–10 anos',
+      '- Expansão para bairros e cidades vizinhas;',
+      '- Parcerias com iniciativas africanas (Afrikafuturo);',
+      '- Conexão com hubs solares globais.',
+      ''
+    ].join('\n');
+  }
+
+  ta.value = md;
+
+  try {
+    localStorage.setItem('nossolar_last_template', md);
+  } catch(e) {}
+
+  nvStopLoading();
+  nvToast('Template Livro Vivo gerado.');
+}
+
+/* TTS básico de boas-vindas */
+let nvTtsInitDone = false;
+let nvVoices = [];
+
+function nvInitVoices() {
+  if (!('speechSynthesis' in window)) return;
+  nvVoices = window.speechSynthesis.getVoices() || [];
+  nvTtsInitDone = true;
+}
+
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.onvoiceschanged = function() {
+    nvInitVoices();
+  };
+  nvInitVoices();
+}
+
+function nvPickPtBrVoice() {
+  if (!nvVoices || !nvVoices.length) return null;
+  // Procura vozes PT-BR primeiro
+  let pt = nvVoices.find(v =>
+    /pt[-_]?BR/i.test(v.lang || '') ||
+    /portuguese.*brazil/i.test((v.name || '') + ' ' + (v.lang || ''))
+  );
+  if (pt) return pt;
+  // fallback para qualquer PT
+  pt = nvVoices.find(v => /^pt[-_]/i.test(v.lang || ''));
+  if (pt) return pt;
+  return nvVoices[0] || null;
+}
+
+function nvSpeakWelcome() {
+  const text =
+    'Bem-vindo ao painel Nos Solar, dual Infodose. ' +
+    'Aqui você conecta energia, dados e livro vivo em um só lugar. ' +
+    'Gere um template, leve para o InfoDocs e continue o fluxo do seu projeto solar.';
+
+  if (!('speechSynthesis' in window)) {
+    alert(text);
+    return;
+  }
+
+  const utter = new SpeechSynthesisUtterance(text);
+  const voice = nvPickPtBrVoice();
+  if (voice) utter.voice = voice;
+  utter.rate = 1.02;
+  utter.pitch = 1.0;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utter);
+}
+
+/* LS STATUS interno do Nos.S°lar */
+function nvLsScan() {
+  nvStartLoading();
+  const out = document.getElementById('nv-ls-output');
+  if (!out) {
+    nvStopLoading();
+    return;
+  }
+
+  try {
+    const ls = window.localStorage;
+    const len = ls.length;
+    let totalBytes = 0;
+    let lines = [];
+
+    for (let i = 0; i < len; i++) {
+      const key = ls.key(i);
+      const val = ls.getItem(key);
+      const size = (key.length + (val ? val.length : 0)) * 2; // aprox bytes
+      totalBytes += size;
+      lines.push('- ' + key + '  ~  ' + size + ' bytes aprox.');
+    }
+
+    const header =
+      'Chaves armazenadas: ' + len + '\n' +
+      'Tamanho aproximado total: ' + totalBytes + ' bytes\n';
+
+    out.textContent = header + (lines.length ? '\n' + lines.join('\n') : '\n(nenhuma chave encontrada)');
+  } catch (e) {
+    out.textContent = 'Erro ao ler localStorage: ' + e;
+  }
+
+  nvStopLoading();
+  nvToast('Leitura de localStorage concluída.');
+}
+
+function nvLsClear() {
+  const out = document.getElementById('nv-ls-output');
+  if (!out) return;
+  if (!window.confirm('Deseja limpar as chaves do Nos.S°lar neste navegador?')) return;
+
+  nvStartLoading();
+  try {
+    const ls = window.localStorage;
+    // Limpa apenas chaves com prefixo nossolar_
+    const toRemove = [];
+    for (let i = 0; i < ls.length; i++) {
+      const key = ls.key(i);
+      if (key && key.indexOf('nossolar_') === 0) {
+        toRemove.push(key);
+      }
+    }
+    toRemove.forEach(k => ls.removeItem(k));
+
+    out.textContent =
+      'Chaves com prefixo "nossolar_" removidas. ' +
+      'Use "Ver estado atual do LS" para conferir.';
+  } catch (e) {
+    out.textContent = 'Erro ao limpar localStorage: ' + e;
+  }
+  nvStopLoading();
+  nvToast('Chaves locais do Nos.S°lar limpas.');
+}
+
+/* Análise de ambiente (loader + métricas em card bonitinho) */
+function nvAnalyzeEnv(ev) {
+  ev.stopPropagation();
+  nvStartLoading();
+
+  const box = document.getElementById('envMetrics');
+  if (!box) {
+    nvStopLoading();
+    return;
+  }
+
+  const now = new Date();
+  const horas = String(now.getHours()).padStart(2, '0');
+  const mins = String(now.getMinutes()).padStart(2, '0');
+  const horaStr = horas + ':' + mins;
+
+  const ciclo = nvGetSolarModeLabel();
+  const latInfo = geoLat != null ? geoLat.toFixed(4) : 'não definido';
+  const lngInfo = geoLng != null ? geoLng.toFixed(4) : 'não definido';
+
+  // Estimativa simbólica de "carga" com base no horário
+  let carga;
+  if (now.getHours() < 6) carga = 'baixa (pré-alvorada)';
+  else if (now.getHours() < 11) carga = 'subindo (manhã ativa)';
+  else if (now.getHours() < 15) carga = 'alta (pico solar)';
+  else if (now.getHours() < 19) carga = 'estável (fim de tarde)';
+  else carga = 'descendo (noite / descarregar)';
+
+  let recomendacao;
+  if (now.getHours() < 11) {
+    recomendacao =
+      'Bom momento para tarefas criativas e planejamento. ' +
+      'Use a luz da manhã como “energia grátis” para o cérebro.';
+  } else if (now.getHours() < 18) {
+    recomendacao =
+      'Priorize execução focada. Menos abas, mais profundidade. ' +
+      'Imagine que cada decisão bem tomada é um painel rendendo mais.';
+  } else {
+    recomendacao =
+      'Comece a desacelerar. Feche ciclos, descarregue tensões e prepare o corpo ' +
+      'para armazenar o essencial do dia, sem sobrecarga.';
+  }
+
+  box.innerHTML = `
+    <div class="env-card">
+      <h4>Leitura rápida do ambiente</h4>
+      <small>Nos.S°lar · análise simbólica local</small>
+      <div class="env-grid">
+        <div class="env-row">
+          <span class="env-label">Horário local</span>
+          <span class="env-value">${horaStr}</span>
+        </div>
+        <div class="env-row">
+          <span class="env-label">Ciclo solar</span>
+          <span class="env-value">${ciclo}</span>
+        </div>
+        <div class="env-row">
+          <span class="env-label">Lat / Lng base</span>
+          <span class="env-value">${latInfo} / ${lngInfo}</span>
+        </div>
+        <div class="env-row">
+          <span class="env-label">Carga simbólica</span>
+          <span class="env-value">${carga}</span>
+        </div>
+      </div>
+      <p style="margin-top:8px;font-size:0.8rem;color:var(--muted);">
+        ${recomendacao}
+      </p>
+    </div>
+  `;
+
+  nvStopLoading();
+  nvToast('Ambiente solar analisado.');
+}
+</script>
+
+<!-- PATCH: UNIFICAÇÃO EM 3 CARDS · NOS.S°LAR -->
+<style>
+/* Subcards dentro do card principal (welcome + LS + ambiente, geo + dicas) */
+
+/* Cards mais "Livro Vivo" – borda e brilho */
+.card {
+  border-radius: 16px;
+  background: radial-gradient(circle at 0 0, rgba(125, 211, 252, 0.12), transparent 55%),
+              rgba(5, 13, 24, 0.96);
+  box-shadow:
+    0 22px 60px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(148, 163, 184, 0.18);
+}
+
+/* Container interno com largura "coluna de leitura" */
+.card-body-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 10px 0 16px;
+}
+
+/* Primeira linha estilo título MD agressivo */
+.card-body-inner p:first-of-type {
+  margin: 0 0 10px;
+  padding-left: 12px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #e5f4ff;
+  border-left: 2px solid var(--accent);
+}
+
+.card-body-inner p:first-of-type::before {
+  left: -10px;
+  font-size: 0.82rem;
+}
+
+
+
+.nv-subcard {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(148, 163, 184, 0.45);
+}
+
+/* Caso ainda não tenha essa classe (reforça estilo Livro Vivo) */
+.nv-subtitle {
+  margin-top: 14px !important;
+  margin-bottom: 6px !important;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: #c7e6ff;
+  position: relative;
+  padding-left: 8px;
+}
+.nv-subtitle::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 4px;
+  height: 14px;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #7dd3fc, #22c55e);
+}
+
+/* Container interno com largura "coluna de leitura" */
+.card-body-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 10px 0 16px;
+}
+
+/* Primeira linha estilo título MD agressivo */
+.card-body-inner p:first-of-type {
+  margin: 0 0 10px;
+  padding-left: 12px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #e5f4ff;
+  border-left: 2px solid var(--accent);
+}
+
+.card-body-inner p:first-of-type::before {
+  left: -10px;
+  font-size: 0.82rem;
+}
+
+/* Parágrafos seguintes com respiro melhor */
+.card-body-inner p + p {
+  margin-top: 6px;
+  font-size: 0.88rem;
+}
+
+/* Tag ::info / ::hub / etc – mais chip "doc técnico" */
+.md-tag {
+  font-size: 0.72rem;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.9);
+}
+
+/* Linha de botões mais separada do texto */
+.btn-row {
+  margin-top: 10px;
+}
+
+/* Botões com vibe InfoDocs (primário agressivo) */
+.btn {
+  font-size: 0.9rem;
+  text-transform: none;
+  letter-spacing: 0.03em;
+  background: radial-gradient(circle at 0 0, rgba(125, 211, 252, 0.35), rgba(255, 255, 255, 0.06));
+  border: 1px solid rgba(148, 163, 184, 0.55);
+}
+
+.btn:hover {
+  background: radial-gradient(circle at 0 0, rgba(125, 211, 252, 0.6), rgba(255, 255, 255, 0.12));
+  box-shadow:
+    0 0 20px rgba(125, 211, 252, 0.35),
+    0 0 0 1px rgba(15, 23, 42, 0.9);
+}
+
+/* Tip-block (dicas) – callout bonitinho */
+#tipsContainer .tip-block {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(148, 163, 184, 0.65);
+  box-shadow:
+    0 12px 26px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(15, 23, 42, 0.9);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#tipsContainer .tip-block strong {
+  font-size: 0.86rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #e5f4ff;
+}
+
+#tipsContainer .tip-block span {
+  font-size: 0.8rem;
+  color: #cbd5f5;
+}
+
+/* Indicadores (modo, geo, dicas) com micro-label */
+.mode-indicator,
+.geo-indicator,
+.tips-indicator {
+  margin-top: 10px;
+  font-size: 0.74rem;
+  letter-spacing: 0.18em;
+  color: #9fb9ff;
+}
+
+/* Header do app levemente mais “doc” que “landing” */
+.app-title {
+  font-size: 1.32rem;
+  letter-spacing: 0.12em;
+}
+
+.app-subtitle {
+  font-size: 0.82rem;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+/* Wave visual um pouco mais discreta (fundo de leitura) */
+.wave-container {
+  margin-top: 12px;
+  opacity: 0.85;
+}
+
+.wave {
+  background: repeating-linear-gradient(
+    to right,
+    rgba(125, 211, 252, 0.08) 0,
+    rgba(125, 211, 252, 0.6) 2px,
+    transparent 6px
+  );
+}
+
+/* Pequeno respiro extra abaixo de cada card */
+.card-stack .card + .card {
+  margin-top: 2px;
+}
+</style>
+
+<script>
+/* Unificação dos cards em 3 blocos:
+   1) welcome + ls + env
+   2) solar (inalterado)
+   3) geo + tips
+*/
+document.addEventListener('DOMContentLoaded', function () {
+  try {
+    // --- Host principal do primeiro card (Boas-vindas / Livro Vivo) ---
+    const welcomeInner = document.querySelector('.card[data-card="welcome"] .card-body-inner');
+
+    const lsCard  = document.querySelector('.card[data-card="ls"]');
+    const envCard = document.querySelector('.card[data-card="env"]');
+    const tipsCard = document.querySelector('.card[data-card="tips"]');
+    const geoInner = document.querySelector('.card[data-card="geo"] .card-body-inner');
+
+    // 1) Juntar LS dentro do card de Boas-vindas
+    if (welcomeInner && lsCard) {
+      const lsInner = lsCard.querySelector('.card-body-inner');
+      if (lsInner) {
+        const wrap = document.createElement('div');
+        wrap.className = 'nv-subcard';
+        wrap.innerHTML =
+          '<p class="nv-subtitle">LocalStorage · Estado interno do Nos.S°lar</p>' +
+          lsInner.innerHTML;
+        welcomeInner.appendChild(wrap);
+      }
+      lsCard.remove();
+    }
+
+    // 2) Juntar Ambiente dentro do card de Boas-vindas
+    if (welcomeInner && envCard) {
+      const envInner = envCard.querySelector('.card-body-inner');
+      if (envInner) {
+        const wrap = document.createElement('div');
+        wrap.className = 'nv-subcard';
+        wrap.innerHTML =
+          '<p class="nv-subtitle">Leitura rápida do ambiente solar</p>' +
+          envInner.innerHTML;
+        welcomeInner.appendChild(wrap);
+      }
+      envCard.remove();
+    }
+
+    // 3) Juntar Dicas dentro do card de Geo
+    if (geoInner && tipsCard) {
+      const tipsInner = tipsCard.querySelector('.card-body-inner');
+      if (tipsInner) {
+        const wrap = document.createElement('div');
+        wrap.className = 'nv-subcard';
+        wrap.innerHTML =
+          '<p class="nv-subtitle">Dicas Meta-Humano-Máquina · manhã · tarde · noite</p>' +
+          tipsInner.innerHTML;
+        geoInner.appendChild(wrap);
+      }
+      tipsCard.remove();
+    }
+
+   
+}
+   catch (e) {
+    console.warn('Patch de unificação de cards falhou:', e);
+  }
+});
+</script>
+
+
+
+
+
+   <!-- ============================================================
+       [FUSION] KARD — Fusion Card // Core Controller
+       Widget flutuante (Card/Orb/HUD) fundido ao shell do Almasliber.
+       Mantém seus próprios di_apiKey, di_modelName, di_infodoseName
+       e compartilha di_userName com o resto do sistema.
+       ============================================================ -->
+  <!-- Ambient Blobs -->
+  <div class="ambient-light">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+  </div>
+
+  <div id="snap-zone"></div>
+
+  <!-- CONTAINER PRINCIPAL -->
+  <div class="container kard-fusion-root">
+    <div class="fusion-card closed" id="mainCard">
+      <div class="card-header" id="cardHeader">
+        <div class="avatar-slot" id="avatarTarget" title="Gerenciar Chaves (Cofre)"></div>
+
+        <div class="text-block">
+          <div class="greeting-row">
+            <span class="txt-thin" id="lblHello">Oi,</span>
+            <span class="txt-heavy" id="lblName">Convidado</span>
+          </div>
+          <div class="brand-dual">DUAL</div>
+        </div>
+
+        <div class="clock-widget">
+          <div class="time-display" id="clockTime">00:00</div>
+          <span class="status-led">ONLINE</span>
+        </div>
+
+        <button class="hud-menu-btn" id="hudMenuBtn" title="Menu Rápido">
+          <!-- Ícone menu inline -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"></line><line x1="4" x2="20" y1="6" y2="6"></line><line x1="4" x2="20" y1="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div class="orb-menu-trigger" id="orbMenuTrigger" title="Menu Rápido">●●●</div>
+      <div class="drag-handle"></div>
+
+      <div class="small-preview" id="smallPreview" title="Gerenciar Chaves">
+        <div class="mini-avatar" id="smallMiniAvatar"></div>
+
+        <button class="fusion-go-btn small-preview" id="fusionGoBtn" onclick="goToIndex()" title="Ativar Portal">
+          <span class="fusion-go-icon">⚡️</span>
+          <span class="fusion-go-text">INICIAR</span>
+        </button>
+
+        <div class="small-text" id="smallText"></div>
+        <div class="ident-badge" id="smallIdent">--</div>
+      </div>
+
+      <div class="card-body" id="cardBody">
+        <!-- Main Input User -->
+        <div class="input-wrapper stagger-item">
+          <input type="text" class="cyber-input" id="inputUser" placeholder="Identifique-se..." autocomplete="off">
+        </div>
+
+        <!-- Section 1: ASCII Activation -->
+        <div class="activation-wrap stagger-item">
+          <div class="activation-toggle" onclick="toggleSection('activationCard')">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:10px;height:10px;border-radius:99px;background:var(--neon-cyan)"></div>
+              <strong style="letter-spacing:1px;font-size:0.9rem">Ativação ASCII</strong>
+            </div>
+            <div style="margin-left:auto;font-size:0.82rem;color:rgba(255,255,255,0.6)">BASE v1</div>
+          </div>
+
+          <div id="activationCard" class="activation-card activation-hidden">
+            <div style="display:flex;align-items:flex-start;gap:10px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="mini-avatar" id="actMiniAvatar"></div>
+                <div>
+                  <div style="font-weight:700">CÉREBRO</div>
+                  <div style="font-size:0.78rem;opacity:0.6"><span id="actName">User</span></div>
+                </div>
+              </div>
+              <div class="activation-badge" id="actBadge" style="margin-left:auto;color:var(--neon-cyan);font-size:0.8em">v:--</div>
+            </div>
+
+            <pre id="actPre" class="activation-pre">Carregando...</pre>
+
+            <div class="activation-controls" style="display:flex;gap:8px;margin-top:8px">
+              <button class="trigger-btn" id="copyActBtn">COPIAR</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: System & Neural -->
+        <div class="activation-wrap stagger-item">
+          <div class="activation-toggle" onclick="toggleSection('systemCard')">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:10px;height:10px;border-radius:99px;background:var(--neon-purple)"></div>
+              <strong style="letter-spacing:1px;font-size:0.9rem">SYSTEM &amp; NEURAL</strong>
+            </div>
+            <div style="margin-left:auto;font-size:0.82rem;color:rgba(255,255,255,0.6)">CONFIG</div>
+          </div>
+
+          <div id="systemCard" class="activation-card activation-hidden">
+            <div class="col">
+              <div class="section-title">IDENTIDADE DA INFODOSE</div>
+              <input type="text" id="infodoseNameInput" placeholder="Nome: World System..." style="width:100%;margin-bottom:8px;padding:8px;border-radius:6px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);color:#fff">
+
+              <div class="section-title" style="margin-top:8px">CONEXÃO NEURAL (SK)</div>
+              <input type="password" id="apiKeyInput" placeholder="sk-or-..." autocomplete="off" style="width:100%;margin-bottom:6px;padding:8px;border-radius:6px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);color:#fff">
+
+              <div class="model-toggle">
+                <select id="modelSelect" class="btn">
+                  <option value="" disabled="" selected="">Selecione Modelo</option>
+                  <option value="nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free">NemoTron (Free)</option>
+                  <option value="poolside/laguna-xs.2:free">laguna (Free)</option>
+                  <option value="inclusionai/ring-2.6-1t:free">ring</option>
+                  <option value="google/gemma-4-31b-it:free">google gemma</option>
+                </select>
+              </div>
+
+              <div class="panel-divider" style="margin:10px 0;border-top:1px solid rgba(255,255,255,0.05)"></div>
+
+              <button id="saveSystemBtn" class="trigger-btn" style="margin-top:12px;background:var(--neon-cyan);color:#000;font-weight:700">
+                SALVAR CONFIGURAÇÃO
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stagger-item" style="display:none;margin-top:4px">
+          <div class="stat-lbl" style="margin-bottom:6px;font-size:0.6rem;color:rgba(255,255,255,0.4)">INTERFACE MODE</div>
+          <div style="display:flex;gap:8px;">
+            <button class="trigger-btn mode-btn active-mode" id="btnModeCard" onclick="setMode('card')" style="flex:1" title="Modo Padrão">CARD</button>
+            <button class="trigger-btn mode-btn" id="btnModeOrb" onclick="setMode('orb')" style="flex:1" title="Flutuante">ORB</button>
+            <button class="trigger-btn mode-btn" id="btnModeHud" onclick="setMode('hud')" style="flex:1" title="Barra de Topo">HUD</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KEYS MANAGER MODAL -->
+  <div id="keysModal" class="modal-overlay" aria-hidden="true">
+    <div class="keys-card" role="dialog">
+      <div class="keys-header">
+        <div>
+          <div id="keysTitle" style="font-weight:800;font-size:1.1rem;color:var(--neon-cyan)">USER KEYS MANAGER</div>
+          <div style="color:rgba(255,255,255,0.6);font-size:0.85rem">Gerencie suas chaves API com segurança local (Cofre).</div>
+        </div>
+        <button id="closeKeysBtn" class="small-btn">X</button>
+      </div>
+
+      <div class="key-list" id="keyList"></div>
+
+      <div class="form-section" style="margin-top:15px;padding-top:15px;border-top:1px solid rgba(255,255,255,0.05)">
+        <div class="form-grid">
+          <input id="keyNameInput" placeholder="Nome da chave (ex: Principal)">
+          <input id="keyTokenInput" type="password" placeholder="Token / ESK (Opcional)">
+        </div>
+        <button id="addKeyBtn" class="small-btn" style="width:100%;margin-top:8px;background:rgba(255,255,255,0.1)">ADICIONAR CHAVE</button>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:space-between;margin-top:15px;border-top:1px solid rgba(255,255,255,0.05);padding-top:12px">
+        <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);display:flex;align-items:center;gap:5px">
+          <!-- Ícone shield-check inline -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path><path d="m9 12 2 2 4-4"></path></svg>
+          <span id="vaultStatusText">Cofre Aberto</span>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button id="lockVaultBtn" class="small-btn danger">BLOQUEAR</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VAULT UNLOCK MODAL -->
+  <div id="vaultModal" class="modal-overlay" aria-hidden="true">
+    <div class="keys-card">
+      <div class="vault-icon">
+        <!-- Ícone lock inline -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+      </div>
+      <h3 style="margin:0 0 10px 0;font-weight:800">ACESSO AO COFRE</h3>
+      <p style="margin:0 0 15px 0;font-size:0.9rem;color:rgba(255,255,255,0.6)">Seus dados estão criptografados. Digite a senha para desbloquear.</p>
+      <input type="password" id="vaultPassInput" class="cyber-input" style="text-align:center;margin-bottom:12px" placeholder="Senha...">
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button id="vaultCancelBtn" class="small-btn">Cancelar</button>
+        <button id="vaultUnlockBtn" class="small-btn active-btn">DESBLOQUEAR</button>
+      </div>
+    </div>
+  </div>
+  <!-- ============================================================
+       [/FUSION KARD body]
+       ============================================================ -->
+
+  <div class="almasliber" data-app="almasliber">
+    <div class="shell">
+
+      <!-- ===== TOPBAR ===== -->
+      <header class="topbar">
+        <button class="icon-btn" id="menuBtn" aria-label="Abrir menu">☰</button>
+        <div class="brand">
+          A.<span>INFODOSE</span>
+          <span class="mini-orb-wrap" id="topbarMiniOrb"></span>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="icon-btn" id="themeToggle" aria-label="Alternar tema">🌙</button>
+          <button class="icon-btn" id="notifBtn" aria-label="Notificações">♧</button>
+        </div>
+      </header>
+
+
+
+     <div class="dual-app">
+<!-- ═══════════════════════════════════════════════════════
+     HEADER GLOBAL
+     1. TOCAR NO HEADER
+        → COLAPSA MAIN
+     2. TOCAR NA BOLINHA
+        → MUDA TEMA
+     3. ROLAR PARA BAIXO
+        → HEADER SOBE
+     4. ROLAR PARA CIMA
+        → HEADER VOLTA
+═══════════════════════════════════════════════════════ -->
+<header class="topbar header-visible" id="main-header">
+    <!-- ÁREA DO SISTEMA -->
+    <div class="brand">
+        <span>
+            DUAL
+        </span>
+        <span class="badge">
+            GLOBAL
+        </span>
+    </div>
+    <!-- ÚNICO CONTROLE DE TEMA -->
+
+  <button id="theme-dot" class="theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>
+       </button>  
+
+</header>
+<!-- ═══════════════════════════════════════════════════════
+     MAIN
+═══════════════════════════════════════════════════════ -->
+<main id="main-content">
+
+     <!-- =========================================================
+     NX SESSION WINDOW · PERFIL / DUAL
+     DETAILS + SESSION + WIN-HDR
+     ========================================================= -->
+
+<div id="kxtsk-shell">
+    <div class="os-topbar">
+      <div class="os-brand">
+        KxTsK
+        <small>Unified Patch Loader</small>
+      </div>
+      <div class="top-actions">
+        <button class="launcher-btn" id="openKobBtn">+ Abrir KOB</button>
+        <button class="soft-btn" id="openLogsBtn">Logs</button>
+      </div>
+    </div>
+
+    <div style="z-index:10000" id="dock"></div>
+    <div id="stackWrap">
+
+      <details class="nx-session al-accordion session-window" id="session-iframe" open="" data-app="Biblioteca Nébula" data-module="./apps/nebula-library.js">
+        <summary class="win-hdr" onclick="handleHeaderClick(event, 'session-iframe')">
+          <div class="win-dots" aria-hidden="true">
+            <span class="win-dot"></span>
+            <span class="win-dot"></span>
+            <span class="win-dot"></span>
+          </div>
+          <div class="win-title">🌐 DUAL H0 // Biblioteca Nébula</div>
+          <div class="win-controls" onclick="event.stopPropagation()">
+            <button onclick="toggleCollapse('session-iframe')" title="Colapsar">—</button>
+            <button onclick="toggleMaximize('session-iframe')" title="Maximizar">⬜</button>
+            <button onclick="minimizeWindow('session-iframe')" title="Minimizar para o Dock">🔘</button>
+            <button onclick="closeWindow('session-iframe')" title="Fechar">✕</button>
+          </div>
+        </summary>
+ 
+
+  <!-- =======================================================
+       WIN BODY
+       ======================================================= -->
+  <div class="win-body">
+
+    <!-- =====================================================
+         PERFIL · HERO
+         ===================================================== -->
+    <details class="al-accordion" data-collapse="profile" open="">
+
+      <summary>
+
+        <div class="al-summary-main">
+
+          <span class="al-summary-icon">⎚</span>
+
+          <div class="al-summary-text">
+
+            <span class="al-summary-title">
+              oiDual
+            </span>
+
+            <span class="al-summary-sub" id="actStatusSub">
+              🦆
+            </span>
+
+          </div>
+
+        </div>
+
+      </summary>
+
+
+      <!-- =================================================
+           HERO
+           ================================================= -->
+      <section class="card hero" data-panel="profile">
+
+        <div class="hero-actions">
+
+          <span class="badge">
+            ⚡ DUAL ATIVO
+          </span>
+
+          <div class="hero-actions-right">
+
+            <button class="icon-btn" id="editProfileBtn" aria-label="Editar perfil">✎</button>
+
+            <button class="icon-btn" id="profileMenuBtn" aria-label="Mais opções">⋯</button>
+
+          </div>
+
+        </div>
+
+
+        <!-- AVATAR -->
+        <div class="avatar-wrap">
+
+          <div id="heroAvatar" class="dual-orb-wrap" style="--orb-size:118px;width:100%;height:100%;"></div>
+
+          <span class="online"></span>
+
+        </div>
+
+
+        <!-- HERO CENTER -->
+        <div class="hero-center">
+
+          <h1>
+
+            <span id="heroName">
+              Meu Dual
+            </span>
+
+            <span class="verified">
+              ✓
+            </span>
+
+          </h1>
+
+          <div class="handle" id="heroHandle">
+            @meu.dual
+          </div>
+
+          <p class="bio">
+            Explorando territórios da mente,
+            expandindo consciência e criando
+            a minha melhor versão todos os dias.
+          </p>
+
+        </div>
+
+
+        <!-- =================================================
+             ACTIVATION CARD
+             ================================================= -->
+        <details class="al-accordion" data-collapse="activation">
+
+          <summary>
+
+            <div class="al-summary-main">
+
+              <span class="al-summary-icon">
+                ⎚
+              </span>
+
+              <div class="al-summary-text">
+
+                <span class="al-summary-title">
+                  Ativação ASCII
+                </span>
+
+                <span class="al-summary-sub" id="actStatusSubActivation">
+                  Base v1
+                </span>
+
+              </div>
+
+            </div>
+
+          </summary>
+
+
+          <!-- ACTIVATION BODY -->
+          <div class="activation-card-main" id="activationCardMain">
+
+            <div class="activation-header">
+
+              <div class="left">
+
+                <div class="orb-mini" id="actMiniOrb"></div>
+
+                <div>
+
+                  <div class="title">
+                    Ativação ASCII
+                  </div>
+
+                  <div style="font-size:12px;color:var(--muted);">
+                    Cérebro · Oráculo
+                  </div>
+
+                </div>
+
+              </div>
+
+              <span class="badge-v" id="actBadgeMain">
+                v:--
+              </span>
+
+            </div>
+
+
+            <!-- NOME -->
+            <div style="margin:4px 0 10px;">
+
+              <input type="text" id="inlineNameInput" class="inline-name-input" placeholder="Seu nome" value="Convidado">
+
+              <span style="
+                  font-size:12px;
+                  color:var(--muted);
+                  margin-left:8px;
+                ">
+                (digite e veja o ASCII mudar)
+              </span>
+
+            </div>
+
+
+            <!-- ASCII -->
+            <div class="activation-pre-wrap">
+
+              <pre id="actPreMain">Carregando...
+              </pre>
+
+            </div>
+
+
+            <!-- ACTIONS -->
+            <div class="activation-actions">
+
+              <button class="btn primary" id="copyActBtnMain">
+                📋 Copiar ASCII
+              </button>
+
+              <button class="btn" id="speakActBtn">
+                🔊 Ouvir
+              </button>
+
+              <button class="btn" id="resetActBtn">
+                ↺ Resetar
+              </button>
+
+            </div>
+
+          </div>
+
+        </details>
+
+      </section>
+
+    </details>
+
+
+    <!-- =====================================================
+         LIBRARY · NÉBULA
+         ===================================================== -->
+    <details class="al-accordion" data-collapse="library" open="">
+
+      <summary>
+
+        <div class="al-summary-main">
+
+          <span class="al-summary-icon">
+            📚
+          </span>
+
+          <div class="al-summary-text">
+
+            <span class="al-summary-title">
+              Library Nébula
+            </span>
+
+            <span class="al-summary-sub" id="nebulaSummarySub">
+              Nébula · carregando…
+            </span>
+
+          </div>
+
+        </div>
+
+      </summary>
+
+
+      <!-- LIBRARY BODY -->
+      <div class="al-accordion-content">
+
+
+        <!-- =================================================
+             QUICK ACTIONS
+             ================================================= -->
+        <div class="nebula-quickbar">
+
+          <button class="nebula-qbtn primary" id="nebulaAdd">
+            <span class="qicon">＋</span>
+            Adicionar
+          </button>
+
+          <button class="nebula-qbtn" id="nebulaSearchToggle">
+            <span class="qicon">⌕</span>
+            Buscar
+          </button>
+
+          <button class="nebula-qbtn" id="nebulaOpenUrl">
+            <span class="qicon">↗</span>
+            Abrir link
+          </button>
+
+        </div>
+
+
+        <!-- =================================================
+             SEARCH
+             ================================================= -->
+        <div class="nebula-search-box" id="nebulaSearchBox">
+
+          <input type="text" id="nebulaSearchInput" placeholder="Buscar documentos...">
+
+        </div>
+
+
+        <!-- =================================================
+             GROUPS
+             ================================================= -->
+        <div class="scroller nebula-groups" id="nebulaGroups" data-carousel="nebula-groups">
+
+          <button class="group-pill snap active" data-group="recentes">
+            Recentes
+          </button>
+
+          <button class="group-pill snap" data-group="favoritos">
+            Favoritos
+          </button>
+
+          <button class="group-pill snap" data-group="cortex">
+            Cortex
+          </button>
+
+          <button class="group-pill snap" data-group="documentos">
+            Documentos
+          </button>
+
+          <button class="group-pill snap" data-group="apps">
+            Apps
+          </button>
+
+          <button class="group-pill snap" data-group="config">
+            Config
+          </button>
+
+          <button class="group-pill snap" data-group="cache">
+            Cache
+          </button>
+
+        </div>
+
+
+        <!-- =================================================
+             DOCUMENT CAROUSEL
+             ================================================= -->
+        <div class="scroller" id="nebulaCarousel" data-carousel="nebula-docs"></div>
+
+
+        <!-- DOTS -->
+        <div class="doc-dots" id="nebulaDots"></div>
+
+
+      </div>
+
+    </details>
+
+
+  </div>
+
+</details>
+
+        <!-- =========================================================
+             EVOLUÇÃO
+             ========================================================= -->
+    <details class="al-accordion" data-collapse="evolution">
+          <summary>
+            <div class="al-summary-main">
+              <span class="al-summary-icon">⎚</span>
+              <div class="al-summary-text">
+                <span class="al-summary-title">EXTRAS</span>
+                <span class="al-summary-sub" id="actStatusSubExtras">Base v1</span>
+              </div>
+            </div>
+          </summary>
+     <details class="al-accordion" data-collapse="evolution">
+          <summary>
+            <div class="al-summary-main">
+              <span class="al-summary-icon">⚡</span>
+              <div class="al-summary-text">
+                <span class="al-summary-title">Evolução</span>
+                <span class="al-summary-sub">Nível 08 · Jornada 78%</span>
+              </div>
+            </div>
+          </summary>
+          <div class="al-accordion-content">
+            <section class="section card evolution" data-panel="evolution">
+              <div class="evo-top">
+                <h2 class="section-title">Evolução</h2>
+                <span class="level">Nível 08 ◉</span>
+              </div>
+              <div class="evo-main">
+                <div class="ring">
+                  <div class="ring-content">
+                    <strong>78%</strong>
+                    <span>Jornada</span>
+                  </div>
+                </div>
+                <div class="metrics">
+                  <div class="metric"><span class="metric-label">◉ &nbsp; Foco</span><span class="metric-value">Alto</span></div>
+                  <div class="metric"><span class="metric-label">⚡ &nbsp; Energia</span><span class="metric-value">84%</span></div>
+                  <div class="metric"><span class="metric-label">♧ &nbsp; Consistência</span><span class="metric-value">09 dias</span></div>
+                  <div class="metric"><span class="metric-label">◌ &nbsp; Microações</span><span class="metric-value">23/30</span></div>
+                </div>
+              </div>
+              <div class="spark" aria-label="Linha de evolução">
+                <svg viewBox="0 0 600 90" preserveAspectRatio="none" role="img">
+                  <path d="M0 68 C35 54,58 72,86 48 S137 57,164 42 S217 63,244 35 S302 55,330 42 S386 65,412 27 S463 48,493 31 S551 43,600 18" fill="none" stroke="#a855ff" stroke-width="4" stroke-linecap="round"></path>
+                </svg>
+              </div>
+              <div class="timeline">
+                <span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span><span>DOM</span>
+              </div>
+            </section>
+          </div>
+        </details>
+
+        <!-- =========================================================
+             DUAL
+             ========================================================= -->
+        <details class="al-accordion" data-collapse="dual">
+          <summary>
+            <div class="al-summary-main">
+              <span class="al-summary-icon">✦</span>
+              <div class="al-summary-text">
+                <span class="al-summary-title">Dual Ativo</span>
+                <span class="al-summary-sub">Explorador · Naviga</span>
+              </div>
+            </div>
+          </summary>
+          <div class="al-accordion-content">
+            <section class="section card dual" data-panel="dual">
+              <small>DUAL ATIVO</small>
+              <h2>Explorador</h2>
+              <p>Arquétipo ativo</p>
+              <div class="dual-line">
+                <span class="dual-pill">◉ &nbsp; Assistente: <b>Naviga</b></span>
+              </div>
+            </section>
+          </div>
+        </details>
+
+        <!-- =========================================================
+             DESAFIO
+             ========================================================= -->
+        <details class="al-accordion" data-collapse="challenge">
+          <summary>
+            <div class="al-summary-main">
+              <span class="al-summary-icon">🔥</span>
+              <div class="al-summary-text">
+                <span class="al-summary-title">Próxima Evolução</span>
+                <span class="al-summary-sub">Desafio · 2/5 etapas</span>
+              </div>
+            </div>
+          </summary>
+          <div class="al-accordion-content">
+            <section class="section card challenge" data-panel="challenge">
+              <small>🔥 PRÓXIMA EVOLUÇÃO</small>
+              <h2>Desafio ativo</h2>
+              <p>Escolha uma ideia da sua Library e transforme-a em uma ação concreta ainda hoje.</p>
+              <div class="challenge-row">
+                <button class="cta" id="startChallengeBtn">Começar desafio →</button>
+                <div class="steps"><span>2/5<br>etapas</span></div>
+              </div>
+            </section>
+          </div>
+        </details>
+
+        <!-- =========================================================
+             DOSES RECENTES
+             ========================================================= -->
+        <details class="al-accordion" data-collapse="doses">
+          <summary>
+            <div class="al-summary-main">
+              <span class="al-summary-icon">💊</span>
+              <div class="al-summary-text">
+                <span class="al-summary-title">Doses Recentes</span>
+                <span class="al-summary-sub">12 arquétipos · experiências ativas</span>
+              </div>
+            </div>
+          </summary>
+          <div class="al-accordion-content">
+            <section class="section" data-panel="doses">
+              <div class="section-head">
+                <h2 class="section-title">Doses Recentes</h2>
+                <button class="section-link" id="dosesViewAllBtn">Ver todas ›</button>
+              </div>
+              <div class="scroller" data-carousel="doses">
+                <article class="dose snap" data-dose="atlas">
+                  <span class="dose-tag">Atlas</span>
+                  <div class="dose-bottom"><h3>Clareza</h3><p>Planejamento</p><span class="dose-status">✓ Ativo</span></div>
+                </article>
+                <article class="dose snap" data-dose="nova">
+                  <span class="dose-tag">Nova</span>
+                  <div class="dose-bottom"><h3>Criação</h3><p>Ideias novas</p><span class="dose-status">◉ 78%</span></div>
+                </article>
+                <article class="dose snap" data-dose="vitalis">
+                  <span class="dose-tag">Vitalis</span>
+                  <div class="dose-bottom"><h3>Energia</h3><p>Ativação</p><span class="dose-status">◉ 84%</span></div>
+                </article>
+                <article class="dose snap" data-dose="pulse">
+                  <span class="dose-tag">Pulse</span>
+                  <div class="dose-bottom"><h3>Ressonância</h3><p>Som &amp; emoção</p><span class="dose-status">◉ 62%</span></div>
+                </article>
+                <article class="dose snap" data-dose="artemis">
+                  <span class="dose-tag">Artemis</span>
+                  <div class="dose-bottom"><h3>Exploração</h3><p>Novos caminhos</p><span class="dose-status">◉ 71%</span></div>
+                </article>
+                <article class="dose snap" data-dose="serena">
+                  <span class="dose-tag">Serena</span>
+                  <div class="dose-bottom"><h3>Acolhimento</h3><p>Conexões</p><span class="dose-status">✓ Ativo</span></div>
+                </article>
+                <article class="dose snap" data-dose="kaos">
+                  <span class="dose-tag">Kaos</span>
+                  <div class="dose-bottom"><h3>Ruptura</h3><p>Quebra de padrão</p><span class="dose-status">◉ 55%</span></div>
+                </article>
+                <article class="dose snap" data-dose="genus">
+                  <span class="dose-tag">Genus</span>
+                  <div class="dose-bottom"><h3>Materialização</h3><p>Ideia → ação</p><span class="dose-status">◉ 66%</span></div>
+                </article>
+                <article class="dose snap" data-dose="lumine">
+                  <span class="dose-tag">Lumine</span>
+                  <div class="dose-bottom"><h3>Alegria</h3><p>Leveza</p><span class="dose-status">✓ Ativo</span></div>
+                </article>
+                <article class="dose snap" data-dose="rhea">
+                  <span class="dose-tag">Rhea</span>
+                  <div class="dose-bottom"><h3>Raízes</h3><p>Memória &amp; vínculos</p><span class="dose-status">◉ 48%</span></div>
+                </article>
+                <article class="dose snap" data-dose="solus">
+                  <span class="dose-tag">Solus</span>
+                  <div class="dose-bottom"><h3>Transformação</h3><p>Intenção → realização</p><span class="dose-status">◉ 73%</span></div>
+                </article>
+                <article class="dose snap" data-dose="aion">
+                  <span class="dose-tag">Aion</span>
+                  <div class="dose-bottom"><h3>Evolução</h3><p>Microações</p><span class="dose-status">◉ 81%</span></div>
+                </article>
+              </div>
+            </section>
+          </div>
+        </details>
+
+        <!-- =========================================================
+             MEMÓRIAS
+             ========================================================= -->
+        <details class="al-accordion" data-collapse="memories">
+          <summary>
+            <div class="al-summary-main">
+              <span class="al-summary-icon">🧠</span>
+              <div class="al-summary-text">
+                <span class="al-summary-title">Memórias em Destaque</span>
+                <span class="al-summary-sub">24 memórias · 4 recentes</span>
+              </div>
+            </div>
+          </summary>
+          <div class="al-accordion-content">
+            <section class="section" data-panel="memories">
+              <div class="section-head">
+                <h2 class="section-title">Memórias em destaque</h2>
+                <button class="section-link" id="memoriesViewAllBtn">Ver todas ›</button>
+              </div>
+              <div class="scroller" data-carousel="memories">
+                <article class="memory snap"><span class="memory-date">18 MAI</span><h3>Insight poderoso</h3><p>Entendi que a consistência...</p></article>
+                <article class="memory snap"><span class="memory-date">14 MAI</span><h3>Momento de foco</h3><p>2h de trabalho profundo...</p></article>
+                <article class="memory snap"><span class="memory-date">10 MAI</span><h3>Nova descoberta</h3><p>Conceito que mudou tudo...</p></article>
+                <article class="memory snap"><span class="memory-date">06 MAI</span><h3>Ação importante</h3><p>Saí da zona de conforto...</p></article>
+              </div>
+            </section>
+          </div>
+        </details>
+</details>
+      </div></div></main>
+
+      <!-- ===== BOTTOM NAV ===== -->
+      <nav style="display:none" class="bottom-nav" data-module="navigation" aria-label="Navegação principal">
+        <button class="nav-item active" data-tab="home"><span class="nav-icon">⌂</span><span>Início</span></button>
+        <button class="nav-item" id="navLibraryBtn"><span class="nav-icon">▣</span><span>Library</span></button>
+        <button class="nav-main" id="navCreateBtn">+</button>
+        <button class="nav-item" id="navResultsBtn"><span class="nav-icon">▥</span><span>Resultados</span></button>
+        <button class="nav-item" id="navProfileBtn"><span class="nav-icon">♙</span><span>Perfil</span></button>
+      </nav>
+
+    </div>
+  </div>
+
+  <!-- TOASTER -->
+  <div class="toaster-wrap" id="toasterWrap"></div>
+
+  <input type="file" id="nebulaFileInput" multiple="" accept=".txt,.md,.html,.pdf" style="display:none">
+
+  <!-- ============================================================
+       NÉBULA: input file + reader (elementos HTML)
+       ============================================================ 
+
+  <div class="reader" id="nebulaReader">
+    <div class="reader-head">
+      <div class="reader-title" id="nebulaReaderTitle">Título do Documento</div>
+      <button class="reader-close" id="nebulaReaderClose">✕</button>
+    </div>
+    <div class="reader-body" id="nebulaReaderBody"></div>
+  </div>
+-->
+
+  <!-- ⚙️ SCRIPTS — ORDEM DEFINITIVA & CORRIGIDA -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/FSWIN/js/modules/iFSw-fix.js"></script>
+  <script type="module" src="https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78Almas/js/main.js"></script>
+  <script type="module" src="https://www.infodose.com.br/js/modules/Dual_[Theme].js"></script>
+  <script src="https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78HERO/js/modules/nebula-unified-mix-1.js"></script>
+  <script src="https://www.infodose.com.br/js/Beauty-v3.js"></script>
+
+  <!-- 📦 BASE → JS_0 até JS_19 (estrutura comum) --
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-0.js" data-k-id="JS_0"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-1.js" data-k-id="JS_1"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-2.js" data-k-id="JS_2"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-3.js" data-k-id="JS_3"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-4.js" data-k-id="JS_4"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-5.js" data-k-id="JS_5"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-7.js" data-k-id="JS_6"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-8.js" data-k-id="JS_7"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-9.js" data-k-id="JS_8"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-10.js" data-k-id="JS_9"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-11.js" data-k-id="JS_10"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-12.js" data-k-id="JS_11"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-13.js" data-k-id="JS_12"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-14.js" data-k-id="JS_13"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-15.js" data-k-id="JS_14"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-16.js" data-k-id="JS_15"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-17.js" data-k-id="JS_16"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-18.js" data-k-id="JS_17"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-19.js" data-k-id="JS_18"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-20.js" data-k-id="JS_19"></script>
+-->
+  <!-- ⭐ NÚCLEO TTS V32 + RECURSOS — inline‑21/24 REMOVIDOS (versões antigas/conflitantes) -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-22.js" data-k-id="JS_21"></script><!-- ✅ MOTOR PRINCIPAL TTS v32 -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-23.js" data-k-id="JS_22"></script><!-- HOOK sobrepõe estilo voz IA/externo -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-25.js" data-k-id="JS_24"></script><!-- Reset preferências → limpo -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-26.js" data-k-id="JS_25"></script><!-- 21+ PERFIS/VOZES Arquétipos -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-27.js" data-k-id="JS_26"></script><!-- Tema/Gradiente por Arquétipo -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-28.js" data-k-id="JS_27"></script><!-- Cores/Detalhes extras -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-29.js" data-k-id="JS_28"></script><!-- Transições suaves/efeitos -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-30.js" data-k-id="JS_29"></script><!-- Animações fundo/neblina -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-31.js" data-k-id="JS_30"></script><!-- Botões/estilo Dock -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-32.js" data-k-id="JS_31"></script><!-- Conversor RTF→Markdown -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-33.js" data-k-id="JS_32"></script><!-- Animação ASCII/Carrossel -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-34.js" data-k-id="JS_33"></script><!-- Conversor RTF+HTML completo -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-35.js" data-k-id="JS_34"></script><!-- Fecha menus ao clicar fora -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-36.js" data-k-id="JS_35"></script><!-- Tabelas/Tokens/estatísticas -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-37.js" data-k-id="JS_36"></script><!-- Melhorias fechamento/estados -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-38.js" data-k-id="JS_37"></script><!-- Detecção inteligente voz/arquétipo -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-39.js" data-k-id="JS_38"></script><!-- Gatilhos de frase por Arquétipo -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-40.js" data-k-id="JS_39"></script><!-- MAPA Ion/Solus/Artemis/Pulse -->
+
+<!-- ==========================================
+       🚀 SCRIPTS DO SISTEMA (Fim do Body)
+       ========================================== -->
+  
+  <!-- Script de Manipulação Inline (Refatorado para textContent) -->
+  <script>
+    function updateInterface(name) {
+      const safe = name || window.di_userName || 'Convidado';
+
+      // Substituição de innerText para textContent para integridade DOM
+      els.lblName.textContent = safe;
+      els.input.value = safe;
+
+      const activeKey = STATE.keys.find(k => k.active);
+
+      els.smallIdent.textContent = activeKey ? activeKey.name : '--';
+      els.actBadge.textContent = activeKey ? `key:${activeKey.name}` : 'v:--';
+
+      const orbBig  = makeOrbAvatar(safe, 64);
+      const orbMid  = makeOrbAvatar(safe, 36);
+      const orbMini = makeOrbAvatar(safe, 24);
+
+      els.avatarTgt.innerHTML = orbBig;
+      els.smallMiniAvatar.innerHTML = orbMini;
+      els.actMiniAvatar.innerHTML = orbMid;
+
+      els.actName.textContent = safe;
+    }
+  </script>
+
+  <!-- Módulos de Boot e Base -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-0.js" data-k-id="JS_0"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-1.js" data-k-id="JS_1"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-2.js" data-k-id="JS_2"></script>
+  <script src="https://kodux78k.github.io/oi-Dual/js/modules/inline-000.js"></script>
+  
+  <!-- Dependências CORE do DUAL -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/js/koblluxv30.js"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/js/kodbrain-66.js"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/js/di_core.js"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/js/di_mood.js"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/js/kobllux-fusion.js"></script>
+
+  <!-- Extensões Visuais e de Janelas -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/kob-DH0/js/0x03_expandir_V_D7.js"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/kob-DH0/js/0x07_selar_B_D3.js"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/FSWIN/js/modules/iFSw-fix.js"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/kob-DH0/js/kob-outline-uni.js"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/js/di-icon-btn.js"></script>
+  <script src="https://www.infodose.com.br/js/Beauty-v3.js"></script>
+
+  <!-- Entry Points e App (type="module") -->
+  <script type="module" src="https://www.infodose.com.br/js/main-2.js"></script>
+  <script type="module" src="https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78Almas/js/main.js"></script>
+  <script type="module" src="https://www.infodose.com.br/js/modules/Dual_[Themeo].js"></script>
+
+  <!-- [REVISAR]: Os scripts abaixo estavam importados múltiplas vezes. Foram deixadas apenas as instâncias finais. -->
+  <!-- <script src="https://infodose.com.br/oiDual/KODUX/78K/APPS/78FusionOS/js/modules/78FusionOS.js"></script> -->
+
+
+</div><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script>
+    function updateInterface(name) {
+      const safe = name || window.di_userName || 'Convidado';
+
+      // Substituição de innerText para textContent para integridade DOM
+      els.lblName.textContent = safe;
+      els.input.value = safe;
+
+      const activeKey = STATE.keys.find(k => k.active);
+
+      els.smallIdent.textContent = activeKey ? activeKey.name : '--';
+      els.actBadge.textContent = activeKey ? `key:${activeKey.name}` : 'v:--';
+
+      const orbBig  = makeOrbAvatar(safe, 64);
+      const orbMid  = makeOrbAvatar(safe, 36);
+      const orbMini = makeOrbAvatar(safe, 24);
+
+      els.avatarTgt.innerHTML = orbBig;
+      els.smallMiniAvatar.innerHTML = orbMini;
+      els.actMiniAvatar.innerHTML = orbMid;
+
+      els.actName.textContent = safe;
+    }
+  </script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script><script></script></body></html>
