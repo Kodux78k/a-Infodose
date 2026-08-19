@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#000000">
+
+  <title>Almasliber OS · DUAL SHELL + Library Nébula</title>
+
+  <link rel="apple-touch-icon" href="https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78HERO/icon-192.png">
+  <link rel="manifest" href="https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78HERO/manifest.json">
+
+  <!-- CSS Externo -->
+  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/M0D/FSWIN/css/iFSw-fix.css">
+  <link rel="stylesheet" href="https://infodose.com.br/oiDual/KODUX/78K/APPS/78Dual/css/main.css">
+  
+  <style>
+    @import "https://infodose.com.br/oiDual/KODUX/78K/APPS/78header/dual-header-app/css/main.css";
+  </style>
+
+  <style>
+    /* =========================================================
+       VARIÁVEIS E RESET
+    ========================================================= */
+    :root {
+      color-scheme: dark light;
+      --dual-bg: #000;
+      --dual-text: #fff;
+      --dual-cyan: #00ffff;
+      --dual-magenta: #ff00ff;
+      --kodux-header-h: 58px;
+      --z-base: 0;
+      --z-content: 100;
+      --z-widget: 500;
+      --z-overlay: 1000;
+      --z-system: 5000;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%; height: 100%;
+      margin: 0; padding: 0;
+      overflow: hidden;
+      background: var(--dual-bg);
+      color: var(--dual-text);
+      font-family: Montserrat, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    #dual-shell {
+      position: relative; display: flex; flex-direction: column;
+      width: 100%; height: 100%; min-height: 0; overflow: hidden;
+    }
+
+    .smart-header {
+      position: relative; width: 100%; overflow: hidden;
+      flex: 0 0 auto; z-index: var(--z-system);
+    }
+
+    #dual-global-header { z-index: 5000; display: flex; flex-direction: column; }
+
+    .dual-global-bar {
+      flex: 0 0 auto; height: 52px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 14px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .025));
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      cursor: pointer;
+    }
+
+    .dual-brand {
+      display: flex; align-items: center; gap: 8px;
+      font-weight: 800; letter-spacing: .08em; pointer-events: none;
+    }
+
+    .dual-brand-badge {
+      padding: 3px 7px; border-radius: 999px;
+      font-size: 9px; letter-spacing: .08em;
+      background: rgba(0, 255, 255, .12);
+      border: 1px solid rgba(0, 255, 255, .25); color: var(--dual-cyan);
+    }
+
+    #dual-theme-dot, #kodux-theme-dot {
+      width: 32px; height: 32px;
+      display: grid; place-items: center;
+      padding: 0; border: 0; border-radius: 50%;
+      cursor: pointer; color: inherit;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    #dual-theme-dot {
+      background: radial-gradient(circle, rgba(255, 0, 255, .45), rgba(0, 255, 255, .18));
+      color: #fff;
+    }
+    #dual-theme-dot:hover, #kodux-theme-dot:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 12px rgba(0, 255, 255, 0.3);
+    }
+    #dual-theme-dot svg, #kodux-theme-dot svg { width: 15px; height: 15px; }
+
+    /* =========================================================
+       LIBRARY NÉBULA
+    ========================================================= */
+    .header-library {
+      flex: 0 0 auto; width: 100%; border: none;
+      border-top: 1px solid rgba(255, 255, 255, .40);
+      background: rgba(255, 255, 255, .025);
+    }
+
+    .header-library > summary {
+      list-style: none; cursor: pointer; padding: 10px 14px;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .header-library > summary::-webkit-details-marker { display: none; }
+
+    .al-summary-main { display: flex; align-items: center; gap: 18px; min-width: 0; }
+    .al-summary-icon {
+      flex: 0 0 auto; width: 30px; height: 30px; display: grid; place-items: center;
+      border-radius: 10px; font-size: 14px;
+      background: linear-gradient(135deg, rgba(0, 255, 255, .15), rgba(255, 0, 255, .12));
+      transition: background .25s ease;
+    }
+    .header-library[open] .al-summary-icon {
+      background: linear-gradient(135deg, var(--dual-cyan), var(--dual-magenta));
+    }
+
+    .al-summary-text { display: flex; flex-direction: column; min-width: 0; }
+    .al-summary-title { font-size: 12px; font-weight: 700; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .al-summary-sub { font-size: 10px; color: rgba(255, 255, 255, .5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .al-chevron {
+      flex: 0 0 auto; font-size: 12px; color: rgba(255, 255, 255, .5);
+      transition: transform .25s ease; will-change: transform;
+    }
+    .header-library[open] .al-chevron { transform: rotate(180deg); }
+
+    .al-accordion-content { overflow: hidden; height: 0; padding: 0 14px; will-change: height; }
+
+    .nebula-quickbar { display: flex; gap: 8px; padding-top: 4px; padding-bottom: 10px; }
+    .nebula-qbtn {
+      flex: 1 1 auto; display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 8px 10px; border: 1px solid rgba(255, 255, 255, .1); border-radius: 12px;
+      background: rgba(255, 255, 255, .03); color: inherit; font: inherit; font-size: 11px; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .nebula-qbtn:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+    .nebula-qbtn.primary {
+      background: linear-gradient(135deg, rgba(0, 255, 255, .18), rgba(255, 0, 255, .14));
+      border-color: rgba(255, 255, 255, .18);
+    }
+    .qicon { font-size: 13px; }
+
+    .nebula-search-box { max-height: 0; overflow: hidden; transition: max-height .22s ease; will-change: max-height; }
+    .nebula-search-box.visible { max-height: 48px; padding-bottom: 10px; }
+    .nebula-search-box input {
+      width: 100%; padding: 9px 12px; border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      background: rgba(255, 255, 255, .04); color: inherit; font: inherit; font-size: 12px;
+      transition: border-color 0.2s ease;
+    }
+    .nebula-search-box input:focus {
+      outline: none;
+      border-color: var(--dual-cyan);
+      box-shadow: 0 0 0 2px rgba(0, 255, 255, 0.15);
+    }
+
+    .scroller {
+      display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 10px;
+      scroll-snap-type: x proximity;
+    }
+    .scroller::-webkit-scrollbar { display: none; }
+    .group-pill {
+      flex: 0 0 auto; padding: 7px 12px; border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 999px; background: transparent; color: inherit; font: inherit; font-size: 10px; cursor: pointer;
+      transition: all 0.2s ease;
+      scroll-snap-align: start;
+    }
+    .group-pill.active {
+      background: linear-gradient(135deg, rgba(0, 255, 255, .18), rgba(255, 0, 255, .14));
+      border-color: rgba(255, 255, 255, .2);
+    }
+
+    .doc-card {
+      flex: 0 0 auto; width: 120px; height: 84px; border-radius: 14px; padding: 10px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      background: linear-gradient(160deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .015));
+      border: 1px solid rgba(255, 255, 255, .08); font-size: 10px; cursor: pointer;
+      transition: all 0.2s ease;
+      scroll-snap-align: start;
+    }
+    .doc-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+    .doc-card .doc-icon { font-size: 16px; }
+    .doc-card .doc-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .85; }
+
+    .doc-dots { display: flex; gap: 4px; justify-content: center; padding-bottom: 12px; }
+    .doc-dots span { width: 4px; height: 4px; border-radius: 50%; background: rgba(255, 255, 255, .25); }
+
+    /* =========================================================
+       HEADER 02 — PAYLOAD / KODUX
+    ========================================================= */
+    #payload-header { height: var(--kodux-header-h); z-index: 4000; }
+
+    .kodux-nav {
+      width: 100%; height: 100%; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 10px; background: linear-gradient(180deg, rgba(20, 20, 20, .96), rgba(0, 0, 0, .94));
+      border-bottom: 1px solid rgba(255, 255, 255, .07);
+    }
+    .kodux-left { display: flex; align-items: center; gap: 8px; }
+    .kodux-brand { 
+      width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .kodux-brand:hover { transform: scale(1.1); }
+    .kodux-brand svg { width: 23px; height: 23px; fill: currentColor; }
+    .kodux-avatar { 
+      width: 28px; height: 28px; border-radius: 50%; 
+      background: linear-gradient(135deg, var(--dual-cyan), var(--dual-magenta));
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+    .kodux-avatar:hover { 
+      transform: scale(1.1); 
+      box-shadow: 0 0 12px rgba(255, 0, 255, 0.3);
+    }
+
+    .footer-tabs { display: flex; align-items: center; gap: 4px; max-width: 52vw; overflow-x: auto; scrollbar-width: none; }
+    .footer-tabs::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      flex: 0 0 auto; padding: 7px 9px; border: 0; border-radius: 999px;
+      background: transparent; color: inherit; font: inherit; font-size: 10px; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(0, 255, 255, .18), rgba(255, 0, 255, .14));
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
+    }
+    .tab-btn:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    #dual-main {
+      position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden;
+      transition: opacity .22s ease, visibility .22s ease, transform .22s ease;
+      will-change: opacity, transform;
+    }
+    #dual-main.hidden { opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(8px); }
+    [data-mount="payload"] { position: relative; width: 100%; height: 100%; overflow: hidden; }
+
+    .tab-iframe {
+      position: absolute; inset: 0; width: 100%; height: 100%; border: 0;
+      opacity: 0; visibility: hidden; pointer-events: none; background: transparent;
+      transition: opacity .25s ease, visibility .25s ease; will-change: opacity;
+    }
+    .tab-iframe.active { opacity: 1; visibility: visible; pointer-events: auto; }
+
+    #kxtsk-shell { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+    .os-topbar {
+      flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 14px; background: linear-gradient(180deg, rgba(255, 255, 255, .04), rgba(255, 255, 255, .01));
+      border-bottom: 1px solid rgba(255, 255, 255, .06);
+    }
+    .os-brand { font-weight: 800; letter-spacing: .08em; font-size: 13px; display: flex; flex-direction: column; line-height: 1.1; }
+    .os-brand small { font-size: 9px; font-weight: 500; opacity: .5; letter-spacing: .04em; }
+
+    .top-actions { display: flex; gap: 8px; }
+    .launcher-btn, .soft-btn {
+      padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, .12);
+      background: linear-gradient(135deg, rgba(0, 255, 255, .12), rgba(255, 0, 255, .08));
+      color: inherit; font: inherit; font-size: 11px; cursor: pointer; transition: all .2s ease;
+    }
+    .soft-btn { background: rgba(255, 255, 255, .04); }
+    .launcher-btn:hover, .soft-btn:hover { border-color: rgba(255, 255, 255, .2); transform: translateY(-1px); }
+
+    #dock {
+      flex: 0 0 auto; min-height: 0; max-height: 0; overflow: hidden;
+      transition: max-height .25s ease; will-change: max-height;
+      background: rgba(255, 255, 255, .02); border-bottom: 1px solid rgba(255, 255, 255, .04);
+      display: flex; gap: 8px;
+    }
+    #dock.visible { max-height: 60px; padding: 8px 14px; }
+
+    #stackWrap {
+      flex: 1 1 auto; position: relative; overflow: auto; padding: 14px;
+      background:
+        radial-gradient(ellipse at 20% 0%, rgba(0, 255, 255, .06), transparent 50%),
+        radial-gradient(ellipse at 80% 100%, rgba(255, 0, 255, .06), transparent 50%),
+        var(--dual-bg);
+    }
+
+    .session-window {
+      position: relative; width: 100%; max-width: 100%;
+      height: calc(100vh - 200px); min-height: 400px;
+      border-radius: 14px; overflow: hidden; background: rgba(20, 20, 20, .9);
+      border: 1px solid rgba(255, 255, 255, .1);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .5), 0 0 0 1px rgba(255, 255, 255, .05);
+      display: flex; flex-direction: column;
+      transition: box-shadow 0.3s ease;
+    }
+    .session-window:hover {
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 255, 255, 0.1);
+    }
+    .session-window.collapsed { height: auto; }
+    .session-window.collapsed .win-frame { display: none; }
+    .session-window.maximized { 
+      position: fixed; inset: 0; width: 100vw; height: 100vh; 
+      border-radius: 0; z-index: 99999; 
+    }
+
+    .win-hdr {
+      flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; background: linear-gradient(180deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .02));
+      border-bottom: 1px solid rgba(255, 255, 255, .08); cursor: pointer; user-select: none;
+    }
+    .win-title { font-size: 12px; font-weight: 700; letter-spacing: .04em; }
+    .win-controls { display: flex; gap: 4px; }
+    .win-controls button {
+      width: 26px; height: 26px; display: grid; place-items: center;
+      border-radius: 6px; border: 1px solid rgba(255, 255, 255, .1);
+      background: rgba(255, 255, 255, .04); color: inherit; font-size: 12px; cursor: pointer; transition: all .15s ease;
+    }
+    .win-controls button:hover { background: rgba(255, 255, 255, .1); border-color: rgba(255, 255, 255, .2); }
+    .win-frame { flex: 1 1 auto; width: 100%; border: 0; background: #000; }
+
+    body[data-theme="light"] { --dual-bg: #f4f4f4; --dual-text: #111; }
+    body[data-theme="light"] .kodux-nav { background: rgba(255, 255, 255, .94); color: #111; }
+    body[data-theme="light"] .dual-global-bar { background: linear-gradient(180deg, rgba(255, 255, 255, .9), rgba(255, 255, 255, .7)); color: #111; }
+    body[data-theme="light"] .header-library { background: rgba(0, 0, 0, .02); border-top-color: rgba(0, 0, 0, .06); }
+    body[data-theme="light"] .os-topbar { background: linear-gradient(180deg, rgba(0, 0, 0, .03), rgba(0, 0, 0, .01)); border-bottom-color: rgba(0, 0, 0, .08); }
+    body[data-theme="light"] .session-window { background: rgba(250, 250, 250, .95); border-color: rgba(0, 0, 0, .1); }
+    body[data-theme="light"] .win-hdr { background: linear-gradient(180deg, rgba(0, 0, 0, .06), rgba(0, 0, 0, .02)); border-bottom-color: rgba(0, 0, 0, .08); }
+    body[data-theme="light"] .nebula-search-box input {
+      background: rgba(255, 255, 255, 0.8);
+      border-color: rgba(0, 0, 0, 0.1);
+      color: #111;
+    }
+    body[data-theme="light"] .group-pill { border-color: rgba(0, 0, 0, 0.1); }
+    body[data-theme="light"] .doc-card {
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+      border-color: rgba(0, 0, 0, 0.08);
+    }
+    body[data-theme="light"] #dock {
+      background: rgba(0, 0, 0, 0.02);
+      border-bottom-color: rgba(0, 0, 0, 0.06);
+    }
+
+    @media(max-width: 700px) {
+      :root { --kodux-header-h: 54px; }
+      .dual-global-bar { padding: 0 10px; }
+      .dual-brand { font-size: 12px; }
+      .footer-tabs { max-width: 48vw; }
+      .doc-card { width: 104px; height: 78px; }
+      .os-topbar { padding: 6px 10px; }
+      #stackWrap { padding: 8px; }
+      .session-window { height: calc(100vh - 180px); min-height: 300px; }
+    }
+  </style>
+</head>
+
+<body class="ui-safe-vertical" data-theme="dark">
+
+  <div id="dual-shell" data-shell="dual" data-version="4.1-almasliber-kxtsk">
+
+    <!-- GLOBAL HEADER + LIBRARY NÉBULA -->
+    <header id="dual-global-header" class="smart-header" data-mount="global-header">
+      <div class="dual-global-bar" data-header-tap-zone>
+        <div class="dual-brand">
+          <span>DUAL</span>
+          <span class="dual-brand-badge">GLOBAL</span>
+        </div>
+        <button id="dual-theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5" />
+            <path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- LIBRARY NÉBULA INTEGRADA -->
+      <details class="al-accordion header-library" id="globalLibrary" open>
+        <summary>
+          <div class="al-summary-main">
+            <span class="al-summary-icon">📚</span>
+            <div class="al-summary-text">
+              <span class="al-summary-title">Library Nébula</span>
+              <span class="al-summary-sub" id="nebulaSummarySub">Nébula · carregando…</span>
+            </div>
+          </div>
+          <span class="al-chevron">⌄</span>
+        </summary>
+        <div class="al-accordion-content">
+          <div class="nebula-quickbar">
+            <button class="nebula-qbtn primary" id="nebulaAdd"><span class="qicon">＋</span>Adicionar</button>
+            <button class="nebula-qbtn" id="nebulaSearchToggle"><span class="qicon">⌕</span>Buscar</button>
+            <button class="nebula-qbtn" id="nebulaOpenUrl"><span class="qicon">↗</span>Abrir link</button>
+          </div>
+          <div class="nebula-search-box" id="nebulaSearchBox">
+            <input type="text" id="nebulaSearchInput" placeholder="Buscar documentos...">
+          </div>
+          <div class="scroller" id="nebulaGroups" data-carousel="nebula-groups">
+            <button class="group-pill active" data-group="recentes">Recentes</button>
+            <button class="group-pill" data-group="favoritos">Favoritos</button>
+            <button class="group-pill" data-group="cortex">Cortex</button>
+            <button class="group-pill" data-group="documentos">Documentos</button>
+            <button class="group-pill" data-group="apps">Apps</button>
+            <button class="group-pill" data-group="config">Config</button>
+            <button class="group-pill" data-group="cache">Cache</button>
+          </div>
+          <div class="scroller" id="nebulaCarousel" data-carousel="nebula-docs"></div>
+          <div class="doc-dots" id="nebulaDots"></div>
+        </div>
+      </details>
+    </header>
+
+    <!-- PAYLOAD / KODUX HEADER -->
+    <header id="payload-header" class="smart-header" data-mount="payload-header">
+      <div class="kodux-nav">
+        <div class="kodux-left">
+          <div class="kodux-brand" id="kodux-brand" title="KODUX iCloud">
+            <svg viewBox="0 0 24 24">
+              <path d="M17.5,19c-3.6,0-6.5-2.9-6.5-6.5s2.9-6.5,6.5-6.5s6.5,2.9,6.5,6.5S21.1,19,17.5,19z M17.5,8c-2.5,0-4.5,2-4.5,4.5s2,4.5,4.5,4.5s4.5-2,4.5-4.5S20,8,17.5,8z" />
+            </svg>
+          </div>
+          <div class="kodux-avatar" id="kodux-avatar" title="Perfil KODUX"></div>
+        </div>
+        <button id="kodux-theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px">
+            <circle cx="12" cy="12" r="5" />
+            <path d="M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42" />
+          </svg>
+        </button>
+        <div class="footer-tabs" data-mount="navigation">
+          <button class="tab-btn active" data-tab="kxtsk">KxTsK</button>
+          <button class="tab-btn" data-tab="inicio">Início</button>
+          <button class="tab-btn" data-tab="biblioteca">Biblioteca</button>
+          <button class="tab-btn" data-tab="cortex">Cortex</button>
+          <button class="tab-btn" data-tab="ajustes">Ajustes</button>
+          <button class="tab-btn" data-tab="kblx">KBLX</button>
+          <button class="tab-btn" data-tab="kard">KARD</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN / PAYLOAD -->
+    <main id="dual-main" data-mount="main-content">
+      <div data-mount="payload" id="payload-container">
+        
+        <!-- ABA: KxTsK -->
+        <div class="tab-iframe active" data-tab="kxtsk" style="position:absolute;inset:0;width:100%;height:100%;overflow:auto">
+          <div id="kxtsk-shell">
+            <div class="os-topbar">
+              <div class="os-brand">KxTsK <small>Unified Patch Loader</small></div>
+              <div class="top-actions">
+                <button class="launcher-btn" id="openKobBtn">+ Abrir KOB</button>
+                <button class="soft-btn" id="openLogsBtn">Logs</button>
+              </div>
+            </div>
+            <div id="dock"></div>
+            <div id="stackWrap">
+              <div class="session-window" id="session-iframe">
+                <div class="win-hdr" onclick="handleHeaderClick(event, 'session-iframe')">
+                  <div class="win-title">🌐 DUAL H0 // KOB LV BASE</div>
+                  <div class="win-controls" onclick="event.stopPropagation()">
+                    <button onclick="toggleCollapse('session-iframe')" title="Colapsar">—</button>
+                    <button onclick="toggleMaximize('session-iframe')" title="Maximizar">⬜</button>
+                    <button onclick="minimizeWindow('session-iframe')" title="Minimizar para o Dock">🔘</button>
+                    <button onclick="closeWindow('session-iframe')" title="Fechar">✕</button>
+                  </div>
+                </div>
+                <iframe
+                  class="win-frame"
+                  src="https://kodux78k.github.io/oiDual-H0/DH0-10.html"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+                  allow="fullscreen; accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
+                  loading="lazy">
+                </iframe>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- OUTRAS ABAS -->
+        <iframe class="tab-iframe" data-tab="inicio" data-payload="78Unouno" src="https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78Unouno/index.html" loading="lazy" allowfullscreen></iframe>
+        <iframe class="tab-iframe" data-tab="biblioteca" data-payload="78HERO" src="https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78HERO/" loading="lazy" allowfullscreen></iframe>
+        <iframe class="tab-iframe" data-tab="cortex" data-payload="78iFSwOS" src="https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78iFSwOS/" loading="lazy" allowfullscreen></iframe>
+        <iframe class="tab-iframe" data-tab="ajustes" data-payload="78KARD" src="https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78KARD/" loading="lazy" allowfullscreen></iframe>
+        <iframe class="tab-iframe" data-tab="kblx" data-payload="kblx" srcdoc="
+          <!DOCTYPE html><html><body style='margin:0;background:#000;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100%;min-height:1200px'>
+            <div><h2>KBLX</h2><p>Conteúdo da aba KBLX</p><p>Role pra testar o header inteligente.</p></div>
+            <script>
+              (function(){
+                let lastY = 0, threshold = 8;
+                window.addEventListener('scroll', () => {
+                  const y = window.scrollY || document.documentElement.scrollTop || 0;
+                  let dir = 'none';
+                  if (y <= 10) dir = 'top';
+                  else if (y > lastY + threshold) dir = 'down';
+                  else if (y < lastY - threshold) dir = 'up';
+                  if (dir !== 'none') window.parent.postMessage({ type: 'dual:scroll', direction: dir, y }, '*');
+                  lastY = y;
+                }, { passive: true });
+              })();
+            <\/script>
+          </body></html>">
+        </iframe>
+
+        <!-- ===== ABA KARD (RENDERIZADA NO PRIMEIRO HEADER/SEÇÃO) ===== -->
+        <div class="tab-iframe" data-tab="kard" style="position:absolute;inset:0;width:100%;height:100%;overflow:auto;background:var(--dual-bg);">
+          <div class="almasliber" data-app="almasliber" style="padding: 14px;">
+            <div class="shell">
+              <div class="dual-app">
+                <main id="main-content-kard">
+
+                  <!-- PERFIL / HERO -->
+                  <details class="al-accordion" data-collapse="activation">
+                    <summary>
+                      <div class="al-summary-main">
+                        <span class="al-summary-icon">⎚</span>
+                        <div class="al-summary-text">
+                          <span class="al-summary-title">oiDual</span>
+                          <span class="al-summary-sub" id="actStatusSub">🦆</span>
+                        </div>
+                      </div>
+                    </summary>
+
+                    <section class="card hero" data-panel="profile">
+                      <div class="hero-actions">
+                        <span class="badge">⚡ DUAL ATIVO</span>
+                        <div class="hero-actions-right">
+                          <button class="icon-btn" id="editProfileBtn" aria-label="Editar perfil">✎</button>
+                          <button class="icon-btn" id="profileMenuBtn" aria-label="Mais opções">⋯</button>
+                        </div>
+                      </div>
+
+                      <div class="avatar-wrap">
+                        <div id="heroAvatar" class="dual-orb-wrap" style="--orb-size:118px; width:100%; height:100%;"></div>
+                        <span class="online"></span>
+                      </div>
+
+                      <div class="hero-center">
+                        <h1>
+                          <span id="heroName">Meu Dual</span>
+                          <span class="verified">✓</span>
+                        </h1>
+                        <div class="handle" id="heroHandle">@meu.dual</div>
+                        <p class="bio">
+                          Explorando territórios da mente,
+                          expandindo consciência e criando
+                          a minha melhor versão todos os dias.
+                        </p>
+                      </div>
+
+                      <!-- ATIVAÇÃO ASCII -->
+                      <details class="al-accordion" data-collapse="activation-card">
+                        <summary>
+                          <div class="al-summary-main">
+                            <span class="al-summary-icon">⎚</span>
+                            <div class="al-summary-text">
+                              <span class="al-summary-title">Ativação ASCII</span>
+                              <span class="al-summary-sub" id="actStatusSubActivation">Base v1</span>
+                            </div>
+                          </div>
+                        </summary>
+                        <div class="activation-card-main" id="activationCardMain">
+                          <div class="activation-header">
+                            <div class="left">
+                              <div class="orb-mini" id="actMiniOrb"></div>
+                              <div>
+                                <div class="title">Ativação ASCII</div>
+                                <div style="font-size:12px; color:var(--muted);">Cérebro · Oráculo</div>
+                              </div>
+                            </div>
+                            <span class="badge-v" id="actBadgeMain">v:--</span>
+                          </div>
+                          <div style="margin: 4px 0 10px;">
+                            <input type="text" id="inlineNameInput" class="inline-name-input" placeholder="Seu nome" value="Convidado">
+                            <span style="font-size:12px; color:var(--muted); margin-left:8px;">(digite e veja o ASCII mudar)</span>
+                          </div>
+                          <div class="activation-pre-wrap"><pre id="actPreMain">Carregando...</pre></div>
+                          <div class="activation-actions">
+                            <button class="btn primary" id="copyActBtnMain">📋 Copiar ASCII</button>
+                            <button class="btn" id="speakActBtn">🔊 Ouvir</button>
+                            <button class="btn" id="resetActBtn">↺ Resetar</button>
+                          </div>
+                        </div>
+                      </details>
+                    </section>
+                  </details>
+
+                  <!-- EXTRAS / SEÇÕES -->
+                  <details class="al-accordion" data-collapse="extras">
+                    <summary>
+                      <div class="al-summary-main">
+                        <span class="al-summary-icon">⎚</span>
+                        <div class="al-summary-text">
+                          <span class="al-summary-title">EXTRAS</span>
+                          <span class="al-summary-sub" id="actStatusSubExtras">Base v1</span>
+                        </div>
+                      </div>
+                    </summary>
+
+                    <!-- EVOLUÇÃO -->
+                    <details class="al-accordion" data-collapse="evolution">
+                      <summary>
+                        <div class="al-summary-main">
+                          <span class="al-summary-icon">⚡</span>
+                          <div class="al-summary-text">
+                            <span class="al-summary-title">Evolução</span>
+                            <span class="al-summary-sub">Nível 08 · Jornada 78%</span>
+                          </div>
+                        </div>
+                      </summary>
+                      <div class="al-accordion-content">
+                        <section class="section card evolution" data-panel="evolution">
+                          <div class="evo-top"><h2 class="section-title">Evolução</h2><span class="level">Nível 08 ◉</span></div>
+                          <div class="evo-main">
+                            <div class="ring"><div class="ring-content"><strong>78%</strong><span>Jornada</span></div></div>
+                            <div class="metrics">
+                              <div class="metric"><span class="metric-label">◉ &nbsp; Foco</span><span class="metric-value">Alto</span></div>
+                              <div class="metric"><span class="metric-label">⚡ &nbsp; Energia</span><span class="metric-value">84%</span></div>
+                              <div class="metric"><span class="metric-label">♧ &nbsp; Consistência</span><span class="metric-value">09 dias</span></div>
+                              <div class="metric"><span class="metric-label">◌ &nbsp; Microações</span><span class="metric-value">23/30</span></div>
+                            </div>
+                          </div>
+                          <div class="spark" aria-label="Linha de evolução">
+                            <svg viewBox="0 0 600 90" preserveAspectRatio="none" role="img">
+                              <path d="M0 68 C35 54,58 72,86 48 S137 57,164 42 S217 63,244 35 S302 55,330 42 S386 65,412 27 S463 48,493 31 S551 43,600 18" fill="none" stroke="#a855ff" stroke-width="4" stroke-linecap="round"></path>
+                            </svg>
+                          </div>
+                          <div class="timeline"><span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span><span>DOM</span></div>
+                        </section>
+                      </div>
+                    </details>
+
+                    <!-- DUAL ATIVO -->
+                    <details class="al-accordion" data-collapse="dual">
+                      <summary>
+                        <div class="al-summary-main">
+                          <span class="al-summary-icon">✦</span>
+                          <div class="al-summary-text">
+                            <span class="al-summary-title">Dual Ativo</span>
+                            <span class="al-summary-sub">Explorador · Naviga</span>
+                          </div>
+                        </div>
+                      </summary>
+                      <div class="al-accordion-content">
+                        <section class="section card dual" data-panel="dual">
+                          <small>DUAL ATIVO</small><h2>Explorador</h2><p>Arquétipo ativo</p>
+                          <div class="dual-line"><span class="dual-pill">◉ &nbsp; Assistente: <b>Naviga</b></span></div>
+                        </section>
+                      </div>
+                    </details>
+
+                    <!-- DESAFIO -->
+                    <details class="al-accordion" data-collapse="challenge">
+                      <summary>
+                        <div class="al-summary-main">
+                          <span class="al-summary-icon">🔥</span>
+                          <div class="al-summary-text">
+                            <span class="al-summary-title">Próxima Evolução</span>
+                            <span class="al-summary-sub">Desafio · 2/5 etapas</span>
+                          </div>
+                        </div>
+                      </summary>
+                      <div class="al-accordion-content">
+                        <section class="section card challenge" data-panel="challenge">
+                          <small>🔥 PRÓXIMA EVOLUÇÃO</small><h2>Desafio ativo</h2>
+                          <p>Escolha uma ideia da sua Library e transforme‑a em uma ação concreta ainda hoje.</p>
+                          <div class="challenge-row"><button class="cta" id="startChallengeBtn">Começar desafio →</button><div class="steps"><span>2/5<br>etapas</span></div></div>
+                        </section>
+                      </div>
+                    </details>
+
+                    <!-- DOSES RECENTES -->
+                    <details class="al-accordion" data-collapse="doses">
+                      <summary>
+                        <div class="al-summary-main">
+                          <span class="al-summary-icon">💊</span>
+                          <div class="al-summary-text">
+                            <span class="al-summary-title">Doses Recentes</span>
+                            <span class="al-summary-sub">12 arquétipos · experiências ativas</span>
+                          </div>
+                        </div>
+                      </summary>
+                      <div class="al-accordion-content">
+                        <section class="section" data-panel="doses">
+                          <div class="section-head"><h2 class="section-title">Doses Recentes</h2><button class="section-link" id="dosesViewAllBtn">Ver todas ›</button></div>
+                          <div class="scroller" data-carousel="doses">
+                            <article class="dose snap" data-dose="atlas"><span class="dose-tag">Atlas</span><div class="dose-bottom"><h3>Clareza</h3><p>Planejamento</p><span class="dose-status">✓ Ativo</span></div></article>
+                            <article class="dose snap" data-dose="nova"><span class="dose-tag">Nova</span><div class="dose-bottom"><h3>Criação</h3><p>Ideias novas</p><span class="dose-status">◉ 78%</span></div></article>
+                            <article class="dose snap" data-dose="vitalis"><span class="dose-tag">Vitalis</span><div class="dose-bottom"><h3>Energia</h3><p>Ativação</p><span class="dose-status">◉ 84%</span></div></article>
+                            <article class="dose snap" data-dose="pulse"><span class="dose-tag">Pulse</span><div class="dose-bottom"><h3>Ressonância</h3><p>Som &amp; emoção</p><span class="dose-status">◉ 62%</span></div></article>
+                            <article class="dose snap" data-dose="artemis"><span class="dose-tag">Artemis</span><div class="dose-bottom"><h3>Exploração</h3><p>Novos caminhos</p><span class="dose-status">◉ 71%</span></div></article>
+                            <article class="dose snap" data-dose="serena"><span class="dose-tag">Serena</span><div class="dose-bottom"><h3>Acolhimento</h3><p>Conexões</p><span class="dose-status">✓ Ativo</span></div></article>
+                            <article class="dose snap" data-dose="kaos"><span class="dose-tag">Kaos</span><div class="dose-bottom"><h3>Ruptura</h3><p>Quebra de padrão</p><span class="dose-status">◉ 55%</span></div></article>
+                            <article class="dose snap" data-dose="genus"><span class="dose-tag">Genus</span><div class="dose-bottom"><h3>Materialização</h3><p>Ideia → ação</p><span class="dose-status">◉ 66%</span></div></article>
+                            <article class="dose snap" data-dose="lumine"><span class="dose-tag">Lumine</span><div class="dose-bottom"><h3>Alegria</h3><p>Leveza</p><span class="dose-status">✓ Ativo</span></div></article>
+                            <article class="dose snap" data-dose="rhea"><span class="dose-tag">Rhea</span><div class="dose-bottom"><h3>Raízes</h3><p>Memória &amp; vínculos</p><span class="dose-status">◉ 48%</span></div></article>
+                            <article class="dose snap" data-dose="solus"><span class="dose-tag">Solus</span><div class="dose-bottom"><h3>Transformação</h3><p>Intenção → realização</p><span class="dose-status">◉ 73%</span></div></article>
+                            <article class="dose snap" data-dose="aion"><span class="dose-tag">Aion</span><div class="dose-bottom"><h3>Evolução</h3><p>Microações</p><span class="dose-status">◉ 81%</span></div></article>
+                          </div>
+                        </section>
+                      </div>
+                    </details>
+
+                    <!-- MEMÓRIAS -->
+                    <details class="al-accordion" data-collapse="memories">
+                      <summary>
+                        <div class="al-summary-main">
+                          <span class="al-summary-icon">🧠</span>
+                          <div class="al-summary-text">
+                            <span class="al-summary-title">Memórias em Destaque</span>
+                            <span class="al-summary-sub">24 memórias · 4 recentes</span>
+                          </div>
+                        </div>
+                      </summary>
+                      <div class="al-accordion-content">
+                        <section class="section" data-panel="memories">
+                          <div class="section-head"><h2 class="section-title">Memórias em Destaque</h2><button class="section-link" id="memoriesViewAllBtn">Ver todas ›</button></div>
+                          <div class="scroller" data-carousel="memories">
+                            <article class="memory snap"><span class="memory-date">18 MAI</span><h3>Insight poderoso</h3><p>Entendi que a consistência...</p></article>
+                            <article class="memory snap"><span class="memory-date">14 MAI</span><h3>Momento de foco</h3><p>2h de trabalho profundo...</p></article>
+                            <article class="memory snap"><span class="memory-date">10 MAI</span><h3>Nova descoberta</h3><p>Conceito que mudou tudo...</p></article>
+                            <article class="memory snap"><span class="memory-date">06 MAI</span><h3>Ação importante</h3><p>Saí da zona de conforto...</p></article>
+                          </div>
+                        </section>
+                      </div>
+                    </details>
+
+                  </details>
+
+                </main>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- SCRIPT DE CONTROLE -->
+  <script>
+    (() => {
+      "use strict";
+
+      const ROOT = document.body;
+      const SHELL = document.getElementById("dual-shell");
+      const MAIN = document.getElementById("dual-main");
+      const GLOBAL_HEADER = document.getElementById("dual-global-header");
+      const TAP_ZONE = GLOBAL_HEADER?.querySelector("[data-header-tap-zone]");
+      const STORAGE_KEY = "dual-theme";
+      let mainCollapsed = false;
+
+      const applyTheme = (theme) => {
+        const next = theme === "light" ? "light" : "dark";
+        ROOT.dataset.theme = next;
+        try { localStorage.setItem(STORAGE_KEY, next); } catch (e) { }
+        window.dispatchEvent(new CustomEvent("dual:theme-change", { detail: { theme: next } }));
+      };
+
+      const getInitialTheme = () => {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved === "light" || saved === "dark") return saved;
+        } catch (e) { }
+        return "dark";
+      };
+
+      window.DualTheme = {
+        set: applyTheme,
+        toggle: () => applyTheme(ROOT.dataset.theme === "light" ? "dark" : "light"),
+        get: () => ROOT.dataset.theme || "dark"
+      };
+
+      const bindThemeButton = (btn) => {
+        btn?.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          DualTheme.toggle();
+        });
+      };
+
+      bindThemeButton(document.getElementById("dual-theme-dot"));
+      bindThemeButton(document.getElementById("kodux-theme-dot"));
+      applyTheme(getInitialTheme());
+
+      const setMainCollapsed = (collapsed) => {
+        mainCollapsed = !!collapsed;
+        MAIN?.classList.toggle("hidden", mainCollapsed);
+        if (SHELL) SHELL.dataset.collapsed = String(mainCollapsed);
+        window.dispatchEvent(new CustomEvent("dual:content-collapse", { detail: { collapsed: mainCollapsed } }));
+      };
+
+      const toggleMainCollapse = () => setMainCollapsed(!mainCollapsed);
+
+      TAP_ZONE?.addEventListener("click", (e) => {
+        if (e.target.closest("button")) return;
+        toggleMainCollapse();
+      });
+
+      const enhanceDetails = (details) => {
+        const summary = details.querySelector(":scope > summary");
+        const content = details.querySelector(":scope > .al-accordion-content");
+        if (!summary || !content) return;
+
+        if (details.open) content.style.height = "auto";
+
+        summary.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          details.open ? collapse() : expand();
+        });
+
+        const expand = () => {
+          details.setAttribute("open", "");
+          const target = (() => {
+            const prev = content.style.height;
+            content.style.height = "auto";
+            const h = content.scrollHeight;
+            content.style.height = prev || "0px";
+            return h;
+          })();
+
+          requestAnimationFrame(() => {
+            content.style.transition = "height .28s cubic-bezier(.22,.61,.36,1)";
+            content.style.height = `${target}px`;
+          });
+
+          content.addEventListener("transitionend", function te(ev) {
+            if (ev.propertyName !== "height") return;
+            content.style.height = "auto";
+            content.style.transition = "";
+            content.removeEventListener("transitionend", te);
+            window.dispatchEvent(new CustomEvent("dual:accordion", { detail: { id: details.id, open: true } }));
+            window.dispatchEvent(new CustomEvent("dual:header-resize"));
+          }, { once: true });
+        };
+
+        const collapse = () => {
+          const current = content.getBoundingClientRect().height;
+          content.style.height = `${current}px`;
+
+          requestAnimationFrame(() => {
+            content.style.transition = "height .22s cubic-bezier(.22,.61,.36,1)";
+            content.style.height = "0px";
+          });
+
+          content.addEventListener("transitionend", function te(ev) {
+            if (ev.propertyName !== "height") return;
+            details.removeAttribute("open");
+            content.style.transition = "";
+            content.removeEventListener("transitionend", te);
+            window.dispatchEvent(new CustomEvent("dual:accordion", { detail: { id: details.id, open: false } }));
+            window.dispatchEvent(new CustomEvent("dual:header-resize"));
+          }, { once: true });
+        };
+      };
+
+      document.querySelectorAll(".al-accordion").forEach(enhanceDetails);
+
+      const searchBox = document.getElementById("nebulaSearchBox");
+      const searchInput = document.getElementById("nebulaSearchInput");
+      const nebulaSummarySub = document.getElementById("nebulaSummarySub");
+      const nebulaCarousel = document.getElementById("nebulaCarousel");
+      const nebulaDots = document.getElementById("nebulaDots");
+      const groupPills = Array.from(document.querySelectorAll("#nebulaGroups .group-pill"));
+
+      document.getElementById("nebulaSearchToggle")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        searchBox.classList.toggle("visible");
+        if (searchBox.classList.contains("visible")) searchInput?.focus();
+      });
+
+      document.getElementById("nebulaAdd")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        window.dispatchEvent(new CustomEvent("dual:nebula-add"));
+      });
+
+      document.getElementById("nebulaOpenUrl")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const url = window.prompt("Cole o link do documento:");
+        if (url) window.dispatchEvent(new CustomEvent("dual:nebula-open-url", { detail: { url } }));
+      });
+
+      groupPills.forEach(pill => {
+        pill.addEventListener("click", (e) => {
+          e.stopPropagation();
+          groupPills.forEach(p => p.classList.remove("active"));
+          pill.classList.add("active");
+          window.dispatchEvent(new CustomEvent("dual:nebula-group-change", { detail: { group: pill.dataset.group } }));
+        });
+      });
+
+      window.NebulaLibrary = {
+        setSummary: (text) => { if (nebulaSummarySub) nebulaSummarySub.textContent = text; },
+        renderDocs: (items = []) => {
+          if (!nebulaCarousel) return;
+          nebulaCarousel.innerHTML = "";
+          items.forEach(doc => {
+            const card = document.createElement("div");
+            card.className = "doc-card";
+            card.dataset.docId = doc.id || "";
+            card.innerHTML = `<span class="doc-icon">${doc.icon || "📄"}</span><span class="doc-name">${doc.name || "Sem título"}</span>`;
+            card.addEventListener("click", () => window.dispatchEvent(new CustomEvent("dual:nebula-open-doc", { detail: { doc } })));
+            nebulaCarousel.appendChild(card);
+          });
+          if (nebulaDots) nebulaDots.innerHTML = items.map(() => `<span></span>`).join("");
+        },
+        getActiveGroup: () => groupPills.find(p => p.classList.contains("active"))?.dataset.group || null
+      };
+
+      const TABS = Array.from(document.querySelectorAll(".tab-btn"));
+      const FRAMES = Array.from(document.querySelectorAll(".tab-iframe"));
+
+      const activateTab = (name) => {
+        if (!name) return;
+        TABS.forEach(tab => tab.classList.toggle("active", tab.dataset.tab === name));
+        FRAMES.forEach(frame => {
+          const active = frame.dataset.tab === name;
+          frame.classList.toggle("active", active);
+          frame.setAttribute("aria-hidden", active ? "false" : "true");
+        });
+        if (SHELL) SHELL.dataset.activeTab = name;
+        window.dispatchEvent(new CustomEvent("dual:tab-change", { detail: { tab: name } }));
+      };
+
+      TABS.forEach(tab => tab.addEventListener("click", (e) => {
+        e.stopPropagation();
+        activateTab(tab.dataset.tab);
+      }));
+
+      document.getElementById("kodux-brand")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        activateTab("kxtsk");
+      });
+
+      document.getElementById("kodux-avatar")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        window.dispatchEvent(new CustomEvent("dual:profile", { detail: { source: "kodux-avatar" } }));
+      });
+
+      window.DUAL_SHELL = {
+        version: "4.1-almasliber-kxtsk-es6",
+        activateTab,
+        collapseMain: () => setMainCollapsed(true),
+        expandMain: () => setMainCollapsed(false),
+        toggleMain: toggleMainCollapse,
+        getFrame: (name) => FRAMES.find(f => f.dataset.tab === name),
+        mount: (element, name) => document.querySelector(`[data-mount="${name}"]`)?.appendChild(element)
+      };
+
+      activateTab(SHELL?.dataset.activeTab || "kxtsk");
+      if (SHELL) SHELL.dataset.ready = "true";
+    })();
+  </script>
+
+  <!-- MÓDULOS EXTERNOS -->
+  <script type="module" src="https://www.infodose.com.br/js/modules/Dual_[Theme]-minuz.js"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/FSWIN/js/modules/iFSw-fix.js"></script>
+  <script src="https://infodose.com.br/oiDual/KODUX/78K/APPS/78HERO/js/modules/nebula-unified-v1.js"></script>
+
+</body>
+</html>
+
