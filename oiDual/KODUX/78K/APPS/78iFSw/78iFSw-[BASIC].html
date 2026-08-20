@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0f0f11">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="manifest" href="./manifest.json">
+
+  <!-- CSS EXTERNOS (únicos) -->
+  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/css/kob-glass-0.css">
+  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/css/kob-e.css">
+  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/css/kxt-solar.css">
+  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/css/kob-nanai.css">
+  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/M0D/di_Pad/css/zpr.css">
+
+  <style>
+    /* ============================================================
+       KOBLLUX WINDOW SYSTEM – CORE REFATORADO
+       ============================================================ */
+
+    :root {
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --topbar-h: 58px;
+      --header-h: 52px;
+      --session-radius: 22px;
+      --session-gap: 20px;
+      --collapsed-h: 52px;
+      --peek-h: 56px;
+      --dock-bottom-gap: 80px;
+      --dock-offset-x: -12px;
+      --resize-hit: 44px;
+      --resize-handle-color: rgba(255,255,255,.22);
+      --resize-handle-glow: rgba(0,242,255,.18);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    body {
+      min-height: 100dvh;
+      background: radial-gradient(circle at 50% 0%, #2a2a35 0%, #0f0f15 100%);
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+    }
+
+    /* --- SHELL --- */
+    #kxtsk-shell {
+      position: relative;
+      width: 100%;
+      min-height: 100dvh;
+      overflow: visible !important;
+      z-index: 1;
+    }
+
+    /* --- TOPBAR GLOBAL --- */
+    .os-topbar {
+      position: relative !important;
+      width: 100%;
+      height: var(--topbar-h);
+      min-height: var(--topbar-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 12px;
+      flex-shrink: 0;
+      background: rgba(8,10,14,.16);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      z-index: 100;
+      transition: transform .28s ease, opacity .28s ease;
+    }
+
+    .os-brand {
+      flex: 0 0 auto;
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: 1.5px;
+    }
+    .os-brand small {
+      display: block;
+      margin-top: 2px;
+      font-size: 10px;
+      letter-spacing: .9px;
+      color: rgba(255,255,255,.65);
+    }
+
+    .top-actions {
+      flex: 1 1 auto;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .win-navrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      min-width: 0;
+      padding: 0 16px 10px;
+    }
+    .win-urlbar {
+      flex: 1 1 auto;
+      padding: 11px 13px;
+      border-radius: 13px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: #fff;
+      outline: none;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      font-size: 13px;
+    }
+    .win-urlbar::placeholder { color: rgba(255,255,255,.45); }
+    .win-urlbar:focus {
+      border-color: rgba(0,242,255,.45);
+      background: rgba(255,255,255,.09);
+      box-shadow: 0 0 0 3px rgba(0,242,255,.08);
+    }
+
+    .soft-btn, .launcher-btn, .win-go-btn {
+      flex: 0 0 auto;
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .soft-btn { background: rgba(255,255,255,.08); }
+    .launcher-btn { background: rgba(0,242,255,.12); border: 1px solid rgba(0,242,255,.3); }
+    .win-go-btn { background: rgba(0,242,255,.12); }
+
+    /* --- STACK --- */
+    #stackWrap {
+      position: relative;
+      z-index: 200;
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--session-gap);
+      overflow: visible !important;
+    }
+
+    /* --- SESSION WINDOW --- */
+    .session-window {
+      position: relative;
+      width: 100%;
+      height: 78vh;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      background: rgba(30,30,35,.40);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--session-radius);
+      box-shadow: 0 10px 30px rgba(0,0,0,.5);
+      overflow: hidden;
+      transition: height .28s cubic-bezier(.16,1,.3,1),
+                  width .28s cubic-bezier(.16,1,.3,1),
+                  transform .28s ease,
+                  opacity .28s ease;
+    }
+
+    /* --- HEADER (simplificado) --- */
+    .win-hdr {
+      position: relative;
+      z-index: 1;
+      flex: 0 0 var(--header-h);
+      min-height: var(--header-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,.045);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      user-select: none;
+      -webkit-user-select: none;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .win-title {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .win-controls {
+      position: relative;
+      z-index: 99;
+      flex: 0 0 auto;
+      display: flex;
+      gap: 7px;
+    }
+    .win-controls button {
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(255,255,255,.10);
+      color: #fff;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 17px;
+      font-weight: 300;
+      line-height: 1;
+      touch-action: manipulation;
+    }
+    .win-controls button:hover { background: rgba(255,255,255,.16); }
+
+    /* --- IFRAME --- */
+    .win-frame {
+      display: block;
+      width: 100%;
+      height: auto;
+      flex: 1 1 auto;
+      min-width: 0;
+      min-height: 0;
+      border: 0;
+      background: transparent;
+    }
+
+    /* --- MODOS (data-mode) --- */
+    .session-window[data-mode="normal"] { /* padrão */ }
+    .session-window[data-mode="peek"]   { height: var(--peek-h) !important; }
+    .session-window[data-mode="peek"] .win-frame { flex: 0 0 0; height: 0; min-height: 0; }
+    .session-window[data-mode="collapsed"] { height: var(--collapsed-h) !important; }
+    .session-window[data-mode="collapsed"] .win-frame { display: none !important; }
+
+    .session-window[data-mode="maximized"] {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100dvh !important;
+      max-width: none !important;
+      max-height: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      overflow: hidden !important;
+      z-index: 300 !important; /* acima do stack */
+      transition: none !important;
+    }
+    .session-window[data-mode="maximized"] .win-hdr {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      background: rgba(8,10,14,.18);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+    .session-window[data-mode="maximized"] .win-frame {
+      position: absolute;
+      inset: 0;
+      width: 100% !important;
+      height: 100% !important;
+      max-width: none !important;
+      max-height: none !important;
+      border-radius: 0;
+    }
+
+    .session-window[data-mode="minimized"] {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(.9) translateY(50px);
+      position: absolute !important;
+    }
+
+    .session-window[data-mode="sheet"] {
+      position: fixed !important;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      top: 12px;
+      width: 100vw !important;
+      max-width: none !important;
+      margin: 0 !important;
+      height: auto !important;
+      z-index: 92000 !important;
+      border-radius: 24px 24px 0 0 !important;
+      overflow: hidden;
+      box-shadow: 0 -18px 50px rgba(0,0,0,.45);
+      will-change: transform;
+      transform: translate3d(0, var(--sheet-y, 0px), 0);
+      transition: transform .18s cubic-bezier(.22,.9,.23,1),
+                  box-shadow .25s ease,
+                  border-radius .25s ease;
+    }
+    .session-window[data-mode="sheet"] .win-hdr {
+      position: relative !important;
+      top: auto;
+      z-index: 3;
+      cursor: grab;
+      touch-action: none;
+      padding-top: 18px;
+    }
+    .session-window[data-mode="sheet"].dragging .win-hdr { cursor: grabbing; }
+    .session-window[data-mode="sheet"] .win-hdr::before {
+      content: "";
+      position: absolute;
+      top: 6px;
+      left: 50%;
+      width: 44px;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.22);
+      transform: translateX(-50%);
+    }
+
+    /* --- RESIZE HANDLES (desktop apenas) --- */
+    .session-window .resize-handle {
+      position: absolute;
+      z-index: 50;
+      background: transparent;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .session-window .resize-y {
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: var(--resize-hit);
+      cursor: ns-resize;
+    }
+    .session-window .resize-x {
+      top: var(--header-h);
+      right: 0;
+      bottom: 0;
+      width: var(--resize-hit);
+      cursor: ew-resize;
+    }
+    .session-window .resize-corner {
+      right: 0;
+      bottom: 0;
+      width: 54px;
+      height: 54px;
+      cursor: nwse-resize;
+    }
+    .session-window .resize-y::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 13px;
+      width: 44px;
+      height: 6px;
+      border-radius: 999px;
+      transform: translateX(-50%);
+      background: var(--resize-handle-color);
+      box-shadow: 0 0 16px var(--resize-handle-glow);
+      pointer-events: none;
+    }
+    .session-window .resize-x::before {
+      content: "";
+      position: absolute;
+      right: 9px;
+      top: 50%;
+      width: 6px;
+      height: 44px;
+      border-radius: 999px;
+      transform: translateY(-50%);
+      background: var(--resize-handle-color);
+      pointer-events: none;
+    }
+    .session-window .resize-corner::before {
+      content: "";
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      width: 17px;
+      height: 17px;
+      border-right: 3px solid rgba(255,255,255,.30);
+      border-bottom: 3px solid rgba(255,255,255,.30);
+      pointer-events: none;
+    }
+
+    .session-window.resizing {
+      transition: none !important;
+      box-shadow: 0 14px 36px rgba(0,0,0,.55);
+    }
+    .session-window.resizing * { user-select: none !important; }
+
+    /* --- DOCK --- */
+    #dock {
+      position: fixed;
+      left: var(--dock-offset-x);
+      bottom: calc(var(--dock-bottom-gap) + var(--safe-bottom));
+      z-index: 400;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 10px;
+      border-radius: 24px;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid rgba(255,255,255,.1);
+    }
+    #dock:empty { opacity: 0; pointer-events: none; }
+
+    .dock-bubble {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.20);
+      color: #fff;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* --- BODY STATE --- */
+    body.has-maximized #stackWrap { max-width: none; margin: 0; padding: 0; }
+    body.has-maximized #kxtsk-shell { overflow: visible !important; }
+
+    /* --- MOBILE --- */
+    @media (hover:none) and (pointer:coarse) {
+      .session-window .resize-y { height: 48px; }
+      .session-window .resize-corner { width: 58px; height: 58px; }
+    }
+  </style>
+</head>
+
+<body class="ui-safe-vertical" data-theme="dark" data-arch="kodux" data-user="Convidado" data-zpr="9" data-intensity="0.72">
+
+  <!-- SCRIPTS EXTERNOS (insert-LS-3 e bgPanel) -->
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LS/js/insert-LS-3.js"></script>
+  <script src="https://kodux78k.github.io/oiDual-KxT-di_oi/js/modules/bgPanel.js"></script>
+
+  <div id="kxtsk-shell">
+
+    <!-- TOPBAR GLOBAL -->
+    <div class="os-topbar">
+      <div class="os-brand">
+        <span>⏣ KOB</span>
+        <small>window system</small>
+      </div>
+      <div class="top-actions">
+        <div class="win-navrow" onclick="event.stopPropagation()">
+          <input class="win-urlbar" type="text" id="urlInputNav" placeholder="Digite uma URL..." spellcheck="false" autocomplete="off">
+          <button class="win-go-btn" type="button" id="goNavBtn">Go</button>
+          <button class="launcher-btn" id="openKobBtn">+ Abrir</button>
+          <button class="soft-btn" id="openLogsBtn">Logs</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DOCK -->
+    <div id="dock"></div>
+
+    <!-- STACK -->
+    <div id="stackWrap">
+      <!-- Sessão inicial (exemplo) -->
+      <div class="session-window" id="session-iframe" data-mode="normal">
+        <div class="win-hdr">
+          <span class="win-title">🌐 infodose</span>
+          <div class="win-controls">
+            <button data-action="collapse" title="Colapsar">—</button>
+            <button data-action="maximize" title="Maximizar">⬜</button>
+            <button data-action="minimize" title="Minimizar">🌐</button>
+            <button data-action="close" title="Fechar">✕</button>
+          </div>
+        </div>
+        <iframe class="win-frame" data-runtime="nav" id="navFrame" src="https://www.infodose.com.br" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox" allow="fullscreen; accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture" loading="lazy"></iframe>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="theme-switch" id="themeSwitch" title="Alternar tema"></div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      // --- DOM refs ---
+      const stackWrap = document.getElementById('stackWrap');
+      const dock = document.getElementById('dock');
+      const urlInput = document.getElementById('urlInputNav');
+      const goBtn = document.getElementById('goNavBtn');
+      const openBtn = document.getElementById('openKobBtn');
+      const logsBtn = document.getElementById('openLogsBtn');
+
+      const DEFAULT_SRC = 'https://www.infodose.com.br';
+      const DEFAULT_ICON = '🌐';
+      const DEFAULT_TITLE = '//';
+
+      let counter = 1;
+      const timers = new Map(); // para clique duplo (peek → maximize)
+
+      // --- helpers ---
+      const $ = (sel, root = document) => root.querySelector(sel);
+      const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+
+      // --- get active window (topo do stack) ---
+      function getActiveWin() {
+        const wins = $$('.session-window:not([data-mode="minimized"])');
+        return wins[wins.length - 1] || null;
+      }
+
+      // --- sync body class ---
+      function syncShell() {
+        const hasMax = !!document.querySelector('.session-window[data-mode="maximized"]');
+        document.body.classList.toggle('has-maximized', hasMax);
+      }
+
+      // --- activate (move to top) ---
+      function activate(win) {
+        if (!win) return;
+        stackWrap.appendChild(win); // move fisicamente
+        syncShell();
+      }
+
+      // --- set mode ---
+      function setMode(win, mode) {
+        if (!win) return;
+        // se for maximized e já estiver, volta para normal
+        if (mode === 'maximized' && win.dataset.mode === 'maximized') {
+          win.dataset.mode = 'normal';
+          // restaura dimensões se houver (opcional)
+          syncShell();
+          return;
+        }
+        // se for minimized, adiciona ao dock
+        if (mode === 'minimized') {
+          win.dataset.mode = 'minimized';
+          addToDock(win);
+          syncShell();
+          return;
+        }
+        // se sair de minimized, remove do dock
+        if (win.dataset.mode === 'minimized') {
+          removeFromDock(win);
+        }
+        win.dataset.mode = mode;
+        // se for maximized, garantir z-index e remover posições antigas
+        if (mode === 'maximized') {
+          win.style.top = '';
+          win.style.left = '';
+          win.style.width = '';
+          win.style.height = '';
+        }
+        // se for sheet, garantir fixed
+        if (mode === 'sheet') {
+          // já tratado no CSS
+        }
+        activate(win);
+        syncShell();
+      }
+
+      // --- dock ---
+      function addToDock(win) {
+        const old = document.getElementById('dock-' + win.id);
+        if (old) old.remove();
+
+        const bubble = document.createElement('button');
+        bubble.type = 'button';
+        bubble.className = 'dock-bubble';
+        bubble.id = 'dock-' + win.id;
+        bubble.textContent = '🌐';
+        bubble.title = 'Restaurar janela';
+        bubble.addEventListener('click', (e) => {
+          e.stopPropagation();
+          setMode(win, 'normal');
+          activate(win);
+        });
+        dock.appendChild(bubble);
+      }
+
+      function removeFromDock(win) {
+        const el = document.getElementById('dock-' + win.id);
+        if (el) el.remove();
+      }
+
+      // --- close ---
+      function closeWindow(win) {
+        if (!win) return;
+        timers.delete(win.id);
+        removeFromDock(win);
+        win.remove();
+        syncShell();
+      }
+
+      // --- maximize toggle (usado pelo header) ---
+      function toggleMaximize(win) {
+        if (!win) return;
+        if (win.dataset.mode === 'maximized') {
+          setMode(win, 'normal');
+        } else {
+          setMode(win, 'maximized');
+        }
+      }
+
+      // --- header click: peek on single, maximize on double ---
+      function handleHeaderClick(e, win) {
+        // ignora se clicou em botão ou controle
+        if (e.target.closest('.win-controls') || e.target.closest('button')) return;
+        if (!win) return;
+
+        // se já estiver maximizado, apenas ativa
+        if (win.dataset.mode === 'maximized') {
+          activate(win);
+          return;
+        }
+
+        const old = timers.get(win.id);
+        if (old) {
+          // segundo clique: maximize
+          clearTimeout(old);
+          timers.delete(win.id);
+          setMode(win, 'maximized');
+          return;
+        }
+
+        // primeiro clique: aguarda 250ms para ver se repete
+        const timer = setTimeout(() => {
+          timers.delete(win.id);
+          // se não estiver em peek, entra em peek, senão volta normal
+          if (win.dataset.mode === 'peek') {
+            setMode(win, 'normal');
+          } else {
+            setMode(win, 'peek');
+          }
+        }, 250);
+        timers.set(win.id, timer);
+      }
+
+      // --- criar nova sessão ---
+      function createSession({ title = DEFAULT_TITLE, icon = DEFAULT_ICON, src = DEFAULT_SRC } = {}) {
+        const id = 'session-' + Date.now() + '-' + counter++;
+        const win = document.createElement('section');
+        win.className = 'session-window';
+        win.dataset.mode = 'normal';
+        win.id = id;
+
+        // header simplificado (sem URL interna)
+        win.innerHTML = `
+          <div class="win-hdr">
+            <span class="win-title">${icon} ${title}</span>
+            <div class="win-controls">
+              <button data-action="collapse" title="Colapsar">—</button>
+              <button data-action="maximize" title="Maximizar">⬜</button>
+              <button data-action="minimize" title="Minimizar">🌐</button>
+              <button data-action="close" title="Fechar">✕</button>
+            </div>
+          </div>
+          <iframe class="win-frame" data-runtime="nav" src="${src}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox" allow="fullscreen; accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture" loading="lazy"></iframe>
+        `;
+
+        stackWrap.appendChild(win);
+        wireSession(win);
+        activate(win);
+        return win;
+      }
+
+      // --- wire session events ---
+      function wireSession(win) {
+        if (win.dataset.wired === '1') return;
+        win.dataset.wired = '1';
+
+        // header click
+        const header = $('.win-hdr', win);
+        if (header) {
+          header.addEventListener('click', (e) => handleHeaderClick(e, win));
+        }
+
+        // controles
+        const controls = $('.win-controls', win);
+        if (controls) {
+          controls.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            const action = btn.dataset.action;
+            if (action === 'collapse') {
+              if (win.dataset.mode === 'collapsed') {
+                setMode(win, 'normal');
+              } else {
+                setMode(win, 'collapsed');
+              }
+            } else if (action === 'maximize') {
+              toggleMaximize(win);
+            } else if (action === 'minimize') {
+              setMode(win, 'minimized');
+            } else if (action === 'close') {
+              closeWindow(win);
+            }
+          });
+        }
+
+        // resize handles (apenas desktop)
+        if (window.matchMedia('(pointer: fine)').matches) {
+          makeResizeHandles(win);
+        }
+      }
+
+      // --- resize handles (copiado do original, adaptado) ---
+      function makeResizeHandles(win) {
+        if (win.dataset.resizeReady === '1') return;
+        win.dataset.resizeReady = '1';
+
+        const hy = document.createElement('div');
+        hy.className = 'resize-handle resize-y';
+        const hx = document.createElement('div');
+        hx.className = 'resize-handle resize-x';
+        const hc = document.createElement('div');
+        hc.className = 'resize-handle resize-corner';
+        win.append(hy, hx, hc);
+
+        // funções de resize (mesma lógica anterior, simplificada)
+        function startResize(e, axis) {
+          if (e.button !== 0) return;
+          const rect = win.getBoundingClientRect();
+          const startX = e.clientX, startY = e.clientY;
+          const startW = rect.width, startH = rect.height;
+          const pointerId = e.pointerId;
+
+          // se estiver maximizado, sai do modo e aplica dimensões atuais
+          if (win.dataset.mode === 'maximized') {
+            setMode(win, 'normal');
+            // ajusta tamanho para o atual
+            win.style.width = rect.width + 'px';
+            win.style.height = rect.height + 'px';
+            win.style.position = 'fixed';
+            win.style.left = rect.left + 'px';
+            win.style.top = rect.top + 'px';
+          }
+
+          win.classList.add('resizing');
+
+          const move = (ev) => {
+            if (ev.pointerId !== pointerId) return;
+            ev.preventDefault();
+            let w = startW, h = startH;
+            if (axis === 'x' || axis === 'corner') {
+              w = Math.max(280, Math.min(window.innerWidth, startW + (ev.clientX - startX)));
+            }
+            if (axis === 'y' || axis === 'corner') {
+              h = Math.max(44, Math.min(window.innerHeight, startH + (ev.clientY - startY)));
+            }
+            if (axis === 'x' || axis === 'corner') win.style.width = w + 'px';
+            if (axis === 'y' || axis === 'corner') win.style.height = h + 'px';
+          };
+
+          const up = (ev) => {
+            if (ev && ev.pointerId !== pointerId) return;
+            win.classList.remove('resizing');
+            window.removeEventListener('pointermove', move);
+            window.removeEventListener('pointerup', up);
+            window.removeEventListener('pointercancel', up);
+          };
+
+          window.addEventListener('pointermove', move, { passive: false });
+          window.addEventListener('pointerup', up, { passive: true });
+          window.addEventListener('pointercancel', up, { passive: true });
+          e.preventDefault();
+        }
+
+        hy.addEventListener('pointerdown', (e) => startResize(e, 'y'));
+        hx.addEventListener('pointerdown', (e) => startResize(e, 'x'));
+        hc.addEventListener('pointerdown', (e) => startResize(e, 'corner'));
+      }
+
+      // --- aplicar URL global na sessão ativa ---
+      function applyGlobalUrl() {
+        const url = urlInput.value.trim();
+        if (!url) return;
+        let clean = url;
+        if (!/^https?:\/\//i.test(clean)) clean = 'https://' + clean;
+        const active = getActiveWin();
+        if (active) {
+          const frame = $('.win-frame', active);
+          if (frame) frame.src = clean;
+          // atualiza título da janela ativa
+          const title = $('.win-title', active);
+          if (title) {
+            try {
+              const host = new URL(clean).hostname;
+              title.textContent = '🌐 ' + host;
+            } catch { /* ignora */ }
+          }
+          urlInput.value = clean;
+        } else {
+          // cria nova sessão com a URL
+          const win = createSession({ src: clean, title: '🌐 ' + clean });
+          // atualiza input
+          urlInput.value = clean;
+        }
+      }
+
+      // --- eventos globais ---
+      goBtn?.addEventListener('click', applyGlobalUrl);
+      urlInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') applyGlobalUrl(); });
+
+      openBtn?.addEventListener('click', () => {
+        createSession();
+      });
+
+      logsBtn?.addEventListener('click', () => {
+        console.log('[iFSw]', $$('.session-window'));
+      });
+
+      // --- boot: wire existing sessions ---
+      $$('.session-window').forEach(win => {
+        wireSession(win);
+        // se já estiver minimizado, adicionar ao dock
+        if (win.dataset.mode === 'minimized') {
+          addToDock(win);
+        }
+      });
+
+      // sincroniza URL inicial com iframe
+      const firstFrame = document.getElementById('navFrame');
+      if (firstFrame && urlInput) {
+        urlInput.value = firstFrame.src;
+      }
+
+      syncShell();
+
+      // expõe API global
+      window.createSession = createSession;
+      window.setMode = setMode;
+      window.activate = activate;
+      window.closeWindow = closeWindow;
+      window.toggleMaximize = toggleMaximize;
+      window.syncShell = syncShell;
+
+    })();
+  </script>
+
+</body>
+</html>
