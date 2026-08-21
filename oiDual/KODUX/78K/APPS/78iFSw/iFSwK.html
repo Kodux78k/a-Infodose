@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0f0f11">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="manifest" href="./manifest.json">
+
+  <!-- CSS EXTERNOS -->
+  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/css/kob-glass-0.css">
+  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/css/kob-e.css">
+  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/css/kxt-solar.css">
+  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/css/kob-nanai.css">
+  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/M0D/di_Pad/css/zpr.css">
+
+  <style>
+    /* =========================================================
+       iFSw CLEAN CORE – com suporte a resize
+       ========================================================= */
+    :root {
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --topbar-h: 58px;
+      --session-radius: 22px;
+      --session-gap: 20px;
+      --collapsed-h: 52px;
+      --peek-h: 56px;
+      --dock-bottom-gap: 80px;
+      --dock-offset-x: -12px;
+      --header-h: 52px;
+      --resize-hit: 44px;
+      --resize-handle-color: rgba(255,255,255,.22);
+      --resize-handle-glow: rgba(0,242,255,.18);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    body {
+      width: 100%;
+      min-height: 100dvh;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      background: radial-gradient(circle at 50% 0%, #2a2a35 0%, #0f0f15 100%);
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    body.ui-safe-vertical {
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+    }
+    body.ui-immersive { padding: 0; }
+
+    #kxtsk-shell {
+      position: relative;
+      width: 100%;
+      min-height: 100dvh;
+      overflow: visible !important;
+      z-index: 1;
+    }
+
+    /* =========================================================
+       ESTILO PARA SVGS DE ÍCONES
+       ========================================================= */
+    .icon-svg {
+      width: 1em;
+      height: 1em;
+      display: inline-block;
+      vertical-align: middle;
+      fill: currentColor;
+      stroke: currentColor;
+      stroke-width: 0;
+    }
+
+    .win-controls .icon-svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .dock-bubble .icon-svg,
+    .win-title .icon-svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .os-brand .icon-svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .launcher-btn .icon-svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* TOPBAR */
+    .os-topbar {
+      position: relative !important;
+      width: 100%;
+      min-height: var(--topbar-h);
+      height: var(--topbar-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 12px;
+      flex-shrink: 0;
+      background: rgba(8,10,14,.16);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      z-index: 100;
+    }
+    .os-brand { flex: 0 0 auto; font-weight: 800; font-size: 14px; letter-spacing: 1.5px; display: flex; align-items: center; }
+    .os-brand small { display: block; margin-top: 2px; font-size: 10px; letter-spacing: .9px; color: rgba(255,255,255,.65); }
+    .top-actions { min-width: 0; flex: 1 1 auto; display: flex; justify-content: flex-end; }
+    .win-navrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      min-width: 0;
+      padding: 0 16px 10px;
+    }
+    .win-urlbar {
+      flex: 1 1 auto;
+      padding: 11px 13px;
+      border-radius: 13px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: #fff;
+      outline: none;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      font-size: 10px;   min-width: 139px;
+    }
+    .win-urlbar::placeholder { color: rgba(255,255,255,.45); }
+    .win-urlbar:focus {
+      border-color: rgba(0,242,255,.45);
+      background: rgba(255,255,255,.09);
+      box-shadow: 0 0 0 3px rgba(0,242,255,.08);
+    }
+    .soft-btn, .launcher-btn, .win-go-btn {
+      flex: 0 0 auto;
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .soft-btn { background: rgba(255,255,255,.08); }
+    .launcher-btn { background: rgba(0,242,255,.12); border: 1px solid rgba(0,242,255,.3); }
+    .win-go-btn { background: rgba(0,242,255,.12); }
+
+    /* STACK */
+    #stackWrap {
+      position: relative;
+      z-index: 101;
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--session-gap);
+      overflow: visible !important;
+    }
+
+    /* SESSION WINDOW */
+    .session-window {
+      position: relative;
+      width: 100%;
+      height: 110dvh;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      background: rgba(30,30,35,.40);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--session-radius);
+      box-shadow: 0 10px 30px rgba(0,0,0,.5);
+      overflow: hidden;
+      transition: height .28s cubic-bezier(.16,1,.3,1),
+                  width .28s cubic-bezier(.16,1,.3,1),
+                  transform .28s ease,
+                  opacity .28s ease;
+    }
+
+    /* HEADER */
+    .win-hdr {
+      position: relative;
+      z-index: 1;
+      flex: 0 0 var(--header-h);
+      min-height: var(--header-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,.045);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      user-select: none;
+      -webkit-user-select: none;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .win-title {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .win-controls {
+      position: relative;
+      z-index: 99;
+      flex: 0 0 auto;
+      display: flex;
+      gap: 7px;
+    }
+    .win-controls button {
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(255,255,255,.10);
+      color: #fff;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 17px;
+      font-weight: 300;
+      line-height: 1;
+      touch-action: manipulation;
+    }
+    .win-controls button:hover { background: rgba(255,255,255,.16); }
+
+    .win-frame {
+      display: block;
+      width: 100%;
+      height: auto;
+      flex: 1 1 auto;
+      min-width: 0;
+      min-height: 0;
+      border: 0;
+      background: transparent;
+    }
+
+    /* MODOS */
+    .session-window.collapsed {
+      height: var(--collapsed-h) !important;
+      min-height: var(--collapsed-h) !important;
+    }
+    .session-window.collapsed .win-frame { display: none !important; }
+
+    .session-window.peeked {
+      height: var(--peek-h) !important;
+      min-height: var(--peek-h) !important;
+    }
+    .session-window.peeked .win-frame { flex: 0 0 0; height: 0; min-height: 0; }
+
+    .session-window.minimized {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(.9) translateY(50px);
+      position: absolute !important;
+    }
+
+    .session-window.maximized {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100dvh !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      max-width: none !important;
+      max-height: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      overflow: hidden !important;
+      z-index: 94000 !important;
+      transition: none !important;
+    }
+    .session-window.maximized .win-hdr {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      z-index: 94010;
+      background: rgba(8,10,14,.18);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+    .session-window.maximized .win-frame {
+      position: absolute;
+      inset: 0;
+      width: 100% !important;
+      height: 100% !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      max-width: none !important;
+      max-height: none !important;
+      border-radius: 0;
+    }
+
+    .session-window.resizing {
+      transition: none !important;
+      box-shadow: 0 14px 36px rgba(0,0,0,.55);
+    }
+    .session-window.resizing * { user-select: none !important; }
+
+    /* RESIZE HANDLES */
+    .session-window .resize-handle {
+      position: absolute;
+      z-index: 50;
+      background: transparent;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .session-window .resize-y {
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: var(--resize-hit);
+      cursor: ns-resize;
+    }
+    .session-window .resize-x {
+      top: var(--header-h);
+      right: 0;
+      bottom: 0;
+      width: var(--resize-hit);
+      cursor: ew-resize;
+    }
+    .session-window .resize-corner {
+      right: 0;
+      bottom: 0;
+      width: 54px;
+      height: 54px;
+      cursor: nwse-resize;
+    }
+    .session-window .resize-y::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 13px;
+      width: 44px;
+      height: 6px;
+      border-radius: 999px;
+      transform: translateX(-50%);
+      background: var(--resize-handle-color);
+      box-shadow: 0 0 16px var(--resize-handle-glow);
+      pointer-events: none;
+    }
+    .session-window .resize-x::before {
+      content: "";
+      position: absolute;
+      right: 9px;
+      top: 50%;
+      width: 6px;
+      height: 44px;
+      border-radius: 999px;
+      transform: translateY(-50%);
+      background: var(--resize-handle-color);
+      pointer-events: none;
+    }
+    .session-window .resize-corner::before {
+      content: "";
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      width: 17px;
+      height: 17px;
+      border-right: 3px solid rgba(255,255,255,.30);
+      border-bottom: 3px solid rgba(255,255,255,.30);
+      pointer-events: none;
+    }
+
+    /* DOCK */
+    #dock {
+      position: fixed;
+      left: var(--dock-offset-x);
+      bottom: calc(var(--dock-bottom-gap) + var(--safe-bottom));
+      z-index: 97000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 10px;
+      border-radius: 24px;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid rgba(255,255,255,.1);
+    }
+    #dock:empty { opacity: 0; pointer-events: none; }
+    .dock-bubble {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.20);
+      color: #fff;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    body.has-maximized #stackWrap { max-width: none; margin: 0; padding: 0; }
+    body.has-maximized #kxtsk-shell { overflow: visible !important; }
+
+    @media (hover:none) and (pointer:coarse) {
+      .session-window .resize-y { height: 48px; }
+      .session-window .resize-corner { width: 58px; height: 58px; }
+    }
+  </style>
+</head>
+
+<body class="ui-safe-vertical" data-theme="dark" data-arch="kodux" data-user="Convidado" data-zpr="9" data-intensity="0.72">
+
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LS/js/insert-LS-3.js"></script>
+  <script src="https://kodux78k.github.io/oiDual-KxT-di_oi/js/modules/bgPanel.js"></script>
+
+  <!-- =========================================================
+       BIBLIOTECA DE ÍCONES SVG INLINE
+       ========================================================= -->
+  <svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
+    <defs>
+      <!-- Ícone da marca (substitui ⏣) -->
+      <symbol id="icon-brand" viewBox="0 0 24 24">
+        <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.3L19.5 8 12 11.7 4.5 8 12 4.3zM4 9.7l7 3.5v7.1L4 16.8V9.7zm9 10.6v-7.1l7-3.5v7.1l-7 3.5z"/>
+      </symbol>
+      <!-- Ícone de globo/navegador (substitui 🌐) -->
+      <symbol id="icon-globe" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+        <path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" fill="none" stroke="currentColor" stroke-width="2"/>
+      </symbol>
+      <!-- Ícone de colapsar (substitui —) -->
+      <symbol id="icon-minimize" viewBox="0 0 24 24">
+        <rect x="4" y="11" width="16" height="2" rx="1"/>
+      </symbol>
+      <!-- Ícone de maximizar (substitui ⬜) -->
+      <symbol id="icon-maximize" viewBox="0 0 24 24">
+        <rect x="4" y="4" width="16" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+      </symbol>
+      <!-- Ícone de restaurar/abaixar (substitui 🌐 no botão) -->
+      <symbol id="icon-restore" viewBox="0 0 24 24">
+        <rect x="4" y="4" width="16" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+        <path d="M8 4v4H4M16 4v4h4M8 20v-4H4M16 20v-4h4" fill="none" stroke="currentColor" stroke-width="2"/>
+      </symbol>
+      <!-- Ícone de fechar (substitui ✕) -->
+      <symbol id="icon-close" viewBox="0 0 24 24">
+        <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
+      <!-- Ícone de adicionar/mais (substitui +) -->
+      <symbol id="icon-plus" viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <div id="kxtsk-shell">
+
+    <!-- TOPBAR -->
+    <div class="os-topbar">
+      <div class="os-brand">
+        <svg class="icon-svg" aria-hidden="true"><use href="#icon-brand"/></svg>
+      </div>
+      <div class="top-actions">
+        <div class="win-navrow" onclick="event.stopPropagation()">
+          <input class="win-urlbar" type="text" id="urlInputNav" placeholder="Digite uma URL..." spellcheck="false" autocomplete="off">
+          <button class="win-go-btn" type="button" id="goNavBtn">Go</button>
+          <button class="launcher-btn" id="openKobBtn" title="Nova janela">
+            <svg class="icon-svg" aria-hidden="true"><use href="#icon-plus"/></svg>
+          </button>
+          <button class="soft-btn" id="openLogsBtn">Logs</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DOCK -->
+    <div id="dock"></div>
+
+    <!-- STACK -->
+    <div id="stackWrap">
+      <!-- SESSÃO INICIAL -->
+      <div class="session-window" id="session-iframe">
+        <div class="win-hdr">
+          <span class="win-title">
+            <svg class="icon-svg" aria-hidden="true"><use href="#icon-globe"/></svg>
+            infodose
+          </span>
+          <div class="win-navrow" style="flex:1; min-width:0;">
+          </div>
+          <div class="win-controls">
+            <button type="button" data-action="minimize" title="Minimizar">
+              <svg class="icon-svg" aria-hidden="true"><use href="#icon-restore"/></svg>
+            </button>
+            <button type="button" data-action="close" title="Fechar">
+              <svg class="icon-svg" aria-hidden="true"><use href="#icon-close"/></svg>
+            </button>
+          </div>
+        </div>
+        <iframe class="win-frame" data-runtime="nav" id="navFrame" src="https://www.infodose.com.br" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox" allow="fullscreen; accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture" loading="lazy"></iframe>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const stackWrap = document.getElementById('stackWrap');
+      const dock = document.getElementById('dock');
+      const DEFAULT_SRC = 'https://www.infodose.com.br';
+      const DEFAULT_ICON = 'globe';
+      const DEFAULT_TITLE = '//';
+      let counter = 1;
+      const timers = new Map();
+
+      const $ = (sel, root = document) => root.querySelector(sel);
+      const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+
+      // Função auxiliar para criar SVG de ícone
+      function createIcon(iconId, extraClass = '') {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('class', 'icon-svg ' + extraClass);
+        svg.setAttribute('aria-hidden', 'true');
+        const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+        use.setAttribute('href', '#icon-' + iconId);
+        svg.appendChild(use);
+        return svg;
+      }
+
+      function getWin(id) { return document.getElementById(id); }
+      function isMaximized(win) { return win?.classList.contains('maximized') || false; }
+
+      function syncShell() {
+        const maximized = !!document.querySelector('.session-window.maximized:not(.minimized)');
+        document.body.classList.toggle('has-maximized', maximized);
+        document.body.classList.toggle('ui-immersive', maximized);
+      }
+
+      function bringToFront(win) {
+        if (!win) return;
+        $$('.session-window').forEach(w => { if (w !== win) w.style.zIndex = '100'; });
+        win.style.zIndex = '94000';
+      }
+
+      function togglePeek(id) {
+        const win = getWin(id);
+        if (!win || isMaximized(win)) return;
+        win.classList.toggle('peeked');
+        if (win.classList.contains('peeked')) win.classList.remove('collapsed');
+        bringToFront(win);
+        syncShell();
+      }
+
+      function toggleCollapse(id) {
+        const win = getWin(id);
+        if (!win || isMaximized(win)) return;
+        win.classList.toggle('collapsed');
+        if (win.classList.contains('collapsed')) win.classList.remove('peeked');
+        bringToFront(win);
+        syncShell();
+      }
+
+      function maximizeWindow(id) {
+        const win = getWin(id);
+        if (!win) return;
+        if (isMaximized(win)) {
+          win.classList.remove('maximized', 'header-hidden');
+          win.style.zIndex = '100';
+          syncShell();
+          return;
+        }
+        win.classList.remove('collapsed', 'peeked', 'minimized', 'resizing', 'header-hidden');
+        ['top', 'left', 'right', 'bottom', 'width', 'height', 'maxWidth', 'maxHeight'].forEach(p => win.style[p] = '');
+        win.classList.add('maximized');
+        bringToFront(win);
+        syncShell();
+      }
+
+      function minimizeWindow(id) {
+        const win = getWin(id);
+        if (!win) return;
+        timers.delete(id);
+        win.classList.remove('maximized', 'collapsed', 'peeked', 'header-hidden', 'resizing');
+        win.classList.add('minimized');
+        const old = document.getElementById('dock-' + id);
+        if (old) old.remove();
+        const bubble = document.createElement('button');
+        bubble.type = 'button';
+        bubble.className = 'dock-bubble';
+        bubble.id = 'dock-' + id;
+        bubble.title = 'Restaurar janela';
+        bubble.appendChild(createIcon('globe'));
+        bubble.addEventListener('click', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          bubble.remove();
+          win.classList.remove('minimized');
+          bringToFront(win);
+          requestAnimationFrame(() => bringToFront(win));
+          syncShell();
+        });
+        dock?.appendChild(bubble);
+        syncShell();
+      }
+
+      function closeWindow(id) {
+        const win = getWin(id);
+        if (!win) return;
+        timers.delete(id);
+        document.getElementById('dock-' + id)?.remove();
+        win.remove();
+        syncShell();
+      }
+
+      function handleHeaderClick(e, id) {
+        if (e.target.closest('.win-controls') || e.target.closest('button') || e.target.closest('input') || e.target.closest('.win-navrow')) return;
+        const win = getWin(id);
+        if (!win) return;
+        bringToFront(win);
+        const old = timers.get(id);
+        if (old) {
+          clearTimeout(old);
+          timers.delete(id);
+          maximizeWindow(id);
+          return;
+        }
+        const timer = setTimeout(() => {
+          timers.delete(id);
+          togglePeek(id);
+        }, 250);
+        timers.set(id, timer);
+      }
+
+      function setFrameUrl(section, url) {
+        const frame = $('.win-frame', section);
+        if (!frame) return;
+        let clean = String(url || '').trim();
+        if (!clean) return;
+        if (!/^https?:\/\//i.test(clean)) clean = 'https://' + clean;
+        frame.src = clean;
+        const input = $('.win-urlbar', section);
+        if (input) input.value = clean;
+      }
+
+      /* ============ RESIZE HANDLES ============ */
+      function makeResizeHandles(win) {
+        if (win.dataset.resizeReady === '1') return;
+        win.dataset.resizeReady = '1';
+
+        const hy = document.createElement('div');
+        hy.className = 'resize-handle resize-y';
+        const hx = document.createElement('div');
+        hx.className = 'resize-handle resize-x';
+        const hc = document.createElement('div');
+        hc.className = 'resize-handle resize-corner';
+        win.append(hy, hx, hc);
+
+        bindResizeY(win, hy);
+        bindResizeX(win, hx);
+        bindResizeCorner(win, hc);
+      }
+
+      function freeFromMaximize(win, rect) {
+        if (isMaximized(win)) {
+          win.classList.remove('maximized', 'header-hidden');
+          win.style.position = 'fixed';
+          win.style.left = Math.max(0, rect.left) + 'px';
+          win.style.top = Math.max(0, rect.top) + 'px';
+          win.style.right = 'auto';
+          win.style.bottom = 'auto';
+          win.style.width = Math.min(rect.width, window.innerWidth) + 'px';
+          win.style.height = Math.min(rect.height, window.innerHeight) + 'px';
+          win.style.maxWidth = 'none';
+          win.style.maxHeight = 'none';
+        }
+        win.classList.remove('collapsed', 'peeked');
+        win.classList.add('resizing');
+        syncShell();
+      }
+
+      function finishResize(win) {
+        win.classList.remove('resizing');
+        syncShell();
+      }
+
+      function bindResizeY(win, handle) {
+        let active = false, pointerId = null, startY = 0, startH = 0;
+        handle.addEventListener('pointerdown', e => {
+          if (e.button != null && e.button !== 0) return;
+          const rect = win.getBoundingClientRect();
+          active = true;
+          pointerId = e.pointerId;
+          startY = e.clientY;
+          startH = rect.height;
+          freeFromMaximize(win, rect);
+          handle.setPointerCapture?.(pointerId);
+          e.preventDefault();
+          const move = ev => {
+            if (!active || ev.pointerId !== pointerId) return;
+            ev.preventDefault();
+            const next = Math.max(44, Math.min(window.innerHeight, startH + (ev.clientY - startY)));
+            win.style.height = next + 'px';
+          };
+          const up = ev => {
+            if (ev && ev.pointerId !== pointerId) return;
+            active = false;
+            window.removeEventListener('pointermove', move);
+            window.removeEventListener('pointerup', up);
+            window.removeEventListener('pointercancel', up);
+            finishResize(win);
+          };
+          window.addEventListener('pointermove', move, { passive: false });
+          window.addEventListener('pointerup', up, { passive: true });
+          window.addEventListener('pointercancel', up, { passive: true });
+        }, { passive: false });
+      }
+
+      function bindResizeX(win, handle) {
+        let active = false, pointerId = null, startX = 0, startW = 0;
+        handle.addEventListener('pointerdown', e => {
+          if (e.button != null && e.button !== 0) return;
+          const rect = win.getBoundingClientRect();
+          active = true;
+          pointerId = e.pointerId;
+          startX = e.clientX;
+          startW = rect.width;
+          freeFromMaximize(win, rect);
+          handle.setPointerCapture?.(pointerId);
+          e.preventDefault();
+          const move = ev => {
+            if (!active || ev.pointerId !== pointerId) return;
+            ev.preventDefault();
+            const next = Math.max(280, Math.min(window.innerWidth, startW + (ev.clientX - startX)));
+            win.style.width = next + 'px';
+          };
+          const up = ev => {
+            if (ev && ev.pointerId !== pointerId) return;
+            active = false;
+            window.removeEventListener('pointermove', move);
+            window.removeEventListener('pointerup', up);
+            window.removeEventListener('pointercancel', up);
+            finishResize(win);
+          };
+          window.addEventListener('pointermove', move, { passive: false });
+          window.addEventListener('pointerup', up, { passive: true });
+          window.addEventListener('pointercancel', up, { passive: true });
+        }, { passive: false });
+      }
+
+      function bindResizeCorner(win, handle) {
+        let active = false, pointerId = null, startX = 0, startY = 0, startW = 0, startH = 0;
+        handle.addEventListener('pointerdown', e => {
+          if (e.button != null && e.button !== 0) return;
+          const rect = win.getBoundingClientRect();
+          active = true;
+          pointerId = e.pointerId;
+          startX = e.clientX;
+          startY = e.clientY;
+          startW = rect.width;
+          startH = rect.height;
+          freeFromMaximize(win, rect);
+          handle.setPointerCapture?.(pointerId);
+          e.preventDefault();
+          const move = ev => {
+            if (!active || ev.pointerId !== pointerId) return;
+            ev.preventDefault();
+            const width = Math.max(280, Math.min(window.innerWidth, startW + (ev.clientX - startX)));
+            const height = Math.max(44, Math.min(window.innerHeight, startH + (ev.clientY - startY)));
+            win.style.width = width + 'px';
+            win.style.height = height + 'px';
+          };
+          const up = ev => {
+            if (ev && ev.pointerId !== pointerId) return;
+            active = false;
+            window.removeEventListener('pointermove', move);
+            window.removeEventListener('pointerup', up);
+            window.removeEventListener('pointercancel', up);
+            finishResize(win);
+          };
+          window.addEventListener('pointermove', move, { passive: false });
+          window.addEventListener('pointerup', up, { passive: true });
+          window.addEventListener('pointercancel', up, { passive: true });
+        }, { passive: false });
+      }
+
+      /* ============ WIRE SESSION ============ */
+      function wireSession(win) {
+        if (!win || win.dataset.wired === '1') return;
+        win.dataset.wired = '1';
+        makeResizeHandles(win);
+
+        const header = $('.win-hdr', win);
+        if (header) {
+          header.addEventListener('click', e => handleHeaderClick(e, win.id));
+        }
+
+        const controls = $('.win-controls', win);
+        controls?.addEventListener('click', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          const btn = e.target.closest('button');
+          if (!btn) return;
+          const action = btn.dataset.action;
+          if (action === 'collapse') toggleCollapse(win.id);
+          else if (action === 'maximize') maximizeWindow(win.id);
+          else if (action === 'minimize') minimizeWindow(win.id);
+          else if (action === 'close') closeWindow(win.id);
+        });
+
+        const input = $('.win-urlbar', win);
+        const go = $('.win-go-btn', win);
+        go?.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); setFrameUrl(win, input?.value); });
+        input?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.stopPropagation(); setFrameUrl(win, input.value); } });
+      }
+
+      function createSessionWindow({ title = DEFAULT_TITLE, icon = DEFAULT_ICON, src = DEFAULT_SRC } = {}) {
+        const id = 'session-' + Date.now() + '-' + counter++;
+        const win = document.createElement('section');
+        win.className = 'session-window';
+        win.id = id;
+        win.innerHTML = `
+          <div class="win-hdr">
+            <span class="win-title">
+              <svg class="icon-svg" aria-hidden="true"><use href="#icon-${icon}"/></svg>
+              ${title}
+            </span>
+            <div class="win-navrow" style="flex:1; min-width:0;">
+              <input class="win-urlbar" type="text" value="${src}" placeholder="Digite uma URL..." spellcheck="false" autocomplete="off">
+              <button class="win-go-btn" type="button">Go</button>
+            </div>
+            <div class="win-controls">
+              <button type="button" data-action="collapse" title="Colapsar">
+                <svg class="icon-svg" aria-hidden="true"><use href="#icon-minimize"/></svg>
+              </button>
+              <button type="button" data-action="maximize" title="Maximizar">
+                <svg class="icon-svg" aria-hidden="true"><use href="#icon-maximize"/></svg>
+              </button>
+              <button type="button" data-action="minimize" title="Minimizar">
+                <svg class="icon-svg" aria-hidden="true"><use href="#icon-restore"/></svg>
+              </button>
+              <button type="button" data-action="close" title="Fechar">
+                <svg class="icon-svg" aria-hidden="true"><use href="#icon-close"/></svg>
+              </button>
+            </div>
+          </div>
+          <iframe class="win-frame" data-runtime="nav" src="${src}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox" allow="fullscreen; accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture" loading="lazy"></iframe>
+        `;
+        stackWrap.appendChild(win);
+        wireSession(win);
+        bringToFront(win);
+        return id;
+      }
+
+      /* ============ GLOBAL NAV ============ */
+      const navInput = document.getElementById('urlInputNav');
+      const navFrame = document.getElementById('navFrame');
+
+      function applyGlobalUrl() {
+        if (!navInput || !navFrame) return;
+        setFrameUrl(document.getElementById('session-iframe'), navInput.value);
+      }
+
+      navInput?.addEventListener('keydown', e => { if (e.key === 'Enter') applyGlobalUrl(); });
+      document.getElementById('goNavBtn')?.addEventListener('click', applyGlobalUrl);
+
+      document.getElementById('openKobBtn')?.addEventListener('click', () => createSessionWindow());
+      document.getElementById('openLogsBtn')?.addEventListener('click', () => console.log('[iFSw]', $$('.session-window')));
+
+      /* ============ BOOT ============ */
+      $$('.session-window').forEach(wireSession);
+
+      if (navInput && navFrame) {
+        navInput.value = navFrame.src;
+      }
+
+      syncShell();
+
+      // API pública
+      window.handleHeaderClick = handleHeaderClick;
+      window.togglePeek = togglePeek;
+      window.toggleCollapse = toggleCollapse;
+      window.maximizeWindow = maximizeWindow;
+      window.minimizeWindow = minimizeWindow;
+      window.closeWindow = closeWindow;
+      window.createSessionWindow = createSessionWindow;
+      window.syncShellMode = syncShell;
+    })();
+  </script>
+
+  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/M0D/di_Pad/css/zpr.css">
+  <div class="theme-switch" id="themeSwitch" title="Alternar tema"></div>
+  <style>
+    body, html { overflow-y: auto; }
+  </style>
+</body>
+</html>
