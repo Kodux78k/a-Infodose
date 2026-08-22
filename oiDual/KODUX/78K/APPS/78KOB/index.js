@@ -60,24 +60,37 @@ document.body.appendChild(n);
  <link rel="manifest" href="./manifest.json">
 
 
-  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/css/kob-.css" data-k-id="L_4">
-  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/css/kxt-solar.css" data-k-id="L_5">
-  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/css/kob-nanaiu.css" data-k-id="L_6">
-  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/css/kob-dox-nanai-uv4.css" data-k-id="L_7">
+<style data-k-id="CSS_IMPORTS">
 
-  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/M0D/di_Pad/css/zpr.css" data-k-id="L_8">
+  /* CSS EXTERNOS — IMPORTS */
 
- <link rel="stylesheet" href="https://www.infodose.com.br/css/main.css" data-k-id="L_0">  
-<link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/M0D/KBF/main.css" data-k-id="L_1">
- <link rel="stylesheet" href="https://infodose.com.br/oiDual/KODUX/78K/APPS/78iFSw/dual-ifswin/css/main.css" data-k-id="L_2">
-  <!-- CSS EXTERNOS -->
+  @import url("https://kodux78k.github.io/oiDual--Y-/css/kob-.css");
+  @import url("https://kodux78k.github.io/oiDual--Y-/css/kxt-solar.css");
+  @import url("https://kodux78k.github.io/oiDual--Y-/css/kob-nanaiu.css");
+  @import url("https://kodux78k.github.io/oiDual--Y-/css/kob-dox-nanai-uv4.css");
 
-  <link rel="stylesheet" href="https://infodose.com.br/oiDual/KODUX/78K/APPS/78FusionOS/css/main.css" data-k-id="L_FUSIONOS">
+  @import url("https://kodux78k.github.io/oiDual--Y-/M0D/di_Pad/css/zpr.css");
 
-<style data-k-id="SI_1">
+  @import url("https://www.infodose.com.br/css/main.css");
 
-    body, html { overflow-y: auto; }
-  </style></head>
+  @import url("https://kodux78k.github.io/oiDual--Y-/M0D/KBF/main.css");
+
+  @import url("https://infodose.com.br/oiDual/KODUX/78K/APPS/78iFSw/dual-ifswin/css/main.css");
+
+  @import url("https://infodose.com.br/oiDual/KODUX/78K/APPS/78FusionOS/css/main.css");
+
+</style>
+<style>
+  /* OVERRIDE FINAL */
+
+  html,
+  body {
+    overflow-y: auto;
+  }
+
+</style>
+
+</head>
 <body class="field-closed mode-night ui-safe-vertical" data-theme="dark" data-arch="" data-user="" data-zpr="9" data-intensity="0.72">
 <div id="root">
   <div id="kxtsk-shell">
