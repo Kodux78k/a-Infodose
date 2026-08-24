@@ -168,7 +168,9 @@ document.body.appendChild(n);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; margin-left: auto; margin-right: auto;
     }
   </style>
-<style>:root { --z-base: 0; --z-content: 100; --z-widget: 500; --z-overlay: 1000; --z-system: 5000; }</style><style data-k-id="SI_0">
+<style>:root { --z-base: 0; --z-content: 100; --z-widget: 500; --z-overlay: 1000; --z-system: 5000; }</style>
+<!--
+<style data-k-id="SI_0">
     @import url("https://kodux78k.github.io/oiDual--Y-/M0D/LV/css/main.css");
     @import url("https://www.infodose.com.br/css/a€ArX.css");
     @import url("https://kodux78k.github.io/oiDual--Y-/M0D/78F/css/main.css");
@@ -184,7 +186,9 @@ document.body.appendChild(n);
     @import url("https://kodux78k.github.io/oiDual--Y-/css/kxt-solar.css");
     @import url("https://kodux78k.github.io/oiDual--Y-/css/kob-glass-0.css");
     @import url("https://www.infodose.com.br/css/ParTKlz.css");
-  </style><style data-k-id="SI_1">
+  </style>
+  -->
+  <style data-k-id="SI_1">
     /* Ajustes de scroll do HUB */
     body, .view { overflow-y: auto; height: 100%; width:100%; padding:0 1px 39px; margin-bottom: 100px; }
   </style><style data-k-id="SI_2">
