@@ -116,8 +116,8 @@
       const name = input.value.trim();
       if (!name) return;
       const arch = detectArchetype(name);
-      if (arch) Archetype.set(arch);
-      else Archetype.set('ATLAS');
+     // if (arch) Archetype.set(arch);
+    //  else Archetype.set('ATLAS');
       STATE.userName = name;
       localStorage.setItem(KEYS.USER, name);
       const displayHeader = document.getElementById('displayUserHeader');
