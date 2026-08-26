@@ -412,13 +412,13 @@
 
         /* ── 2. Force CSS vars directly on :root so #arch-bg + all UI sync ── */
         const root = document.documentElement;
-        root.style.setProperty('--kob-voice-primary',   vc.primary);
+        root.style.setProperty('--kob-voice-primaryi',   vc.primary);
         root.style.setProperty('--kob-voice-secondary', vc.secondary);
         root.style.setProperty('--active-color',  data.colors.main);
         root.style.setProperty('--active-glow',   data.colors.main + '55');
 
         /* ── 3. #arch-bg gradient — set directly for instant reactivity ── */
-        const bg = document.getElementById('arch-bg');
+        const bg = document.getElementById('arch-bg-off');
         if (bg) {
           bg.style.background = `
             radial-gradient(900px 700px at 50% 10%,
