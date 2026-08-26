@@ -5,13 +5,13 @@
   // LISTA DE SCRIPTS EXTERNOS (ordem original do HTML)
   // =========================================================
   const SCRIPTS = [
-    { src: "https://infodose.com.br/oiDual/KODUX/78K/APPS/78PLAYER/Player-[di_jogador]-87-OK-0.js" },
-    { src: "https://www.infodose.com.br/js/mainoff-.js", type: "module" },
+   // { src: "https://infodose.com.br/oiDual/KODUX/78K/APPS/78PLAYER/Player-[di_jogador]-87-OK-0.js" },
+   // { src: "https://www.infodose.com.br/js/mainoff-.js", type: "module" },
     { src: "https://kodux78k.github.io/oiDual--Y-/M0D/kob-DH0/js/kob-outline-uni.js" },
     { src: "https://kodux78k.github.io/oiDual--Y-/M0D/kard/js/modules/inline-000.js" },
     { src: "https://kodux78k.github.io/oiDual--Y-/M0D/kard/js/modules/o0.js" },
     { src: "https://kodux78k.github.io/oiDual--Y-/js/koblluxv30.js" },
-    { src: "https://kodux78k.github.io/oiDual--Y-/js/kodbrain-u66.js" },
+    //{ src: "https://kodux78k.github.io/oiDual--Y-/js/kodbrain-u66.js" },
     { src: "https://kodux78k.github.io/oiDual--Y-/js/kobllux-fusion.js" },
     { src: "https://kodux78k.github.io/oiDual--Y-/M0D/0RB/js/modules/inline-1.js", type: "module" },
     { src: "https://www.infodose.com.br/js/modules/oiDual-S-0e1u.js" },
