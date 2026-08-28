@@ -1180,14 +1180,63 @@
 
       <div class="win-hdr">
 
-        <span class="win-title">
+        <div class="win-controls">
+
+ <button
+            type="button"
+            data-action="collapse"
+            title="Colapsar"
+            aria-label="Colapsar"
+          >
+            −
+          </button>
+
+       <!-- <span style="pointer-events:auto" 
+class="win-title">
           ۞ ${title}
-        </span>
+        </span> -->
+
+<button
+            type="button"
+            data-action="maximize"
+            title="Maximizar"
+            aria-label="Maximizar"
+          >
+            ⛶
+          </button>
 
 
-        <div
+          <button
+            type="button"
+            data-action="minimize"
+            title="Minimizar"
+            aria-label="Minimizar"
+          >
+            ۞
+          </button>
+</div>
+          <div class="win-controls">
+
+         
+
+         
+
+
+          <button
+            type="button"
+            data-action="close"
+            title="Fechar"
+            aria-label="Fechar"
+            style="color:red"
+          >
+            ×
+          </button>
+
+        </div>
+
+      <div
           class="win-navrow"
-          style="flex:1; min-width:0;"
+          style="flex:2; min-width:0;"
         >
 
           <input
@@ -1209,50 +1258,6 @@
 
         </div>
 
-
-        <div class="win-controls">
-
-          <button
-            type="button"
-            data-action="collapse"
-            title="Colapsar"
-            aria-label="Colapsar"
-          >
-            −
-          </button>
-
-
-          <button
-            type="button"
-            data-action="maximize"
-            title="Maximizar"
-            aria-label="Maximizar"
-          >
-            ⛶
-          </button>
-
-
-          <button
-            type="button"
-            data-action="minimize"
-            title="Minimizar"
-            aria-label="Minimizar"
-          >
-            ۞
-          </button>
-
-
-          <button
-            type="button"
-            data-action="close"
-            title="Fechar"
-            aria-label="Fechar"
-            style="color:red"
-          >
-            ×
-          </button>
-
-        </div>
 
       </div>
 
