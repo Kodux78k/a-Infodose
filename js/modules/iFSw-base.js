@@ -1,0 +1,1412 @@
+(() => {
+
+  'use strict';
+
+
+  /* =======================================================
+     CORE
+     ======================================================= */
+
+  const stackWrap =
+    document.getElementById('stackWrap');
+
+  const dock =
+    document.getElementById('dock');
+
+  const DEFAULT_SRC =
+    'https://www.infodose.com.br';
+
+  const DEFAULT_TITLE =
+    '//';
+
+  let counter = 1;
+
+  const timers = new Map();
+
+
+  /* =======================================================
+     HELPERS
+     ======================================================= */
+
+  const $ = (
+    sel,
+    root = document
+  ) => root.querySelector(sel);
+
+
+  const $$ = (
+    sel,
+    root = document
+  ) => [...root.querySelectorAll(sel)];
+
+
+  function getWin(id) {
+
+    return document.getElementById(id);
+
+  }
+
+
+  function isMaximized(win) {
+
+    return win?.classList.contains('maximized') || false;
+
+  }
+
+
+  /* =======================================================
+     SHELL
+     ======================================================= */
+
+  function syncShell() {
+
+    const maximized =
+      !!document.querySelector(
+        '.session-window.maximized:not(.minimized)'
+      );
+
+    document.body.classList.toggle(
+      'has-maximized',
+      maximized
+    );
+
+    document.body.classList.toggle(
+      'ui-immersive',
+      maximized
+    );
+
+  }
+
+
+  /* =======================================================
+     Z-INDEX
+     ======================================================= */
+
+  function bringToFront(win) {
+
+    if (!win) return;
+
+    $$('.session-window').forEach(w => {
+
+      if (w !== win) {
+
+        w.style.zIndex = '100';
+
+      }
+
+    });
+
+    win.style.zIndex = '94000';
+
+  }
+
+
+  /* =======================================================
+     PEEK
+     ======================================================= */
+
+  function togglePeek(id) {
+
+    const win = getWin(id);
+
+    if (!win || isMaximized(win)) return;
+
+    win.classList.toggle('peeked');
+
+    if (win.classList.contains('peeked')) {
+
+      win.classList.remove('collapsed');
+
+    }
+
+    bringToFront(win);
+
+    syncShell();
+
+  }
+
+
+  /* =======================================================
+     COLLAPSE
+     ======================================================= */
+
+  function toggleCollapse(id) {
+
+    const win = getWin(id);
+
+    if (!win || isMaximized(win)) return;
+
+    win.classList.toggle('collapsed');
+
+    if (win.classList.contains('collapsed')) {
+
+      win.classList.remove('peeked');
+
+    }
+
+    bringToFront(win);
+
+    syncShell();
+
+  }
+
+
+  /* =======================================================
+     MAXIMIZE
+     ======================================================= */
+
+  function maximizeWindow(id) {
+
+    const win = getWin(id);
+
+    if (!win) return;
+
+
+    if (isMaximized(win)) {
+
+      win.classList.remove(
+        'maximized',
+        'header-hidden'
+      );
+
+      win.style.zIndex = '100';
+
+      syncShell();
+
+      return;
+
+    }
+
+
+    win.classList.remove(
+      'collapsed',
+      'peeked',
+      'minimized',
+      'resizing',
+      'header-hidden'
+    );
+
+
+    [
+      'top',
+      'left',
+      'right',
+      'bottom',
+      'width',
+      'height',
+      'maxWidth',
+      'maxHeight'
+    ].forEach(p => {
+
+      win.style[p] = '';
+
+    });
+
+
+    win.classList.add('maximized');
+
+    bringToFront(win);
+
+    syncShell();
+
+  }
+
+
+  /* =======================================================
+     MINIMIZE + DOCK
+     ======================================================= */
+
+  function minimizeWindow(id) {
+
+    const win = getWin(id);
+
+    if (!win) return;
+
+
+    timers.delete(id);
+
+
+    win.classList.remove(
+      'maximized',
+      'collapsed',
+      'peeked',
+      'header-hidden',
+      'resizing'
+    );
+
+    win.classList.add('minimized');
+
+
+    const old =
+      document.getElementById('dock-' + id);
+
+    if (old) old.remove();
+
+
+    const bubble =
+      document.createElement('button');
+
+    bubble.type = 'button';
+
+    bubble.className =
+      'dock-bubble';
+
+    bubble.id =
+      'dock-' + id;
+
+    bubble.title =
+      'Restaurar janela';
+
+    bubble.setAttribute(
+      'aria-label',
+      'Restaurar janela'
+    );
+
+    bubble.textContent =
+      '۞';
+
+
+    bubble.addEventListener(
+      'click',
+      e => {
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        bubble.remove();
+
+        win.classList.remove(
+          'minimized'
+        );
+
+        bringToFront(win);
+
+        requestAnimationFrame(
+          () => bringToFront(win)
+        );
+
+        syncShell();
+
+      }
+    );
+
+
+    dock?.appendChild(bubble);
+
+    syncShell();
+
+  }
+
+
+  /* =======================================================
+     CLOSE
+     ======================================================= */
+
+  function closeWindow(id) {
+
+    const win = getWin(id);
+
+    if (!win) return;
+
+    timers.delete(id);
+
+    document
+      .getElementById('dock-' + id)
+      ?.remove();
+
+    win.remove();
+
+    syncShell();
+
+  }
+
+
+  /* =======================================================
+     HEADER
+     ======================================================= */
+
+  function handleHeaderClick(e, id) {
+
+    if (
+      e.target.closest('.win-controls') ||
+      e.target.closest('button') ||
+      e.target.closest('input') ||
+      e.target.closest('.win-navrow')
+    ) {
+
+      return;
+
+    }
+
+
+    const win = getWin(id);
+
+    if (!win) return;
+
+    bringToFront(win);
+
+
+    const old =
+      timers.get(id);
+
+
+    if (old) {
+
+      clearTimeout(old);
+
+      timers.delete(id);
+
+      maximizeWindow(id);
+
+      return;
+
+    }
+
+
+    const timer =
+      setTimeout(() => {
+
+        timers.delete(id);
+
+        togglePeek(id);
+
+      }, 250);
+
+
+    timers.set(
+      id,
+      timer
+    );
+
+  }
+
+
+  /* =======================================================
+     FRAME URL
+     ======================================================= */
+
+  function setFrameUrl(section, url) {
+
+    const frame =
+      $('.win-frame', section);
+
+    if (!frame) return;
+
+    let clean =
+      String(url || '').trim();
+
+    if (!clean) return;
+
+
+    if (
+      !/^https?:\/\//i.test(clean)
+    ) {
+
+      clean =
+        'https://' + clean;
+
+    }
+
+
+    frame.src = clean;
+
+
+    const input =
+      $('.win-urlbar', section);
+
+    if (input) {
+
+      input.value = clean;
+
+    }
+
+  }
+
+
+  /* =======================================================
+     RESIZE HANDLES
+     ======================================================= */
+
+  function makeResizeHandles(win) {
+
+    if (
+      win.dataset.resizeReady === '1'
+    ) return;
+
+    win.dataset.resizeReady = '1';
+
+
+    const hy =
+      document.createElement('div');
+
+    hy.className =
+      'resize-handle resize-y';
+
+
+    const hx =
+      document.createElement('div');
+
+    hx.className =
+      'resize-handle resize-x';
+
+
+    const hc =
+      document.createElement('div');
+
+    hc.className =
+      'resize-handle resize-corner';
+
+
+    win.append(
+      hy,
+      hx,
+      hc
+    );
+
+
+    bindResizeY(win, hy);
+
+    bindResizeX(win, hx);
+
+    bindResizeCorner(win, hc);
+
+  }
+
+
+  /* =======================================================
+     FREE FROM MAXIMIZE
+     ======================================================= */
+
+  function freeFromMaximize(
+    win,
+    rect
+  ) {
+
+    if (isMaximized(win)) {
+
+      win.classList.remove(
+        'maximized',
+        'header-hidden'
+      );
+
+
+      win.style.position =
+        'fixed';
+
+      win.style.left =
+        Math.max(0, rect.left) + 'px';
+
+      win.style.top =
+        Math.max(0, rect.top) + 'px';
+
+      win.style.right =
+        'auto';
+
+      win.style.bottom =
+        'auto';
+
+      win.style.width =
+        Math.min(
+          rect.width,
+          window.innerWidth
+        ) + 'px';
+
+      win.style.height =
+        Math.min(
+          rect.height,
+          window.innerHeight
+        ) + 'px';
+
+      win.style.maxWidth =
+        'none';
+
+      win.style.maxHeight =
+        'none';
+
+    }
+
+
+    win.classList.remove(
+      'collapsed',
+      'peeked'
+    );
+
+    win.classList.add(
+      'resizing'
+    );
+
+    syncShell();
+
+  }
+
+
+  function finishResize(win) {
+
+    win.classList.remove(
+      'resizing'
+    );
+
+    syncShell();
+
+  }
+
+
+  /* =======================================================
+     RESIZE Y
+     ======================================================= */
+
+  function bindResizeY(
+    win,
+    handle
+  ) {
+
+    let active = false;
+
+    let pointerId = null;
+
+    let startY = 0;
+
+    let startH = 0;
+
+
+    handle.addEventListener(
+      'pointerdown',
+      e => {
+
+        if (
+          e.button != null &&
+          e.button !== 0
+        ) return;
+
+
+        const rect =
+          win.getBoundingClientRect();
+
+
+        active = true;
+
+        pointerId =
+          e.pointerId;
+
+        startY =
+          e.clientY;
+
+        startH =
+          rect.height;
+
+
+        freeFromMaximize(
+          win,
+          rect
+        );
+
+
+        handle.setPointerCapture?.(
+          pointerId
+        );
+
+
+        e.preventDefault();
+
+
+        const move = ev => {
+
+          if (
+            !active ||
+            ev.pointerId !== pointerId
+          ) return;
+
+
+          ev.preventDefault();
+
+
+          const next =
+            Math.max(
+              44,
+              Math.min(
+                window.innerHeight,
+                startH +
+                (ev.clientY - startY)
+              )
+            );
+
+
+          win.style.height =
+            next + 'px';
+
+        };
+
+
+        const up = ev => {
+
+          if (
+            ev &&
+            ev.pointerId !== pointerId
+          ) return;
+
+
+          active = false;
+
+
+          window.removeEventListener(
+            'pointermove',
+            move
+          );
+
+          window.removeEventListener(
+            'pointerup',
+            up
+          );
+
+          window.removeEventListener(
+            'pointercancel',
+            up
+          );
+
+
+          finishResize(win);
+
+        };
+
+
+        window.addEventListener(
+          'pointermove',
+          move,
+          { passive: false }
+        );
+
+        window.addEventListener(
+          'pointerup',
+          up,
+          { passive: true }
+        );
+
+        window.addEventListener(
+          'pointercancel',
+          up,
+          { passive: true }
+        );
+
+      },
+      { passive: false }
+    );
+
+  }
+
+
+  /* =======================================================
+     RESIZE X
+     ======================================================= */
+
+  function bindResizeX(
+    win,
+    handle
+  ) {
+
+    let active = false;
+
+    let pointerId = null;
+
+    let startX = 0;
+
+    let startW = 0;
+
+
+    handle.addEventListener(
+      'pointerdown',
+      e => {
+
+        if (
+          e.button != null &&
+          e.button !== 0
+        ) return;
+
+
+        const rect =
+          win.getBoundingClientRect();
+
+
+        active = true;
+
+        pointerId =
+          e.pointerId;
+
+        startX =
+          e.clientX;
+
+        startW =
+          rect.width;
+
+
+        freeFromMaximize(
+          win,
+          rect
+        );
+
+
+        handle.setPointerCapture?.(
+          pointerId
+        );
+
+
+        e.preventDefault();
+
+
+        const move = ev => {
+
+          if (
+            !active ||
+            ev.pointerId !== pointerId
+          ) return;
+
+
+          ev.preventDefault();
+
+
+          const next =
+            Math.max(
+              280,
+              Math.min(
+                window.innerWidth,
+                startW +
+                (ev.clientX - startX)
+              )
+            );
+
+
+          win.style.width =
+            next + 'px';
+
+        };
+
+
+        const up = ev => {
+
+          if (
+            ev &&
+            ev.pointerId !== pointerId
+          ) return;
+
+
+          active = false;
+
+
+          window.removeEventListener(
+            'pointermove',
+            move
+          );
+
+          window.removeEventListener(
+            'pointerup',
+            up
+          );
+
+          window.removeEventListener(
+            'pointercancel',
+            up
+          );
+
+
+          finishResize(win);
+
+        };
+
+
+        window.addEventListener(
+          'pointermove',
+          move,
+          { passive: false }
+        );
+
+        window.addEventListener(
+          'pointerup',
+          up,
+          { passive: true }
+        );
+
+        window.addEventListener(
+          'pointercancel',
+          up,
+          { passive: true }
+        );
+
+      },
+      { passive: false }
+    );
+
+  }
+
+
+  /* =======================================================
+     RESIZE CORNER
+     ======================================================= */
+
+  function bindResizeCorner(
+    win,
+    handle
+  ) {
+
+    let active = false;
+
+    let pointerId = null;
+
+    let startX = 0;
+    let startY = 0;
+
+    let startW = 0;
+    let startH = 0;
+
+
+    handle.addEventListener(
+      'pointerdown',
+      e => {
+
+        if (
+          e.button != null &&
+          e.button !== 0
+        ) return;
+
+
+        const rect =
+          win.getBoundingClientRect();
+
+
+        active = true;
+
+        pointerId =
+          e.pointerId;
+
+        startX =
+          e.clientX;
+
+        startY =
+          e.clientY;
+
+        startW =
+          rect.width;
+
+        startH =
+          rect.height;
+
+
+        freeFromMaximize(
+          win,
+          rect
+        );
+
+
+        handle.setPointerCapture?.(
+          pointerId
+        );
+
+
+        e.preventDefault();
+
+
+        const move = ev => {
+
+          if (
+            !active ||
+            ev.pointerId !== pointerId
+          ) return;
+
+
+          ev.preventDefault();
+
+
+          const width =
+            Math.max(
+              280,
+              Math.min(
+                window.innerWidth,
+                startW +
+                (ev.clientX - startX)
+              )
+            );
+
+
+          const height =
+            Math.max(
+              44,
+              Math.min(
+                window.innerHeight,
+                startH +
+                (ev.clientY - startY)
+              )
+            );
+
+
+          win.style.width =
+            width + 'px';
+
+          win.style.height =
+            height + 'px';
+
+        };
+
+
+        const up = ev => {
+
+          if (
+            ev &&
+            ev.pointerId !== pointerId
+          ) return;
+
+
+          active = false;
+
+
+          window.removeEventListener(
+            'pointermove',
+            move
+          );
+
+          window.removeEventListener(
+            'pointerup',
+            up
+          );
+
+          window.removeEventListener(
+            'pointercancel',
+            up
+          );
+
+
+          finishResize(win);
+
+        };
+
+
+        window.addEventListener(
+          'pointermove',
+          move,
+          { passive: false }
+        );
+
+        window.addEventListener(
+          'pointerup',
+          up,
+          { passive: true }
+        );
+
+        window.addEventListener(
+          'pointercancel',
+          up,
+          { passive: true }
+        );
+
+      },
+      { passive: false }
+    );
+
+  }
+
+
+  /* =======================================================
+     WIRE SESSION
+     ======================================================= */
+
+  function wireSession(win) {
+
+    if (
+      !win ||
+      win.dataset.wired === '1'
+    ) return;
+
+
+    win.dataset.wired = '1';
+
+
+    makeResizeHandles(win);
+
+
+    const header =
+      $('.win-hdr', win);
+
+
+    if (header) {
+
+      header.addEventListener(
+        'click',
+        e =>
+          handleHeaderClick(
+            e,
+            win.id
+          )
+      );
+
+    }
+
+
+    const controls =
+      $('.win-controls', win);
+
+
+    controls?.addEventListener(
+      'click',
+      e => {
+
+        e.preventDefault();
+
+        e.stopPropagation();
+
+
+        const btn =
+          e.target.closest('button');
+
+
+        if (!btn) return;
+
+
+        const action =
+          btn.dataset.action;
+
+
+        if (
+          action === 'collapse'
+        ) {
+
+          toggleCollapse(win.id);
+
+        }
+
+        else if (
+          action === 'maximize'
+        ) {
+
+          maximizeWindow(win.id);
+
+        }
+
+        else if (
+          action === 'minimize'
+        ) {
+
+          minimizeWindow(win.id);
+
+        }
+
+        else if (
+          action === 'close'
+        ) {
+
+          closeWindow(win.id);
+
+        }
+
+      }
+    );
+
+
+    const input =
+      $('.win-urlbar', win);
+
+
+    const go =
+      $('.win-go-btn', win);
+
+
+    go?.addEventListener(
+      'click',
+      e => {
+
+        e.preventDefault();
+
+        e.stopPropagation();
+
+        setFrameUrl(
+          win,
+          input?.value
+        );
+
+      }
+    );
+
+
+    input?.addEventListener(
+      'keydown',
+      e => {
+
+        if (
+          e.key === 'Enter'
+        ) {
+
+          e.stopPropagation();
+
+          setFrameUrl(
+            win,
+            input.value
+          );
+
+        }
+
+      }
+    );
+
+  }
+
+
+  /* =======================================================
+     CREATE SESSION
+     ======================================================= */
+
+  function createSessionWindow({
+    title = DEFAULT_TITLE,
+    src = DEFAULT_SRC
+  } = {}) {
+
+    const id =
+      'session-' +
+      Date.now() +
+      '-' +
+      counter++;
+
+
+    const win =
+      document.createElement(
+        'section'
+      );
+
+
+    win.className =
+      'session-window';
+
+
+    win.id =
+      id;
+
+
+    win.innerHTML = `
+
+      <div class="win-hdr">
+
+        <span class="win-title">
+          ۞ ${title}
+        </span>
+
+
+        <div
+          class="win-navrow"
+          style="flex:1; min-width:0;"
+        >
+
+          <input
+            class="win-urlbar"
+            type="text"
+            value="${src}"
+            placeholder="Digite uma URL..."
+            spellcheck="false"
+            autocomplete="off"
+          >
+
+
+          <button
+            class="win-go-btn"
+            type="button"
+          >
+            Go
+          </button>
+
+        </div>
+
+
+        <div class="win-controls">
+
+          <button
+            type="button"
+            data-action="collapse"
+            title="Colapsar"
+            aria-label="Colapsar"
+          >
+            −
+          </button>
+
+
+          <button
+            type="button"
+            data-action="maximize"
+            title="Maximizar"
+            aria-label="Maximizar"
+          >
+            ⛶
+          </button>
+
+
+          <button
+            type="button"
+            data-action="minimize"
+            title="Minimizar"
+            aria-label="Minimizar"
+          >
+            ۞
+          </button>
+
+
+          <button
+            type="button"
+            data-action="close"
+            title="Fechar"
+            aria-label="Fechar"
+            style="color:red"
+          >
+            ×
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <iframe
+        class="win-frame"
+        data-runtime="nav"
+        src="${src}"
+        allow="fullscreen; accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
+      ></iframe>
+
+    `;
+
+
+    stackWrap.appendChild(win);
+
+
+    wireSession(win);
+
+    bringToFront(win);
+
+
+    return id;
+
+  }
+
+
+  /* =======================================================
+     GLOBAL NAV
+     ======================================================= */
+
+  const navInput =
+    document.getElementById(
+      'urlInputNav'
+    );
+
+
+  const navFrame =
+    document.getElementById(
+      'navFrame'
+    );
+
+
+  function applyGlobalUrl() {
+
+    if (
+      !navInput ||
+      !navFrame
+    ) return;
+
+
+    setFrameUrl(
+      document.getElementById(
+        'session-iframe'
+      ),
+      navInput.value
+    );
+
+  }
+
+
+  navInput?.addEventListener(
+    'keydown',
+    e => {
+
+      if (
+        e.key === 'Enter'
+      ) {
+
+        applyGlobalUrl();
+
+      }
+
+    }
+  );
+
+
+  document
+    .getElementById('goNavBtn')
+    ?.addEventListener(
+      'click',
+      applyGlobalUrl
+    );
+
+
+  document
+    .getElementById('openKobBtn')
+    ?.addEventListener(
+      'click',
+      () => createSessionWindow()
+    );
+
+
+  document
+    .getElementById('openLogsBtn')
+    ?.addEventListener(
+      'click',
+      () =>
+        console.log(
+          '[iFSw]',
+          $$('.session-window')
+        )
+    );
+
+
+  /* =======================================================
+     BOOT
+     ======================================================= */
+
+  $$('.session-window')
+    .forEach(wireSession);
+
+
+  if (
+    navInput &&
+    navFrame
+  ) {
+
+    navInput.value =
+      navFrame.src;
+
+  }
+
+
+  syncShell();
+
+
+  /* =======================================================
+     API PÚBLICA
+     ======================================================= */
+
+  window.handleHeaderClick =
+    handleHeaderClick;
+
+  window.togglePeek =
+    togglePeek;
+
+  window.toggleCollapse =
+    toggleCollapse;
+
+  window.maximizeWindow =
+    maximizeWindow;
+
+  window.minimizeWindow =
+    minimizeWindow;
+
+  window.closeWindow =
+    closeWindow;
+
+  window.createSessionWindow =
+    createSessionWindow;
+
+  window.syncShellMode =
+    syncShell;
+
+
+})();
