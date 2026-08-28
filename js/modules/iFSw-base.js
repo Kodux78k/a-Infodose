@@ -1169,7 +1169,7 @@
 
 
     win.className =
-      'session-window';
+      'session-window peeked';
 
 
     win.id =
