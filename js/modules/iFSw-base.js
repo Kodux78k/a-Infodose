@@ -1214,15 +1214,7 @@ class="win-title">
           >
             ۞
           </button>
-</div>
-          <div class="win-controls">
-
-         
-
-         
-
-
-          <button
+                    <button
             type="button"
             data-action="close"
             title="Fechar"
@@ -1231,8 +1223,8 @@ class="win-title">
           >
             ×
           </button>
-
-        </div>
+</div>
+        
 
       <div
           class="win-navrow"
