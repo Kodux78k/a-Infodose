@@ -1266,7 +1266,6 @@ class="win-title">
         class="win-frame"
         data-runtime="nav"
         src="${src}"
-        allow="fullscreen; accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
       ></iframe>
 
     `;
