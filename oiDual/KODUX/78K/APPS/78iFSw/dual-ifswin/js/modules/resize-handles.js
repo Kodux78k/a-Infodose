@@ -315,32 +315,71 @@
         win.className = 'session-window';
         win.id = id;
         win.innerHTML = `
-          <div class="win-hdr">
-            <span class="win-title">
-              <svg class="icon-svg" aria-hidden="true"><use href="#icon-${icon}"/></svg>
-              ${title}
-            </span>
-            <div class="win-navrow" style="flex:1; min-width:0;">
-              <input class="win-urlbar" type="text" value="${src}" placeholder="Digite uma URL..." spellcheck="false" autocomplete="off">
-              <button class="win-go-btn" type="button">Go</button>
-            </div>
-            <div class="win-controls">
-              <button type="button" data-action="collapse" title="Colapsar">
-                <svg class="icon-svg" aria-hidden="true"><use href="#icon-minimize"/></svg>
-              </button>
-              <button type="button" data-action="maximize" title="Maximizar">
-                <svg class="icon-svg" aria-hidden="true"><use href="#icon-maximize"/></svg>
-              </button>
-              <button type="button" data-action="minimize" title="Minimizar">
-                <svg class="icon-svg" aria-hidden="true"><use href="#icon-globe"/></svg>
-              </button>
-              <button type="button" data-action="close" title="Fechar">
-                <svg class="icon-svg" aria-hidden="true"><use href="#icon-close"/></svg>
-              </button>
-            </div>
-          </div>
-          <iframe class="win-frame" data-runtime="nav" src="${src}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox" allow="fullscreen; accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture" loading="lazy"></iframe>
-        `;
+            <div class="win-hdr">
+    <span class="win-title">
+      ۞ ${title}
+    </span>
+
+    <div class="win-navrow" style="flex:1; min-width:0;">
+      <input
+        class="win-urlbar"
+        type="text"
+        value="${src}"
+        placeholder="Digite uma URL..."
+        spellcheck="false"
+        autocomplete="off"
+      >
+      <button
+        class="win-go-btn"
+        type="button">
+        Go
+      </button>
+    </div>
+
+    <div class="win-controls">
+
+      <button
+        type="button"
+        data-action="collapse"
+        title="Colapsar"
+        aria-label="Colapsar">
+        −
+      </button>
+
+      <button
+        type="button"
+        data-action="maximize"
+        title="Maximizar"
+        aria-label="Maximizar">
+        ⛶
+      </button>
+
+      <button
+        type="button"
+        data-action="minimize"
+        title="Minimizar"
+        aria-label="Minimizar">
+        ۞
+      </button>
+
+      <button
+        type="button"
+        data-action="close"
+        title="Fechar"
+        aria-label="Fechar"
+        style="color:red">
+        ×
+      </button>
+
+    </div>
+  </div>
+
+  <iframe
+    class="win-frame"
+    data-runtime="nav"
+    src="${src}"
+    allow="fullscreen; accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture">
+  </iframe>`;
         stackWrap.appendChild(win);
         wireSession(win);
         bringToFront(win);
