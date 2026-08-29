@@ -1,0 +1,383 @@
+(function(bundle,s='body'){
+const p=new DOMParser();
+const c=p.parseFromString(
+bundle,
+'text/html'
+);
+const t=
+document.querySelector(s)
+||document.body;
+// CSS
+Array.from(
+c.querySelectorAll('style')
+)
+.forEach(style=>{
+const n=
+document.createElement('style');
+n.textContent=
+style.textContent;
+document.head.appendChild(n);
+});
+// HTML
+const f=
+document.createDocumentFragment();
+Array.from(
+c.body.childNodes
+)
+.forEach(node=>{
+if(node.nodeName!=='SCRIPT'){
+f.appendChild(
+document.importNode(node,true)
+);
+}
+});
+t.appendChild(f);
+// JS
+Array.from(
+c.querySelectorAll('script')
+)
+.forEach(x=>{
+const n=
+document.createElement('script');
+for(
+const a of x.attributes
+)
+n.setAttribute(
+a.name,
+a.value
+);
+n.textContent=
+x.textContent;
+document.body.appendChild(n);
+});
+})(`<script>
+/* ═══════════════════════════════════════════════════════
+   DUAL MONOLITH
+   THEME + HEADER COLLAPSE + SMART HEADER
+═══════════════════════════════════════════════════════ */
+(() => {
+"use strict";
+/* ═══════════════════════════════════════════════════════
+   ELEMENTOS
+═══════════════════════════════════════════════════════ */
+const ROOT =
+    document.documentElement;
+const HEADER =
+    document.getElementById(
+        "main-header"
+    );
+const MAIN =
+    document.getElementById(
+        "main-content"
+    );
+const THEME_DOT =
+    document.getElementById(
+        "theme-dot"
+    );
+/* ═══════════════════════════════════════════════════════
+   THEME ENGINE
+═══════════════════════════════════════════════════════ */
+const STORAGE_KEY =
+    "dual-theme";
+function applyTheme(theme) {
+    const nextTheme =
+        theme === "light"
+            ? "light"
+            : "dark";
+    ROOT.dataset.theme =
+        nextTheme;
+    try {
+        localStorage.setItem(
+            STORAGE_KEY,
+            nextTheme
+        );
+    } catch (error) {
+        console.warn(
+            "DUAL Theme · localStorage indisponível"
+        );
+    }
+    /*
+     * Evento global.
+     *
+     * Qualquer módulo do sistema pode ouvir:
+     *
+     * window.addEventListener(
+     *     "dual:theme-change",
+     *     e => {}
+     * );
+     */
+    window.dispatchEvent(
+        new CustomEvent(
+            "dual:theme-change",
+            {
+                detail: {
+                    theme:
+                        nextTheme
+                }
+            }
+        )
+    );
+}
+function getInitialTheme() {
+    try {
+        const saved =
+            localStorage.getItem(
+                STORAGE_KEY
+            );
+        if (
+            saved === "light" ||
+            saved === "dark"
+        ) {
+            return saved;
+        }
+    } catch (error) {}
+    return "dark";
+}
+/* ═══════════════════════════════════════════════════════
+   API GLOBAL
+═══════════════════════════════════════════════════════ */
+window.DualTheme = {
+    set(theme) {
+        applyTheme(
+            theme
+        );
+    },
+    toggle() {
+        const current =
+            ROOT.dataset.theme ||
+            "dark";
+        applyTheme(
+            current === "light"
+                ? "dark"
+                : "light"
+        );
+    },
+    get() {
+        return (
+            ROOT.dataset.theme ||
+            "dark"
+        );
+    }
+};
+/* ═══════════════════════════════════════════════════════
+   BOLINHA DE TEMA
+═══════════════════════════════════════════════════════ */
+if (THEME_DOT) {
+    THEME_DOT.addEventListener(
+        "click",
+        event => {
+            /*
+             * Impede que o clique
+             * chegue ao header.
+             *
+             * Assim a bolinha troca
+             * o tema sem colapsar
+             * o conteúdo.
+             */
+            event.stopPropagation();
+            DualTheme.toggle();
+        }
+    );
+}
+/* ═══════════════════════════════════════════════════════
+   HEADER → COLLAPSE DO MAIN
+═══════════════════════════════════════════════════════ */
+if (HEADER && MAIN) {
+    HEADER.addEventListener(
+        "click",
+        event => {
+            /*
+             * Se o clique veio da bolinha,
+             * não executa o collapse.
+             */
+            if (
+                event.target.closest(
+                    "#theme-dot2"
+                )
+            ) {
+                return;
+            }
+            MAIN.classList.toggle(
+                "hidden"
+            );
+            const collapsed =
+                MAIN.classList.contains(
+                    "hidden"
+                );
+            HEADER.classList.toggle(
+                "is-collapsed",
+                collapsed
+            );
+            /*
+             * Evento para futuras
+             * Symbol Bars / Navigation.
+             */
+            window.dispatchEvent(
+                new CustomEvent(
+                    "dual:content-collapse",
+                    {
+                        detail: {
+                            collapsed
+                        }
+                    }
+                )
+            );
+        }
+    );
+}
+/* ═══════════════════════════════════════════════════════
+   SMART HEADER
+   SCROLL DOWN → ESCONDE
+   SCROLL UP   → MOSTRA
+═══════════════════════════════════════════════════════ */
+let lastScrollY =
+    window.scrollY;
+let ticking =
+    false;
+const SCROLL_THRESHOLD =
+    8;
+/* Função de controle */
+function updateHeader() {
+    const currentScrollY =
+        window.scrollY;
+    /*
+     * No topo:
+     * sempre mostra.
+     */
+    if (
+        currentScrollY <= 10
+    ) {
+        HEADER.classList.remove(
+            "header-hidden"
+        );
+        HEADER.classList.add(
+            "header-visible"
+        );
+        lastScrollY =
+            currentScrollY;
+        ticking =
+            false;
+        return;
+    }
+    /*
+     * Scroll para baixo
+     * → header sobe.
+     */
+    if (
+        currentScrollY >
+        lastScrollY +
+        SCROLL_THRESHOLD
+    ) {
+        HEADER.classList.remove(
+            "header-visible"
+        );
+        HEADER.classList.add(
+            "header-hidden"
+        );
+    }
+    /*
+     * Scroll para cima
+     * → header retorna.
+     */
+    else if (
+        currentScrollY <
+        lastScrollY -
+        SCROLL_THRESHOLD
+    ) {
+        HEADER.classList.remove(
+            "header-hidden"
+        );
+        HEADER.classList.add(
+            "header-visible"
+        );
+    }
+    lastScrollY =
+        currentScrollY;
+    ticking =
+        false;
+}
+/* Scroll otimizado */
+window.addEventListener(
+    "scroll",
+    () => {
+        if (
+            !ticking
+        ) {
+            window.requestAnimationFrame(
+                updateHeader
+            );
+            ticking =
+                true;
+        }
+    },
+    {
+        passive:
+            true
+    }
+);
+/* ═══════════════════════════════════════════════════════
+   INICIALIZAÇÃO
+═══════════════════════════════════════════════════════ */
+applyTheme(
+    getInitialTheme()
+);
+console.log(
+    "DUAL · GLOBAL SYSTEM READY"
+);
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════
+     PONTE DE TEMA (override-first, roda por último)
+     Antes existiam DOIS sistemas de tema desencontrados:
+       1) #theme-dot (SVG) → data-theme no <html>, via
+          Dual_[Theme]-minuz.js — esse é o principal e já
+          funciona certinho.
+       2) #themeToggle (🌙) → classe .theme-dark no <body> +
+          localStorage('theme') — um sistema paralelo que não
+          mexia em nenhum token realmente usado na tela.
+     Agora o #themeToggle só repassa o clique pro #theme-dot,
+     então os dois botões acabam controlando o MESMO tema real,
+     sem lógica duplicada e sem risco de dessincronizar.
+     ═══════════════════════════════════════════════════════ -->
+
+<script>
+  (function () {
+    var canonBtn = document.getElementById('theme-dot');
+    var themeToggleBtn = document.getElementById('themeToggle');
+
+    if (!canonBtn) return;
+
+    // Qualquer .theme-dot redireciona para o botão canônico
+    document.addEventListener('click', function (e) {
+      var trigger = e.target.closest('.theme-dot');
+
+      if (trigger && trigger !== canonBtn) {
+        canonBtn.click();
+      }
+    });
+
+    // Botão externo #themeToggle também redireciona
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener('click', function () {
+        canonBtn.click();
+      });
+
+      // Espelha o emoji conforme o data-theme real
+      var syncIcon = function () {
+        var t = document.documentElement.getAttribute('data-theme') || 'dark';
+        themeToggleBtn.textContent = t === 'light' ? '☀️' : '🌙';
+      };
+
+      syncIcon();
+
+      new MutationObserver(syncIcon).observe(
+        document.documentElement,
+        {
+          attributes: true,
+          attributeFilter: ['data-theme']
+        }
+      );
+    }
+  })();
+</script>`);
