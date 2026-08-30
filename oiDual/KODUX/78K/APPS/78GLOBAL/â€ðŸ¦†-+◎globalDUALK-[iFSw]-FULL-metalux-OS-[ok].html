@@ -1,0 +1,2177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f7fb">
+  <title>Almasliber · KODUX — Fusão de Abas</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+
+  <!-- ====== ESTILOS ALMASLIBER (core) + KODUX (abas) ====== -->
+  <style id="ifsw-unified-core">
+    /* =========================================================
+       ALMASLIBER / iFSw — UNIFIED CORE (base)
+       ========================================================= */
+    :root {
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+
+      --topbar-h: 58px;
+      --header-h: 52px;
+
+      --session-radius: 29px;
+      --session-gap: 20px;
+
+      --collapsed-h: 52px;
+      --peek-h: 178px;
+
+      --resize-hit: 0px;
+      --resize-corner: 54px;
+
+      --dock-bottom-gap: 80px;
+      --dock-offset-x: -12px;
+
+      --z-base: 1;
+      --z-content: 100;
+      --z-header-system: 900;
+      --z-header-main: 910;
+      --z-session: 1000;
+      --z-session-header: 1010;
+      --z-session-controls: 1020;
+      --z-maximized: 94000;
+      --z-maximized-header: 94010;
+      --z-maximized-controls: 94020;
+      --z-resize: 94030;
+      --z-dock: 97000;
+      --z-tab-switcher: 98000;
+      --z-popup: 99000;
+      --z-boot: 99999;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      min-width: 0;
+      min-height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    html { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    body {
+      min-height: 100dvh;
+      background: radial-gradient(circle at 50% 0%, #2a2a35 0%, #0f0f15 100%);
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    body.ui-safe-vertical {
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+    }
+    body.ui-immersive { padding: 0; overflow: hidden !important; }
+
+    #kxtsk-shell {
+      position: relative;
+      width: 100%;
+      min-height: 100dvh;
+      overflow: visible;
+      z-index: var(--z-base);
+    }
+    .almasliber, .almasliber .shell, #main-content {
+      position: relative;
+      width: 100%;
+      min-width: 0;
+    }
+    .almasliber { min-height: 100dvh; }
+
+    /* HEADER SYSTEM */
+    .topbar {
+      position: relative;
+      width: 100%;
+      min-width: 0;
+      height: var(--topbar-h);
+      min-height: var(--topbar-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 12px;
+      z-index: var(--z-header-system);
+      isolation: isolate;
+    }
+    #system-topbar { z-index: var(--z-header-system); }
+    #main-header { z-index: var(--z-header-main); }
+
+    #main-header.header-visible {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #main-header.header-hidden {
+      transform: translateY(-100%);
+      opacity: 0;
+      pointer-events: none;
+    }
+    #main-header { transition: transform .25s ease, opacity .2s ease; }
+
+    .brand, .brandX, .os-brand {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      font-weight: 800;
+    }
+    .brandX { gap: 7px; font-size: 13px; letter-spacing: 1.3px; }
+    .badgeX { font-size: 9px; opacity: .55; }
+
+    .top-actions {
+      min-width: 0;
+      flex: 1 1 auto;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .icon-btn, .soft-btn, .launcher-btn, .win-go-btn {
+      flex: 0 0 auto;
+      border: 0;
+      border-radius: 12px;
+      min-height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .icon-btn { width: 34px; height: 34px; padding: 0; background: rgba(255,255,255,.08); }
+    .soft-btn { padding: 10px 12px; background: rgba(255,255,255,.08); }
+    .launcher-btn { padding: 10px 12px; background: rgba(0,242,255,.12); border: 1px solid rgba(0,242,255,.3); }
+    .win-go-btn { padding: 10px 12px; background: rgba(0,242,255,.12); }
+    .icon-btn:active, .win-controls button:active, .dock-bubble:active { transform: scale(.94); }
+
+    .win-navrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      min-width: 0;
+      padding: 0 16px 10px;
+    }
+    .win-urlbar {
+      flex: 1 1 auto;
+      min-width: 139px;
+      padding: 11px 13px;
+      border-radius: 13px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: #fff;
+      outline: none;
+      font-size: 10px;
+    }
+    .win-urlbar::placeholder { color: rgba(255,255,255,.45); }
+    .win-urlbar:focus {
+      border-color: rgba(0,242,255,.45);
+      background: rgba(255,255,255,.09);
+      box-shadow: 0 0 0 3px rgba(0,242,255,.08);
+    }
+
+    main, #main-content { position: relative; z-index: var(--z-content); }
+
+    #stackWrap {
+      position: relative;
+      width: 100%;
+      max-width: 800px;
+      min-height: calc(100dvh - var(--topbar-h));
+      margin: 0 auto;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--session-gap);
+      overflow: visible;
+      z-index: var(--z-content);
+      isolation: isolate;
+    }
+
+    /* SESSION WINDOW */
+    .session-window {
+      position: relative;
+      width: 100%;
+      height: calc(100dvh - var(--topbar-h));
+      min-height: 0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: rgba(30,30,35,.40);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--session-radius);
+      z-index: var(--z-session);
+      transition: height .28s cubic-bezier(.16,1,.3,1), width .28s cubic-bezier(.16,1,.3,1), transform .28s ease, opacity .28s ease;
+    }
+
+    .session-window .win-hdr {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      height: var(--header-h);
+      min-height: var(--header-h);
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      z-index: var(--z-session-header);
+      background: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+      pointer-events: none;
+      touch-action: manipulation;
+      isolation: isolate;
+    }
+
+    .win-controls {
+      position: relative;
+      z-index: var(--z-session-controls);
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      pointer-events: auto;
+    }
+    .win-controls button {
+      width: 30px;
+      height: 30px;
+      min-width: 30px;
+      min-height: 30px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(255,255,255,.10);
+      color: #fff;
+      cursor: pointer;
+      font-family: "Noto Sans Symbols 2", "Noto Sans Symbols", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 17px;
+      font-weight: 300;
+      line-height: 1;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .win-controls button:hover { background: rgba(255,255,255,.17); }
+
+    /* Botão de abas (estilo KODUX) */
+    .win-controls .tab-badge {
+      width: auto;
+      min-width: 30px;
+      padding: 0 10px;
+      border-radius: 20px;
+      background: rgba(0,242,255,.15);
+      font-size: 12px;
+      font-weight: 600;
+      color: #7af;
+      letter-spacing: 0.3px;
+      border: 1px solid rgba(0,242,255,.2);
+      cursor: pointer;
+    }
+    .win-controls .tab-badge:active { transform: scale(.94); }
+
+    .session-window .win-frame {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      min-height: 0;
+      border: 0;
+      background: transparent;
+      z-index: 1;
+      display: block;
+    }
+
+    .session-window.collapsed {
+      height: var(--collapsed-h) !important;
+      min-height: var(--collapsed-h) !important;
+      overflow: hidden !important;
+    }
+    .session-window.collapsed .win-frame { visibility: hidden; pointer-events: none; }
+
+    .session-window.peeked {
+      height: var(--peek-h) !important;
+      min-height: var(--peek-h) !important;
+    }
+    .session-window.peeked .win-frame { visibility: visible; pointer-events: auto; }
+
+    .session-window.minimized {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      min-width: 1px !important;
+      min-height: 1px !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transform: scale(.90) translateY(50px);
+      overflow: hidden !important;
+    }
+
+    .session-window.maximized {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100dvh !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      max-width: none !important;
+      max-height: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      overflow: hidden !important;
+      z-index: var(--z-maximized) !important;
+      transition: none !important;
+    }
+    .session-window.maximized .win-hdr {
+      position: absolute !important;
+      inset: 0 0 auto 0 !important;
+      width: 100% !important;
+      height: var(--header-h) !important;
+      z-index: var(--z-maximized-header) !important;
+      pointer-events: none !important;
+    }
+    .session-window.maximized .win-controls { pointer-events: auto !important; z-index: var(--z-maximized-controls) !important; }
+    .session-window.maximized .win-frame {
+      position: absolute !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      z-index: 1 !important;
+    }
+
+    body.has-maximized { overflow: hidden !important; }
+    body.has-maximized .topbar { pointer-events: none; }
+    body.has-maximized .session-window.maximized .win-controls,
+    body.has-maximized .session-window.maximized .win-hdr { pointer-events: auto; }
+
+    .session-window .resize-handle {
+      position: absolute;
+      z-index: var(--z-resize);
+      background: transparent;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .session-window .resize-y { left: 0; right: 0; bottom: 0; height: var(--resize-hit); cursor: ns-resize; }
+    .session-window .resize-x { top: var(--header-h); right: 0; bottom: 0; width: var(--resize-hit); cursor: ew-resize; }
+    .session-window .resize-corner { right: 0; bottom: 0; width: var(--resize-corner); height: var(--resize-corner); cursor: nwse-resize; }
+    .session-window .resize-corner::before {
+      content: "";
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.18);
+      border: 1px solid rgba(255,255,255,.25);
+      box-shadow: 0 0 14px rgba(0,242,255,.18);
+      pointer-events: none;
+    }
+    .session-window.maximized .resize-handle { display: none !important; }
+
+    .session-window.suspended .win-frame { display: none; }
+    .session-window.suspended::after {
+      content: "⏸";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      opacity: .3;
+      pointer-events: none;
+    }
+
+    .session-window.state-idle { filter: saturate(.82); }
+    .session-window.state-idle .win-hdr::before {
+      content: "";
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255,200,60,.75);
+      pointer-events: none;
+    }
+    .session-window.state-loading .win-hdr::before {
+      content: "";
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(0,242,255,.8);
+      animation: session-loading-pulse 1s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes session-loading-pulse {
+      0%, 100% { opacity: .3; }
+      50% { opacity: 1; }
+    }
+
+    /* DOCK (Almasliber) */
+    #dock {
+      position: fixed;
+      left: var(--dock-offset-x);
+      bottom: calc(var(--dock-bottom-gap) + var(--safe-bottom));
+      z-index: var(--z-dock);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 10px;
+      border-radius: 24px;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid rgba(255,255,255,.1);
+    }
+    #dock:empty { opacity: 0; pointer-events: none; }
+    .dock-bubble {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.20);
+      color: #fff;
+      cursor: pointer;
+      font-family: "Noto Sans Symbols 2", "Noto Sans Symbols", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 19px;
+      line-height: 1;
+      touch-action: manipulation;
+    }
+
+    /* ====== ESTILOS DO KODUX (painel de abas) ====== */
+    .glass-panel { background: rgba(40,40,40,.17); }
+    .app-view {
+      position: fixed;
+      inset: 0;
+      z-index: var(--z-tab-switcher);
+      background: rgba(0,0,0,.92);
+      backdrop-filter: blur(20px);
+      display: flex;
+      flex-direction: column;
+      padding: 64px 16px 96px;
+      overflow-y: auto;
+      transition: transform .3s cubic-bezier(.25,.8,.25,1), opacity .3s ease;
+      transform: scale(.95) translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .app-view.active {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .app-view .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .app-view .header h2 {
+      font-size: 24px;
+      font-weight: 800;
+    }
+    .app-view .footer {
+      margin-top: auto;
+      padding-top: 32px;
+      display: flex;
+      justify-content: center;
+    }
+    .app-view .footer button {
+      padding: 12px 28px;
+      border-radius: 99px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      background: rgba(40,40,40,.17);
+    }
+    .btn-primary {
+      background: #0A84FF;
+      color: #fff;
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+    }
+
+    #tabs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .tab-card-glass {
+      background: rgba(40,40,40,.17);
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      height: 160px;
+      position: relative;
+      cursor: pointer;
+      transition: .2s;
+      border: 1px solid transparent;
+    }
+    .tab-card-glass:active { transform: scale(.96); }
+    .tab-card-glass.active { outline: 2px solid #0A84FF; border-color: #0A84FF; }
+    .tab-card-glass .title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #D1D5DB;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding-right: 24px;
+    }
+    .tab-card-glass .close-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 24px;
+      height: 24px;
+      border-radius: 99px;
+      background: rgba(239,68,68,.2);
+      color: #F87171;
+      border: none;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+    .tab-card-glass .preview {
+      flex: 1;
+      background: rgba(255,255,255,.05);
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-size: 28px;
+      margin-top: 8px;
+    }
+
+    ::-webkit-scrollbar { display: none; }
+    * { scrollbar-width: none; }
+
+    @media (max-width: 600px) {
+      :root { --session-radius: 22px; --session-gap: 10px; }
+      .session-window { width: 100%; }
+      #tabs-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+
+  <!-- ====== ESTILOS ADICIONAIS (tema, painéis) ====== -->
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #050507;
+      --panel: rgba(18,18,22,.82);
+      --panel-solid: #121216;
+      --border: rgba(255,255,255,.10);
+      --text: #f5f5f7;
+      --muted: rgba(255,255,255,.52);
+      --cyan: #00e5ff;
+      --purple: #bf5af2;
+      --gold: #ffd60a;
+      --input-bg: rgba(255,255,255,.055);
+      --button-bg: rgba(255,255,255,.07);
+      --topbar-bg: rgba(5,5,7,.82);
+      --dock-bg: rgba(10,10,13,.92);
+      --shadow: 0 10px 40px rgba(0,0,0,.35);
+      --radius: 18px;
+      --transition: .25s ease;
+    }
+    html[data-theme="light"] {
+      color-scheme: light;
+      --bg: #f5f5f7;
+      --panel: rgba(255,255,255,.85);
+      --panel-solid: #ffffff;
+      --border: rgba(0,0,0,.08);
+      --text: #1a1a1e;
+      --muted: rgba(0,0,0,.50);
+      --cyan: #007aff;
+      --purple: #af52de;
+      --gold: #d4a017;
+      --input-bg: rgba(0,0,0,.035);
+      --button-bg: rgba(0,0,0,.045);
+      --topbar-bg: rgba(255,255,255,.82);
+      --dock-bg: rgba(255,255,255,.92);
+      --shadow: 0 10px 40px rgba(0,0,0,.10);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; padding: 0; width: 100%; min-height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Inter, system-ui, sans-serif; transition: background-color var(--transition), color var(--transition); }
+    .dual-app { min-height: 100vh; background: var(--bg); color: var(--text); }
+
+    /* HEADER FLUTUANTE (já existe no core) */
+    .topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 56px;
+      padding: 10px 16px;
+      background: var(--topbar-bg);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      transform: translateY(0);
+      transition: transform .32s cubic-bezier(.22,1,.36,1), opacity .25s ease, background var(--transition), border-color var(--transition);
+    }
+    .topbar.header-hidden {
+      transform: translateY(calc(-100% - 12px));
+      opacity: .15;
+      pointer-events: none;
+    }
+    .topbar.header-visible {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .brandX { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .08em; }
+    .badgeX { padding: 5px 9px; border-radius: 999px; background: var(--button-bg); color: var(--muted); font-size: 10px; letter-spacing: .08em; }
+    .theme-dot {
+      position: relative;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      background: var(--button-bg);
+      color: var(--text);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: transform .2s ease, background var(--transition), border-color var(--transition), box-shadow var(--transition);
+    }
+    .theme-dot::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 12px var(--cyan);
+      transition: all var(--transition);
+    }
+    .theme-dot:hover { transform: scale(1.08); border-color: var(--cyan); box-shadow: 0 0 20px color-mix(in srgb, var(--cyan) 20%, transparent); }
+
+    #main-content {
+      padding-top: 56px;
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      max-height: 50000px;
+      overflow: hidden;
+      transition: opacity .35s ease, max-height .35s ease, visibility .35s ease, padding .35s ease;
+    }
+    #main-content.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+
+    .panel, .card, .modal, .drawer, .sidebar, .sheet, .deck, .overlay-panel, .fractal-block, .preview-card {
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      transition: background var(--transition), border-color var(--transition), color var(--transition), box-shadow var(--transition);
+    }
+
+    /* HOME SCREEN */
+    #home-screen {
+      position: relative;
+      width: 100%;
+      min-height: calc(100dvh - var(--topbar-h) - 80px);
+      padding: 28px 18px 120px;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    #home-screen .home-title {
+      font-size: 32px;
+      font-weight: 900;
+      margin-bottom: 32px;
+      padding-left: 8px;
+      letter-spacing: -0.5px;
+    }
+    .grid-apps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 28px 16px;
+    }
+    .app-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: transform .15s ease;
+    }
+    .app-tile:active { transform: scale(.92); }
+    .app-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      font-size: 32px;
+      color: #fff;
+      box-shadow: 0 8px 20px rgba(0,0,0,.4);
+      transition: transform .15s ease;
+    }
+    .app-icon:active { transform: scale(.9); }
+    .app-name { font-size: 11px; color: var(--text); opacity: .8; }
+
+    /* BOTTOM DOCK (KODUX) */
+    .dock-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 97000;
+      padding: 0 16px 20px;
+      padding-bottom: calc(20px + var(--safe-bottom));
+      pointer-events: none;
+    }
+    .dock-nav-inner {
+      margin: 0 auto;
+      max-width: 360px;
+      border-radius: 28px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 8px;
+      pointer-events: auto;
+      background: rgba(10,10,13,.88);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 8px 30px rgba(0,0,0,.5);
+    }
+    .dock-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      color: #9CA3AF;
+      font-size: 22px;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      transition: color .2s, background .2s;
+    }
+    .dock-btn:active { background: rgba(255,255,255,.1); color: #fff; }
+    .dock-btn.active { color: var(--cyan); }
+
+    /* POPUP */
+    #popup-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 99000;
+      background: rgba(0,0,0,.6);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      transition: opacity .3s ease;
+    }
+    #popup-box {
+      width: 100%;
+      max-width: 360px;
+      border-radius: 24px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transform: scale(.95);
+      transition: transform .3s ease;
+      background: var(--panel);
+      border: 1px solid var(--border);
+    }
+    #popup-box h3 { font-size: 18px; font-weight: 800; text-align: center; }
+    #popup-box p { font-size: 13px; color: var(--muted); text-align: center; }
+    .popup-actions { display: flex; gap: 12px; margin-top: 8px; }
+    .popup-actions .btn { flex: 1; padding: 10px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; }
+    .popup-actions .btn-primary { background: #0A84FF; color: #fff; }
+    .popup-actions .btn-secondary { background: rgba(255,255,255,.08); color: var(--text); }
+
+    /* BOOT SCREEN */
+    #boot-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity .8s ease-out;
+    }
+    #boot-screen h1 {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 6px;
+    }
+    .boot-bar {
+      margin-top: 32px;
+      width: 192px;
+      height: 4px;
+      background: #1F2937;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .boot-bar .fill {
+      height: 100%;
+      background: var(--cyan);
+      width: 0;
+      transition: width .3s ease;
+    }
+
+    /* APP VIEWS (Notas, Plugins) */
+    .app-view-app {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      background: var(--bg);
+      transition: transform .3s cubic-bezier(.25,.8,.25,1), opacity .3s ease;
+      transform: scale(.95) translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      padding-top: 56px;
+    }
+    .app-view-app.active {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+      z-index: 30;
+    }
+    .app-view-app .app-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--topbar-bg);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      flex-shrink: 0;
+    }
+    .app-view-app .app-header .back-btn {
+      background: none;
+      border: none;
+      color: var(--cyan);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 8px 12px;
+    }
+    .app-view-app .app-header .app-title {
+      font-weight: 700;
+      font-size: 13px;
+      flex: 1;
+    }
+    .app-view-app .app-header .app-action {
+      background: none;
+      border: none;
+      color: var(--cyan);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 8px 12px;
+    }
+    .app-view-app .app-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+    #notes-content {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      padding: 24px;
+      font-size: 18px;
+      outline: none;
+      resize: none;
+      color: var(--text);
+      border: none;
+      line-height: 1.6;
+      font-family: inherit;
+    }
+    #notes-content::placeholder { color: var(--muted); }
+
+    .plugin-item {
+      background: var(--panel);
+      padding: 14px;
+      border-radius: 16px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid var(--border);
+    }
+    .plugin-item .name { font-weight: 700; font-size: 13px; }
+    .plugin-item .status { font-size: 11px; color: #34D399; }
+    .plugin-item .del-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 99px;
+      background: rgba(239,68,68,.2);
+      color: #F87171;
+      border: none;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+    .plugins-empty {
+      text-align: center;
+      color: var(--muted);
+      margin-top: 40px;
+    }
+    .plugins-empty .big { font-size: 36px; }
+    .plugins-empty p { font-size: 13px; margin-top: 8px; }
+
+    @media (max-width: 480px) {
+      .grid-apps { grid-template-columns: repeat(3, 1fr); gap: 20px 12px; }
+      #home-screen .home-title { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="almasliber" data-app="almasliber">
+  <div class="shell">
+
+    <!-- ===== BOOT SCREEN ===== -->
+    <div id="boot-screen">
+      <h1>KODUX · OS</h1>
+      <div class="boot-bar"><div class="fill" id="boot-progress"></div></div>
+    </div>
+
+    <!-- ===== TOPBAR SISTEMA ===== -->
+    <header style="z-index:1" class="topbar" id="system-topbar" style="position:fixed;top:0;z-index:1;">
+      <button class="icon-btn" id="menuBtn" aria-label="Abrir menu">☰</button>
+      <div class="brand">A.<span>INFODOSE</span></div>
+      <div style="display:flex;gap:8px;">
+        <button class="icon-btn theme-dot" id="themeToggle" aria-label="Alternar tema">🌙</button>
+        <button class="icon-btn" id="notifBtn" aria-label="Notificações">♧</button>
+      </div>
+    </header>
+
+    <!-- ===== HEADER GLOBAL ===== -->
+    <header class="topbar header-visible" id="main-header" style="position:fixed;top:56px;z-index:910;">
+      <div class="brandX"><span class="badgeX">GLOBAL</span></div>
+      <div class="win-navrow" onclick="event.stopPropagation()" style="flex:1;min-width:0;padding:0 8px;">
+        <input class="win-urlbar" type="text" id="urlInputNav" placeholder="Digite uma URL..." spellcheck="false" autocomplete="off">
+        <button class="win-go-btn" type="button" id="goNavBtn">Go</button>
+        <button class="win-go-btn" type="button" id="favBtn" title="Favoritos" style="padding:10px 12px;background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.3);">★</button>
+      </div>
+      <button id="theme-dot-canon" class="theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+          <circle cx="12" cy="12" r="5"></circle>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+        </svg>
+      </button>
+    </header>
+
+    <!-- ===== MAIN ===== -->
+    <main>
+      <div id="main-content">
+        <div id="kxtsk-shell">
+
+          <!-- HOME SCREEN -->
+          <div id="home-screen">
+            <div class="home-title">oiDual</div>
+            <div class="grid-apps" id="app-grid"></div>
+          </div>
+
+          <!-- SESSIONS (Almasliber) -->
+          <div id="stackWrap" style="display:none;">
+            <!-- Sessão inicial (será gerenciada) -->
+            <div class="session-window peeked" id="session-iframe">
+              <div class="win-hdr">
+                <div class="win-controls">
+                  <button type="button" data-action="collapse" title="Colapsar" aria-label="Colapsar">−</button>
+                  <!-- Botão de abas (estilo KODUX) -->
+                  <button type="button" data-action="tab-switcher" class="tab-badge" id="tabCounterInit">
+                    <span id="tab-count">1</span>
+                  </button>
+                  <button type="button" data-action="maximize" title="Maximizar" aria-label="Maximizar">⛶</button>
+                  <button type="button" data-action="minimize" title="Minimizar" aria-label="Minimizar">۞</button>
+                  <button id="theme-dot" class="theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                      <circle cx="12" cy="12" r="5"></circle>
+                      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+                    </svg>
+                  </button>
+                  <button class="launcher-btn" id="openKobBtn">+</button>
+                </div>
+              </div>
+              <iframe class="win-frame" data-runtime="nav" id="navFrame" src="https://www.infodose.com.br/splash"></iframe>
+            </div>
+          </div>
+
+          <!-- DOCK (Almasliber) -->
+          <div id="dock" style="display:none;"></div>
+
+        </div><!-- /kxtsk-shell -->
+      </div>
+    </main>
+
+    <!-- ===== BOTTOM DOCK (KODUX) ===== -->
+    <nav class="dock-nav" id="bottomDock">
+      <div class="dock-nav-inner">
+        <button class="dock-btn active" data-app="home" title="Início">⌂</button>
+        <button class="dock-btn" data-app="browser" title="Navegador">◍</button>
+        <button class="dock-btn" data-app="notes" title="Notas">✎</button>
+        <button class="dock-btn" data-app="plugins" title="Plugins">◫</button>
+      </div>
+    </nav>
+
+    <!-- ===== TAB SWITCHER (KODUX) ===== -->
+    <div id="tab-switcher" class="app-view">
+      <div class="header">
+        <h2>Abas</h2>
+        <button onclick="OS.TabEngine.newTab()" class="btn-primary" style="width:40px;height:40px;border-radius:99px;display:grid;place-items:center;">+</button>
+      </div>
+      <div id="tabs-grid"></div>
+      <div class="footer">
+        <button onclick="OS.TabEngine.hideTabSwitcher()">Concluído</button>
+      </div>
+    </div>
+
+    <!-- ===== APPS (Notas, Plugins) ===== -->
+    <div class="app-view-app" id="app-notes">
+      <div class="app-header">
+        <button class="back-btn" onclick="OS.UI.goHome()">◀ OS</button>
+        <span class="app-title">Notas</span>
+        <button class="app-action" onclick="OS.Apps.Notes.save()">Salvar</button>
+      </div>
+      <div class="app-body" style="padding:0;">
+        <textarea id="notes-content" placeholder="Comece a digitar..."></textarea>
+      </div>
+    </div>
+
+    <div class="app-view-app" id="app-plugins">
+      <div class="app-header">
+        <button class="back-btn" onclick="OS.UI.goHome()">◀ Voltar</button>
+        <span class="app-title">Plugins JS</span>
+        <button class="app-action" onclick="OS.Plugins.promptInstall()">+</button>
+      </div>
+      <div class="app-body" id="plugins-list"></div>
+    </div>
+
+    <!-- ===== POPUP ===== -->
+    <div id="popup-layer">
+      <div id="popup-box" class="panel">
+        <h3 id="popup-title">Título</h3>
+        <div id="popup-body" style="font-size:13px;color:var(--muted);text-align:center;"></div>
+        <div class="popup-actions" id="popup-actions"></div>
+      </div>
+    </div>
+
+    <!-- ===== HIDDEN FILE INPUT ===== -->
+    <input type="file" id="nebulaFileInput" multiple accept=".txt,.md,.html,.pdf" style="display:none">
+
+  </div><!-- /shell -->
+</div><!-- /almasliber -->
+
+
+<!-- ============================================================
+     SCRIPT — FUSÃO COMPLETA (Almasliber + KODUX TabEngine)
+     ============================================================ -->
+<script>
+(function () {
+  'use strict';
+
+  // ============================================================
+  // 1. ALMASLIBER CORE (janelas, dock, lifecycle)
+  // ============================================================
+
+  const ROOT = document.documentElement;
+  const THEME_KEY = 'dual-theme';
+
+  const stackWrap = document.getElementById('stackWrap');
+  const dock = document.getElementById('dock');
+
+  const timers = new Map();
+  const sessionStore = new Map();
+  const suspendedQueue = [];
+  const MAX_SUSPENDED = 5;
+  let counter = 1;
+  let activeWindow = null;
+
+  const SessionState = {
+    CREATED:   'created',
+    LOADING:   'loading',
+    ACTIVE:    'active',
+    IDLE:      'idle',
+    SUSPENDED: 'suspended',
+    CLOSED:    'closed'
+  };
+
+  const Tier = { FREE: 'free', PRO: 'pro', PREMIUM: 'premium' };
+  const TIER_LIMITS = {
+    [Tier.FREE]:    { maxActive: 2, maxSuspended: 3,  maxSessions: 5  },
+    [Tier.PRO]:     { maxActive: 4, maxSuspended: 6,  maxSessions: 12 },
+    [Tier.PREMIUM]: { maxActive: 8, maxSuspended: 12, maxSessions: 30 }
+  };
+  const IDLE_AFTER_MS = 45000;
+  const SUSPEND_AFTER_IDLE_MS = 90000;
+  let currentTier = Tier.FREE;
+  const sessionMeta = new Map();
+
+  function currentLimits() { return TIER_LIMITS[currentTier] || TIER_LIMITS[Tier.FREE]; }
+  function countByStates(...states) {
+    let n = 0;
+    sessionMeta.forEach(meta => { if (states.includes(meta.state)) n++; });
+    return n;
+  }
+  function setSessionState(id, state) {
+    const win = getWin(id);
+    const meta = sessionMeta.get(id) || { createdAt: Date.now() };
+    meta.state = state;
+    if (state === SessionState.ACTIVE || state === SessionState.LOADING) {
+      meta.lastActive = Date.now();
+    }
+    if (state === SessionState.CLOSED) {
+      sessionMeta.delete(id);
+    } else {
+      sessionMeta.set(id, meta);
+    }
+    if (win) {
+      win.dataset.state = state;
+      win.classList.remove('state-created','state-loading','state-active','state-idle','state-suspended','state-closed');
+      win.classList.add('state-' + state);
+    }
+    window.dispatchEvent(new CustomEvent('session:state-change', { detail: { id, state } }));
+  }
+  function getSessionState(id) { return sessionMeta.get(id)?.state || null; }
+  function touchSession(id) {
+    const meta = sessionMeta.get(id);
+    if (!meta) return;
+    meta.lastActive = Date.now();
+    if (meta.state === SessionState.IDLE) setSessionState(id, SessionState.ACTIVE);
+  }
+  function leastRecentlyActiveSession(excludeId) {
+    let oldestId = null, oldestTime = Infinity;
+    sessionMeta.forEach((meta, id) => {
+      if (id === excludeId) return;
+      const win = getWin(id);
+      if (win && isMaximized(win)) return;
+      if (![SessionState.ACTIVE, SessionState.IDLE, SessionState.LOADING].includes(meta.state)) return;
+      const t = meta.lastActive || 0;
+      if (t < oldestTime) { oldestTime = t; oldestId = id; }
+    });
+    return oldestId;
+  }
+  function enforceActiveBudget(excludeId) {
+    const limits = currentLimits();
+    let guard = 0;
+    while (
+      countByStates(SessionState.ACTIVE, SessionState.LOADING, SessionState.IDLE) >= limits.maxActive &&
+      guard++ < 50
+    ) {
+      const victim = leastRecentlyActiveSession(excludeId);
+      if (!victim) break;
+      suspendSession(victim);
+    }
+  }
+  function setTier(tier) { if (TIER_LIMITS[tier]) { currentTier = tier; enforceActiveBudget(); } }
+
+  setInterval(() => {
+    const now = Date.now();
+    sessionMeta.forEach((meta, id) => {
+      const win = getWin(id);
+      if (!win) return;
+      if (isMaximized(win)) { touchSession(id); return; }
+      if (meta.state === SessionState.ACTIVE && now - (meta.lastActive || 0) > IDLE_AFTER_MS) {
+        setSessionState(id, SessionState.IDLE);
+      } else if (meta.state === SessionState.IDLE && now - (meta.lastActive || 0) > SUSPEND_AFTER_IDLE_MS) {
+        suspendSession(id);
+      }
+    });
+  }, 10000);
+
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+  function getWin(id) { return document.getElementById(id); }
+  function isMaximized(win) { return !!win?.classList.contains('maximized'); }
+
+  const zStack = [];
+  function bringToFront(win) {
+    if (!win) return;
+    const index = zStack.indexOf(win);
+    if (index !== -1) zStack.splice(index, 1);
+    zStack.push(win);
+    zStack.forEach((item, i) => {
+      if (!item.classList.contains('maximized')) {
+        item.style.zIndex = String(1000 + i * 10);
+      }
+    });
+    setActiveWindow(win);
+  }
+
+  function setActiveWindow(win) {
+    if (activeWindow === win) return;
+    activeWindow = win;
+    syncGlobalHeader();
+  }
+
+  function syncGlobalHeader() {
+    const urlInput = document.getElementById('urlInputNav');
+    if (!activeWindow) { if (urlInput) urlInput.value = ''; return; }
+    // Usa a aba ativa do OS.TabEngine
+    const activeTab = OS.TabEngine.getActiveTab();
+    if (activeTab && urlInput) {
+      urlInput.value = activeTab.url || '';
+    } else if (urlInput) {
+      urlInput.value = '';
+    }
+  }
+
+  // ============================================================
+  // SUSPEND / RESTORE / DESTROY
+  // ============================================================
+  function suspendSession(id) {
+    const win = getWin(id);
+    if (!win) return;
+    const frame = win.querySelector('.win-frame');
+    if (!frame) return;
+    sessionStore.set(id, { url: frame.src });
+    frame.remove();
+    win.dataset.suspended = 'true';
+    win.classList.add('suspended');
+    setSessionState(id, SessionState.SUSPENDED);
+    if (!suspendedQueue.includes(id)) suspendedQueue.push(id);
+    while (suspendedQueue.length > MAX_SUSPENDED) {
+      const oldest = suspendedQueue.shift();
+      destroySession(oldest);
+    }
+  }
+  function restoreSession(id) {
+    const win = getWin(id);
+    if (!win) return;
+    const data = sessionStore.get(id);
+    if (!data) return;
+    enforceActiveBudget(id);
+    setSessionState(id, SessionState.LOADING);
+    const frame = document.createElement('iframe');
+    frame.className = 'win-frame';
+    frame.dataset.runtime = 'nav';
+    frame.addEventListener('load', () => setSessionState(id, SessionState.ACTIVE), { once: true });
+    frame.src = data.url;
+    win.appendChild(frame);
+    win.dataset.suspended = 'false';
+    win.classList.remove('suspended');
+    sessionStore.delete(id);
+    const index = suspendedQueue.indexOf(id);
+    if (index !== -1) suspendedQueue.splice(index, 1);
+  }
+  function destroySession(id) {
+    const win = getWin(id);
+    setSessionState(id, SessionState.CLOSED);
+    document.getElementById('dock-' + id)?.remove();
+    win?.remove();
+    sessionStore.delete(id);
+    const index = suspendedQueue.indexOf(id);
+    if (index !== -1) suspendedQueue.splice(index, 1);
+    syncShell();
+    if (activeWindow === win) setActiveWindow(null);
+    // Se não houver mais janelas, mostrar a home
+    if (document.querySelectorAll('.session-window').length === 0) {
+      document.getElementById('home-screen').style.display = 'flex';
+      stackWrap.style.display = 'none';
+      dock.style.display = 'none';
+      document.querySelectorAll('.dock-btn').forEach(b => b.classList.toggle('active', b.dataset.app === 'home'));
+    }
+  }
+
+  // ============================================================
+  // WINDOW CONTROLS
+  // ============================================================
+  function toggleCollapse(id) {
+    const win = getWin(id);
+    if (!win) return;
+    if (isMaximized(win)) { win.classList.remove('maximized'); win.style.zIndex = ''; syncShell(); }
+    win.classList.toggle('collapsed');
+    win.classList.remove('peeked');
+    if (win.classList.contains('collapsed') && win.dataset.suspended === 'true') restoreSession(id);
+    bringToFront(win);
+    syncShell();
+  }
+  function togglePeek(id) {
+    const win = getWin(id);
+    if (!win) return;
+    if (isMaximized(win)) { win.classList.remove('maximized'); win.style.zIndex = ''; syncShell(); }
+    win.classList.toggle('peeked');
+    if (win.classList.contains('peeked')) {
+      win.classList.remove('collapsed');
+      if (win.dataset.suspended === 'true') restoreSession(id);
+    }
+    bringToFront(win);
+    syncShell();
+  }
+  function maximizeWindow(id) {
+    const win = getWin(id);
+    if (!win) return;
+    if (isMaximized(win)) {
+      win.classList.remove('maximized');
+      win.style.zIndex = '';
+      if (win.dataset.suspended === 'true') restoreSession(id);
+      bringToFront(win);
+      syncShell();
+      return;
+    }
+    win.classList.remove('collapsed', 'peeked', 'minimized', 'header-hidden', 'resizing');
+    ['top','left','right','bottom','width','height','maxWidth','maxHeight'].forEach(p => win.style[p] = '');
+    if (win.dataset.suspended === 'true') restoreSession(id);
+    win.classList.add('maximized');
+    win.style.zIndex = '94000';
+    bringToFront(win);
+    syncShell();
+  }
+  function minimizeWindow(id) {
+    const win = getWin(id);
+    if (!win) return;
+    timers.delete(id);
+    win.classList.remove('maximized', 'collapsed', 'peeked', 'header-hidden', 'resizing');
+    syncShell();
+    suspendSession(id);
+    win.classList.add('minimized');
+    document.getElementById('dock-' + id)?.remove();
+    const bubble = document.createElement('button');
+    bubble.type = 'button';
+    bubble.className = 'dock-bubble';
+    bubble.id = 'dock-' + id;
+    bubble.title = 'Restaurar janela';
+    bubble.setAttribute('aria-label', 'Restaurar janela');
+    bubble.textContent = '۞';
+    bubble.addEventListener('click', function(e) {
+      e.preventDefault(); e.stopPropagation();
+      win.classList.remove('minimized');
+      if (win.dataset.suspended === 'true') restoreSession(id);
+      bringToFront(win);
+      requestAnimationFrame(() => { bringToFront(win); syncShell(); });
+      bubble.remove();
+    });
+    dock?.appendChild(bubble);
+    syncShell();
+  }
+  function closeWindow(id) { destroySession(id); }
+
+  function handleHeaderClick(e, id) {
+    if (e.target.closest('.win-controls') || e.target.closest('button') || e.target.closest('input') || e.target.closest('.win-navrow')) return;
+    const win = getWin(id);
+    if (!win) return;
+    bringToFront(win);
+    const old = timers.get(id);
+    if (old) { clearTimeout(old); timers.delete(id); maximizeWindow(id); return; }
+    const timer = setTimeout(() => { timers.delete(id); togglePeek(id); }, 250);
+    timers.set(id, timer);
+  }
+
+  // ============================================================
+  // RESIZE
+  // ============================================================
+  function makeResizeHandles(win) {
+    if (win.dataset.resizeReady === '1') return;
+    win.dataset.resizeReady = '1';
+    const hy = document.createElement('div'); hy.className = 'resize-handle resize-y';
+    const hx = document.createElement('div'); hx.className = 'resize-handle resize-x';
+    const hc = document.createElement('div'); hc.className = 'resize-handle resize-corner';
+    win.append(hy, hx, hc);
+    bindResizeY(win, hy);
+    bindResizeX(win, hx);
+    bindResizeCorner(win, hc);
+  }
+  function freeFromMaximize(win, rect) {
+    if (isMaximized(win)) {
+      win.classList.remove('maximized');
+      win.style.position = 'fixed';
+      win.style.left = Math.max(0, rect.left) + 'px';
+      win.style.top = Math.max(0, rect.top) + 'px';
+      win.style.right = 'auto';
+      win.style.bottom = 'auto';
+      win.style.width = Math.min(rect.width, window.innerWidth) + 'px';
+      win.style.height = Math.min(rect.height, window.innerHeight) + 'px';
+      win.style.maxWidth = 'none';
+      win.style.maxHeight = 'none';
+      if (win.dataset.suspended === 'true') restoreSession(win.id);
+    }
+    win.classList.remove('collapsed', 'peeked');
+    win.classList.add('resizing');
+    syncShell();
+  }
+  function finishResize(win) { win.classList.remove('resizing'); syncShell(); }
+
+  function bindResizeY(win, handle) {
+    let active = false, pointerId = null, startY = 0, startH = 0;
+    handle.addEventListener('pointerdown', function(e) {
+      if (e.button != null && e.button !== 0) return;
+      const rect = win.getBoundingClientRect();
+      active = true; pointerId = e.pointerId;
+      startY = e.clientY; startH = rect.height;
+      freeFromMaximize(win, rect);
+      handle.setPointerCapture?.(pointerId);
+      e.preventDefault();
+      const move = ev => { if (!active || ev.pointerId !== pointerId) return; ev.preventDefault(); const next = Math.max(44, Math.min(window.innerHeight, startH + (ev.clientY - startY))); win.style.height = next + 'px'; };
+      const up = ev => { if (ev && ev.pointerId !== pointerId) return; active = false; window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up); finishResize(win); };
+      window.addEventListener('pointermove', move, { passive: false });
+      window.addEventListener('pointerup', up);
+      window.addEventListener('pointercancel', up);
+    }, { passive: false });
+  }
+  function bindResizeX(win, handle) {
+    let active = false, pointerId = null, startX = 0, startW = 0;
+    handle.addEventListener('pointerdown', function(e) {
+      if (e.button != null && e.button !== 0) return;
+      const rect = win.getBoundingClientRect();
+      active = true; pointerId = e.pointerId;
+      startX = e.clientX; startW = rect.width;
+      freeFromMaximize(win, rect);
+      handle.setPointerCapture?.(pointerId);
+      e.preventDefault();
+      const move = ev => { if (!active || ev.pointerId !== pointerId) return; ev.preventDefault(); const next = Math.max(280, Math.min(window.innerWidth, startW + (ev.clientX - startX))); win.style.width = next + 'px'; };
+      const up = ev => { if (ev && ev.pointerId !== pointerId) return; active = false; window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up); finishResize(win); };
+      window.addEventListener('pointermove', move, { passive: false });
+      window.addEventListener('pointerup', up);
+      window.addEventListener('pointercancel', up);
+    }, { passive: false });
+  }
+  function bindResizeCorner(win, handle) {
+    let active = false, pointerId = null, startX = 0, startY = 0, startW = 0, startH = 0;
+    handle.addEventListener('pointerdown', function(e) {
+      if (e.button != null && e.button !== 0) return;
+      const rect = win.getBoundingClientRect();
+      active = true; pointerId = e.pointerId;
+      startX = e.clientX; startY = e.clientY;
+      startW = rect.width; startH = rect.height;
+      freeFromMaximize(win, rect);
+      handle.setPointerCapture?.(pointerId);
+      e.preventDefault();
+      const move = ev => { if (!active || ev.pointerId !== pointerId) return; ev.preventDefault(); const width = Math.max(280, Math.min(window.innerWidth, startW + (ev.clientX - startX))); const height = Math.max(44, Math.min(window.innerHeight, startH + (ev.clientY - startY))); win.style.width = width + 'px'; win.style.height = height + 'px'; };
+      const up = ev => { if (ev && ev.pointerId !== pointerId) return; active = false; window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up); finishResize(win); };
+      window.addEventListener('pointermove', move, { passive: false });
+      window.addEventListener('pointerup', up);
+      window.addEventListener('pointercancel', up);
+    }, { passive: false });
+  }
+
+  // ============================================================
+  // SYNC SHELL
+  // ============================================================
+  function syncShell() {
+    const maximized = !!document.querySelector('.session-window.maximized:not(.minimized)');
+    document.body.classList.toggle('has-maximized', maximized);
+    document.body.classList.toggle('ui-immersive', maximized);
+  }
+
+  // ============================================================
+  // WIRE SESSION (sem abas próprias, usa OS.TabEngine)
+  // ============================================================
+  function wireSession(win) {
+    if (!win || win.dataset.wired === '1') return;
+    win.dataset.wired = '1';
+
+    win.addEventListener('pointerdown', () => touchSession(win.id), { passive: true });
+
+    makeResizeHandles(win);
+
+    const header = $('.win-hdr', win);
+    header?.addEventListener('click', e => handleHeaderClick(e, win.id));
+
+    const controls = $('.win-controls', win);
+    controls?.addEventListener('click', function(e) {
+      e.preventDefault(); e.stopPropagation();
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      if (action === 'collapse') toggleCollapse(win.id);
+      else if (action === 'maximize') maximizeWindow(win.id);
+      else if (action === 'minimize') minimizeWindow(win.id);
+      else if (action === 'close') closeWindow(win.id);
+      else if (action === 'tab-switcher') {
+        // Abre o painel de abas do KODUX
+        OS.TabEngine.showTabSwitcher();
+      }
+    });
+
+    // Navegação local (dentro da janela)
+    const input = $('.win-urlbar', win);
+    const go = $('.win-go-btn', win);
+    go?.addEventListener('click', function(e) {
+      e.preventDefault(); e.stopPropagation();
+      if (!input) return;
+      let url = input.value.trim();
+      if (!url) return;
+      if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+      // Atualiza a aba ativa e o iframe
+      const activeTab = OS.TabEngine.getActiveTab();
+      if (activeTab) {
+        OS.TabEngine.updateActiveTabUrl(url);
+      }
+      input.value = url;
+    });
+    input?.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.stopPropagation(); go?.click(); } });
+
+    // Sincroniza o iframe com a aba ativa
+    const frame = win.querySelector('.win-frame');
+    const activeTab = OS.TabEngine.getActiveTab();
+    if (frame && activeTab && frame.src !== activeTab.url) {
+      frame.src = activeTab.url || 'about:blank';
+    }
+
+    // Quando o iframe carregar, atualiza o título da aba
+    frame?.addEventListener('load', function() {
+      try {
+        const doc = this.contentDocument;
+        if (doc && doc.title) {
+          const active = OS.TabEngine.getActiveTab();
+          if (active) {
+            active.title = doc.title;
+            OS.TabEngine.saveState();
+            OS.TabEngine.updateUI();
+          }
+        }
+      } catch (_) {}
+      if (this.src) {
+        const active = OS.TabEngine.getActiveTab();
+        if (active && active.url !== this.src) {
+          active.url = this.src;
+          OS.TabEngine.saveState();
+          OS.TabEngine.updateUI();
+        }
+        const localInput = win.querySelector('.win-urlbar');
+        if (localInput) localInput.value = this.src;
+        syncGlobalHeader();
+      }
+    });
+
+    // Traz para frente ao clicar no frame (se não estiver maximizado)
+    frame?.addEventListener('click', function() {
+      if (!win.classList.contains('maximized')) bringToFront(win);
+    });
+
+    // Atualiza o contador de abas na janela
+    const updateTabCounter = () => {
+      const counter = win.querySelector('.tab-badge span');
+      if (counter) counter.textContent = OS.TabEngine.tabs.length;
+    };
+    // Insere hook no TabEngine para atualizar todos os contadores
+    const origUpdateUI = OS.TabEngine.updateUI;
+    OS.TabEngine.updateUI = function() {
+      origUpdateUI.call(this);
+      document.querySelectorAll('.session-window .tab-badge span').forEach(el => {
+        el.textContent = this.tabs.length;
+      });
+    };
+    // Inicializa o contador
+    updateTabCounter();
+
+    if (!activeWindow) setActiveWindow(win);
+  }
+
+  // ============================================================
+  // CREATE SESSION
+  // ============================================================
+  function createSessionWindow({ src = 'https://www.infodose.com.br' } = {}) {
+    const id = 'session-' + Date.now() + '-' + counter++;
+    const win = document.createElement('section');
+    win.className = 'session-window peeked';
+    win.id = id;
+    win.innerHTML = `
+      <div class="win-hdr">
+        <div class="win-controls">
+          <button type="button" data-action="collapse" title="Colapsar" aria-label="Colapsar">−</button>
+          <button type="button" data-action="tab-switcher" class="tab-badge">
+            <span>${OS.TabEngine.tabs.length}</span>
+          </button>
+          <button type="button" data-action="maximize" title="Maximizar" aria-label="Maximizar">⛶</button>
+          <button type="button" data-action="minimize" title="Minimizar" aria-label="Minimizar">۞</button>
+          <button type="button" data-action="close" title="Fechar" aria-label="Fechar">×</button>
+        </div>
+        <div class="win-navrow" style="flex:2;min-width:0;pointer-events:auto;">
+          <input class="win-urlbar" type="text" value="${src}" placeholder="Digite uma URL..." spellcheck="false" autocomplete="off">
+          <button class="win-go-btn" type="button">Go</button>
+        </div>
+      </div>
+      <iframe class="win-frame" data-runtime="nav" src="${src}"></iframe>
+    `;
+    stackWrap.appendChild(win);
+
+    setSessionState(id, SessionState.CREATED);
+    enforceActiveBudget(id);
+    setSessionState(id, SessionState.LOADING);
+    const newFrame = win.querySelector('.win-frame');
+    newFrame?.addEventListener('load', () => setSessionState(id, SessionState.ACTIVE), { once: true });
+    wireSession(win);
+    bringToFront(win);
+
+    // Esconde a home screen quando uma janela é criada
+    document.getElementById('home-screen').style.display = 'none';
+    stackWrap.style.display = 'flex';
+    dock.style.display = 'flex';
+    document.querySelectorAll('.dock-btn').forEach(b => b.classList.toggle('active', b.dataset.app === 'browser'));
+
+    return id;
+  }
+
+  // ============================================================
+  // THEME
+  // ============================================================
+  function applyTheme(theme) {
+    const next = theme === 'light' ? 'light' : 'dark';
+    ROOT.dataset.theme = next;
+    try { localStorage.setItem(THEME_KEY, next); } catch (_) {}
+    $$('.theme-dot').forEach(btn => {
+      if (btn.textContent.includes('☀') || btn.textContent.includes('🌙')) {
+        btn.textContent = next === 'light' ? '☀️' : '🌙';
+      }
+    });
+    window.dispatchEvent(new CustomEvent('dual:theme-change', { detail: { theme: next } }));
+  }
+  function getInitialTheme() {
+    try { const saved = localStorage.getItem(THEME_KEY); if (saved === 'light' || saved === 'dark') return saved; } catch (_) {}
+    return 'dark';
+  }
+  const DualTheme = {
+    set: applyTheme,
+    toggle() { applyTheme(ROOT.dataset.theme === 'light' ? 'dark' : 'light'); },
+    get() { return ROOT.dataset.theme || 'dark'; }
+  };
+  $$('.theme-dot').forEach(btn => {
+    btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); DualTheme.toggle(); });
+  });
+  applyTheme(getInitialTheme());
+
+  // ============================================================
+  // HEADER GLOBAL NAV
+  // ============================================================
+  const navInput = document.getElementById('urlInputNav');
+  const goNavBtn = document.getElementById('goNavBtn');
+  const favBtn = document.getElementById('favBtn');
+
+  function applyGlobalUrl() {
+    if (!navInput || !activeWindow) return;
+    let url = navInput.value.trim();
+    if (!url) return;
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    const activeTab = OS.TabEngine.getActiveTab();
+    if (activeTab) {
+      OS.TabEngine.updateActiveTabUrl(url);
+    }
+    navInput.value = url;
+  }
+  navInput?.addEventListener('keydown', e => { if (e.key === 'Enter') applyGlobalUrl(); });
+  goNavBtn?.addEventListener('click', applyGlobalUrl);
+
+  // Favoritar aba atual (apenas exemplo, não implementado)
+  favBtn?.addEventListener('click', function() {
+    // Pode ser implementado com um campo 'fav' no OS.TabEngine
+    OS.Popup.show('Favorito', 'Função de favoritos não implementada ainda.');
+  });
+
+  // ============================================================
+  // HEADER GLOBAL COLLAPSE
+  // ============================================================
+  const HEADER = document.getElementById('main-header');
+  const MAIN = document.getElementById('main-content');
+  HEADER?.addEventListener('click', e => {
+    if (e.target.closest('button') || e.target.closest('input') || e.target.closest('.win-navrow') || e.target.closest('.theme-dot')) return;
+    MAIN?.classList.toggle('hidden');
+    const collapsed = MAIN?.classList.contains('hidden');
+    HEADER.classList.toggle('is-collapsed', collapsed);
+    window.dispatchEvent(new CustomEvent('dual:content-collapse', { detail: { collapsed } }));
+  });
+
+  // ============================================================
+  // SMART SCROLL
+  // ============================================================
+  let lastScrollY = window.scrollY, ticking = false;
+  const SCROLL_THRESHOLD = 8;
+  function updateHeader() {
+    if (!HEADER) return;
+    const current = window.scrollY;
+    if (current <= 10) {
+      HEADER.classList.remove('header-hidden');
+      HEADER.classList.add('header-visible');
+      lastScrollY = current; ticking = false; return;
+    }
+    if (current > lastScrollY + SCROLL_THRESHOLD) {
+      HEADER.classList.remove('header-visible');
+      HEADER.classList.add('header-hidden');
+    } else if (current < lastScrollY - SCROLL_THRESHOLD) {
+      HEADER.classList.remove('header-hidden');
+      HEADER.classList.add('header-visible');
+    }
+    lastScrollY = current; ticking = false;
+  }
+  window.addEventListener('scroll', () => { if (!ticking) { requestAnimationFrame(updateHeader); ticking = true; } }, { passive: true });
+
+
+  // ============================================================
+  // 2. KODUX OS — APPS, PLUGINS, NOTES, TABENGINE
+  // ============================================================
+
+  const OS = {
+    state: { activeApp: 'home', booted: false },
+    Storage: {
+      prefix: 'kodux_',
+      save(k, d) { try { localStorage.setItem(this.prefix + k, JSON.stringify(d)); } catch (_) {} },
+      load(k, def = null) { try { const i = localStorage.getItem(this.prefix + k); return i ? JSON.parse(i) : def; } catch (_) { return def; } },
+      remove(k) { localStorage.removeItem(this.prefix + k); }
+    },
+    Popup: {
+      show(title, html, buttons = []) {
+        const layer = document.getElementById('popup-layer');
+        const box = document.getElementById('popup-box');
+        const t = document.getElementById('popup-title');
+        const b = document.getElementById('popup-body');
+        const a = document.getElementById('popup-actions');
+        t.innerText = title;
+        b.innerHTML = html;
+        a.innerHTML = '';
+        if (!buttons.length) buttons = [{ text: 'OK', type: 'primary', onClick: () => this.hide() }];
+        buttons.forEach(btn => {
+          const el = document.createElement('button');
+          el.innerText = btn.text;
+          el.className = btn.type === 'primary' ? 'btn btn-primary' : 'btn btn-secondary';
+          el.style.flex = '1';
+          el.onclick = () => { if (btn.onClick) btn.onClick(); };
+          a.appendChild(el);
+        });
+        layer.style.display = 'flex';
+        requestAnimationFrame(() => { layer.style.opacity = '1'; box.style.transform = 'scale(1)'; });
+      },
+      hide() {
+        const layer = document.getElementById('popup-layer');
+        const box = document.getElementById('popup-box');
+        layer.style.opacity = '0';
+        box.style.transform = 'scale(.95)';
+        setTimeout(() => { layer.style.display = 'none'; }, 300);
+      },
+      prompt(title, ph, cb) {
+        const html = `<input type="text" id="popup-input" style="width:100%;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px;color:#fff;outline:none;margin-top:8px" placeholder="${ph}">`;
+        this.show(title, html, [
+          { text: 'Cancelar', type: 'secondary', onClick: () => this.hide() },
+          { text: 'Confirmar', type: 'primary', onClick: () => { const v = document.getElementById('popup-input').value; cb(v); this.hide(); } }
+        ]);
+        setTimeout(() => document.getElementById('popup-input')?.focus(), 100);
+      }
+    },
+    TabEngine: {
+      tabs: [],
+      activeTabId: null,
+      init() {
+        this.tabs = OS.Storage.load('tabs', []);
+        if (!this.tabs.length) this.createTab();
+        else { this.activeTabId = this.tabs[0].id; this.renderActiveTab(); }
+        this.updateUI();
+      },
+      createTab(url = '') {
+        const id = 'tab_' + Date.now();
+        this.tabs.push({ id, url, title: 'Nova Aba' });
+        this.activeTabId = id;
+        this.saveState();
+        this.renderActiveTab();
+        this.updateUI();
+        // Se não houver janela, cria uma
+        if (document.querySelectorAll('.session-window').length === 0) {
+          createSessionWindow({ src: url || 'https://www.infodose.com.br/splash' });
+        } else {
+          // Atualiza o iframe da janela ativa
+          const activeWin = document.querySelector('.session-window:not(.minimized)');
+          if (activeWin) {
+            const frame = activeWin.querySelector('.win-frame');
+            if (frame) frame.src = url || 'https://www.infodose.com.br/splash';
+          }
+        }
+        OS.UI.openApp('browser');
+      },
+      closeTab(id) {
+        if (this.tabs.length <= 1) { OS.Popup.show('Aviso', 'Não é possível fechar a última aba.'); return; }
+        this.tabs = this.tabs.filter(t => t.id !== id);
+        if (this.activeTabId === id) {
+          this.activeTabId = this.tabs[this.tabs.length - 1].id;
+          this.renderActiveTab();
+        }
+        this.saveState();
+        this.renderSwitcherGrid();
+        this.updateUI();
+        // Atualiza o iframe da janela ativa
+        const activeWin = document.querySelector('.session-window:not(.minimized)');
+        if (activeWin) {
+          const frame = activeWin.querySelector('.win-frame');
+          const activeTab = this.getActiveTab();
+          if (frame && activeTab) frame.src = activeTab.url || 'about:blank';
+        }
+      },
+      switchTab(id) {
+        this.activeTabId = id;
+        this.renderActiveTab();
+        this.hideTabSwitcher();
+        this.updateUI();
+        // Atualiza o iframe da janela ativa
+        const activeWin = document.querySelector('.session-window:not(.minimized)');
+        if (activeWin) {
+          const frame = activeWin.querySelector('.win-frame');
+          const activeTab = this.getActiveTab();
+          if (frame && activeTab) frame.src = activeTab.url || 'about:blank';
+          const localInput = activeWin.querySelector('.win-urlbar');
+          if (localInput) localInput.value = activeTab.url || '';
+          syncGlobalHeader();
+        }
+      },
+      saveState() { OS.Storage.save('tabs', this.tabs); },
+      getActiveTab() {
+        return this.tabs.find(t => t.id === this.activeTabId) || this.tabs[0] || null;
+      },
+      renderActiveTab() {
+        // Atualiza o input do header global e o título (se houver)
+        const activeTab = this.getActiveTab();
+        if (activeTab) {
+          const urlInput = document.getElementById('urlInputNav');
+          if (urlInput) urlInput.value = activeTab.url || '';
+        }
+      },
+      updateActiveTabUrl(url) {
+        const t = this.tabs.find(x => x.id === this.activeTabId);
+        if (t) {
+          t.url = url;
+          t.title = url.replace(/^https?:\/\//, '').split('/')[0] || 'Nova Aba';
+          this.saveState();
+          this.renderActiveTab();
+          this.updateUI();
+          // Atualiza o iframe da janela ativa
+          const activeWin = document.querySelector('.session-window:not(.minimized)');
+          if (activeWin) {
+            const frame = activeWin.querySelector('.win-frame');
+            if (frame) frame.src = url;
+            const localInput = activeWin.querySelector('.win-urlbar');
+            if (localInput) localInput.value = url;
+          }
+          syncGlobalHeader();
+        }
+      },
+      updateUI() {
+        const countEl = document.getElementById('tab-count');
+        if (countEl) countEl.innerText = this.tabs.length;
+        // Atualiza todos os contadores nas janelas
+        document.querySelectorAll('.session-window .tab-badge span').forEach(el => {
+          el.innerText = this.tabs.length;
+        });
+      },
+      showTabSwitcher() {
+        this.renderSwitcherGrid();
+        document.getElementById('tab-switcher').classList.add('active');
+      },
+      hideTabSwitcher() {
+        document.getElementById('tab-switcher').classList.remove('active');
+      },
+      renderSwitcherGrid() {
+        const g = document.getElementById('tabs-grid');
+        g.innerHTML = '';
+        this.tabs.forEach(tab => {
+          const is = tab.id === this.activeTabId;
+          const el = document.createElement('div');
+          el.className = `tab-card-glass${is ? ' active' : ''}`;
+          el.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <span class="title">${tab.title || 'Nova Aba'}</span>
+              <button onclick="event.stopPropagation();OS.TabEngine.closeTab('${tab.id}')" class="close-btn">×</button>
+            </div>
+            <div class="preview" onclick="OS.TabEngine.switchTab('${tab.id}')">◍</div>
+          `;
+          g.appendChild(el);
+        });
+      },
+      newTab() {
+        this.createTab();
+        this.hideTabSwitcher();
+      }
+    },
+    Browser: {
+      navigate(e) {
+        e.preventDefault();
+        let url = document.getElementById('address-bar')?.value.trim();
+        if (!url) return;
+        if (!/^https?:\/\//i.test(url)) {
+          if (url.includes('.') && !url.includes(' ')) url = 'https://' + url;
+          else url = 'https://www.bing.com/search?q=' + encodeURIComponent(url);
+        }
+        OS.TabEngine.updateActiveTabUrl(url);
+      },
+      reload() {
+        const activeTab = OS.TabEngine.getActiveTab();
+        if (activeTab && activeTab.url) {
+          const activeWin = document.querySelector('.session-window:not(.minimized)');
+          if (activeWin) {
+            const frame = activeWin.querySelector('.win-frame');
+            if (frame) frame.src = frame.src;
+          }
+        }
+      },
+      loadUrl(url) {
+        const addr = document.getElementById('address-bar');
+        if (addr) addr.value = url;
+        OS.TabEngine.updateActiveTabUrl(url);
+      }
+    },
+    Plugins: {
+      list: [],
+      init() {
+        this.list = OS.Storage.load('plugins', []);
+        this.renderList();
+        this.executeAll();
+      },
+      promptInstall() {
+        const html = `
+          <p style="text-align:left;font-size:11px;margin-bottom:6px;">Código JS do plugin:</p>
+          <textarea id="plugin-code" style="width:100%;height:96px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px;color:#fff;font-family:monospace;font-size:11px;outline:none;" placeholder="OS.Popup.show('Hello','Plugin rodando!')"></textarea>
+          <input type="text" id="plugin-name" style="width:100%;margin-top:8px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px;color:#fff;font-size:13px;outline:none;" placeholder="Nome do Plugin">
+        `;
+        OS.Popup.show("Novo Plugin", html, [
+          { text: 'Cancelar', type: 'secondary', onClick: () => OS.Popup.hide() },
+          { text: 'Instalar', type: 'primary', onClick: () => {
+            const code = document.getElementById('plugin-code').value;
+            const name = document.getElementById('plugin-name').value || 'Plugin ' + (this.list.length + 1);
+            if (code) {
+              this.list.push({ id: Date.now(), name, code, active: true });
+              OS.Storage.save('plugins', this.list);
+              this.renderList();
+              this.execute(code);
+              OS.Popup.show("Sucesso", "Plugin instalado.");
+            }
+          }}
+        ]);
+      },
+      remove(id) {
+        this.list = this.list.filter(p => p.id !== id);
+        OS.Storage.save('plugins', this.list);
+        this.renderList();
+      },
+      renderList() {
+        const c = document.getElementById('plugins-list');
+        if (!this.list.length) {
+          c.innerHTML = `<div class="plugins-empty"><div class="big">◫</div><p>Nenhum plugin</p></div>`;
+          return;
+        }
+        c.innerHTML = this.list.map(p =>
+          `<div class="plugin-item">
+            <div><div class="name">${p.name}</div><div class="status">Ativo</div></div>
+            <button class="del-btn" onclick="OS.Plugins.remove(${p.id})">✕</button>
+          </div>`
+        ).join('');
+      },
+      execute(code) {
+        try { const fn = new Function('OS', code); fn(OS); } catch (e) { OS.Popup.show('Erro no Plugin', `<p style="color:#F87171;font-size:11px;">${e.message}</p>`); }
+      },
+      executeAll() { this.list.filter(p => p.active).forEach(p => this.execute(p.code)); }
+    },
+    Apps: {
+      registry: [
+        { id: 'browser', name: 'Navegador', icon: '◍', color: '#0A84FF' },
+        { id: 'notes', name: 'Notas', icon: '✎', color: '#FBBF24' },
+        { id: 'plugins', name: 'Plugins', icon: '◫', color: '#A855F7' },
+        { id: 'settings', name: 'Ajustes', icon: '⚙', color: '#6B7280', action: () => OS.Popup.show('Sistema', 'KODUX OS v1.0<br>Sem dependências<br>LocalStorage OK') }
+      ],
+      Notes: {
+        init() { const el = document.getElementById('notes-content'); if (el) el.value = OS.Storage.load('notes_data', ''); },
+        save() {
+          const el = document.getElementById('notes-content');
+          if (el) OS.Storage.save('notes_data', el.value);
+          OS.Popup.show('Notas', 'Salvo local!');
+        }
+      }
+    },
+    UI: {
+      buildHome() {
+        const g = document.getElementById('app-grid');
+        g.innerHTML = OS.Apps.registry.map(app => {
+          let action = `OS.UI.openApp('${app.id}')`;
+          if (app.id === 'browser') action = `OS.UI.openBrowser()`;
+          return `<div class="app-tile" onclick="${action}">
+            <div class="app-icon" style="background:${app.color}">${app.icon}</div>
+            <span class="app-name">${app.name}</span>
+          </div>`;
+        }).join('');
+        // Nova janela
+        const tile = document.createElement('div');
+        tile.className = 'app-tile';
+        tile.innerHTML = `<div class="app-icon" style="background:#00e5ff;font-size:28px;">⊞</div><span class="app-name">Nova Janela</span>`;
+        tile.onclick = () => { createSessionWindow(); };
+        g.appendChild(tile);
+      },
+      openBrowser() {
+        let existing = document.querySelector('.session-window:not(.minimized)');
+        if (existing) {
+          bringToFront(existing);
+          if (existing.dataset.suspended === 'true') restoreSession(existing.id);
+          document.getElementById('home-screen').style.display = 'none';
+          stackWrap.style.display = 'flex';
+          dock.style.display = 'flex';
+          document.querySelectorAll('.dock-btn').forEach(b => b.classList.toggle('active', b.dataset.app === 'browser'));
+          OS.state.activeApp = 'browser';
+          return;
+        }
+        createSessionWindow({ src: 'https://www.infodose.com.br/splash' });
+        OS.state.activeApp = 'browser';
+        document.querySelectorAll('.dock-btn').forEach(b => b.classList.toggle('active', b.dataset.app === 'browser'));
+      },
+      openApp(id) {
+        document.querySelectorAll('.app-view-app').forEach(el => el.classList.remove('active'));
+        OS.TabEngine.hideTabSwitcher();
+        if (id === 'home') {
+          document.getElementById('home-screen').style.display = 'flex';
+          stackWrap.style.display = 'none';
+          dock.style.display = 'none';
+          OS.state.activeApp = 'home';
+          document.querySelectorAll('.dock-btn').forEach(b => b.classList.toggle('active', b.dataset.app === 'home'));
+          return;
+        }
+        if (id === 'browser') {
+          this.openBrowser();
+          return;
+        }
+        document.getElementById('home-screen').style.display = 'none';
+        stackWrap.style.display = 'none';
+        dock.style.display = 'none';
+        const el = document.getElementById('app-' + id);
+        if (el) {
+          el.classList.add('active');
+          OS.state.activeApp = id;
+          document.querySelectorAll('.dock-btn').forEach(b => b.classList.toggle('active', b.dataset.app === id));
+        }
+      },
+      goHome() {
+        document.querySelectorAll('.app-view-app').forEach(el => el.classList.remove('active'));
+        OS.TabEngine.hideTabSwitcher();
+        document.getElementById('home-screen').style.display = 'flex';
+        stackWrap.style.display = 'none';
+        dock.style.display = 'none';
+        OS.state.activeApp = 'home';
+        document.querySelectorAll('.dock-btn').forEach(b => b.classList.toggle('active', b.dataset.app === 'home'));
+      }
+    },
+    boot() {
+      const bar = document.getElementById('boot-progress');
+      let p = 0;
+      const it = setInterval(() => {
+        p += Math.random() * 25;
+        if (p >= 100) { p = 100; clearInterval(it); setTimeout(() => this.finishBoot(), 400); }
+        if (bar) bar.style.width = p + '%';
+      }, 120);
+    },
+    finishBoot() {
+      const boot = document.getElementById('boot-screen');
+      if (boot) { boot.style.opacity = '0'; setTimeout(() => boot.remove(), 700); }
+
+      // Inicializa o TabEngine antes das janelas
+      this.TabEngine.init();
+
+      // Inicializa janelas existentes
+      $$('.session-window').forEach(win => {
+        wireSession(win);
+        const hasFrame = !!win.querySelector('.win-frame');
+        setSessionState(win.id, hasFrame ? SessionState.ACTIVE : SessionState.CREATED);
+        if (!activeWindow) setActiveWindow(win);
+      });
+      syncGlobalHeader();
+      syncShell();
+
+      // Inicializa apps
+      this.UI.buildHome();
+      this.Apps.Notes.init();
+      this.Plugins.init();
+
+      // Mostra home por padrão, esconde stackWrap
+      document.getElementById('home-screen').style.display = 'flex';
+      stackWrap.style.display = 'none';
+      dock.style.display = 'none';
+
+      // Configura dock buttons
+      document.querySelectorAll('.dock-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const app = this.dataset.app;
+          if (app === 'home') OS.UI.goHome();
+          else OS.UI.openApp(app);
+        });
+      });
+
+      // Atualiza contadores das janelas
+      OS.TabEngine.updateUI();
+
+      this.state.booted = true;
+      console.log('🚀 Fusão completa: Almasliber + KODUX TabEngine.');
+    }
+  };
+
+  // ============================================================
+  // 3. EXPOSIÇÃO GLOBAL
+  // ============================================================
+
+  window.createSessionWindow = createSessionWindow;
+  window.togglePeek = togglePeek;
+  window.toggleCollapse = toggleCollapse;
+  window.maximizeWindow = maximizeWindow;
+  window.minimizeWindow = minimizeWindow;
+  window.closeWindow = closeWindow;
+  window.syncShellMode = syncShell;
+  window.DualTheme = DualTheme;
+  window.OS = OS;
+
+  // Atualiza o estado do botão "browser" no dock quando uma janela é criada/fechada
+  document.addEventListener('session:state-change', function(e) {
+    const hasWindows = document.querySelectorAll('.session-window:not(.minimized)').length > 0;
+    const browserBtn = document.querySelector('.dock-btn[data-app="browser"]');
+    if (browserBtn) browserBtn.classList.toggle('active', hasWindows);
+  });
+
+  window.addEventListener('load', () => OS.boot());
+
+})();
+</script>
+
+</body>
+</html>

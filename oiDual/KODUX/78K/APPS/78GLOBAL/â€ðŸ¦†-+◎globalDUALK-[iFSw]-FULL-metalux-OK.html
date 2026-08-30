@@ -1,0 +1,3276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f7fb">
+  <title>Almasliber OS — Dual Infodose (Monólito Patch)</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+
+<style id="ifsw-unified-core">
+/* =========================================================
+   ALMASLIBER / iFSw — UNIFIED CORE
+   HEADER + SESSION + DOCK + MAXIMIZE/MINIMIZE
+   ========================================================= */
+
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  --topbar-h: 58px;
+  --header-h: 52px;
+
+  --session-radius: 29px;
+  --session-gap: 20px;
+
+  --collapsed-h: 52px;
+  --peek-h: 178px;
+
+  --resize-hit: 0px;
+  --resize-corner: 54px;
+
+  --dock-bottom-gap: 80px;
+  --dock-offset-x: -12px;
+
+  /* -------------------------------------------------------
+     Z-INDEX ARCHITECTURE
+     ------------------------------------------------------- */
+
+  --z-base: 1;
+  --z-content: 100;
+
+  --z-header-system: 900;
+  --z-header-main: 910;
+
+  --z-session: 1000;
+  --z-session-header: 1010;
+  --z-session-controls: 1020;
+
+  --z-maximized: 94000;
+  --z-maximized-header: 94010;
+  --z-maximized-controls: 94020;
+  --z-resize: 94030;
+
+  --z-dock: 97000;
+}
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+html {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  min-height: 100dvh;
+
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      #2a2a35 0%,
+      #0f0f15 100%
+    );
+
+  color: #fff;
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+}
+
+body.ui-safe-vertical {
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+}
+
+body.ui-immersive {
+  padding: 0;
+  overflow: hidden !important;
+}
+
+/* =========================================================
+   SHELL
+   ========================================================= */
+
+#kxtsk-shell {
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  overflow: visible;
+  z-index: var(--z-base);
+}
+
+/* =========================================================
+   ALMASLIBER SHELL
+   ========================================================= */
+
+.almasliber,
+.almasliber .shell,
+#main-content {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.almasliber {
+  min-height: 100dvh;
+}
+
+/* =========================================================
+   HEADER SYSTEM
+   ========================================================= */
+
+.topbar {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+
+  height: var(--topbar-h);
+  min-height: var(--topbar-h);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+  padding: 0 12px;
+
+  z-index: var(--z-header-system);
+
+  isolation: isolate;
+}
+
+/* Header do sistema */
+#system-topbar {
+  z-index: var(--z-header-system);
+}
+
+/* Header global */
+#main-header {
+  z-index: var(--z-header-main);
+}
+
+/* =========================================================
+   HEADER TRANSITIONS
+   ========================================================= */
+
+#main-header.header-visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#main-header.header-hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+#main-header {
+  transition:
+    transform .25s ease,
+    opacity .2s ease;
+}
+
+/* =========================================================
+   HEADER BRAND
+   ========================================================= */
+
+.brand,
+.brandX,
+.os-brand {
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+
+  min-width: 0;
+
+  font-weight: 800;
+}
+
+.brandX {
+  gap: 7px;
+  font-size: 13px;
+  letter-spacing: 1.3px;
+}
+
+.badgeX {
+  font-size: 9px;
+  opacity: .55;
+}
+
+/* =========================================================
+   TOP ACTIONS
+   ========================================================= */
+
+.top-actions {
+  min-width: 0;
+  flex: 1 1 auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 8px;
+}
+
+.icon-btn,
+.soft-btn,
+.launcher-btn,
+.win-go-btn {
+  flex: 0 0 auto;
+
+  border: 0;
+  border-radius: 12px;
+
+  min-height: 30px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #fff;
+  cursor: pointer;
+
+  font-weight: 600;
+
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  background: rgba(255,255,255,.08);
+}
+
+.soft-btn {
+  padding: 10px 12px;
+  background: rgba(255,255,255,.08);
+}
+
+.launcher-btn {
+  padding: 10px 12px;
+  background: rgba(0,242,255,.12);
+  border: 1px solid rgba(0,242,255,.3);
+}
+
+.win-go-btn {
+  padding: 10px 12px;
+  background: rgba(0,242,255,.12);
+}
+
+.icon-btn:active,
+.win-controls button:active,
+.dock-bubble:active {
+  transform: scale(.94);
+}
+
+/* =========================================================
+   MAIN NAV
+   ========================================================= */
+
+.win-navrow {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  width: 100%;
+  min-width: 0;
+
+  padding: 0 16px 10px;
+}
+
+.win-urlbar {
+  flex: 1 1 auto;
+
+  min-width: 139px;
+
+  padding: 11px 13px;
+
+  border-radius: 13px;
+
+  border: 1px solid rgba(255,255,255,.12);
+
+  background: rgba(255,255,255,.06);
+
+  color: #fff;
+
+  outline: none;
+
+  font-size: 10px;
+}
+
+.win-urlbar::placeholder {
+  color: rgba(255,255,255,.45);
+}
+
+.win-urlbar:focus {
+  border-color: rgba(0,242,255,.45);
+
+  background: rgba(255,255,255,.09);
+
+  box-shadow:
+    0 0 0 3px rgba(0,242,255,.08);
+}
+
+/* =========================================================
+   MAIN CONTENT
+   ========================================================= */
+
+main,
+#main-content {
+  position: relative;
+  z-index: var(--z-content);
+}
+
+/* =========================================================
+   STACK
+   ========================================================= */
+
+#stackWrap {
+  position: relative;
+
+  width: 100%;
+  max-width: 800px;
+
+  min-height:
+    calc(100dvh - var(--topbar-h));
+
+  margin: 0 auto;
+  padding: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: var(--session-gap);
+
+  overflow: visible;
+
+  z-index: var(--z-content);
+
+  isolation: isolate;
+}
+
+/* =========================================================
+   SESSION
+   ========================================================= */
+
+.session-window {
+  position: relative;
+
+  width: 100%;
+  height:
+    calc(100dvh - var(--topbar-h));
+
+  min-height: 0;
+
+  margin: 0;
+  padding: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  background:
+    rgba(30,30,35,.40);
+
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+
+  border:
+    1px solid rgba(255,255,255,.08);
+
+  border-radius: var(--session-radius);
+
+  z-index: var(--z-session);
+
+  transition:
+    height .28s cubic-bezier(.16,1,.3,1),
+    width .28s cubic-bezier(.16,1,.3,1),
+    transform .28s ease,
+    opacity .28s ease;
+}
+
+/* =========================================================
+   SESSION HEADER
+   ========================================================= */
+
+.session-window .win-hdr {
+  position: absolute;
+
+  top: 0;
+  left: 0;
+  right: 0;
+
+  width: 100%;
+  height: var(--header-h);
+
+  min-height: var(--header-h);
+
+  display: flex;
+  align-items: center;
+
+  padding: 10px 14px;
+
+  z-index: var(--z-session-header);
+
+  background: transparent;
+
+  user-select: none;
+  -webkit-user-select: none;
+
+  pointer-events: none;
+
+  touch-action: manipulation;
+
+  isolation: isolate;
+}
+
+/* =========================================================
+   CONTROLES
+   ========================================================= */
+
+.win-controls {
+  position: relative;
+
+  z-index: var(--z-session-controls);
+
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  pointer-events: auto;
+}
+
+.win-controls button {
+  width: 30px;
+  height: 30px;
+
+  min-width: 30px;
+  min-height: 30px;
+
+  padding: 0;
+
+  display: grid;
+  place-items: center;
+
+  border: 0;
+  border-radius: 50%;
+
+  background:
+    rgba(255,255,255,.10);
+
+  color: #fff;
+
+  cursor: pointer;
+
+  font-family:
+    "Noto Sans Symbols 2",
+    "Noto Sans Symbols",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  font-size: 17px;
+  font-weight: 300;
+  line-height: 1;
+
+  touch-action: manipulation;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+.win-controls button:hover {
+  background: rgba(255,255,255,.17);
+}
+
+/* =========================================================
+   FRAME
+   ========================================================= */
+
+.session-window .win-frame {
+  position: absolute;
+
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  min-width: 0;
+  min-height: 0;
+
+  border: 0;
+
+  background: transparent;
+
+  z-index: 1;
+
+  display: block;
+}
+
+/* =========================================================
+   COLLAPSED
+   ========================================================= */
+
+.session-window.collapsed {
+  height: var(--collapsed-h) !important;
+  min-height: var(--collapsed-h) !important;
+  overflow: hidden !important;
+}
+
+.session-window.collapsed .win-frame {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* =========================================================
+   PEEK
+   ========================================================= */
+
+.session-window.peeked {
+  height: var(--peek-h) !important;
+  min-height: var(--peek-h) !important;
+}
+
+.session-window.peeked .win-frame {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* =========================================================
+   MINIMIZED
+   ========================================================= */
+
+.session-window.minimized {
+  position: absolute !important;
+
+  width: 1px !important;
+  height: 1px !important;
+
+  min-width: 1px !important;
+  min-height: 1px !important;
+
+  opacity: 0 !important;
+
+  pointer-events: none !important;
+
+  transform:
+    scale(.90)
+    translateY(50px);
+
+  overflow: hidden !important;
+}
+
+/* =========================================================
+   MAXIMIZED
+   ========================================================= */
+
+.session-window.maximized {
+  position: fixed !important;
+
+  inset: 0 !important;
+
+  width: 100vw !important;
+  height: 100dvh !important;
+
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  max-width: none !important;
+  max-height: none !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  overflow: hidden !important;
+
+  z-index: var(--z-maximized) !important;
+
+  transition: none !important;
+}
+
+/* Header da sessão maximizada */
+.session-window.maximized .win-hdr {
+  position: absolute !important;
+
+  inset:
+    0 0 auto 0 !important;
+
+  width: 100% !important;
+  height: var(--header-h) !important;
+
+  z-index: var(--z-maximized-header) !important;
+
+  pointer-events: none !important;
+}
+
+/* Controles continuam clicáveis */
+.session-window.maximized .win-controls {
+  pointer-events: auto !important;
+  z-index: var(--z-maximized-controls) !important;
+}
+
+/* Frame maximizado */
+.session-window.maximized .win-frame {
+  position: absolute !important;
+
+  inset: 0 !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  z-index: 1 !important;
+}
+
+/* =========================================================
+   MAXIMIZED STATE
+   ========================================================= */
+
+body.has-maximized {
+  overflow: hidden !important;
+}
+
+body.has-maximized .topbar {
+  pointer-events: none;
+}
+
+body.has-maximized .session-window.maximized .win-controls,
+body.has-maximized .session-window.maximized .win-hdr {
+  pointer-events: auto;
+}
+
+/* =========================================================
+   RESIZE
+   ========================================================= */
+
+.session-window .resize-handle {
+  position: absolute;
+
+  z-index: var(--z-resize);
+
+  background: transparent;
+
+  touch-action: none;
+
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.session-window .resize-y {
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  height: var(--resize-hit);
+
+  cursor: ns-resize;
+}
+
+.session-window .resize-x {
+  top: var(--header-h);
+  right: 0;
+  bottom: 0;
+
+  width: var(--resize-hit);
+
+  cursor: ew-resize;
+}
+
+.session-window .resize-corner {
+  right: 0;
+  bottom: 0;
+
+  width: var(--resize-corner);
+  height: var(--resize-corner);
+
+  cursor: nwse-resize;
+}
+
+.session-window .resize-corner::before {
+  content: "";
+
+  position: absolute;
+
+  right: 10px;
+  bottom: 10px;
+
+  width: 16px;
+  height: 16px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255,255,255,.18);
+
+  border:
+    1px solid rgba(255,255,255,.25);
+
+  box-shadow:
+    0 0 14px rgba(0,242,255,.18);
+
+  pointer-events: none;
+}
+
+.session-window.maximized .resize-handle {
+  display: none !important;
+}
+
+/* =========================================================
+   SUSPENDED
+   ========================================================= */
+
+.session-window.suspended .win-frame {
+  display: none;
+}
+
+.session-window.suspended::after {
+  content: "⏸";
+
+  position: absolute;
+
+  top: 50%;
+  left: 50%;
+
+  transform: translate(-50%, -50%);
+
+  font-size: 2rem;
+
+  opacity: .3;
+
+  pointer-events: none;
+}
+
+/* =========================================================
+   SESSION LIFECYCLE — INDICADOR VISUAL DE ESTADO
+   (CREATED/LOADING/ACTIVE não precisam de estilo próprio;
+   IDLE e SUSPENDED têm que ser perceptíveis ao usuário)
+   ========================================================= */
+
+.session-window.state-idle {
+  filter: saturate(.82);
+}
+
+.session-window.state-idle .win-hdr::before {
+  content: "";
+
+  position: absolute;
+
+  top: 8px;
+  right: 8px;
+
+  width: 6px;
+  height: 6px;
+
+  border-radius: 50%;
+
+  background: rgba(255, 200, 60, .75);
+
+  pointer-events: none;
+}
+
+.session-window.state-loading .win-hdr::before {
+  content: "";
+
+  position: absolute;
+
+  top: 8px;
+  right: 8px;
+
+  width: 6px;
+  height: 6px;
+
+  border-radius: 50%;
+
+  background: rgba(0, 242, 255, .8);
+
+  animation: session-loading-pulse 1s ease-in-out infinite;
+
+  pointer-events: none;
+}
+
+@keyframes session-loading-pulse {
+  0%, 100% { opacity: .3; }
+  50% { opacity: 1; }
+}
+
+/* =========================================================
+   DOCK
+   ========================================================= */
+
+#dock {
+  position: fixed;
+
+  left: var(--dock-offset-x);
+
+  bottom:
+    calc(
+      var(--dock-bottom-gap)
+      + var(--safe-bottom)
+    );
+
+  z-index: var(--z-dock);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 12px 10px;
+
+  border-radius: 24px;
+
+  background:
+    rgba(0,0,0,.55);
+
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+
+  border:
+    1px solid rgba(255,255,255,.1);
+}
+
+#dock:empty {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dock-bubble {
+  width: 42px;
+  height: 42px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255,255,255,.10);
+
+  border:
+    1px solid rgba(255,255,255,.20);
+
+  color: #fff;
+
+  cursor: pointer;
+
+  font-family:
+    "Noto Sans Symbols 2",
+    "Noto Sans Symbols",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  font-size: 19px;
+  line-height: 1;
+
+  touch-action: manipulation;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 600px) {
+  :root {
+    --session-radius: 39px;
+    --session-gap: 10px;
+  }
+
+  .session-window {
+    width: 100%;
+  }
+}
+
+@media (hover:none) and (pointer:coarse) {
+  .session-window .resize-corner {
+    width: 58px;
+    height: 58px;
+  }
+}
+</style>
+
+ <style>
+/* @import "https://infodose.com.br/oiDual/KODUX/78K/APPS/78header/dual-header-app/css/main.css"; */
+
+/* style  */
+
+/* ═══════════════════════════════════════════════════════
+   DUAL CORE · GLOBAL TOKENS
+═══════════════════════════════════════════════════════ */
+:root {
+    color-scheme: dark;
+    --bg: #050507;
+    --panel:
+        rgba(18, 18, 22, .82);
+    --panel-solid:
+        #121216;
+    --border:
+        rgba(255, 255, 255, .10);
+    --text:
+        #f5f5f7;
+    --muted:
+        rgba(255, 255, 255, .52);
+    --cyan:
+        #00e5ff;
+    --purple:
+        #bf5af2;
+    --gold:
+        #ffd60a;
+    --input-bg:
+        rgba(255, 255, 255, .055);
+    --button-bg:
+        rgba(255, 255, 255, .07);
+    --topbar-bg:
+        rgba(5, 5, 7, .82);
+    --dock-bg:
+        rgba(10, 10, 13, .92);
+    --shadow:
+        0 10px 40px
+        rgba(0, 0, 0, .35);
+    --radius:
+        18px;
+    --transition:
+        .25s ease;
+}
+/* ═══════════════════════════════════════════════════════
+   LIGHT
+═══════════════════════════════════════════════════════ */
+html[data-theme="light"] {
+    color-scheme: light;
+    --bg:
+        #f5f5f7;
+    --panel:
+        rgba(255, 255, 255, .85);
+    --panel-solid:
+        #ffffff;
+    --border:
+        rgba(0, 0, 0, .08);
+    --text:
+        #1a1a1e;
+    --muted:
+        rgba(0, 0, 0, .50);
+    --cyan:
+        #007aff;
+    --purple:
+        #af52de;
+    --gold:
+        #d4a017;
+    --input-bg:
+        rgba(0, 0, 0, .035);
+    --button-bg:
+        rgba(0, 0, 0, .045);
+    --topbar-bg:
+        rgba(255, 255, 255, .82);
+    --dock-bg:
+        rgba(255, 255, 255, .92);
+    --shadow:
+        0 10px 40px
+        rgba(0, 0, 0, .10);
+}
+/* ═══════════════════════════════════════════════════════
+   RESET
+═══════════════════════════════════════════════════════ */
+* {
+    box-sizing:
+        border-box;
+    -webkit-tap-highlight-color:
+        transparent;
+}
+html,
+body {
+    margin:
+        0;
+    padding:
+        0;
+    width:
+        100%;
+    min-height:
+        100%;
+    background:
+        var(--bg);
+    color:
+        var(--text);
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "SF Pro Display",
+        "SF Pro Text",
+        Inter,
+        system-ui,
+        sans-serif;
+    transition:
+        background-color
+        var(--transition),
+        color
+        var(--transition);
+}
+/* ═══════════════════════════════════════════════════════
+   APP
+═══════════════════════════════════════════════════════ */
+.dual-app {
+    min-height:
+        100vh;
+    background:
+        var(--bg);
+    color:
+        var(--text);
+}
+/* ═══════════════════════════════════════════════════════
+   HEADER FLUTUANTE
+═══════════════════════════════════════════════════════ */
+.topbar {
+    position:
+        fixed;
+    top:
+        0;
+    left:
+        0;
+    right:
+        0;
+    z-index:
+        1000;
+    display:
+        flex;
+    align-items:
+        center;
+    justify-content:
+        space-between;
+    min-height:
+        56px;
+    padding:
+        10px 16px;
+    background:
+        var(--topbar-bg);
+    border-bottom:
+        1px solid
+        var(--border);
+    backdrop-filter:
+        blur(24px);
+    -webkit-backdrop-filter:
+        blur(24px);
+    transform:
+        translateY(0);
+    transition:
+        transform
+        .32s
+        cubic-bezier(.22, 1, .36, 1),
+        opacity
+        .25s
+        ease,
+        background
+        var(--transition),
+        border-color
+        var(--transition);
+}
+/* ═══════════════════════════════════════════════════════
+   HEADER ESCONDIDO DURANTE SCROLL DOWN
+═══════════════════════════════════════════════════════ */
+.topbar.header-hidden {
+    transform:
+        translateY(
+            calc(-100% - 12px)
+        );
+    opacity:
+        .15;
+    pointer-events:
+        none;
+}
+/* ═══════════════════════════════════════════════════════
+   HEADER VISÍVEL
+═══════════════════════════════════════════════════════ */
+.topbar.header-visible {
+    transform:
+        translateY(0);
+    opacity:
+        1;
+    pointer-events:
+        auto;
+}
+/* ═══════════════════════════════════════════════════════
+   BRAND
+═══════════════════════════════════════════════════════ */
+.brandX {
+    display:
+        flex;
+    align-items:
+        center;
+    gap:
+        10px;
+    font-weight:
+        700;
+    letter-spacing:
+        .08em;
+}
+.badgeX {
+    padding:
+        5px 9px;
+    border-radius:
+        999px;
+    background:
+        var(--button-bg);
+    color:
+        var(--muted);
+    font-size:
+        10px;
+    letter-spacing:
+        .08em;
+}
+/* ═══════════════════════════════════════════════════════
+   THEME DOT
+   UMA ÚNICA BOLINHA
+═══════════════════════════════════════════════════════ */
+.theme-dot {
+    position:
+        relative;
+    width:
+        30px;
+    height:
+        30px;
+    padding:
+        0;
+    border:
+        1px solid
+        var(--border);
+    border-radius:
+        50%;
+    background:
+        var(--button-bg);
+    color:
+        var(--text);
+    cursor:
+        pointer;
+    display:
+        grid;
+    place-items:
+        center;
+    transition:
+        transform
+        .2s ease,
+        background
+        var(--transition),
+        border-color
+        var(--transition),
+        box-shadow
+        var(--transition);
+}
+.theme-dot::before {
+    content:
+        "";
+    width:
+        10px;
+    height:
+        10px;
+    border-radius:
+        50%;
+    background:
+        var(--cyan);
+    box-shadow:
+        0 0 12px
+        var(--cyan);
+    transition:
+        all
+        var(--transition);
+}
+.theme-dot:hover {
+    transform:
+        scale(1.08);
+    border-color:
+        var(--cyan);
+    box-shadow:
+        0 0 20px
+        color-mix(
+            in srgb,
+            var(--cyan) 20%,
+            transparent
+        );
+}
+/* ═══════════════════════════════════════════════════════
+   CONTENT
+═══════════════════════════════════════════════════════ */
+#main-content {
+    padding-top:
+        56px;
+    opacity:
+        1;
+    visibility:
+        visible;
+    pointer-events:
+        auto;
+    max-height:
+        50000px;
+    overflow:
+        hidden;
+    transition:
+        opacity
+        .35s
+        ease,
+        max-height
+        .35s
+        ease,
+        visibility
+        .35s
+        ease,
+        padding
+        .35s
+        ease;
+}
+/* ═══════════════════════════════════════════════════════
+   HEADER COLLAPSE
+   CLIQUE NO HEADER
+═══════════════════════════════════════════════════════ */
+#main-content.hidden {
+    opacity:
+        0;
+    visibility:
+        hidden;
+    pointer-events:
+        none;
+    max-height:
+        0;
+    padding-top:
+        0;
+    padding-bottom:
+        0;
+}
+/* ═══════════════════════════════════════════════════════
+   CONTENT
+═══════════════════════════════════════════════════════ */
+.content {
+    width:
+        min(
+            900px,
+            100%
+        );
+    margin:
+        0 auto;
+    padding:
+        28px 18px 120px;
+}
+/* ═══════════════════════════════════════════════════════
+   PANELS
+═══════════════════════════════════════════════════════ */
+.panel,
+.card,
+.modal,
+.drawer,
+.sidebar,
+.sheet,
+.deck,
+.overlay-panel,
+.fractal-block,
+.preview-card {
+    background:
+        var(--panel);
+    color:
+        var(--text);
+    border:
+        1px solid
+        var(--border);
+    border-radius:
+        var(--radius);
+    box-shadow:
+        var(--shadow);
+    backdrop-filter:
+        blur(20px);
+    -webkit-backdrop-filter:
+        blur(20px);
+    transition:
+        background
+        var(--transition),
+        border-color
+        var(--transition),
+        color
+        var(--transition),
+        box-shadow
+        var(--transition);
+}
+/* ═══════════════════════════════════════════════════════
+   FIELD
+═══════════════════════════════════════════════════════ */
+.field {
+    display:
+        grid;
+    gap:
+        8px;
+    margin-bottom:
+        18px;
+}
+.field label {
+    color:
+        var(--muted);
+    font-size:
+        12px;
+    font-weight:
+        600;
+}
+textarea,
+input,
+select {
+    width:
+        100%;
+    padding:
+        14px;
+    border:
+        1px solid
+        var(--border);
+    border-radius:
+        14px;
+    outline:
+        none;
+    background:
+        var(--input-bg);
+    color:
+        var(--text);
+    font:
+        inherit;
+}
+/* ═══════════════════════════════════════════════════════
+   DEMO
+═══════════════════════════════════════════════════════ */
+.demo {
+    min-height:
+        1200px;
+    padding:
+        24px;
+}
+
+</style>
+
+  <!-- Estilos adicionais para suporte à suspensão -->
+  <style>
+    .session-window.suspended .win-frame { display: none; }
+    .session-window.suspended::after {
+      content: '⏸';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      opacity: 0.3;
+      pointer-events: none;
+    }
+    .session-window.minimized { display: none; }
+    .dock-bubble { cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<div class="almasliber" data-app="almasliber">
+  <div class="shell">
+
+    <!-- ===== TOPBAR (único, simplificado) ===== -->
+    <header style="z-index:0" class="topbar" id="system-topbar">
+      <button class="icon-btn" id="menuBtn" aria-label="Abrir menu">☰</button>
+      <div class="brand">
+        A.<span>INFODOSE</span>
+        <span class="mini-orb-wrap" id="topbarMiniOrb"></span>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="icon-btn theme-dot" id="themeToggle" aria-label="Alternar tema">🌙</button>
+        <button class="icon-btn" id="notifBtn" aria-label="Notificações">♧</button>
+      </div>
+    </header>
+
+    <!-- ===== HEADER GLOBAL (colapso + smart scroll) ===== -->
+    <header class="topbar header-visible" id="main-header">
+      <div class="brandX">
+        <span>DUAL</span>
+        <span class="badgeX">GLOBAL</span>
+      </div>
+      <div class="win-navrow" onclick="event.stopPropagation()">
+        <input class="win-urlbar" type="text" id="urlInputNav" placeholder="Digite uma URL..." spellcheck="false" autocomplete="off">
+        <button class="win-go-btn" type="button" id="goNavBtn">Go</button>
+      </div>
+      <!-- Botão de tema canônico (também .theme-dot) -->
+      <button id="theme-dot-canon" class="theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+          <circle cx="12" cy="12" r="5"></circle>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+        </svg>
+      </button>
+    </header>
+
+    <!-- ===== MAIN ===== -->
+    <main>
+      <div id="main-content">
+        <div id="kxtsk-shell">
+          <div id="inject-here"></div>
+          <div id="dock"></div>
+          <div id="stackWrap">
+            <!-- Sessão inicial (será gerenciada pelo session manager) -->
+            <div class="session-window peeked" id="session-iframe">
+              <div class="win-hdr">
+                <div class="win-controls">
+                  <button type="button" data-action="collapse" title="Colapsar" aria-label="Colapsar">−</button>
+                  <span class="win-title">۞ //</span>
+                  <button type="button" data-action="maximize" title="Maximizar" aria-label="Maximizar">⛶</button>
+                  <button type="button" data-action="minimize" title="Minimizar" aria-label="Minimizar">۞</button>
+                  <!-- Botão de tema canônico (mesmo da header, mas duplicado para compatibilidade) -->
+                  <button id="theme-dot" class="theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                      <circle cx="12" cy="12" r="5"></circle>
+                      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+                    </svg>
+                  </button>
+                  <button class="launcher-btn" id="openKobBtn">+</button>
+                </div>
+              </div>
+              <iframe class="win-frame" data-runtime="nav" id="navFrame" src="https://www.infodose.com.br/splash"></iframe>
+            </div>
+          </div><!-- /stackWrap -->
+        </div><!-- /kxtsk-shell -->
+      </div>
+    </main>
+
+    <!-- ===== BOTTOM NAV (oculto) ===== -->
+    <nav style="display:none" class="symbol-bar bottom-nav" data-module="navigation" aria-label="Navegação principal">
+      <button class="nav-item active" data-tab="home"><span class="nav-icon">⌂</span><span>Início</span></button>
+      <button class="nav-item" id="navLibraryBtn"><span class="nav-icon">▣</span><span>Library</span></button>
+      <button class="nav-main" id="navCreateBtn">+</button>
+      <button class="nav-item" id="navResultsBtn"><span class="nav-icon">▥</span><span>Resultados</span></button>
+      <button class="nav-item" id="navProfileBtn"><span class="nav-icon">♙</span><span>Perfil</span></button>
+    </nav>
+
+  </div><!-- /shell -->
+</div><!-- /almasliber -->
+
+<!-- ===== TOASTER ===== -->
+<div class="toaster-wrap" id="toasterWrap"></div>
+<input type="file" id="nebulaFileInput" multiple accept=".txt,.md,.html,.pdf" style="display:none">
+
+<script>
+(function () {
+  'use strict';
+
+  const ROOT = document.documentElement;
+  const THEME_KEY = 'dual-theme';
+
+  const stackWrap = document.getElementById('stackWrap');
+  const dock = document.getElementById('dock');
+
+  const timers = new Map();
+  const sessionStore = new Map();
+  const suspendedQueue = [];
+
+  const MAX_SUSPENDED = 5;
+
+  let counter = 1;
+
+  /* =======================================================
+     SESSION LIFECYCLE MANAGER
+     -------------------------------------------------------
+     "Session window" (visual) e "iframe vivo" (computacional)
+     são desacoplados. A window pode existir só como metadata
+     (CREATED/SUSPENDED/CLOSED) sem custo real de app rodando.
+
+     Controle comercial (FREE/PRO/PREMIUM = quanto o usuário
+     PODE usar) é mantido separado do controle computacional
+     (ACTIVE/IDLE/SUSPENDED = quanto o dispositivo AGUENTA
+     manter vivo ao mesmo tempo).
+     ======================================================= */
+
+  const SessionState = {
+    CREATED:   'created',
+    LOADING:   'loading',
+    ACTIVE:    'active',
+    IDLE:      'idle',
+    SUSPENDED: 'suspended',
+    CLOSED:    'closed'
+  };
+
+  const Tier = {
+    FREE:    'free',
+    PRO:     'pro',
+    PREMIUM: 'premium'
+  };
+
+  const TIER_LIMITS = {
+    [Tier.FREE]:    { maxActive: 2, maxSuspended: 3,  maxSessions: 5  },
+    [Tier.PRO]:     { maxActive: 4, maxSuspended: 6,  maxSessions: 12 },
+    [Tier.PREMIUM]: { maxActive: 8, maxSuspended: 12, maxSessions: 30 }
+  };
+
+  const IDLE_AFTER_MS = 45000;         // ACTIVE sem interação → IDLE
+  const SUSPEND_AFTER_IDLE_MS = 90000; // IDLE sem interação → SUSPENDED
+
+  let currentTier = Tier.FREE;
+
+  // Metadata por sessão: { state, createdAt, lastActive }
+  const sessionMeta = new Map();
+
+  function currentLimits() {
+    return TIER_LIMITS[currentTier] || TIER_LIMITS[Tier.FREE];
+  }
+
+  function countByStates(...states) {
+    let n = 0;
+
+    sessionMeta.forEach(meta => {
+      if (states.includes(meta.state)) n++;
+    });
+
+    return n;
+  }
+
+  function setSessionState(id, state) {
+    const win = getWin(id);
+    const meta = sessionMeta.get(id) || { createdAt: Date.now() };
+
+    meta.state = state;
+
+    if (
+      state === SessionState.ACTIVE ||
+      state === SessionState.LOADING
+    ) {
+      meta.lastActive = Date.now();
+    }
+
+    if (state === SessionState.CLOSED) {
+      sessionMeta.delete(id);
+    } else {
+      sessionMeta.set(id, meta);
+    }
+
+    if (win) {
+      win.dataset.state = state;
+
+      win.classList.remove(
+        'state-created',
+        'state-loading',
+        'state-active',
+        'state-idle',
+        'state-suspended',
+        'state-closed'
+      );
+
+      win.classList.add('state-' + state);
+    }
+
+    window.dispatchEvent(
+      new CustomEvent('session:state-change', {
+        detail: { id, state }
+      })
+    );
+  }
+
+  function getSessionState(id) {
+    return sessionMeta.get(id)?.state || null;
+  }
+
+  function touchSession(id) {
+    const meta = sessionMeta.get(id);
+
+    if (!meta) return;
+
+    meta.lastActive = Date.now();
+
+    if (meta.state === SessionState.IDLE) {
+      setSessionState(id, SessionState.ACTIVE);
+    }
+  }
+
+  // Sessão viva (ACTIVE/IDLE/LOADING) usada há mais tempo,
+  // candidata a ser suspensa para liberar orçamento.
+  function leastRecentlyActiveSession(excludeId) {
+    let oldestId = null;
+    let oldestTime = Infinity;
+
+    sessionMeta.forEach((meta, id) => {
+      if (id === excludeId) return;
+
+      const win = getWin(id);
+      if (win && isMaximized(win)) return; // janela em foco não é vítima
+
+      if (
+        meta.state !== SessionState.ACTIVE &&
+        meta.state !== SessionState.IDLE &&
+        meta.state !== SessionState.LOADING
+      ) return;
+
+      const t = meta.lastActive || 0;
+
+      if (t < oldestTime) {
+        oldestTime = t;
+        oldestId = id;
+      }
+    });
+
+    return oldestId;
+  }
+
+  // Garante que abrir/restaurar uma sessão não estoure o
+  // orçamento de sessões computacionalmente vivas do tier atual.
+  function enforceActiveBudget(excludeId) {
+    const limits = currentLimits();
+    let guard = 0;
+
+    while (
+      countByStates(
+        SessionState.ACTIVE,
+        SessionState.LOADING,
+        SessionState.IDLE
+      ) >= limits.maxActive &&
+      guard++ < 50
+    ) {
+      const victim = leastRecentlyActiveSession(excludeId);
+
+      if (!victim) break;
+
+      suspendSession(victim);
+    }
+  }
+
+  function setTier(tier) {
+    if (!TIER_LIMITS[tier]) return;
+
+    currentTier = tier;
+    enforceActiveBudget();
+  }
+
+  // Ronda periódica do ciclo de vida.
+  setInterval(() => {
+    const now = Date.now();
+
+    sessionMeta.forEach((meta, id) => {
+      const win = getWin(id);
+      if (!win) return;
+
+      if (isMaximized(win)) {
+        touchSession(id);
+        return;
+      }
+
+      if (
+        meta.state === SessionState.ACTIVE &&
+        now - (meta.lastActive || 0) > IDLE_AFTER_MS
+      ) {
+        setSessionState(id, SessionState.IDLE);
+      }
+
+      else if (
+        meta.state === SessionState.IDLE &&
+        now - (meta.lastActive || 0) > SUSPEND_AFTER_IDLE_MS
+      ) {
+        suspendSession(id);
+      }
+    });
+  }, 10000);
+
+  window.SessionLifecycle = {
+    States: SessionState,
+    Tiers: Tier,
+
+    getState: getSessionState,
+
+    listSessions() {
+      return [...sessionMeta.entries()].map(
+        ([id, meta]) => ({ id, ...meta })
+      );
+    },
+
+    setTier,
+    getTier: () => currentTier,
+
+    touch: touchSession,
+
+    suspend: id => suspendSession(id),
+    restore: id => restoreSession(id),
+    close: id => destroySession(id),
+
+    limits: () => currentLimits()
+  };
+
+  const $ = (sel, root = document) =>
+    root.querySelector(sel);
+
+  const $$ = (sel, root = document) =>
+    [...root.querySelectorAll(sel)];
+
+  function getWin(id) {
+    return document.getElementById(id);
+  }
+
+  function isMaximized(win) {
+    return !!win?.classList.contains('maximized');
+  }
+
+  /* =======================================================
+     Z STACK
+     ======================================================= */
+
+  const zStack = [];
+
+  function bringToFront(win) {
+    if (!win) return;
+
+    const index = zStack.indexOf(win);
+
+    if (index !== -1) {
+      zStack.splice(index, 1);
+    }
+
+    zStack.push(win);
+
+    zStack.forEach((item, i) => {
+      if (!item.classList.contains('maximized')) {
+        item.style.zIndex = String(1000 + i * 10);
+      }
+    });
+  }
+
+  /* =======================================================
+     SHELL STATE
+     ======================================================= */
+
+  function syncShell() {
+    const maximized =
+      !!document.querySelector(
+        '.session-window.maximized:not(.minimized)'
+      );
+
+    document.body.classList.toggle(
+      'has-maximized',
+      maximized
+    );
+
+    document.body.classList.toggle(
+      'ui-immersive',
+      maximized
+    );
+  }
+
+  /* =======================================================
+     SUSPEND
+     ======================================================= */
+
+  function suspendSession(id) {
+    const win = getWin(id);
+
+    if (!win) return;
+
+    const frame =
+      win.querySelector('.win-frame');
+
+    if (!frame) return;
+
+    sessionStore.set(id, {
+      url: frame.src
+    });
+
+    frame.remove();
+
+    win.dataset.suspended = 'true';
+    win.classList.add('suspended');
+
+    setSessionState(id, SessionState.SUSPENDED);
+
+    if (!suspendedQueue.includes(id)) {
+      suspendedQueue.push(id);
+    }
+
+    while (
+      suspendedQueue.length > MAX_SUSPENDED
+    ) {
+      const oldest =
+        suspendedQueue.shift();
+
+      destroySession(oldest);
+    }
+  }
+
+  /* =======================================================
+     RESTORE
+     ======================================================= */
+
+  function restoreSession(id) {
+    const win = getWin(id);
+
+    if (!win) return;
+
+    const data = sessionStore.get(id);
+
+    if (!data) return;
+
+    // Restaurar um iframe é reativar consumo real de recurso:
+    // antes de reviver, garante orçamento (pode suspender outra
+    // sessão ociosa para abrir espaço para esta).
+    enforceActiveBudget(id);
+
+    setSessionState(id, SessionState.LOADING);
+
+    const frame =
+      document.createElement('iframe');
+
+    frame.className = 'win-frame';
+    frame.dataset.runtime = 'nav';
+
+    frame.addEventListener(
+      'load',
+      () => setSessionState(id, SessionState.ACTIVE),
+      { once: true }
+    );
+
+    /*
+     * Sem sandbox.
+     * Downloads e recursos dependem também
+     * das políticas do documento remoto.
+     */
+    frame.src = data.url;
+
+    win.appendChild(frame);
+
+    win.dataset.suspended = 'false';
+    win.classList.remove('suspended');
+
+    sessionStore.delete(id);
+
+    const index =
+      suspendedQueue.indexOf(id);
+
+    if (index !== -1) {
+      suspendedQueue.splice(index, 1);
+    }
+  }
+
+  /* =======================================================
+     DESTROY
+     ======================================================= */
+
+  function destroySession(id) {
+    const win = getWin(id);
+
+    setSessionState(id, SessionState.CLOSED);
+
+    document
+      .getElementById('dock-' + id)
+      ?.remove();
+
+    win?.remove();
+
+    sessionStore.delete(id);
+
+    const index =
+      suspendedQueue.indexOf(id);
+
+    if (index !== -1) {
+      suspendedQueue.splice(index, 1);
+    }
+
+    syncShell();
+  }
+
+  /* =======================================================
+     COLLAPSE
+     ======================================================= */
+
+  function toggleCollapse(id) {
+    const win = getWin(id);
+
+    if (!win) return;
+
+    /*
+     * IMPORTANTE:
+     * Maximizado não bloqueia mais a ação.
+     * Primeiro sai do maximizado.
+     */
+    if (isMaximized(win)) {
+      win.classList.remove('maximized');
+
+      win.style.zIndex = '';
+
+      syncShell();
+    }
+
+    win.classList.toggle('collapsed');
+
+    win.classList.remove('peeked');
+
+    if (win.classList.contains('collapsed')) {
+      if (win.dataset.suspended === 'true') {
+        restoreSession(id);
+      }
+    }
+
+    bringToFront(win);
+
+    syncShell();
+  }
+
+  /* =======================================================
+     PEEK
+     ======================================================= */
+
+  function togglePeek(id) {
+    const win = getWin(id);
+
+    if (!win) return;
+
+    if (isMaximized(win)) {
+      win.classList.remove('maximized');
+      win.style.zIndex = '';
+      syncShell();
+    }
+
+    win.classList.toggle('peeked');
+
+    if (win.classList.contains('peeked')) {
+      win.classList.remove('collapsed');
+
+      if (win.dataset.suspended === 'true') {
+        restoreSession(id);
+      }
+    }
+
+    bringToFront(win);
+
+    syncShell();
+  }
+
+  /* =======================================================
+     MAXIMIZE
+     ======================================================= */
+
+  function maximizeWindow(id) {
+    const win = getWin(id);
+
+    if (!win) return;
+
+    /*
+     * Se já está maximizado,
+     * segundo clique restaura.
+     */
+    if (isMaximized(win)) {
+      win.classList.remove('maximized');
+
+      win.style.zIndex = '';
+
+      if (win.dataset.suspended === 'true') {
+        restoreSession(id);
+      }
+
+      bringToFront(win);
+      syncShell();
+
+      return;
+    }
+
+    /*
+     * Limpa estados incompatíveis.
+     */
+    win.classList.remove(
+      'collapsed',
+      'peeked',
+      'minimized',
+      'header-hidden',
+      'resizing'
+    );
+
+    [
+      'top',
+      'left',
+      'right',
+      'bottom',
+      'width',
+      'height',
+      'maxWidth',
+      'maxHeight'
+    ].forEach(prop => {
+      win.style[prop] = '';
+    });
+
+    /*
+     * Restaura iframe antes de maximizar.
+     */
+    if (win.dataset.suspended === 'true') {
+      restoreSession(id);
+    }
+
+    win.classList.add('maximized');
+
+    /*
+     * Maximizado sempre ganha da stack normal.
+     */
+    win.style.zIndex = '94000';
+
+    bringToFront(win);
+
+    syncShell();
+  }
+
+  /* =======================================================
+     MINIMIZE
+     ======================================================= */
+
+  function minimizeWindow(id) {
+    const win = getWin(id);
+
+    if (!win) return;
+
+    timers.delete(id);
+
+    /*
+     * 1 — sai explicitamente do maximizado
+     */
+    win.classList.remove(
+      'maximized',
+      'collapsed',
+      'peeked',
+      'header-hidden',
+      'resizing'
+    );
+
+    /*
+     * 2 — sincroniza imediatamente
+     */
+    syncShell();
+
+    /*
+     * 3 — suspende iframe
+     */
+    suspendSession(id);
+
+    /*
+     * 4 — estado visual minimizado
+     */
+    win.classList.add('minimized');
+
+    /*
+     * 5 — cria/renova dock bubble
+     */
+    document
+      .getElementById('dock-' + id)
+      ?.remove();
+
+    const bubble =
+      document.createElement('button');
+
+    bubble.type = 'button';
+    bubble.className = 'dock-bubble';
+    bubble.id = 'dock-' + id;
+
+    bubble.title = 'Restaurar janela';
+    bubble.setAttribute(
+      'aria-label',
+      'Restaurar janela'
+    );
+
+    bubble.textContent = '۞';
+
+    bubble.addEventListener(
+      'click',
+      function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        win.classList.remove('minimized');
+
+        if (
+          win.dataset.suspended === 'true'
+        ) {
+          restoreSession(id);
+        }
+
+        bringToFront(win);
+
+        requestAnimationFrame(() => {
+          bringToFront(win);
+          syncShell();
+        });
+
+        bubble.remove();
+      }
+    );
+
+    dock?.appendChild(bubble);
+
+    syncShell();
+  }
+
+  /* =======================================================
+     CLOSE
+     ======================================================= */
+
+  function closeWindow(id) {
+    destroySession(id);
+  }
+
+  /* =======================================================
+     HEADER CLICK
+     ======================================================= */
+
+  function handleHeaderClick(e, id) {
+    if (
+      e.target.closest('.win-controls') ||
+      e.target.closest('button') ||
+      e.target.closest('input') ||
+      e.target.closest('.win-navrow')
+    ) {
+      return;
+    }
+
+    const win = getWin(id);
+
+    if (!win) return;
+
+    bringToFront(win);
+
+    const old = timers.get(id);
+
+    if (old) {
+      clearTimeout(old);
+      timers.delete(id);
+
+      maximizeWindow(id);
+
+      return;
+    }
+
+    const timer =
+      setTimeout(() => {
+        timers.delete(id);
+        togglePeek(id);
+      }, 250);
+
+    timers.set(id, timer);
+  }
+
+  /* =======================================================
+     RESIZE
+     ======================================================= */
+
+  function makeResizeHandles(win) {
+    if (win.dataset.resizeReady === '1') return;
+
+    win.dataset.resizeReady = '1';
+
+    const hy =
+      document.createElement('div');
+
+    hy.className =
+      'resize-handle resize-y';
+
+    const hx =
+      document.createElement('div');
+
+    hx.className =
+      'resize-handle resize-x';
+
+    const hc =
+      document.createElement('div');
+
+    hc.className =
+      'resize-handle resize-corner';
+
+    win.append(hy, hx, hc);
+
+    bindResizeY(win, hy);
+    bindResizeX(win, hx);
+    bindResizeCorner(win, hc);
+  }
+
+  function freeFromMaximize(win, rect) {
+    if (isMaximized(win)) {
+      win.classList.remove('maximized');
+
+      win.style.position = 'fixed';
+
+      win.style.left =
+        Math.max(0, rect.left) + 'px';
+
+      win.style.top =
+        Math.max(0, rect.top) + 'px';
+
+      win.style.right = 'auto';
+      win.style.bottom = 'auto';
+
+      win.style.width =
+        Math.min(
+          rect.width,
+          window.innerWidth
+        ) + 'px';
+
+      win.style.height =
+        Math.min(
+          rect.height,
+          window.innerHeight
+        ) + 'px';
+
+      win.style.maxWidth = 'none';
+      win.style.maxHeight = 'none';
+
+      if (
+        win.dataset.suspended === 'true'
+      ) {
+        restoreSession(win.id);
+      }
+    }
+
+    win.classList.remove(
+      'collapsed',
+      'peeked'
+    );
+
+    win.classList.add('resizing');
+
+    syncShell();
+  }
+
+  function finishResize(win) {
+    win.classList.remove('resizing');
+    syncShell();
+  }
+
+  function bindResizeY(win, handle) {
+    let active = false;
+    let pointerId = null;
+    let startY = 0;
+    let startH = 0;
+
+    handle.addEventListener(
+      'pointerdown',
+      function (e) {
+        if (
+          e.button != null &&
+          e.button !== 0
+        ) return;
+
+        const rect =
+          win.getBoundingClientRect();
+
+        active = true;
+        pointerId = e.pointerId;
+        startY = e.clientY;
+        startH = rect.height;
+
+        freeFromMaximize(win, rect);
+
+        handle.setPointerCapture?.(
+          pointerId
+        );
+
+        e.preventDefault();
+
+        const move = ev => {
+          if (
+            !active ||
+            ev.pointerId !== pointerId
+          ) return;
+
+          ev.preventDefault();
+
+          const next =
+            Math.max(
+              44,
+              Math.min(
+                window.innerHeight,
+                startH +
+                (ev.clientY - startY)
+              )
+            );
+
+          win.style.height =
+            next + 'px';
+        };
+
+        const up = ev => {
+          if (
+            ev &&
+            ev.pointerId !== pointerId
+          ) return;
+
+          active = false;
+
+          window.removeEventListener(
+            'pointermove',
+            move
+          );
+
+          window.removeEventListener(
+            'pointerup',
+            up
+          );
+
+          window.removeEventListener(
+            'pointercancel',
+            up
+          );
+
+          finishResize(win);
+        };
+
+        window.addEventListener(
+          'pointermove',
+          move,
+          { passive: false }
+        );
+
+        window.addEventListener(
+          'pointerup',
+          up
+        );
+
+        window.addEventListener(
+          'pointercancel',
+          up
+        );
+      },
+      { passive: false }
+    );
+  }
+
+  function bindResizeX(win, handle) {
+    let active = false;
+    let pointerId = null;
+    let startX = 0;
+    let startW = 0;
+
+    handle.addEventListener(
+      'pointerdown',
+      function (e) {
+        if (
+          e.button != null &&
+          e.button !== 0
+        ) return;
+
+        const rect =
+          win.getBoundingClientRect();
+
+        active = true;
+        pointerId = e.pointerId;
+        startX = e.clientX;
+        startW = rect.width;
+
+        freeFromMaximize(win, rect);
+
+        handle.setPointerCapture?.(
+          pointerId
+        );
+
+        e.preventDefault();
+
+        const move = ev => {
+          if (
+            !active ||
+            ev.pointerId !== pointerId
+          ) return;
+
+          ev.preventDefault();
+
+          const next =
+            Math.max(
+              280,
+              Math.min(
+                window.innerWidth,
+                startW +
+                (ev.clientX - startX)
+              )
+            );
+
+          win.style.width =
+            next + 'px';
+        };
+
+        const up = ev => {
+          if (
+            ev &&
+            ev.pointerId !== pointerId
+          ) return;
+
+          active = false;
+
+          window.removeEventListener(
+            'pointermove',
+            move
+          );
+
+          window.removeEventListener(
+            'pointerup',
+            up
+          );
+
+          window.removeEventListener(
+            'pointercancel',
+            up
+          );
+
+          finishResize(win);
+        };
+
+        window.addEventListener(
+          'pointermove',
+          move,
+          { passive: false }
+        );
+
+        window.addEventListener(
+          'pointerup',
+          up
+        );
+
+        window.addEventListener(
+          'pointercancel',
+          up
+        );
+      },
+      { passive: false }
+    );
+  }
+
+  function bindResizeCorner(win, handle) {
+    let active = false;
+    let pointerId = null;
+
+    let startX = 0;
+    let startY = 0;
+
+    let startW = 0;
+    let startH = 0;
+
+    handle.addEventListener(
+      'pointerdown',
+      function (e) {
+        if (
+          e.button != null &&
+          e.button !== 0
+        ) return;
+
+        const rect =
+          win.getBoundingClientRect();
+
+        active = true;
+        pointerId = e.pointerId;
+
+        startX = e.clientX;
+        startY = e.clientY;
+
+        startW = rect.width;
+        startH = rect.height;
+
+        freeFromMaximize(win, rect);
+
+        handle.setPointerCapture?.(
+          pointerId
+        );
+
+        e.preventDefault();
+
+        const move = ev => {
+          if (
+            !active ||
+            ev.pointerId !== pointerId
+          ) return;
+
+          ev.preventDefault();
+
+          const width =
+            Math.max(
+              280,
+              Math.min(
+                window.innerWidth,
+                startW +
+                (ev.clientX - startX)
+              )
+            );
+
+          const height =
+            Math.max(
+              44,
+              Math.min(
+                window.innerHeight,
+                startH +
+                (ev.clientY - startY)
+              )
+            );
+
+          win.style.width =
+            width + 'px';
+
+          win.style.height =
+            height + 'px';
+        };
+
+        const up = ev => {
+          if (
+            ev &&
+            ev.pointerId !== pointerId
+          ) return;
+
+          active = false;
+
+          window.removeEventListener(
+            'pointermove',
+            move
+          );
+
+          window.removeEventListener(
+            'pointerup',
+            up
+          );
+
+          window.removeEventListener(
+            'pointercancel',
+            up
+          );
+
+          finishResize(win);
+        };
+
+        window.addEventListener(
+          'pointermove',
+          move,
+          { passive: false }
+        );
+
+        window.addEventListener(
+          'pointerup',
+          up
+        );
+
+        window.addEventListener(
+          'pointercancel',
+          up
+        );
+      },
+      { passive: false }
+    );
+  }
+
+  /* =======================================================
+     WIRE SESSION
+     ======================================================= */
+
+  function wireSession(win) {
+    if (
+      !win ||
+      win.dataset.wired === '1'
+    ) return;
+
+    win.dataset.wired = '1';
+
+    // Qualquer interação real na sessão conta como sinal de uso —
+    // tira do estado IDLE e adia o próximo auto-suspend.
+    win.addEventListener(
+      'pointerdown',
+      () => touchSession(win.id),
+      { passive: true }
+    );
+
+    makeResizeHandles(win);
+
+    const header =
+      $('.win-hdr', win);
+
+    header?.addEventListener(
+      'click',
+      e => handleHeaderClick(
+        e,
+        win.id
+      )
+    );
+
+    const controls =
+      $('.win-controls', win);
+
+    controls?.addEventListener(
+      'click',
+      function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const btn =
+          e.target.closest('button');
+
+        if (!btn) return;
+
+        const action =
+          btn.dataset.action;
+
+        if (action === 'collapse') {
+          toggleCollapse(win.id);
+        }
+
+        else if (action === 'maximize') {
+          maximizeWindow(win.id);
+        }
+
+        else if (action === 'minimize') {
+          minimizeWindow(win.id);
+        }
+
+        else if (action === 'close') {
+          closeWindow(win.id);
+        }
+      }
+    );
+
+    const input =
+      $('.win-urlbar', win);
+
+    const go =
+      $('.win-go-btn', win);
+
+    go?.addEventListener(
+      'click',
+      e => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!input) return;
+
+        let url =
+          input.value.trim();
+
+        if (!url) return;
+
+        if (!/^https?:\/\//i.test(url)) {
+          url = 'https://' + url;
+        }
+
+        const frame =
+          $('.win-frame', win);
+
+        if (frame) {
+          frame.src = url;
+        }
+
+        input.value = url;
+      }
+    );
+
+    input?.addEventListener(
+      'keydown',
+      e => {
+        if (e.key === 'Enter') {
+          e.stopPropagation();
+          go?.click();
+        }
+      }
+    );
+  }
+
+  /* =======================================================
+     THEME
+     ======================================================= */
+
+  function applyTheme(theme) {
+    const next =
+      theme === 'light'
+        ? 'light'
+        : 'dark';
+
+    ROOT.dataset.theme = next;
+
+    try {
+      localStorage.setItem(
+        THEME_KEY,
+        next
+      );
+    } catch (_) {}
+
+    $$('.theme-dot').forEach(btn => {
+      if (
+        btn.textContent.includes('☀') ||
+        btn.textContent.includes('🌙')
+      ) {
+        btn.textContent =
+          next === 'light'
+            ? '☀️'
+            : '🌙';
+      }
+    });
+
+    window.dispatchEvent(
+      new CustomEvent(
+        'dual:theme-change',
+        {
+          detail: {
+            theme: next
+          }
+        }
+      )
+    );
+  }
+
+  function getInitialTheme() {
+    try {
+      const saved =
+        localStorage.getItem(
+          THEME_KEY
+        );
+
+      if (
+        saved === 'light' ||
+        saved === 'dark'
+      ) {
+        return saved;
+      }
+    } catch (_) {}
+
+    return 'dark';
+  }
+
+  window.DualTheme = {
+    set: applyTheme,
+
+    toggle() {
+      applyTheme(
+        ROOT.dataset.theme === 'light'
+          ? 'dark'
+          : 'light'
+      );
+    },
+
+    get() {
+      return ROOT.dataset.theme || 'dark';
+    }
+  };
+
+  /* =======================================================
+     EXISTING SESSIONS
+     ======================================================= */
+
+  $$('.session-window')
+    .forEach(win => {
+      wireSession(win);
+
+      // Sessões que já vêm no markup inicial entram direto
+      // como ACTIVE se já têm iframe, ou CREATED caso contrário.
+      const hasFrame = !!win.querySelector('.win-frame');
+      setSessionState(
+        win.id,
+        hasFrame ? SessionState.ACTIVE : SessionState.CREATED
+      );
+    });
+
+  /* =======================================================
+     THEME BUTTONS
+     ======================================================= */
+
+  $$('.theme-dot')
+    .forEach(btn => {
+      btn.addEventListener(
+        'click',
+        e => {
+          e.preventDefault();
+          e.stopPropagation();
+          DualTheme.toggle();
+        }
+      );
+    });
+
+  applyTheme(
+    getInitialTheme()
+  );
+
+  /* =======================================================
+     GLOBAL NAV
+     ======================================================= */
+
+  const navInput =
+    document.getElementById(
+      'urlInputNav'
+    );
+
+  const session =
+    document.getElementById(
+      'session-iframe'
+    );
+
+  const navFrame =
+    document.getElementById(
+      'navFrame'
+    );
+
+  function applyGlobalUrl() {
+    if (
+      !navInput ||
+      !session
+    ) return;
+
+    let url =
+      navInput.value.trim();
+
+    if (!url) return;
+
+    if (!/^https?:\/\//i.test(url)) {
+      url = 'https://' + url;
+    }
+
+    const frame =
+      session.querySelector(
+        '.win-frame'
+      );
+
+    if (frame) {
+      frame.src = url;
+    }
+
+    navInput.value = url;
+  }
+
+  navInput?.addEventListener(
+    'keydown',
+    e => {
+      if (e.key === 'Enter') {
+        applyGlobalUrl();
+      }
+    }
+  );
+
+  document
+    .getElementById('goNavBtn')
+    ?.addEventListener(
+      'click',
+      applyGlobalUrl
+    );
+
+  /* =======================================================
+     CREATE SESSION
+     ======================================================= */
+
+  function createSessionWindow({
+    title = '//',
+    src = 'https://www.infodose.com.br'
+  } = {}) {
+
+    const id =
+      'session-' +
+      Date.now() +
+      '-' +
+      counter++;
+
+    const win =
+      document.createElement(
+        'section'
+      );
+
+    win.className =
+      'session-window peeked';
+
+    win.id = id;
+
+    win.innerHTML = `
+      <div class="win-hdr">
+
+        <div class="win-controls">
+
+          <button
+            type="button"
+            data-action="collapse"
+            title="Colapsar"
+            aria-label="Colapsar"
+          >−</button>
+
+          <button
+            type="button"
+            data-action="maximize"
+            title="Maximizar"
+            aria-label="Maximizar"
+          >⛶</button>
+
+          <button
+            type="button"
+            data-action="minimize"
+            title="Minimizar"
+            aria-label="Minimizar"
+          >۞</button>
+
+          <button
+            type="button"
+            data-action="close"
+            title="Fechar"
+            aria-label="Fechar"
+          >×</button>
+
+        </div>
+
+        <div
+          class="win-navrow"
+          style="flex:2;min-width:0;pointer-events:auto;"
+        >
+
+          <input
+            class="win-urlbar"
+            type="text"
+            value="${src}"
+            placeholder="Digite uma URL..."
+            spellcheck="false"
+            autocomplete="off"
+          >
+
+          <button
+            class="win-go-btn"
+            type="button"
+          >Go</button>
+
+        </div>
+
+      </div>
+
+      <iframe
+        class="win-frame"
+        data-runtime="nav"
+        src="${src}"
+      ></iframe>
+    `;
+
+    stackWrap.appendChild(win);
+
+    setSessionState(id, SessionState.CREATED);
+
+    // Nova sessão nasce pedindo um "slot ativo" — se o orçamento
+    // do tier já estiver cheio, uma sessão ociosa é suspensa antes.
+    enforceActiveBudget(id);
+
+    setSessionState(id, SessionState.LOADING);
+
+    const newFrame = win.querySelector('.win-frame');
+
+    newFrame?.addEventListener(
+      'load',
+      () => setSessionState(id, SessionState.ACTIVE),
+      { once: true }
+    );
+
+    wireSession(win);
+    bringToFront(win);
+
+    return id;
+  }
+
+  document
+    .getElementById('openKobBtn')
+    ?.addEventListener(
+      'click',
+      () => createSessionWindow()
+    );
+
+  /* =======================================================
+     HEADER GLOBAL COLLAPSE
+     ======================================================= */
+
+  const HEADER =
+    document.getElementById(
+      'main-header'
+    );
+
+  const MAIN =
+    document.getElementById(
+      'main-content'
+    );
+
+  HEADER?.addEventListener(
+    'click',
+    e => {
+      if (
+        e.target.closest('button') ||
+        e.target.closest('input') ||
+        e.target.closest('.win-navrow') ||
+        e.target.closest('.theme-dot')
+      ) {
+        return;
+      }
+
+      MAIN?.classList.toggle(
+        'hidden'
+      );
+
+      const collapsed =
+        MAIN?.classList.contains(
+          'hidden'
+        );
+
+      HEADER.classList.toggle(
+        'is-collapsed',
+        collapsed
+      );
+
+      window.dispatchEvent(
+        new CustomEvent(
+          'dual:content-collapse',
+          {
+            detail: {
+              collapsed
+            }
+          }
+        )
+      );
+    }
+  );
+
+  /* =======================================================
+     SMART SCROLL
+     ======================================================= */
+
+  let lastScrollY =
+    window.scrollY;
+
+  let ticking = false;
+
+  const SCROLL_THRESHOLD = 8;
+
+  function updateHeader() {
+    if (!HEADER) return;
+
+    const current =
+      window.scrollY;
+
+    if (current <= 10) {
+      HEADER.classList.remove(
+        'header-hidden'
+      );
+
+      HEADER.classList.add(
+        'header-visible'
+      );
+
+      lastScrollY = current;
+      ticking = false;
+
+      return;
+    }
+
+    if (
+      current >
+      lastScrollY +
+      SCROLL_THRESHOLD
+    ) {
+      HEADER.classList.remove(
+        'header-visible'
+      );
+
+      HEADER.classList.add(
+        'header-hidden'
+      );
+    }
+
+    else if (
+      current <
+      lastScrollY -
+      SCROLL_THRESHOLD
+    ) {
+      HEADER.classList.remove(
+        'header-hidden'
+      );
+
+      HEADER.classList.add(
+        'header-visible'
+      );
+    }
+
+    lastScrollY = current;
+    ticking = false;
+  }
+
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (!ticking) {
+        requestAnimationFrame(
+          updateHeader
+        );
+
+        ticking = true;
+      }
+    },
+    { passive: true }
+  );
+
+  /* =======================================================
+     INITIAL STATE
+     ======================================================= */
+
+  if (
+    navInput &&
+    navFrame
+  ) {
+    navInput.value =
+      navFrame.src;
+  }
+
+  syncShell();
+
+  /* =======================================================
+     DEBUG API
+     ======================================================= */
+
+  window.createSessionWindow =
+    createSessionWindow;
+
+  window.togglePeek =
+    togglePeek;
+
+  window.toggleCollapse =
+    toggleCollapse;
+
+  window.maximizeWindow =
+    maximizeWindow;
+
+  window.minimizeWindow =
+    minimizeWindow;
+
+  window.closeWindow =
+    closeWindow;
+
+  window.syncShellMode =
+    syncShell;
+
+  console.log(
+    '🚀 Almasliber OS — Unified Core carregado.'
+  );
+
+})();
+</script>
+
+<style>
+:root{--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;user-select:none;height:100vh;width:100vw;display:flex;flex-direction:column;position:relative}
+.glass{background:rgba(0,0,0,.18);}
+.glass-panel{background:rgba(40,40,40,.17);}
+.app-view{position:absolute;inset:0;transition:transform.3s cubic-bezier(.25,.8,.25,1),opacity.3s ease;transform:scale(.95) translateY(20px);opacity:0;pointer-events:none}
+.app-view.active{transform:scale(1) translateY(0);opacity:1;pointer-events:auto}
+iframe{background:var(--bg);width:100%;height:100%;border:none}
+#boot-screen{position:absolute;inset:0;z-index:50;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity.8s ease-out}
+.safe-pt{padding-top:var(--safe-top)}.safe-pb{padding-bottom:var(--safe-bottom)}
+.btn{border:none;background:rgba(255,255,255,.1);color:#fff;padding:8px 12px;border-radius:10px;cursor:pointer;font-size:12px}
+.btn:active{background:rgba(255,255,255,.2)}
+.btn-primary{background:#0A84FF;color:#fff;border-radius:12px;padding:10px 16px;font-weight:700}
+.dock-nav{position:absolute;bottom:0;width:100%;z-index:21;padding-bottom:var(--safe-bottom);padding-left:16px;padding-right:16px;padding-bottom:20px;pointer-events:none}
+.dock-nav-inner{margin:0 auto;max-width:360px;border-radius:28px;height:64px;display:flex;align-items:center;justify-content:space-around;padding:0 8px;pointer-events:auto}
+.icon-btn{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;color:#9CA3AF;font-size:22px;cursor:pointer}
+.icon-btn:active{background:rgba(255,255,255,.1);color:#fff}
+.home4{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;padding-top:80px;padding-bottom:96px;padding-left:24px;padding-right:24px;background:var(--bg);overflow-y:auto}
+.grid-apps{display:grid;grid-template-columns:repeat(4,1fr);gap:28px 16px}
+.app-tile{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer}
+.app-icon{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;font-size:32px;color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.4)}
+.app-icon:active{transform:scale(.9)}
+.app-name{font-size:11px;color:#E5E7EB}
+.topbar-mtlx{display:flex;align-items:center;gap:12px;padding:12px 16px;padding-top:calc(78px + var(--safe-top))}
+.addr{flex:1;display:flex;align-items:center;background:rgba(255,255,255,.1);border-radius:12px;padding:8px 12px;border:1px solid rgba(255,255,255,.05)}
+.addr input{background:transparent;border:none;outline:none;width:100%;color:#fff;font-size:13px}
+.tab-badge{width:32px;height:32px;border-radius:10px;border:1px solid rgba(255,255,255,.2);display:grid;place-items:center;font-size:11px;font-weight:800}
+#popup-layer{position:absolute;inset:0;z-index:100;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;opacity:0;transition:opacity.3s}
+#popup-box{width:100%;max-width:360px;border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:12px;transform:scale(.95);transition:transform.3s}
+#tabs-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+::-webkit-scrollbar{display:none}
+</style>
+
+<div id="boot-screen">
+<h1 style="font-size:24px;font-weight:900;letter-spacing:6px">KODUX OS</h1>
+<div style="margin-top:32px;width:192px;height:4px;background:#1F2937;border-radius:99px;overflow:hidden"><div id="boot-progress" style="height:100%;background:#fff;width:0;transition:width.3s"></div></div>
+</div>
+
+<div id="home-screen" class="home">
+<h2 style="font-size:32px;font-weight:900;margin-bottom:32px;padding-left:8px">oiDual</h2>
+<div class="grid-apps" id="app-grid"></div>
+</div>
+
+<div id="app-browser" class="app-view" style="z-index:22;background:var(--bg);display:flex;flex-direction:column">
+<div class="glass topbar-mtlx" style="">
+<button onclick="OS.UI.goHome()" class="btn" style="width:32px;height:32px;border-radius:99px;display:grid;place-items:center">◀</button>
+<form onsubmit="OS.Browser.navigate(event)" class="addr">
+<span style="color:#9CA3AF;font-size:10px;margin-right:8px">🔒</span>
+<input type="text" id="address-bar" placeholder="Pesquisar ou URL">
+<button type="button" onclick="OS.Browser.reload()" class="btn" style="background:transparent;margin-left:4px">↻</button>
+</form>
+<button onclick="OS.TabEngine.showTabSwitcher()" class="tab-badge"><span id="tab-count">1</span></button>
+</div>
+<div style="flex:1;position:relative;background:#1a1a1a" id="iframe-container">
+<div id="browser-empty-state" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;color:#9CA3AF">
+<div style="font-size:48px;margin-bottom:16px">🌐</div>
+<p style="font-size:13px;max-width:260px">Muitos sites bloqueiam iframes por segurança. Teste sites que liberam.</p>
+<div style="margin-top:24px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+<button onclick="OS.Browser.loadUrl('https://infodose.com.br/splash.html')" class="btn">Wikipedia</button>
+<button onclick="OS.Browser.loadUrl('https://infodose.com.br')" class="btn">Example.com</button>
+<button onclick="OS.Browser.loadUrl('https://https://kodux78k.github.io/oiDual--Y-/splash.html')" class="btn">KODUX</button>
+</div>
+</div>
+</div>
+</div>
+
+<div id="tab-switcher" class="app-view" style="z-index:30;background:rgba(0,0,0,.92);backdrop-filter:blur(20px);display:flex;flex-direction:column;padding:64px 16px 96px;overflow-y:auto">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px"><h2 style="font-size:24px;font-weight:800">Abas</h2><button onclick="OS.TabEngine.newTab()" class="btn-primary" style="width:40px;height:40px;border-radius:99px;display:grid;place-items:center">+</button></div>
+<div id="tabs-grid"></div>
+<div style="margin-top:auto;padding-top:32px;display:flex;justify-content:center"><button onclick="OS.TabEngine.hideTabSwitcher()" class="glass-panel" style="padding:12px 28px;border-radius:99px;font-size:13px;font-weight:600;color:#fff;border:none;cursor:pointer">Concluído</button></div>
+</div>
+
+<div id="app-notes" class="app-view" style="z-index:20;background:#1e1e1e;display:flex;flex-direction:column">
+<div class="glass topbar-mtlx" style="justify-content:space-between"><button onclick="OS.UI.goHome()" style="background:none;border:none;color:#0A84FF;font-size:13px">◀ OS</button><span style="font-weight:700;font-size:13px">Notas</span><button onclick="OS.Apps.Notes.save()" style="background:none;border:none;color:#0A84FF;font-size:13px">Salvar</button></div>
+<textarea id="notes-content" style="flex:1;width:100%;background:transparent;padding:24px;font-size:18px;outline:none;resize:none;color:#E5E7EB;border:none;line-height:1.6" placeholder="Comece a digitar..."></textarea>
+</div>
+
+<div id="app-plugins" class="app-view" style="z-index:20;background:#000;display:flex;flex-direction:column">
+<div class="glass topbar-mtlx" style="justify-content:space-between"><button onclick="OS.UI.goHome()" style="background:none;border:none;color:#0A84FF;font-size:13px">◀ Voltar</button><span style="font-weight:700;font-size:13px">Plugins JS</span><button onclick="OS.Plugins.promptInstall()" class="btn" style="width:32px;height:32px;border-radius:99px">+</button></div>
+<div style="flex:1;overflow-y:auto;padding:16px" id="plugins-list"></div>
+</div>
+
+<div class="dock-nav"><div class="glass dock-nav-inner">
+<button onclick="OS.UI.goHome()" class="icon-btn">⌂</button>
+<button onclick="OS.UI.openApp('browser')" class="icon-btn">◍</button>
+<button onclick="OS.UI.openApp('notes')" class="icon-btn">✎</button>
+<button onclick="OS.UI.openApp('plugins')" class="icon-btn">◫</button>
+</div></div>
+
+<div id="popup-layer"><div id="popup-box" class="glass-panel">
+<h3 id="popup-title" style="font-size:18px;font-weight:800;text-align:center">Título</h3>
+<div id="popup-body" style="font-size:13px;color:#D1D5DB;text-align:center"></div>
+<div id="popup-actions" style="display:flex;gap:12px;margin-top:8px"></div>
+</div></div>
+
+<script>
+const OS={
+state:{activeApp:'home',booted:false},
+Storage:{prefix:'kodux_',save(k,d){try{localStorage.setItem(this.prefix+k,JSON.stringify(d))}catch(e){}},load(k,def=null){try{const i=localStorage.getItem(this.prefix+k);return i?JSON.parse(i):def}catch(e){return def}},remove(k){localStorage.removeItem(this.prefix+k)}},
+Popup:{show(title,html,buttons=[]){const layer=document.getElementById('popup-layer'),box=document.getElementById('popup-box'),t=document.getElementById('popup-title'),b=document.getElementById('popup-body'),a=document.getElementById('popup-actions');t.innerText=title;b.innerHTML=html;a.innerHTML='';if(!buttons.length)buttons=[{text:'OK',type:'primary',onClick:()=>OS.Popup.hide()}];buttons.forEach(btn=>{const el=document.createElement('button');el.innerText=btn.text;el.className=btn.type==='primary'?'btn-primary':'btn';el.style.flex='1';el.onclick=()=>{if(btn.onClick)btn.onClick();};a.appendChild(el)});layer.style.display='flex';requestAnimationFrame(()=>{layer.style.opacity='1';box.style.transform='scale(1)'})},hide(){const layer=document.getElementById('popup-layer'),box=document.getElementById('popup-box');layer.style.opacity='0';box.style.transform='scale(.95)';setTimeout(()=>layer.style.display='none',300)},prompt(title,ph,cb){const html=`<input type="text" id="popup-input" style="width:100%;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px;color:#fff;outline:none;margin-top:8px" placeholder="${ph}">`;this.show(title,html,[{text:'Cancelar',type:'secondary',onClick:()=>this.hide()},{text:'Confirmar',type:'primary',onClick:()=>{const v=document.getElementById('popup-input').value;cb(v);this.hide()}}]);setTimeout(()=>document.getElementById('popup-input').focus(),100)}},
+TabEngine:{tabs:[],activeTabId:null,init(){this.tabs=OS.Storage.load('tabs',[]);if(!this.tabs.length)this.createTab();else{this.activeTabId=this.tabs[0].id;this.renderActiveTab()}this.updateUI()},createTab(url=''){const id='tab_'+Date.now();this.tabs.push({id,url,title:'Nova Aba'});this.activeTabId=id;this.saveState();this.renderActiveTab();this.updateUI();OS.UI.openApp('browser')},closeTab(id){this.tabs=this.tabs.filter(t=>t.id!==id);const ifr=document.getElementById(`iframe_${id}`);if(ifr)ifr.remove();if(!this.tabs.length)this.createTab();else if(this.activeTabId===id){this.activeTabId=this.tabs[this.tabs.length-1].id;this.renderActiveTab()}this.saveState();this.renderSwitcherGrid();this.updateUI()},switchTab(id){this.activeTabId=id;this.renderActiveTab();this.hideTabSwitcher();this.updateUI()},saveState(){OS.Storage.save('tabs',this.tabs)},renderActiveTab(){const c=document.getElementById('iframe-container'),e=document.getElementById('browser-empty-state'),addr=document.getElementById('address-bar');c.querySelectorAll('iframe').forEach(f=>f.style.display='none');const t=this.tabs.find(x=>x.id===this.activeTabId);if(!t)return;addr.value=t.url;if(!t.url)e.style.display='flex';else{e.style.display='none';let ifr=document.getElementById(`iframe_${t.id}`);if(!ifr){ifr=document.createElement('iframe');ifr.id=`iframe_${t.id}`;ifr.sandbox="allow-scripts allow-same-origin allow-forms allow-popups";ifr.src=t.url;ifr.onload=()=>{try{t.title=ifr.contentDocument.title||t.url}catch{ t.title=t.url.replace(/^https?:\/\//,'').split('/')[0]}this.saveState()};c.appendChild(ifr)}ifr.style.display='block'}},updateActiveTabUrl(url){const t=this.tabs.find(x=>x.id===this.activeTabId);if(t){t.url=url;t.title=url;const old=document.getElementById(`iframe_${t.id}`);if(old)old.remove();this.saveState();this.renderActiveTab()}},updateUI(){document.getElementById('tab-count').innerText=this.tabs.length},showTabSwitcher(){this.renderSwitcherGrid();document.getElementById('tab-switcher').classList.add('active')},hideTabSwitcher(){document.getElementById('tab-switcher').classList.remove('active')},renderSwitcherGrid(){const g=document.getElementById('tabs-grid');g.innerHTML='';this.tabs.forEach(tab=>{const is=tab.id===this.activeTabId;const el=document.createElement('div');el.className=`glass-panel`;el.style.cssText=`border-radius:16px;padding:12px;display:flex;flex-direction:column;height:160px;position:relative;${is?'outline:2px solid #0A84FF':''}`;el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:11px;font-weight:700;color:#D1D5DB;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:24px">${tab.title||'Nova Aba'}</span><button onclick="event.stopPropagation();OS.TabEngine.closeTab('${tab.id}')" style="position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:99px;background:rgba(239,68,68,.2);color:#F87171;border:none">×</button></div><div style="flex:1;background:rgba(255,255,255,.05);border-radius:12px;display:grid;place-items:center;cursor:pointer" onclick="OS.TabEngine.switchTab('${tab.id}')"><span style="font-size:28px">◍</span></div>`;g.appendChild(el)})},newTab(){this.createTab();this.hideTabSwitcher()}},
+Browser:{navigate(e){e.preventDefault();let url=document.getElementById('address-bar').value.trim();if(!url)return;if(!/^https?:\/\//i.test(url)){if(url.includes('.')&&!url.includes(' '))url='https://'+url;else url='https://www.bing.com/search?q='+encodeURIComponent(url)}OS.TabEngine.updateActiveTabUrl(url)},reload(){const t=OS.TabEngine.tabs.find(x=>x.id===OS.TabEngine.activeTabId);if(t&&t.url){const ifr=document.getElementById(`iframe_${t.id}`);if(ifr)ifr.src=ifr.src}},loadUrl(url){document.getElementById('address-bar').value=url;OS.TabEngine.updateActiveTabUrl(url)}},
+Plugins:{list:[],init(){this.list=OS.Storage.load('plugins',[]);this.renderList();this.executeAll()},promptInstall(){const html=`<p style="text-align:left;font-size:11px;margin-bottom:6px">Código JS do plugin:</p><textarea id="plugin-code" style="width:100%;height:96px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px;color:#fff;font-family:monospace;font-size:11px;outline:none" placeholder="OS.Popup.show('Hello','Plugin rodando!')"></textarea><input type="text" id="plugin-name" style="width:100%;margin-top:8px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px;color:#fff;font-size:13px;outline:none" placeholder="Nome do Plugin">`;OS.Popup.show("Novo Plugin",html,[{text:'Cancelar',type:'secondary',onClick:()=>OS.Popup.hide()},{text:'Instalar',type:'primary',onClick:()=>{const code=document.getElementById('plugin-code').value;const name=document.getElementById('plugin-name').value||'Plugin '+(this.list.length+1);if(code){this.list.push({id:Date.now(),name,code,active:true});OS.Storage.save('plugins',this.list);this.renderList();this.execute(code);OS.Popup.show("Sucesso","Plugin instalado.");}}}])},remove(id){this.list=this.list.filter(p=>p.id!==id);OS.Storage.save('plugins',this.list);this.renderList()},renderList(){const c=document.getElementById('plugins-list');if(!this.list.length){c.innerHTML=`<div style="text-align:center;color:#6B7280;margin-top:40px"><div style="font-size:36px">◫</div><p style="font-size:13px;margin-top:8px">Nenhum plugin</p></div>`;return}c.innerHTML=this.list.map(p=>`<div class="glass-panel" style="padding:14px;border-radius:16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center"><div><h4 style="font-weight:700;font-size:13px">${p.name}</h4><p style="font-size:11px;color:#34D399">Ativo</p></div><button onclick="OS.Plugins.remove(${p.id})" style="width:32px;height:32px;border-radius:99px;background:rgba(239,68,68,.2);color:#F87171;border:none">✕</button></div>`).join('')},execute(code){try{const fn=new Function('OS',code);fn(OS)}catch(e){OS.Popup.show("Erro no Plugin",`<p style="color:#F87171;font-size:11px">${e.message}</p>`)}},executeAll(){this.list.filter(p=>p.active).forEach(p=>this.execute(p.code))}},
+Apps:{registry:[{id:'browser',name:'Navegador',icon:'◍',color:'#0A84FF'},{id:'notes',name:'Notas',icon:'✎',color:'#FBBF24'},{id:'plugins',name:'Plugins',icon:'◫',color:'#A855F7'},{id:'settings',name:'Ajustes',icon:'⚙',color:'#6B7280',action:()=>OS.Popup.show('Sistema','KODUX OS v1.0<br>Sem dependências<br>LocalStorage OK')}],Notes:{init(){document.getElementById('notes-content').value=OS.Storage.load('notes_data','')},save(){OS.Storage.save('notes_data',document.getElementById('notes-content').value);OS.Popup.show("Notas","Salvo local!")}}},
+UI:{buildHome(){const g=document.getElementById('app-grid');g.innerHTML=OS.Apps.registry.map(app=>`<div class="app-tile" onclick="${app.action?`(${app.action.toString()})()`: `OS.UI.openApp('${app.id}')`}"><div class="app-icon" style="background:${app.color}">${app.icon}</div><span class="app-name">${app.name}</span></div>`).join('')},openApp(id){document.querySelectorAll('.app-view').forEach(el=>el.classList.remove('active'));OS.TabEngine.hideTabSwitcher();if(id==='home'){OS.state.activeApp='home';return}const el=document.getElementById(`app-${id}`);if(el){el.classList.add('active');OS.state.activeApp=id}},goHome(){this.openApp('home')}},
+boot(){const bar=document.getElementById('boot-progress');let p=0;const it=setInterval(()=>{p+=Math.random()*25;if(p>=100){p=100;clearInterval(it);setTimeout(()=>this.finishBoot(),400)}bar.style.width=p+'%'},120)},
+finishBoot(){document.getElementById('boot-screen').style.opacity='0';setTimeout(()=>document.getElementById('boot-screen').remove(),700);this.UI.buildHome();this.TabEngine.init();this.Apps.Notes.init();this.Plugins.init();this.state.booted=true}
+};
+window.addEventListener('load',()=>OS.boot());
+</script>
+
+</body>
+</html>

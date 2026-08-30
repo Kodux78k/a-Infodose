@@ -1,0 +1,1776 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f7fb">
+  <title>Almasliber OS — Unified</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+
+<style id="ifsw-unified-core">
+/* =========================================================
+   ALMASLIBER / iFSw — UNIFIED CORE (com apps)
+   ========================================================= */
+
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  --topbar-h: 58px;
+  --header-h: 52px;
+
+  --session-radius: 29px;
+  --session-gap: 20px;
+
+  --collapsed-h: 52px;
+  --peek-h: 178px;
+
+  --resize-hit: 0px;
+  --resize-corner: 54px;
+
+  --dock-width: 64px;
+  --dock-bottom-gap: 80px;
+
+  --z-base: 1;
+  --z-content: 100;
+  --z-header-system: 900;
+  --z-header-main: 910;
+  --z-session: 1000;
+  --z-session-header: 1010;
+  --z-session-controls: 1020;
+  --z-maximized: 94000;
+  --z-maximized-header: 94010;
+  --z-maximized-controls: 94020;
+  --z-resize: 94030;
+  --z-dock: 97000;
+  --z-tab-switcher: 98000;
+
+  --bg: #0f0f15;
+  --panel: rgba(30,30,35,.40);
+  --panel-solid: #121216;
+  --border: rgba(255,255,255,.08);
+  --text: #f5f5f7;
+  --muted: rgba(255,255,255,.52);
+  --cyan: #00e5ff;
+  --purple: #bf5af2;
+  --gold: #ffd60a;
+  --input-bg: rgba(255,255,255,.055);
+  --button-bg: rgba(255,255,255,.07);
+  --topbar-bg: rgba(5,5,7,.82);
+  --dock-bg: rgba(10,10,13,.92);
+  --shadow: 0 10px 40px rgba(0,0,0,.35);
+  --radius: 18px;
+  --transition: .25s ease;
+}
+
+html[data-theme="light"] {
+  --bg: #f5f5f7;
+  --panel: rgba(255,255,255,.85);
+  --panel-solid: #ffffff;
+  --border: rgba(0,0,0,.08);
+  --text: #1a1a1e;
+  --muted: rgba(0,0,0,.50);
+  --cyan: #007aff;
+  --purple: #af52de;
+  --gold: #d4a017;
+  --input-bg: rgba(0,0,0,.035);
+  --button-bg: rgba(0,0,0,.045);
+  --topbar-bg: rgba(255,255,255,.82);
+  --dock-bg: rgba(255,255,255,.92);
+  --shadow: 0 10px 40px rgba(0,0,0,.10);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+html { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+body {
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  transition: background var(--transition), color var(--transition);
+}
+body.ui-safe-vertical {
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+}
+body.ui-immersive { padding: 0; overflow: hidden !important; }
+
+#kxtsk-shell {
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  overflow: visible;
+  z-index: var(--z-base);
+}
+.almasliber, .almasliber .shell, #main-content {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+.almasliber { min-height: 100dvh; }
+
+/* HEADER SYSTEM */
+.topbar {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  height: var(--topbar-h);
+  min-height: var(--topbar-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;
+  z-index: var(--z-header-system);
+  isolation: isolate;
+}
+#system-topbar { z-index: var(--z-header-system); }
+#main-header { z-index: var(--z-header-main); }
+
+#main-header.header-visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+#main-header.header-hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+#main-header { transition: transform .25s ease, opacity .2s ease; }
+
+.brand, .brandX, .os-brand {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  font-weight: 800;
+}
+.brandX { gap: 7px; font-size: 13px; letter-spacing: 1.3px; }
+.badgeX { font-size: 9px; opacity: .55; }
+
+.top-actions {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.icon-btn, .soft-btn, .launcher-btn, .win-go-btn {
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 12px;
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.icon-btn { width: 34px; height: 34px; padding: 0; background: rgba(255,255,255,.08); }
+.soft-btn { padding: 10px 12px; background: rgba(255,255,255,.08); }
+.launcher-btn { padding: 10px 12px; background: rgba(0,242,255,.12); border: 1px solid rgba(0,242,255,.3); }
+.win-go-btn { padding: 10px 12px; background: rgba(0,242,255,.12); }
+.icon-btn:active, .win-controls button:active, .dock-bubble:active { transform: scale(.94); }
+
+.win-navrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  padding: 0 16px 10px;
+}
+.win-urlbar {
+  flex: 1 1 auto;
+  min-width: 139px;
+  padding: 11px 13px;
+  border-radius: 13px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  outline: none;
+  font-size: 10px;
+}
+.win-urlbar::placeholder { color: rgba(255,255,255,.45); }
+.win-urlbar:focus {
+  border-color: rgba(0,242,255,.45);
+  background: rgba(255,255,255,.09);
+  box-shadow: 0 0 0 3px rgba(0,242,255,.08);
+}
+
+main, #main-content { position: relative; z-index: var(--z-content); }
+
+#stackWrap {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  min-height: calc(100dvh - var(--topbar-h));
+  margin: 0 auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--session-gap);
+  overflow: visible;
+  z-index: var(--z-content);
+  isolation: isolate;
+}
+
+/* SESSION WINDOW (base) */
+.session-window {
+  position: relative;
+  width: 100%;
+  height: calc(100dvh - var(--topbar-h));
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--panel);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--session-radius);
+  z-index: var(--z-session);
+  transition: height .28s cubic-bezier(.16,1,.3,1), width .28s cubic-bezier(.16,1,.3,1), transform .28s ease, opacity .28s ease;
+  color: var(--text);
+}
+
+.session-window .win-hdr {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: var(--header-h);
+  min-height: var(--header-h);
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  z-index: var(--z-session-header);
+  background: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+  touch-action: manipulation;
+  isolation: isolate;
+}
+
+.win-controls {
+  position: relative;
+  z-index: var(--z-session-controls);
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  pointer-events: auto;
+}
+.win-controls button {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,.10);
+  color: #fff;
+  cursor: pointer;
+  font-family: "Noto Sans Symbols 2", "Noto Sans Symbols", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 17px;
+  font-weight: 300;
+  line-height: 1;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.win-controls button:hover { background: rgba(255,255,255,.17); }
+
+.win-controls .tab-counter {
+  width: auto;
+  min-width: 30px;
+  padding: 0 10px;
+  border-radius: 20px;
+  background: rgba(0,242,255,.15);
+  font-size: 12px;
+  font-weight: 600;
+  color: #7af;
+  letter-spacing: 0.3px;
+}
+.win-controls .app-icon-badge {
+  width: auto;
+  min-width: 30px;
+  padding: 0 10px;
+  border-radius: 20px;
+  background: rgba(255,255,255,.08);
+  font-size: 13px;
+  pointer-events: none;
+  opacity: .7;
+}
+
+.session-window .win-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  z-index: 1;
+  display: block;
+}
+.session-window .win-content {
+  position: absolute;
+  inset: 0;
+  top: var(--header-h);
+  width: 100%;
+  height: calc(100% - var(--header-h));
+  overflow: auto;
+  z-index: 1;
+  padding: 16px;
+  background: var(--bg);
+  color: var(--text);
+}
+.session-window .win-content.hidden { display: none; }
+.session-window .win-frame.hidden { display: none; }
+
+.session-window.collapsed {
+  height: var(--collapsed-h) !important;
+  min-height: var(--collapsed-h) !important;
+  overflow: hidden !important;
+}
+.session-window.collapsed .win-frame,
+.session-window.collapsed .win-content { visibility: hidden; pointer-events: none; }
+
+.session-window.peeked {
+  height: var(--peek-h) !important;
+  min-height: var(--peek-h) !important;
+}
+.session-window.peeked .win-frame,
+.session-window.peeked .win-content { visibility: visible; pointer-events: auto; }
+
+.session-window.minimized {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-width: 1px !important;
+  min-height: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: scale(.90) translateY(50px);
+  overflow: hidden !important;
+}
+
+.session-window.maximized {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  overflow: hidden !important;
+  z-index: var(--z-maximized) !important;
+  transition: none !important;
+}
+.session-window.maximized .win-hdr {
+  position: absolute !important;
+  inset: 0 0 auto 0 !important;
+  width: 100% !important;
+  height: var(--header-h) !important;
+  z-index: var(--z-maximized-header) !important;
+  pointer-events: none !important;
+}
+.session-window.maximized .win-controls { pointer-events: auto !important; z-index: var(--z-maximized-controls) !important; }
+.session-window.maximized .win-frame,
+.session-window.maximized .win-content {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 1;
+}
+.session-window.maximized .win-content { top: var(--header-h); height: calc(100% - var(--header-h)); }
+
+body.has-maximized { overflow: hidden !important; }
+body.has-maximized .topbar { pointer-events: none; }
+body.has-maximized .session-window.maximized .win-controls,
+body.has-maximized .session-window.maximized .win-hdr { pointer-events: auto; }
+
+/* Resize handles */
+.session-window .resize-handle {
+  position: absolute;
+  z-index: var(--z-resize);
+  background: transparent;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.session-window .resize-y { left: 0; right: 0; bottom: 0; height: var(--resize-hit); cursor: ns-resize; }
+.session-window .resize-x { top: var(--header-h); right: 0; bottom: 0; width: var(--resize-hit); cursor: ew-resize; }
+.session-window .resize-corner { right: 0; bottom: 0; width: var(--resize-corner); height: var(--resize-corner); cursor: nwse-resize; }
+.session-window .resize-corner::before {
+  content: "";
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.18);
+  border: 1px solid rgba(255,255,255,.25);
+  box-shadow: 0 0 14px rgba(0,242,255,.18);
+  pointer-events: none;
+}
+.session-window.maximized .resize-handle { display: none !important; }
+
+/* DOCK FIXO LATERAL */
+#dock {
+  position: fixed;
+  left: 12px;
+  bottom: calc(var(--dock-bottom-gap) + var(--safe-bottom));
+  z-index: var(--z-dock);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 10px;
+  border-radius: 24px;
+  background: var(--dock-bg);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  transition: background var(--transition), border-color var(--transition);
+}
+#dock .dock-bubble {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.20);
+  color: #fff;
+  cursor: pointer;
+  font-family: "Noto Sans Symbols 2", "Noto Sans Symbols", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 19px;
+  line-height: 1;
+  touch-action: manipulation;
+  transition: transform .15s, background .15s;
+}
+#dock .dock-bubble:hover { background: rgba(255,255,255,.20); transform: scale(1.05); }
+#dock .dock-bubble:active { transform: scale(.92); }
+#dock .dock-app-icon { font-size: 20px; }
+#dock .dock-divider {
+  width: 30px;
+  height: 1px;
+  background: rgba(255,255,255,.15);
+  margin: 2px 0;
+}
+#dock .dock-minimized { border-color: rgba(0,242,255,.3); background: rgba(0,242,255,.08); }
+
+/* TAB SWITCHER OVERLAY */
+.tab-switcher-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-tab-switcher);
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(10px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+.tab-switcher-overlay.open {
+  display: flex;
+  opacity: 1;
+}
+.tab-switcher-panel {
+  background: var(--panel-solid);
+  border: 1px solid var(--border);
+  border-radius: 32px;
+  max-width: 640px;
+  width: 100%;
+  max-height: 80vh;
+  padding: 24px 20px 20px;
+  box-shadow: var(--shadow);
+  overflow-y: auto;
+  color: var(--text);
+}
+.tab-switcher-panel .panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.tab-switcher-panel .panel-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.tab-switcher-panel .panel-actions {
+  display: flex;
+  gap: 10px;
+}
+.tab-switcher-panel .panel-actions button {
+  background: rgba(255,255,255,0.08);
+  border: 0;
+  border-radius: 30px;
+  padding: 8px 16px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tab-switcher-panel .panel-actions button:hover { background: rgba(255,255,255,0.15); }
+
+.tab-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+.tab-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 14px 12px;
+  cursor: pointer;
+  transition: background .15s, transform .15s;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+.tab-card:hover { background: rgba(255,255,255,0.10); transform: scale(1.01); }
+.tab-card.active { border-color: var(--cyan); background: rgba(0,150,255,0.12); }
+.tab-card .tab-title {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tab-card .tab-url {
+  font-size: 10px;
+  opacity: 0.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tab-card .tab-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255,0,0,0.2);
+  color: #f66;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .15s;
+  font-size: 14px;
+}
+.tab-card:hover .tab-close { opacity: 1; }
+.tab-card .tab-close:hover { background: rgba(255,0,0,0.4); }
+
+.tab-card .tab-fav {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 0;
+  background: transparent;
+  color: var(--gold);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.4;
+  transition: opacity .15s;
+}
+.tab-card .tab-fav.active { opacity: 1; }
+.tab-card .tab-fav:hover { opacity: 1; }
+
+/* Responsive */
+@media (max-width: 600px) {
+  :root { --session-radius: 22px; --session-gap: 10px; --dock-width: 56px; }
+  #dock { left: 6px; padding: 10px 6px; gap: 8px; }
+  #dock .dock-bubble { width: 36px; height: 36px; font-size: 16px; }
+  .tab-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (hover:none) and (pointer:coarse) {
+  .session-window .resize-corner { width: 58px; height: 58px; }
+  .tab-card .tab-close { opacity: 1; }
+}
+
+/* Apps internos (Notas, Library, etc.) */
+.app-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+  background: var(--bg);
+  color: var(--text);
+}
+.app-inner .app-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.app-inner .app-toolbar .btn {
+  border: 0;
+  background: var(--button-bg);
+  color: var(--text);
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.app-inner .app-toolbar .btn:hover { background: rgba(255,255,255,.15); }
+.app-inner .app-toolbar .btn-primary {
+  background: var(--cyan);
+  color: #000;
+  font-weight: 600;
+}
+.app-inner .app-body {
+  flex: 1;
+  overflow: auto;
+  padding: 12px;
+}
+.app-inner textarea {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: ui-monospace, monospace;
+  font-size: 14px;
+  resize: none;
+  line-height: 1.6;
+}
+.app-inner .markdown-preview {
+  white-space: pre-wrap;
+  line-height: 1.6;
+  padding: 8px;
+}
+.app-inner .cdn-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--input-bg);
+  color: var(--text);
+  outline: 0;
+  font-size: 13px;
+}
+.app-inner .cdn-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.app-inner .plugin-card,
+.app-inner .lib-card {
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.app-inner .lib-card .lib-title { font-weight: 600; }
+.app-inner .lib-card .lib-meta { font-size: 11px; opacity: .6; }
+</style>
+
+</head>
+<body>
+
+<div class="almasliber" data-app="almasliber">
+  <div class="shell">
+
+    <!-- TOPBAR SISTEMA -->
+    <header style="z-index:0" class="topbar" id="system-topbar">
+      <button class="icon-btn" id="menuBtn" aria-label="Abrir menu">☰</button>
+      <div class="brand">
+        A.<span>INFODOSE</span>
+        <span class="mini-orb-wrap" id="topbarMiniOrb"></span>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="icon-btn theme-dot" id="themeToggle" aria-label="Alternar tema">🌙</button>
+        <button class="icon-btn" id="notifBtn" aria-label="Notificações">♧</button>
+      </div>
+    </header>
+
+    <!-- HEADER GLOBAL -->
+    <header class="topbar header-visible" id="main-header">
+      <div class="brandX">
+        <span class="badgeX">GLOBAL</span>
+      </div>
+      <div class="win-navrow" onclick="event.stopPropagation()">
+        <input class="win-urlbar" type="text" id="urlInputNav" placeholder="Digite uma URL..." spellcheck="false" autocomplete="off">
+        <button class="win-go-btn" type="button" id="goNavBtn">Go</button>
+        <button class="win-go-btn" type="button" id="favBtn" title="Favoritos" style="padding:10px 12px;background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.3);">★</button>
+      </div>
+      <button id="theme-dot-canon" class="theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+          <circle cx="12" cy="12" r="5"></circle>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+        </svg>
+      </button>
+    </header>
+
+    <!-- MAIN -->
+    <main>
+      <div id="main-content">
+        <div id="kxtsk-shell">
+          <div id="dock"></div>
+          <div id="stackWrap">
+            <!-- A primeira janela será criada via JS -->
+          </div>
+        </div>
+      </div>
+    </main>
+
+  </div><!-- /shell -->
+</div><!-- /almasliber -->
+
+<!-- ===== TAB SWITCHER OVERLAY ===== -->
+<div class="tab-switcher-overlay" id="tabSwitcherOverlay">
+  <div class="tab-switcher-panel" id="tabSwitcherPanel">
+    <div class="panel-header">
+      <h2 id="tabSwitcherTitle">Abas da janela</h2>
+      <div class="panel-actions">
+        <button id="newTabBtn"><span>+</span> Nova aba</button>
+        <button id="closeTabSwitcher">✕</button>
+      </div>
+    </div>
+    <div class="tab-grid" id="tabGrid"></div>
+  </div>
+</div>
+
+<!-- ===== TOASTER ===== -->
+<div class="toaster-wrap" id="toasterWrap"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  const ROOT = document.documentElement;
+  const THEME_KEY = 'dual-theme';
+
+  const stackWrap = document.getElementById('stackWrap');
+  const dock = document.getElementById('dock');
+
+  const timers = new Map();
+  const sessionStore = new Map();
+  const suspendedQueue = [];
+  const MAX_SUSPENDED = 5;
+
+  let counter = 1;
+  let activeWindow = null;
+  const tabDataMap = new WeakMap();
+
+  /* =======================================================
+     TEMA
+     ======================================================= */
+  function applyTheme(theme) {
+    const next = theme === 'light' ? 'light' : 'dark';
+    ROOT.dataset.theme = next;
+    try { localStorage.setItem(THEME_KEY, next); } catch (_) {}
+    document.querySelectorAll('.theme-dot').forEach(btn => {
+      if (btn.textContent.includes('☀') || btn.textContent.includes('🌙')) {
+        btn.textContent = next === 'light' ? '☀️' : '🌙';
+      }
+    });
+    window.dispatchEvent(new CustomEvent('dual:theme-change', { detail: { theme: next } }));
+  }
+  function getInitialTheme() {
+    try { const saved = localStorage.getItem(THEME_KEY); if (saved === 'light' || saved === 'dark') return saved; } catch (_) {}
+    return 'dark';
+  }
+  const DualTheme = {
+    set: applyTheme,
+    toggle() { applyTheme(ROOT.dataset.theme === 'light' ? 'dark' : 'light'); },
+    get() { return ROOT.dataset.theme || 'dark'; }
+  };
+  document.querySelectorAll('.theme-dot').forEach(btn => {
+    btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); DualTheme.toggle(); });
+  });
+  applyTheme(getInitialTheme());
+
+  /* =======================================================
+     STORAGE (genérico)
+     ======================================================= */
+  const Storage = {
+    prefix: 'almasliber_',
+    save(key, value) {
+      try { localStorage.setItem(this.prefix + key, JSON.stringify(value)); } catch (_) {}
+    },
+    load(key, fallback = null) {
+      try { const raw = localStorage.getItem(this.prefix + key); return raw ? JSON.parse(raw) : fallback; } catch (_) { return fallback; }
+    },
+    remove(key) { localStorage.removeItem(this.prefix + key); }
+  };
+
+  /* =======================================================
+     SESSION LIFECYCLE (simplificado)
+     ======================================================= */
+  const SessionState = { CREATED: 'created', LOADING: 'loading', ACTIVE: 'active', IDLE: 'idle', SUSPENDED: 'suspended', CLOSED: 'closed' };
+  const sessionMeta = new Map();
+
+  function setSessionState(id, state) {
+    const win = getWin(id);
+    const meta = sessionMeta.get(id) || { createdAt: Date.now() };
+    meta.state = state;
+    if (state === SessionState.ACTIVE || state === SessionState.LOADING) meta.lastActive = Date.now();
+    if (state === SessionState.CLOSED) sessionMeta.delete(id);
+    else sessionMeta.set(id, meta);
+    if (win) {
+      win.dataset.state = state;
+      win.classList.remove('state-created','state-loading','state-active','state-idle','state-suspended','state-closed');
+      win.classList.add('state-' + state);
+    }
+  }
+
+  function touchSession(id) {
+    const meta = sessionMeta.get(id);
+    if (!meta) return;
+    meta.lastActive = Date.now();
+    if (meta.state === SessionState.IDLE) setSessionState(id, SessionState.ACTIVE);
+  }
+
+  function getWin(id) { return document.getElementById(id); }
+
+  /* =======================================================
+     Z STACK
+     ======================================================= */
+  const zStack = [];
+  function bringToFront(win) {
+    if (!win) return;
+    const idx = zStack.indexOf(win);
+    if (idx !== -1) zStack.splice(idx, 1);
+    zStack.push(win);
+    zStack.forEach((w, i) => { if (!w.classList.contains('maximized')) w.style.zIndex = String(1000 + i * 10); });
+    setActiveWindow(win);
+  }
+
+  function setActiveWindow(win) {
+    if (activeWindow === win) return;
+    activeWindow = win;
+    syncGlobalHeader();
+  }
+
+  function syncGlobalHeader() {
+    const input = document.getElementById('urlInputNav');
+    if (!activeWindow) { input.value = ''; return; }
+    const data = tabDataMap.get(activeWindow);
+    if (!data) return;
+    const active = data.tabs.find(t => t.id === data.activeId);
+    input.value = active ? active.url : '';
+  }
+
+  function isMaximized(win) { return !!win?.classList.contains('maximized'); }
+
+  /* =======================================================
+     TABS (para janelas do tipo 'browser')
+     ======================================================= */
+  function getTabData(win) {
+    if (!tabDataMap.has(win)) {
+      const frame = win.querySelector('.win-frame');
+      const src = frame ? frame.src : 'https://www.infodose.com.br/splash';
+      const tabs = [{ id: 'tab-' + Date.now(), url: src, title: src.replace(/^https?:\/\//,'').split('/')[0] || 'Nova Aba', fav: false }];
+      tabDataMap.set(win, { tabs, activeId: tabs[0].id });
+      saveTabs(win);
+    }
+    return tabDataMap.get(win);
+  }
+
+  function saveTabs(win) {
+    const data = tabDataMap.get(win);
+    if (!data) return;
+    Storage.save('tabs_' + win.id, data);
+  }
+
+  function loadTabs(win) {
+    const data = Storage.load('tabs_' + win.id);
+    if (data && data.tabs && data.tabs.length) {
+      tabDataMap.set(win, data);
+      return true;
+    }
+    return false;
+  }
+
+  function getActiveTab(win) {
+    const data = tabDataMap.get(win);
+    if (!data) return null;
+    return data.tabs.find(t => t.id === data.activeId) || data.tabs[0] || null;
+  }
+
+  function setActiveTab(win, tabId) {
+    const data = tabDataMap.get(win);
+    if (!data) return;
+    const exists = data.tabs.some(t => t.id === tabId);
+    if (!exists) return;
+    data.activeId = tabId;
+    saveTabs(win);
+    renderTabCounter(win);
+    syncGlobalHeader();
+    const frame = win.querySelector('.win-frame');
+    const tab = getActiveTab(win);
+    if (frame && tab) frame.src = tab.url || 'about:blank';
+  }
+
+  function addTab(win, url = '') {
+    const data = tabDataMap.get(win);
+    if (!data) return;
+    const newTab = {
+      id: 'tab-' + Date.now(),
+      url: url || 'https://www.infodose.com.br/splash',
+      title: url ? url.replace(/^https?:\/\//,'').split('/')[0] : 'Nova Aba',
+      fav: false
+    };
+    data.tabs.push(newTab);
+    data.activeId = newTab.id;
+    saveTabs(win);
+    renderTabCounter(win);
+    syncGlobalHeader();
+    const frame = win.querySelector('.win-frame');
+    if (frame) frame.src = newTab.url;
+    closeTabSwitcher();
+  }
+
+  function removeTab(win, tabId) {
+    const data = tabDataMap.get(win);
+    if (!data || data.tabs.length <= 1) return;
+    const idx = data.tabs.findIndex(t => t.id === tabId);
+    if (idx === -1) return;
+    data.tabs.splice(idx, 1);
+    if (data.activeId === tabId) data.activeId = data.tabs[Math.min(idx, data.tabs.length - 1)].id;
+    saveTabs(win);
+    renderTabCounter(win);
+    syncGlobalHeader();
+    const frame = win.querySelector('.win-frame');
+    const active = getActiveTab(win);
+    if (frame && active) frame.src = active.url;
+    if (document.getElementById('tabSwitcherOverlay').classList.contains('open')) renderTabSwitcher(win);
+  }
+
+  function updateTabUrl(win, tabId, newUrl) {
+    const data = tabDataMap.get(win);
+    if (!data) return;
+    const tab = data.tabs.find(t => t.id === tabId);
+    if (!tab) return;
+    tab.url = newUrl;
+    tab.title = newUrl.replace(/^https?:\/\//,'').split('/')[0] || 'Nova Aba';
+    saveTabs(win);
+    syncGlobalHeader();
+    if (data.activeId === tabId) {
+      const frame = win.querySelector('.win-frame');
+      if (frame) frame.src = newUrl;
+    }
+    if (document.getElementById('tabSwitcherOverlay').classList.contains('open')) renderTabSwitcher(win);
+  }
+
+  function toggleFav(win, tabId) {
+    const data = tabDataMap.get(win);
+    if (!data) return;
+    const tab = data.tabs.find(t => t.id === tabId);
+    if (!tab) return;
+    tab.fav = !tab.fav;
+    saveTabs(win);
+    if (document.getElementById('tabSwitcherOverlay').classList.contains('open')) renderTabSwitcher(win);
+  }
+
+  function renderTabCounter(win) {
+    const data = tabDataMap.get(win);
+    if (!data) return;
+    const btn = win.querySelector('.tab-counter');
+    if (btn) btn.textContent = data.tabs.length;
+  }
+
+  /* =======================================================
+     TAB SWITCHER UI
+     ======================================================= */
+  let currentSwitcherWin = null;
+
+  function openTabSwitcher(win) {
+    currentSwitcherWin = win;
+    document.getElementById('tabSwitcherTitle').textContent = 'Abas — ' + (win.dataset.appName || 'Navegador');
+    renderTabSwitcher(win);
+    document.getElementById('tabSwitcherOverlay').classList.add('open');
+    document.getElementById('tabSwitcherOverlay').onclick = function(e) { if (e.target === this) closeTabSwitcher(); };
+  }
+
+  function closeTabSwitcher() {
+    document.getElementById('tabSwitcherOverlay').classList.remove('open');
+    currentSwitcherWin = null;
+  }
+
+  function renderTabSwitcher(win) {
+    const grid = document.getElementById('tabGrid');
+    const data = tabDataMap.get(win);
+    if (!data) { grid.innerHTML = '<div style="padding:20px;text-align:center;opacity:.5;">Nenhuma aba</div>'; return; }
+    grid.innerHTML = '';
+    data.tabs.forEach(tab => {
+      const card = document.createElement('div');
+      card.className = 'tab-card' + (tab.id === data.activeId ? ' active' : '');
+      card.dataset.tabId = tab.id;
+      card.innerHTML = `
+        <div class="tab-title">${tab.title}</div>
+        <div class="tab-url">${tab.url}</div>
+        <button class="tab-close" data-tabid="${tab.id}" title="Fechar aba">×</button>
+        <button class="tab-fav ${tab.fav?'active':''}" data-tabid="${tab.id}" title="Favoritar">${tab.fav?'★':'☆'}</button>
+      `;
+      card.addEventListener('click', e => {
+        if (e.target.closest('.tab-close') || e.target.closest('.tab-fav')) return;
+        setActiveTab(win, tab.id);
+        closeTabSwitcher();
+      });
+      card.querySelector('.tab-close').addEventListener('click', e => { e.stopPropagation(); removeTab(win, tab.id); });
+      card.querySelector('.tab-fav').addEventListener('click', e => { e.stopPropagation(); toggleFav(win, tab.id); });
+      grid.appendChild(card);
+    });
+  }
+
+  document.getElementById('newTabBtn').addEventListener('click', () => { if (currentSwitcherWin) addTab(currentSwitcherWin); });
+  document.getElementById('closeTabSwitcher').addEventListener('click', closeTabSwitcher);
+
+  /* =======================================================
+     NAVEGAÇÃO GLOBAL
+     ======================================================= */
+  const navInput = document.getElementById('urlInputNav');
+  const goNavBtn = document.getElementById('goNavBtn');
+  const favBtn = document.getElementById('favBtn');
+
+  function applyGlobalUrl() {
+    if (!navInput || !activeWindow) return;
+    let url = navInput.value.trim();
+    if (!url) return;
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    const active = getActiveTab(activeWindow);
+    if (active) updateTabUrl(activeWindow, active.id, url);
+    navInput.value = url;
+  }
+  navInput?.addEventListener('keydown', e => { if (e.key === 'Enter') applyGlobalUrl(); });
+  goNavBtn?.addEventListener('click', applyGlobalUrl);
+  favBtn?.addEventListener('click', () => { if (activeWindow) { const active = getActiveTab(activeWindow); if (active) toggleFav(activeWindow, active.id); } });
+
+  /* =======================================================
+     RESIZE (manter)
+     ======================================================= */
+  function makeResizeHandles(win) {
+    if (win.dataset.resizeReady === '1') return;
+    win.dataset.resizeReady = '1';
+    const hy = document.createElement('div'); hy.className = 'resize-handle resize-y';
+    const hx = document.createElement('div'); hx.className = 'resize-handle resize-x';
+    const hc = document.createElement('div'); hc.className = 'resize-handle resize-corner';
+    win.append(hy, hx, hc);
+    bindResizeY(win, hy);
+    bindResizeX(win, hx);
+    bindResizeCorner(win, hc);
+  }
+
+  function freeFromMaximize(win, rect) {
+    if (isMaximized(win)) {
+      win.classList.remove('maximized');
+      win.style.position = 'fixed';
+      win.style.left = Math.max(0, rect.left) + 'px';
+      win.style.top = Math.max(0, rect.top) + 'px';
+      win.style.right = 'auto';
+      win.style.bottom = 'auto';
+      win.style.width = Math.min(rect.width, window.innerWidth) + 'px';
+      win.style.height = Math.min(rect.height, window.innerHeight) + 'px';
+      win.style.maxWidth = 'none';
+      win.style.maxHeight = 'none';
+    }
+    win.classList.remove('collapsed', 'peeked');
+    win.classList.add('resizing');
+    syncShell();
+  }
+  function finishResize(win) { win.classList.remove('resizing'); syncShell(); }
+
+  function bindResizeY(win, handle) {
+    let active = false, pointerId = null, startY = 0, startH = 0;
+    handle.addEventListener('pointerdown', function(e) {
+      if (e.button != null && e.button !== 0) return;
+      const rect = win.getBoundingClientRect();
+      active = true; pointerId = e.pointerId;
+      startY = e.clientY; startH = rect.height;
+      freeFromMaximize(win, rect);
+      handle.setPointerCapture?.(pointerId);
+      e.preventDefault();
+      const move = ev => { if (!active || ev.pointerId !== pointerId) return; ev.preventDefault(); const next = Math.max(44, Math.min(window.innerHeight, startH + (ev.clientY - startY))); win.style.height = next + 'px'; };
+      const up = ev => { if (ev && ev.pointerId !== pointerId) return; active = false; window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up); finishResize(win); };
+      window.addEventListener('pointermove', move, { passive: false });
+      window.addEventListener('pointerup', up);
+      window.addEventListener('pointercancel', up);
+    }, { passive: false });
+  }
+  function bindResizeX(win, handle) {
+    let active = false, pointerId = null, startX = 0, startW = 0;
+    handle.addEventListener('pointerdown', function(e) {
+      if (e.button != null && e.button !== 0) return;
+      const rect = win.getBoundingClientRect();
+      active = true; pointerId = e.pointerId;
+      startX = e.clientX; startW = rect.width;
+      freeFromMaximize(win, rect);
+      handle.setPointerCapture?.(pointerId);
+      e.preventDefault();
+      const move = ev => { if (!active || ev.pointerId !== pointerId) return; ev.preventDefault(); const next = Math.max(280, Math.min(window.innerWidth, startW + (ev.clientX - startX))); win.style.width = next + 'px'; };
+      const up = ev => { if (ev && ev.pointerId !== pointerId) return; active = false; window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up); finishResize(win); };
+      window.addEventListener('pointermove', move, { passive: false });
+      window.addEventListener('pointerup', up);
+      window.addEventListener('pointercancel', up);
+    }, { passive: false });
+  }
+  function bindResizeCorner(win, handle) {
+    let active = false, pointerId = null, startX = 0, startY = 0, startW = 0, startH = 0;
+    handle.addEventListener('pointerdown', function(e) {
+      if (e.button != null && e.button !== 0) return;
+      const rect = win.getBoundingClientRect();
+      active = true; pointerId = e.pointerId;
+      startX = e.clientX; startY = e.clientY;
+      startW = rect.width; startH = rect.height;
+      freeFromMaximize(win, rect);
+      handle.setPointerCapture?.(pointerId);
+      e.preventDefault();
+      const move = ev => { if (!active || ev.pointerId !== pointerId) return; ev.preventDefault(); const width = Math.max(280, Math.min(window.innerWidth, startW + (ev.clientX - startX))); const height = Math.max(44, Math.min(window.innerHeight, startH + (ev.clientY - startY))); win.style.width = width + 'px'; win.style.height = height + 'px'; };
+      const up = ev => { if (ev && ev.pointerId !== pointerId) return; active = false; window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up); finishResize(win); };
+      window.addEventListener('pointermove', move, { passive: false });
+      window.addEventListener('pointerup', up);
+      window.addEventListener('pointercancel', up);
+    }, { passive: false });
+  }
+
+  function syncShell() {
+    const maximized = !!document.querySelector('.session-window.maximized:not(.minimized)');
+    document.body.classList.toggle('has-maximized', maximized);
+    document.body.classList.toggle('ui-immersive', maximized);
+  }
+
+  /* =======================================================
+     COLLAPSE / PEEK / MAXIMIZE / MINIMIZE
+     ======================================================= */
+  function toggleCollapse(id) {
+    const win = getWin(id);
+    if (!win) return;
+    if (isMaximized(win)) { win.classList.remove('maximized'); win.style.zIndex = ''; syncShell(); }
+    win.classList.toggle('collapsed');
+    win.classList.remove('peeked');
+    bringToFront(win);
+    syncShell();
+  }
+  function togglePeek(id) {
+    const win = getWin(id);
+    if (!win) return;
+    if (isMaximized(win)) { win.classList.remove('maximized'); win.style.zIndex = ''; syncShell(); }
+    win.classList.toggle('peeked');
+    if (win.classList.contains('peeked')) win.classList.remove('collapsed');
+    bringToFront(win);
+    syncShell();
+  }
+  function maximizeWindow(id) {
+    const win = getWin(id);
+    if (!win) return;
+    if (isMaximized(win)) {
+      win.classList.remove('maximized');
+      win.style.zIndex = '';
+      bringToFront(win);
+      syncShell();
+      return;
+    }
+    win.classList.remove('collapsed', 'peeked', 'minimized', 'header-hidden', 'resizing');
+    ['top','left','right','bottom','width','height','maxWidth','maxHeight'].forEach(p => win.style[p] = '');
+    win.classList.add('maximized');
+    win.style.zIndex = '94000';
+    bringToFront(win);
+    syncShell();
+  }
+  function minimizeWindow(id) {
+    const win = getWin(id);
+    if (!win) return;
+    timers.delete(id);
+    win.classList.remove('maximized', 'collapsed', 'peeked', 'header-hidden', 'resizing');
+    syncShell();
+    win.classList.add('minimized');
+    // adiciona bubble ao dock
+    const bubble = document.createElement('button');
+    bubble.type = 'button';
+    bubble.className = 'dock-bubble dock-minimized';
+    bubble.id = 'dock-' + id;
+    bubble.title = 'Restaurar';
+    bubble.setAttribute('aria-label', 'Restaurar');
+    bubble.textContent = '۞';
+    bubble.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      win.classList.remove('minimized');
+      bringToFront(win);
+      requestAnimationFrame(() => { bringToFront(win); syncShell(); });
+      bubble.remove();
+    });
+    dock.appendChild(bubble);
+    syncShell();
+  }
+  function closeWindow(id) {
+    const win = getWin(id);
+    if (!win) return;
+    tabDataMap.delete(win);
+    sessionMeta.delete(id);
+    document.getElementById('dock-' + id)?.remove();
+    win.remove();
+    if (activeWindow === win) setActiveWindow(null);
+    syncShell();
+  }
+
+  /* =======================================================
+     APP RENDERERS (Notas, Library, Plugins, CDN)
+     ======================================================= */
+  const appRenderers = {
+
+    notes: function(win) {
+      const content = win.querySelector('.win-content');
+      if (!content) return;
+      content.className = 'win-content';
+      content.innerHTML = `
+        <div class="app-inner" style="height:100%;">
+          <div class="app-toolbar">
+            <button class="btn" data-notes-preview>◉ Preview</button>
+            <button class="btn btn-primary" data-notes-save>Salvar</button>
+          </div>
+          <div class="app-body" style="display:flex;gap:12px;height:calc(100% - 60px);">
+            <textarea id="notes-editor-${win.id}" style="flex:1;height:100%;" placeholder="# Nova nota&#10;&#10;Escreva em Markdown..."></textarea>
+            <div id="notes-preview-${win.id}" class="markdown-preview" style="flex:1;overflow:auto;border-left:1px solid var(--border);padding-left:12px;"></div>
+          </div>
+        </div>
+      `;
+      const editor = content.querySelector('#notes-editor-' + win.id);
+      const preview = content.querySelector('#notes-preview-' + win.id);
+      const saveBtn = content.querySelector('[data-notes-save]');
+      const previewBtn = content.querySelector('[data-notes-preview]');
+
+      // Carregar conteúdo salvo
+      const saved = Storage.load('notes_content', '');
+      editor.value = saved;
+      preview.innerHTML = markdownToHtml(saved);
+
+      editor.addEventListener('input', () => {
+        preview.innerHTML = markdownToHtml(editor.value);
+      });
+
+      saveBtn.addEventListener('click', () => {
+        Storage.save('notes_content', editor.value);
+        showToast('Notas salvas');
+      });
+
+      previewBtn.addEventListener('click', () => {
+        const visible = preview.style.display !== 'none';
+        preview.style.display = visible ? 'none' : 'block';
+        previewBtn.textContent = visible ? '◉ Preview' : '◉ Ocultar';
+      });
+    },
+
+    library: function(win) {
+      const content = win.querySelector('.win-content');
+      if (!content) return;
+      content.className = 'win-content';
+      content.innerHTML = `
+        <div class="app-inner" style="height:100%;">
+          <div class="app-toolbar">
+            <button class="btn btn-primary" data-lib-add>+ Novo</button>
+          </div>
+          <div class="app-body" id="library-list-${win.id}" style="overflow-y:auto;"></div>
+        </div>
+      `;
+      const list = content.querySelector('#library-list-' + win.id);
+      const addBtn = content.querySelector('[data-lib-add]');
+
+      function renderLibrary() {
+        const items = Storage.load('library_items', []);
+        list.innerHTML = items.length ? items.map((item, i) => `
+          <div class="lib-card">
+            <div class="lib-title">${item.title}</div>
+            <div class="lib-meta">${item.type} · ${new Date(item.created).toLocaleDateString()}</div>
+            <button class="btn" data-lib-del="${i}" style="margin-top:6px;">✕</button>
+          </div>
+        `).join('') : '<div style="padding:20px;text-align:center;opacity:.5;">Library vazia</div>';
+
+        list.querySelectorAll('[data-lib-del]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.libDel);
+            const items = Storage.load('library_items', []);
+            items.splice(idx, 1);
+            Storage.save('library_items', items);
+            renderLibrary();
+          });
+        });
+      }
+
+      addBtn.addEventListener('click', () => {
+        const title = prompt('Título do documento:');
+        if (!title) return;
+        const type = prompt('Tipo (markdown, link, app, document):', 'document') || 'document';
+        const items = Storage.load('library_items', []);
+        items.unshift({ id: 'lib_' + Date.now(), title, type, created: new Date().toISOString() });
+        Storage.save('library_items', items);
+        renderLibrary();
+      });
+
+      renderLibrary();
+    },
+
+    plugins: function(win) {
+      const content = win.querySelector('.win-content');
+      if (!content) return;
+      content.className = 'win-content';
+      content.innerHTML = `
+        <div class="app-inner" style="height:100%;">
+          <div class="app-toolbar">
+            <button class="btn btn-primary" data-plugin-add>+ Instalar</button>
+          </div>
+          <div class="app-body" id="plugin-list-${win.id}" style="overflow-y:auto;"></div>
+        </div>
+      `;
+      const list = content.querySelector('#plugin-list-' + win.id);
+      const addBtn = content.querySelector('[data-plugin-add]');
+
+      function renderPlugins() {
+        const plugins = Storage.load('plugins', []);
+        list.innerHTML = plugins.length ? plugins.map((p, i) => `
+          <div class="plugin-card">
+            <strong>${p.name || 'Plugin'}</strong> <span style="opacity:.5;font-size:12px;">${p.type}</span>
+            <div style="font-size:11px;opacity:.6;">${p.source}</div>
+            <button class="btn" data-plugin-del="${i}" style="margin-top:6px;">✕</button>
+          </div>
+        `).join('') : '<div style="padding:20px;text-align:center;opacity:.5;">Nenhum plugin instalado.</div>';
+
+        list.querySelectorAll('[data-plugin-del]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.pluginDel);
+            const plugins = Storage.load('plugins', []);
+            plugins.splice(idx, 1);
+            Storage.save('plugins', plugins);
+            renderPlugins();
+          });
+        });
+      }
+
+      addBtn.addEventListener('click', () => {
+        const name = prompt('Nome do plugin:') || 'Plugin';
+        const type = prompt('Tipo (js, css, code):', 'js') || 'js';
+        const source = prompt('URL ou código:');
+        if (!source) return;
+        const plugins = Storage.load('plugins', []);
+        plugins.push({ id: 'plugin_' + Date.now(), name, type, source, active: true });
+        Storage.save('plugins', plugins);
+        // Executa imediatamente
+        if (type === 'js') loadScript(source);
+        else if (type === 'css') loadCSS(source);
+        else if (type === 'code') try { new Function(source)(); } catch(e) { showToast('Erro no plugin: ' + e.message); }
+        renderPlugins();
+        showToast('Plugin instalado');
+      });
+
+      renderPlugins();
+    },
+
+    cdn: function(win) {
+      const content = win.querySelector('.win-content');
+      if (!content) return;
+      content.className = 'win-content';
+      content.innerHTML = `
+        <div class="app-inner" style="height:100%;">
+          <div class="app-toolbar">
+            <button class="btn btn-primary" data-cdn-add>+ Adicionar CDN</button>
+          </div>
+          <div class="app-body" id="cdn-list-${win.id}" style="overflow-y:auto;"></div>
+        </div>
+      `;
+      const list = content.querySelector('#cdn-list-' + win.id);
+      const addBtn = content.querySelector('[data-cdn-add]');
+
+      function renderCDN() {
+        const items = Storage.load('cdn_items', []);
+        list.innerHTML = items.length ? items.map((item, i) => `
+          <div class="cdn-item">
+            <span><strong>${item.type.toUpperCase()}</strong> — ${item.url}</span>
+            <button class="btn" data-cdn-del="${i}">✕</button>
+          </div>
+        `).join('') : '<div style="padding:20px;text-align:center;opacity:.5;">Nenhuma CDN registrada.</div>';
+
+        list.querySelectorAll('[data-cdn-del]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.cdnDel);
+            const items = Storage.load('cdn_items', []);
+            items.splice(idx, 1);
+            Storage.save('cdn_items', items);
+            renderCDN();
+          });
+        });
+      }
+
+      addBtn.addEventListener('click', () => {
+        const url = prompt('URL do recurso (ex: https://cdn.jsdelivr.net/npm/...):');
+        if (!url) return;
+        const type = url.match(/\.css(\?|#|$)/) ? 'css' : 'js';
+        const items = Storage.load('cdn_items', []);
+        items.push({ id: 'cdn_' + Date.now(), url, type });
+        Storage.save('cdn_items', items);
+        if (type === 'js') loadScript(url);
+        else loadCSS(url);
+        renderCDN();
+        showToast('CDN adicionada');
+      });
+
+      renderCDN();
+    }
+
+  };
+
+  function loadScript(url) {
+    if (document.querySelector(`script[data-os-cdn="${url}"]`)) return;
+    const script = document.createElement('script');
+    script.src = url;
+    script.dataset.osCdn = url;
+    document.head.appendChild(script);
+  }
+  function loadCSS(url) {
+    if (document.querySelector(`link[data-os-cdn="${url}"]`)) return;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = url;
+    link.dataset.osCdn = url;
+    document.head.appendChild(link);
+  }
+
+  function markdownToHtml(text) {
+    let html = String(text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    html = html.replace(/^### (.*)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^## (.*)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^# (.*)$/gm, '<h1>$1</h1>');
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    html = html.replace(/^- (.*)$/gm, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+    html = html.replace(/\n\n/g, '</p><p>');
+    return '<p>' + html + '</p>';
+  }
+
+  function showToast(msg) {
+    const wrap = document.getElementById('toasterWrap');
+    const el = document.createElement('div');
+    el.style.cssText = `
+      position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
+      background:rgba(0,0,0,.8); color:#fff; padding:10px 24px;
+      border-radius:30px; font-size:14px; z-index:99999;
+      backdrop-filter:blur(10px); border:1px solid var(--border);
+      animation: fadeInUp .3s ease;
+    `;
+    el.textContent = msg;
+    wrap.appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 2500);
+  }
+
+  /* =======================================================
+     CRIAÇÃO DE JANELA (suporte a apps)
+     ======================================================= */
+  function createSessionWindow({ type = 'browser', title = '//', src = 'https://www.infodose.com.br/splash' } = {}) {
+    const id = 'session-' + Date.now() + '-' + counter++;
+    const win = document.createElement('section');
+    win.className = 'session-window peeked';
+    win.id = id;
+    win.dataset.appType = type;
+    win.dataset.appName = title;
+
+    // Monta header
+    let controlsHTML = `
+      <button type="button" data-action="collapse" title="Colapsar">−</button>
+    `;
+    if (type === 'browser') {
+      controlsHTML += `
+        <button type="button" data-action="tab-switcher" class="tab-counter">1</button>
+      `;
+    } else {
+      controlsHTML += `
+        <span class="app-icon-badge">${title}</span>
+      `;
+    }
+    controlsHTML += `
+      <button type="button" data-action="maximize" title="Maximizar">⛶</button>
+      <button type="button" data-action="minimize" title="Minimizar">۞</button>
+      <button type="button" data-action="close" title="Fechar">×</button>
+    `;
+
+    let navRow = '';
+    if (type === 'browser') {
+      navRow = `
+        <div class="win-navrow" style="flex:2;min-width:0;pointer-events:auto;">
+          <input class="win-urlbar" type="text" value="${src}" placeholder="Digite uma URL..." spellcheck="false" autocomplete="off">
+          <button class="win-go-btn" type="button">Go</button>
+        </div>
+      `;
+    }
+
+    win.innerHTML = `
+      <div class="win-hdr">
+        <div class="win-controls">${controlsHTML}</div>
+        ${navRow}
+      </div>
+      <iframe class="win-frame ${type !== 'browser' ? 'hidden' : ''}" data-runtime="nav" src="${type === 'browser' ? src : ''}"></iframe>
+      <div class="win-content ${type === 'browser' ? 'hidden' : ''}"></div>
+    `;
+
+    stackWrap.appendChild(win);
+    setSessionState(id, SessionState.CREATED);
+
+    // Renderiza conteúdo do app se não for browser
+    if (type !== 'browser') {
+      const renderer = appRenderers[type];
+      if (renderer) renderer(win);
+      setSessionState(id, SessionState.ACTIVE);
+    } else {
+      // Browser: configura tabs
+      if (!loadTabs(win)) {
+        const frame = win.querySelector('.win-frame');
+        const src2 = frame ? frame.src : 'https://www.infodose.com.br/splash';
+        const tabs = [{ id: 'tab-' + Date.now(), url: src2, title: src2.replace(/^https?:\/\//,'').split('/')[0] || 'Nova Aba', fav: false }];
+        tabDataMap.set(win, { tabs, activeId: tabs[0].id });
+        saveTabs(win);
+      }
+      renderTabCounter(win);
+      // Sincroniza frame com aba ativa
+      const active = getActiveTab(win);
+      const frame = win.querySelector('.win-frame');
+      if (frame && active) frame.src = active.url;
+      setSessionState(id, SessionState.LOADING);
+      frame?.addEventListener('load', () => setSessionState(id, SessionState.ACTIVE), { once: true });
+    }
+
+    wireSession(win);
+    bringToFront(win);
+    return id;
+  }
+
+  /* =======================================================
+     WIRE SESSION (eventos)
+     ======================================================= */
+  function wireSession(win) {
+    if (!win || win.dataset.wired === '1') return;
+    win.dataset.wired = '1';
+
+    win.addEventListener('pointerdown', () => touchSession(win.id), { passive: true });
+
+    makeResizeHandles(win);
+
+    const header = win.querySelector('.win-hdr');
+    header?.addEventListener('click', e => {
+      if (e.target.closest('.win-controls') || e.target.closest('button') || e.target.closest('input') || e.target.closest('.win-navrow')) return;
+      bringToFront(win);
+      const old = timers.get(win.id);
+      if (old) { clearTimeout(old); timers.delete(win.id); maximizeWindow(win.id); return; }
+      const timer = setTimeout(() => { timers.delete(win.id); togglePeek(win.id); }, 250);
+      timers.set(win.id, timer);
+    });
+
+    const controls = win.querySelector('.win-controls');
+    controls?.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      if (action === 'collapse') toggleCollapse(win.id);
+      else if (action === 'maximize') maximizeWindow(win.id);
+      else if (action === 'minimize') minimizeWindow(win.id);
+      else if (action === 'close') closeWindow(win.id);
+      else if (action === 'tab-switcher') openTabSwitcher(win);
+    });
+
+    // Navegação local (browser)
+    const input = win.querySelector('.win-urlbar');
+    const go = win.querySelector('.win-go-btn');
+    go?.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!input) return;
+      let url = input.value.trim();
+      if (!url) return;
+      if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+      const active = getActiveTab(win);
+      if (active) updateTabUrl(win, active.id, url);
+      input.value = url;
+    });
+    input?.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') { e.stopPropagation(); go?.click(); }
+    });
+
+    const frame = win.querySelector('.win-frame');
+    frame?.addEventListener('load', function() {
+      try {
+        const doc = this.contentDocument;
+        if (doc && doc.title) {
+          const active = getActiveTab(win);
+          if (active) { active.title = doc.title; saveTabs(win); }
+        }
+      } catch (_) {}
+      if (this.src) {
+        const active = getActiveTab(win);
+        if (active && active.url !== this.src) { active.url = this.src; saveTabs(win); }
+        const localInput = win.querySelector('.win-urlbar');
+        if (localInput) localInput.value = this.src;
+        syncGlobalHeader();
+      }
+    });
+    frame?.addEventListener('click', function() { if (!win.classList.contains('maximized')) bringToFront(win); });
+
+    // Sincroniza input local com aba ativa
+    const active = getActiveTab(win);
+    if (input && active) input.value = active.url;
+
+    if (!activeWindow) setActiveWindow(win);
+  }
+
+  /* =======================================================
+     DOCK (fixo com apps)
+     ======================================================= */
+  function buildDock() {
+    const apps = [
+      { id: 'browser', icon: '◍', label: 'Navegador' },
+      { id: 'notes', icon: '✎', label: 'Notas' },
+      { id: 'library', icon: '◈', label: 'Library' },
+      { id: 'plugins', icon: '◫', label: 'Plugins' },
+      { id: 'cdn', icon: '⌘', label: 'CDN' },
+    ];
+    dock.innerHTML = '';
+    apps.forEach(app => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'dock-bubble dock-app-icon';
+      btn.textContent = app.icon;
+      btn.title = app.label;
+      btn.setAttribute('aria-label', app.label);
+      btn.addEventListener('click', () => {
+        // Se já existe uma janela desse tipo, traz para frente; senão cria
+        const existing = document.querySelector(`.session-window[data-app-type="${app.id}"]:not(.minimized)`);
+        if (existing) { bringToFront(existing); if (isMaximized(existing)) { /* já está */ } else maximizeWindow(existing.id); return; }
+        // Se minimizada, restaura
+        const minimized = document.querySelector(`.session-window[data-app-type="${app.id}"].minimized`);
+        if (minimized) {
+          minimized.classList.remove('minimized');
+          document.getElementById('dock-' + minimized.id)?.remove();
+          bringToFront(minimized);
+          return;
+        }
+        createSessionWindow({ type: app.id, title: app.label, src: 'https://www.infodose.com.br/splash' });
+      });
+      dock.appendChild(btn);
+    });
+
+    // Divisor
+    const div = document.createElement('div');
+    div.className = 'dock-divider';
+    dock.appendChild(div);
+
+    // Botão + (nova janela browser)
+    const plus = document.createElement('button');
+    plus.type = 'button';
+    plus.className = 'dock-bubble dock-app-icon';
+    plus.textContent = '+';
+    plus.title = 'Nova janela';
+    plus.setAttribute('aria-label', 'Nova janela');
+    plus.addEventListener('click', () => createSessionWindow({ type: 'browser', title: 'Navegador' }));
+    dock.appendChild(plus);
+  }
+
+  /* =======================================================
+     HEADER GLOBAL COLLAPSE (conteúdo)
+     ======================================================= */
+  const HEADER = document.getElementById('main-header');
+  const MAIN = document.getElementById('main-content');
+  HEADER?.addEventListener('click', e => {
+    if (e.target.closest('button') || e.target.closest('input') || e.target.closest('.win-navrow') || e.target.closest('.theme-dot')) return;
+    MAIN?.classList.toggle('hidden');
+    HEADER.classList.toggle('is-collapsed', MAIN?.classList.contains('hidden'));
+  });
+
+  /* =======================================================
+     SMART SCROLL (header)
+     ======================================================= */
+  let lastScrollY = window.scrollY, ticking = false;
+  const SCROLL_THRESHOLD = 8;
+  function updateHeader() {
+    if (!HEADER) return;
+    const current = window.scrollY;
+    if (current <= 10) { HEADER.classList.remove('header-hidden'); HEADER.classList.add('header-visible'); lastScrollY = current; ticking = false; return; }
+    if (current > lastScrollY + SCROLL_THRESHOLD) { HEADER.classList.remove('header-visible'); HEADER.classList.add('header-hidden'); }
+    else if (current < lastScrollY - SCROLL_THRESHOLD) { HEADER.classList.remove('header-hidden'); HEADER.classList.add('header-visible'); }
+    lastScrollY = current; ticking = false;
+  }
+  window.addEventListener('scroll', () => { if (!ticking) { requestAnimationFrame(updateHeader); ticking = true; } }, { passive: true });
+
+  /* =======================================================
+     INICIALIZAÇÃO
+     ======================================================= */
+  function init() {
+    buildDock();
+    // Cria janela inicial do navegador
+    createSessionWindow({ type: 'browser', title: 'Navegador', src: 'https://www.infodose.com.br/splash' });
+    syncShell();
+    // Aplica tema
+    applyTheme(getInitialTheme());
+    console.log('🚀 Almasliber OS — Unified com apps carregado.');
+  }
+
+  // Expor funções para console
+  window.createSessionWindow = createSessionWindow;
+  window.DualTheme = DualTheme;
+
+  // Iniciar quando DOM estiver pronto
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,2390 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f7fb">
+  <title>Almasliber OS — Dual Infodose (Monólito Patch)</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+
+<style id="ifsw-unified-core">
+/* =========================================================
+   ALMASLIBER / iFSw — UNIFIED CORE
+   HEADER + SESSION + DOCK + MAXIMIZE/MINIMIZE
+   ========================================================= */
+
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  --topbar-h: 58px;
+  --header-h: 52px;
+
+  --session-radius: 29px;
+  --session-gap: 20px;
+
+  --collapsed-h: 52px;
+  --peek-h: 178px;
+
+  --resize-hit: 0px;
+  --resize-corner: 54px;
+
+  --dock-bottom-gap: 80px;
+  --dock-offset-x: -12px;
+
+  /* -------------------------------------------------------
+     Z-INDEX ARCHITECTURE
+     ------------------------------------------------------- */
+
+  --z-base: 1;
+  --z-content: 100;
+
+  --z-header-system: 900;
+  --z-header-main: 910;
+
+  --z-session: 1000;
+  --z-session-header: 1010;
+  --z-session-controls: 1020;
+
+  --z-maximized: 94000;
+  --z-maximized-header: 94010;
+  --z-maximized-controls: 94020;
+  --z-resize: 94030;
+
+  --z-dock: 97000;
+}
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+html {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  min-height: 100dvh;
+
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      #2a2a35 0%,
+      #0f0f15 100%
+    );
+
+  color: #fff;
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+}
+
+body.ui-safe-vertical {
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+}
+
+body.ui-immersive {
+  padding: 0;
+  overflow: hidden !important;
+}
+
+/* =========================================================
+   SHELL
+   ========================================================= */
+
+#kxtsk-shell {
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  overflow: visible;
+  z-index: var(--z-base);
+}
+
+/* =========================================================
+   ALMASLIBER SHELL
+   ========================================================= */
+
+.almasliber,
+.almasliber .shell,
+#main-content {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.almasliber {
+  min-height: 100dvh;
+}
+
+/* =========================================================
+   HEADER SYSTEM
+   ========================================================= */
+
+.topbar {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+
+  height: var(--topbar-h);
+  min-height: var(--topbar-h);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+  padding: 0 12px;
+
+  z-index: var(--z-header-system);
+
+  isolation: isolate;
+}
+
+/* Header do sistema */
+#system-topbar {
+  z-index: var(--z-header-system);
+}
+
+/* Header global */
+#main-header {
+  z-index: var(--z-header-main);
+}
+
+/* =========================================================
+   HEADER TRANSITIONS
+   ========================================================= */
+
+#main-header.header-visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#main-header.header-hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+#main-header {
+  transition:
+    transform .25s ease,
+    opacity .2s ease;
+}
+
+/* =========================================================
+   HEADER BRAND
+   ========================================================= */
+
+.brand,
+.brandX,
+.os-brand {
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+
+  min-width: 0;
+
+  font-weight: 800;
+}
+
+.brandX {
+  gap: 7px;
+  font-size: 13px;
+  letter-spacing: 1.3px;
+}
+
+.badgeX {
+  font-size: 9px;
+  opacity: .55;
+}
+
+/* =========================================================
+   TOP ACTIONS
+   ========================================================= */
+
+.top-actions {
+  min-width: 0;
+  flex: 1 1 auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 8px;
+}
+
+.icon-btn,
+.soft-btn,
+.launcher-btn,
+.win-go-btn {
+  flex: 0 0 auto;
+
+  border: 0;
+  border-radius: 12px;
+
+  min-height: 30px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #fff;
+  cursor: pointer;
+
+  font-weight: 600;
+
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  background: rgba(255,255,255,.08);
+}
+
+.soft-btn {
+  padding: 10px 12px;
+  background: rgba(255,255,255,.08);
+}
+
+.launcher-btn {
+  padding: 10px 12px;
+  background: rgba(0,242,255,.12);
+  border: 1px solid rgba(0,242,255,.3);
+}
+
+.win-go-btn {
+  padding: 10px 12px;
+  background: rgba(0,242,255,.12);
+}
+
+.icon-btn:active,
+.win-controls button:active,
+.dock-bubble:active {
+  transform: scale(.94);
+}
+
+/* =========================================================
+   MAIN NAV
+   ========================================================= */
+
+.win-navrow {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  width: 100%;
+  min-width: 0;
+
+  padding: 0 16px 10px;
+}
+
+.win-urlbar {
+  flex: 1 1 auto;
+
+  min-width: 139px;
+
+  padding: 11px 13px;
+
+  border-radius: 13px;
+
+  border: 1px solid rgba(255,255,255,.12);
+
+  background: rgba(255,255,255,.06);
+
+  color: #fff;
+
+  outline: none;
+
+  font-size: 10px;
+}
+
+.win-urlbar::placeholder {
+  color: rgba(255,255,255,.45);
+}
+
+.win-urlbar:focus {
+  border-color: rgba(0,242,255,.45);
+
+  background: rgba(255,255,255,.09);
+
+  box-shadow:
+    0 0 0 3px rgba(0,242,255,.08);
+}
+
+/* =========================================================
+   MAIN CONTENT
+   ========================================================= */
+
+main,
+#main-content {
+  position: relative;
+  z-index: var(--z-content);
+}
+
+/* =========================================================
+   STACK
+   ========================================================= */
+
+#stackWrap {
+  position: relative;
+
+  width: 100%;
+  max-width: 800px;
+
+  min-height:
+    calc(100dvh - var(--topbar-h));
+
+  margin: 0 auto;
+  padding: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: var(--session-gap);
+
+  overflow: visible;
+
+  z-index: var(--z-content);
+
+  isolation: isolate;
+}
+
+/* =========================================================
+   SESSION
+   ========================================================= */
+
+.session-window {
+  position: relative;
+
+  width: 100%;
+  height:
+    calc(100dvh - var(--topbar-h));
+
+  min-height: 0;
+
+  margin: 0;
+  padding: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  background:
+    rgba(30,30,35,.40);
+
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+
+  border:
+    1px solid rgba(255,255,255,.08);
+
+  border-radius: var(--session-radius);
+
+  z-index: var(--z-session);
+
+  transition:
+    height .28s cubic-bezier(.16,1,.3,1),
+    width .28s cubic-bezier(.16,1,.3,1),
+    transform .28s ease,
+    opacity .28s ease;
+}
+
+/* =========================================================
+   SESSION HEADER
+   ========================================================= */
+
+.session-window .win-hdr {
+  position: absolute;
+
+  top: 0;
+  left: 0;
+  right: 0;
+
+  width: 100%;
+  height: var(--header-h);
+
+  min-height: var(--header-h);
+
+  display: flex;
+  align-items: center;
+
+  padding: 10px 14px;
+
+  z-index: var(--z-session-header);
+
+  background: transparent;
+
+  user-select: none;
+  -webkit-user-select: none;
+
+  pointer-events: none;
+
+  touch-action: manipulation;
+
+  isolation: isolate;
+}
+
+/* =========================================================
+   CONTROLES
+   ========================================================= */
+
+.win-controls {
+  position: relative;
+
+  z-index: var(--z-session-controls);
+
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  pointer-events: auto;
+}
+
+.win-controls button {
+  width: 30px;
+  height: 30px;
+
+  min-width: 30px;
+  min-height: 30px;
+
+  padding: 0;
+
+  display: grid;
+  place-items: center;
+
+  border: 0;
+  border-radius: 50%;
+
+  background:
+    rgba(255,255,255,.10);
+
+  color: #fff;
+
+  cursor: pointer;
+
+  font-family:
+    "Noto Sans Symbols 2",
+    "Noto Sans Symbols",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  font-size: 17px;
+  font-weight: 300;
+  line-height: 1;
+
+  touch-action: manipulation;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+.win-controls button:hover {
+  background: rgba(255,255,255,.17);
+}
+
+/* =========================================================
+   FRAME
+   ========================================================= */
+
+.session-window .win-frame {
+  position: absolute;
+
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  min-width: 0;
+  min-height: 0;
+
+  border: 0;
+
+  background: transparent;
+
+  z-index: 1;
+
+  display: block;
+}
+
+/* =========================================================
+   COLLAPSED
+   ========================================================= */
+
+.session-window.collapsed {
+  height: var(--collapsed-h) !important;
+  min-height: var(--collapsed-h) !important;
+  overflow: hidden !important;
+}
+
+.session-window.collapsed .win-frame {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* =========================================================
+   PEEK
+   ========================================================= */
+
+.session-window.peeked {
+  height: var(--peek-h) !important;
+  min-height: var(--peek-h) !important;
+}
+
+.session-window.peeked .win-frame {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* =========================================================
+   MINIMIZED
+   ========================================================= */
+
+.session-window.minimized {
+  position: absolute !important;
+
+  width: 1px !important;
+  height: 1px !important;
+
+  min-width: 1px !important;
+  min-height: 1px !important;
+
+  opacity: 0 !important;
+
+  pointer-events: none !important;
+
+  transform:
+    scale(.90)
+    translateY(50px);
+
+  overflow: hidden !important;
+}
+
+/* =========================================================
+   MAXIMIZED
+   ========================================================= */
+
+.session-window.maximized {
+  position: fixed !important;
+
+  inset: 0 !important;
+
+  width: 100vw !important;
+  height: 100dvh !important;
+
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  max-width: none !important;
+  max-height: none !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  overflow: hidden !important;
+
+  z-index: var(--z-maximized) !important;
+
+  transition: none !important;
+}
+
+/* Header da sessão maximizada */
+.session-window.maximized .win-hdr {
+  position: absolute !important;
+
+  inset:
+    0 0 auto 0 !important;
+
+  width: 100% !important;
+  height: var(--header-h) !important;
+
+  z-index: var(--z-maximized-header) !important;
+
+  pointer-events: none !important;
+}
+
+/* Controles continuam clicáveis */
+.session-window.maximized .win-controls {
+  pointer-events: auto !important;
+  z-index: var(--z-maximized-controls) !important;
+}
+
+/* Frame maximizado */
+.session-window.maximized .win-frame {
+  position: absolute !important;
+
+  inset: 0 !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  z-index: 1 !important;
+}
+
+/* =========================================================
+   MAXIMIZED STATE
+   ========================================================= */
+
+body.has-maximized {
+  overflow: hidden !important;
+}
+
+body.has-maximized .topbar {
+  pointer-events: none;
+}
+
+body.has-maximized .session-window.maximized .win-controls,
+body.has-maximized .session-window.maximized .win-hdr {
+  pointer-events: auto;
+}
+
+/* =========================================================
+   RESIZE
+   ========================================================= */
+
+.session-window .resize-handle {
+  position: absolute;
+
+  z-index: var(--z-resize);
+
+  background: transparent;
+
+  touch-action: none;
+
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.session-window .resize-y {
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  height: var(--resize-hit);
+
+  cursor: ns-resize;
+}
+
+.session-window .resize-x {
+  top: var(--header-h);
+  right: 0;
+  bottom: 0;
+
+  width: var(--resize-hit);
+
+  cursor: ew-resize;
+}
+
+.session-window .resize-corner {
+  right: 0;
+  bottom: 0;
+
+  width: var(--resize-corner);
+  height: var(--resize-corner);
+
+  cursor: nwse-resize;
+}
+
+.session-window .resize-corner::before {
+  content: "";
+
+  position: absolute;
+
+  right: 10px;
+  bottom: 10px;
+
+  width: 16px;
+  height: 16px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255,255,255,.18);
+
+  border:
+    1px solid rgba(255,255,255,.25);
+
+  box-shadow:
+    0 0 14px rgba(0,242,255,.18);
+
+  pointer-events: none;
+}
+
+.session-window.maximized .resize-handle {
+  display: none !important;
+}
+
+/* =========================================================
+   SUSPENDED
+   ========================================================= */
+
+.session-window.suspended .win-frame {
+  display: none;
+}
+
+.session-window.suspended::after {
+  content: "⏸";
+
+  position: absolute;
+
+  top: 50%;
+  left: 50%;
+
+  transform: translate(-50%, -50%);
+
+  font-size: 2rem;
+
+  opacity: .3;
+
+  pointer-events: none;
+}
+
+/* =========================================================
+   DOCK
+   ========================================================= */
+
+#dock {
+  position: fixed;
+
+  left: var(--dock-offset-x);
+
+  bottom:
+    calc(
+      var(--dock-bottom-gap)
+      + var(--safe-bottom)
+    );
+
+  z-index: var(--z-dock);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 12px 10px;
+
+  border-radius: 24px;
+
+  background:
+    rgba(0,0,0,.55);
+
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+
+  border:
+    1px solid rgba(255,255,255,.1);
+}
+
+#dock:empty {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dock-bubble {
+  width: 42px;
+  height: 42px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255,255,255,.10);
+
+  border:
+    1px solid rgba(255,255,255,.20);
+
+  color: #fff;
+
+  cursor: pointer;
+
+  font-family:
+    "Noto Sans Symbols 2",
+    "Noto Sans Symbols",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  font-size: 19px;
+  line-height: 1;
+
+  touch-action: manipulation;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 600px) {
+  :root {
+    --session-radius: 22px;
+    --session-gap: 10px;
+  }
+
+  .session-window {
+    width: 100%;
+  }
+}
+
+@media (hover:none) and (pointer:coarse) {
+  .session-window .resize-corner {
+    width: 58px;
+    height: 58px;
+  }
+}
+</style>
+
+  <style>@import "https://infodose.com.br/oiDual/KODUX/78K/APPS/78header/dual-header-app/css/main.css";</style>
+  <!-- Estilos adicionais para suporte à suspensão -->
+  <style>
+    .session-window.suspended .win-frame { display: none; }
+    .session-window.suspended::after {
+      content: '⏸';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      opacity: 0.3;
+      pointer-events: none;
+    }
+    .session-window.minimized { display: none; }
+    .dock-bubble { cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<div class="almasliber" data-app="almasliber">
+  <div class="shell">
+
+    <!-- ===== TOPBAR (único, simplificado) ===== -->
+    <header style="z-index:0" class="topbar" id="system-topbar">
+      <button class="icon-btn" id="menuBtn" aria-label="Abrir menu">☰</button>
+      <div class="brand">
+        A.<span>INFODOSE</span>
+        <span class="mini-orb-wrap" id="topbarMiniOrb"></span>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="icon-btn theme-dot" id="themeToggle" aria-label="Alternar tema">🌙</button>
+        <button class="icon-btn" id="notifBtn" aria-label="Notificações">♧</button>
+      </div>
+    </header>
+
+    <!-- ===== HEADER GLOBAL (colapso + smart scroll) ===== -->
+    <header class="topbar header-visible" id="main-header">
+      <div class="brandX">
+        <span>DUAL</span>
+        <span class="badgeX">GLOBAL</span>
+      </div>
+      <div class="win-navrow" onclick="event.stopPropagation()">
+        <input class="win-urlbar" type="text" id="urlInputNav" placeholder="Digite uma URL..." spellcheck="false" autocomplete="off">
+        <button class="win-go-btn" type="button" id="goNavBtn">Go</button>
+      </div>
+      <!-- Botão de tema canônico (também .theme-dot) -->
+      <button id="theme-dot-canon" class="theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+          <circle cx="12" cy="12" r="5"></circle>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+        </svg>
+      </button>
+    </header>
+
+    <!-- ===== MAIN ===== -->
+    <main>
+      <div id="main-content">
+        <div id="kxtsk-shell">
+          <div id="inject-here"></div>
+          <div id="dock"></div>
+          <div id="stackWrap">
+            <!-- Sessão inicial (será gerenciada pelo session manager) -->
+            <div class="session-window peeked" id="session-iframe">
+              <div class="win-hdr">
+                <div class="win-controls">
+                  <button type="button" data-action="collapse" title="Colapsar" aria-label="Colapsar">−</button>
+                  <span class="win-title">۞ //</span>
+                  <button type="button" data-action="maximize" title="Maximizar" aria-label="Maximizar">⛶</button>
+                  <button type="button" data-action="minimize" title="Minimizar" aria-label="Minimizar">۞</button>
+                  <!-- Botão de tema canônico (mesmo da header, mas duplicado para compatibilidade) -->
+                  <button id="theme-dot" class="theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                      <circle cx="12" cy="12" r="5"></circle>
+                      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+                    </svg>
+                  </button>
+                  <button class="launcher-btn" id="openKobBtn">+</button>
+                </div>
+              </div>
+              <iframe class="win-frame" data-runtime="nav" id="navFrame" src="https://www.infodose.com.br/splash"></iframe>
+            </div>
+          </div><!-- /stackWrap -->
+        </div><!-- /kxtsk-shell -->
+      </div>
+    </main>
+
+    <!-- ===== BOTTOM NAV (oculto) ===== -->
+    <nav style="display:none" class="symbol-bar bottom-nav" data-module="navigation" aria-label="Navegação principal">
+      <button class="nav-item active" data-tab="home"><span class="nav-icon">⌂</span><span>Início</span></button>
+      <button class="nav-item" id="navLibraryBtn"><span class="nav-icon">▣</span><span>Library</span></button>
+      <button class="nav-main" id="navCreateBtn">+</button>
+      <button class="nav-item" id="navResultsBtn"><span class="nav-icon">▥</span><span>Resultados</span></button>
+      <button class="nav-item" id="navProfileBtn"><span class="nav-icon">♙</span><span>Perfil</span></button>
+    </nav>
+
+  </div><!-- /shell -->
+</div><!-- /almasliber -->
+
+<!-- ===== TOASTER ===== -->
+<div class="toaster-wrap" id="toasterWrap"></div>
+<input type="file" id="nebulaFileInput" multiple accept=".txt,.md,.html,.pdf" style="display:none">
+
+<script>
+(function () {
+  'use strict';
+
+  const ROOT = document.documentElement;
+  const THEME_KEY = 'dual-theme';
+
+  const stackWrap = document.getElementById('stackWrap');
+  const dock = document.getElementById('dock');
+
+  const timers = new Map();
+  const sessionStore = new Map();
+  const suspendedQueue = [];
+
+  const MAX_SUSPENDED = 5;
+
+  let counter = 1;
+
+  const $ = (sel, root = document) =>
+    root.querySelector(sel);
+
+  const $$ = (sel, root = document) =>
+    [...root.querySelectorAll(sel)];
+
+  function getWin(id) {
+    return document.getElementById(id);
+  }
+
+  function isMaximized(win) {
+    return !!win?.classList.contains('maximized');
+  }
+
+  /* =======================================================
+     Z STACK
+     ======================================================= */
+
+  const zStack = [];
+
+  function bringToFront(win) {
+    if (!win) return;
+
+    const index = zStack.indexOf(win);
+
+    if (index !== -1) {
+      zStack.splice(index, 1);
+    }
+
+    zStack.push(win);
+
+    zStack.forEach((item, i) => {
+      if (!item.classList.contains('maximized')) {
+        item.style.zIndex = String(1000 + i * 10);
+      }
+    });
+  }
+
+  /* =======================================================
+     SHELL STATE
+     ======================================================= */
+
+  function syncShell() {
+    const maximized =
+      !!document.querySelector(
+        '.session-window.maximized:not(.minimized)'
+      );
+
+    document.body.classList.toggle(
+      'has-maximized',
+      maximized
+    );
+
+    document.body.classList.toggle(
+      'ui-immersive',
+      maximized
+    );
+  }
+
+  /* =======================================================
+     SUSPEND
+     ======================================================= */
+
+  function suspendSession(id) {
+    const win = getWin(id);
+
+    if (!win) return;
+
+    const frame =
+      win.querySelector('.win-frame');
+
+    if (!frame) return;
+
+    sessionStore.set(id, {
+      url: frame.src
+    });
+
+    frame.remove();
+
+    win.dataset.suspended = 'true';
+    win.classList.add('suspended');
+
+    if (!suspendedQueue.includes(id)) {
+      suspendedQueue.push(id);
+    }
+
+    while (
+      suspendedQueue.length > MAX_SUSPENDED
+    ) {
+      const oldest =
+        suspendedQueue.shift();
+
+      destroySession(oldest);
+    }
+  }
+
+  /* =======================================================
+     RESTORE
+     ======================================================= */
+
+  function restoreSession(id) {
+    const win = getWin(id);
+
+    if (!win) return;
+
+    const data = sessionStore.get(id);
+
+    if (!data) return;
+
+    const frame =
+      document.createElement('iframe');
+
+    frame.className = 'win-frame';
+    frame.dataset.runtime = 'nav';
+
+    /*
+     * Sem sandbox.
+     * Downloads e recursos dependem também
+     * das políticas do documento remoto.
+     */
+    frame.src = data.url;
+
+    win.appendChild(frame);
+
+    win.dataset.suspended = 'false';
+    win.classList.remove('suspended');
+
+    sessionStore.delete(id);
+
+    const index =
+      suspendedQueue.indexOf(id);
+
+    if (index !== -1) {
+      suspendedQueue.splice(index, 1);
+    }
+  }
+
+  /* =======================================================
+     DESTROY
+     ======================================================= */
+
+  function destroySession(id) {
+    const win = getWin(id);
+
+    document
+      .getElementById('dock-' + id)
+      ?.remove();
+
+    win?.remove();
+
+    sessionStore.delete(id);
+
+    const index =
+      suspendedQueue.indexOf(id);
+
+    if (index !== -1) {
+      suspendedQueue.splice(index, 1);
+    }
+
+    syncShell();
+  }
+
+  /* =======================================================
+     COLLAPSE
+     ======================================================= */
+
+  function toggleCollapse(id) {
+    const win = getWin(id);
+
+    if (!win) return;
+
+    /*
+     * IMPORTANTE:
+     * Maximizado não bloqueia mais a ação.
+     * Primeiro sai do maximizado.
+     */
+    if (isMaximized(win)) {
+      win.classList.remove('maximized');
+
+      win.style.zIndex = '';
+
+      syncShell();
+    }
+
+    win.classList.toggle('collapsed');
+
+    win.classList.remove('peeked');
+
+    if (win.classList.contains('collapsed')) {
+      if (win.dataset.suspended === 'true') {
+        restoreSession(id);
+      }
+    }
+
+    bringToFront(win);
+
+    syncShell();
+  }
+
+  /* =======================================================
+     PEEK
+     ======================================================= */
+
+  function togglePeek(id) {
+    const win = getWin(id);
+
+    if (!win) return;
+
+    if (isMaximized(win)) {
+      win.classList.remove('maximized');
+      win.style.zIndex = '';
+      syncShell();
+    }
+
+    win.classList.toggle('peeked');
+
+    if (win.classList.contains('peeked')) {
+      win.classList.remove('collapsed');
+
+      if (win.dataset.suspended === 'true') {
+        restoreSession(id);
+      }
+    }
+
+    bringToFront(win);
+
+    syncShell();
+  }
+
+  /* =======================================================
+     MAXIMIZE
+     ======================================================= */
+
+  function maximizeWindow(id) {
+    const win = getWin(id);
+
+    if (!win) return;
+
+    /*
+     * Se já está maximizado,
+     * segundo clique restaura.
+     */
+    if (isMaximized(win)) {
+      win.classList.remove('maximized');
+
+      win.style.zIndex = '';
+
+      if (win.dataset.suspended === 'true') {
+        restoreSession(id);
+      }
+
+      bringToFront(win);
+      syncShell();
+
+      return;
+    }
+
+    /*
+     * Limpa estados incompatíveis.
+     */
+    win.classList.remove(
+      'collapsed',
+      'peeked',
+      'minimized',
+      'header-hidden',
+      'resizing'
+    );
+
+    [
+      'top',
+      'left',
+      'right',
+      'bottom',
+      'width',
+      'height',
+      'maxWidth',
+      'maxHeight'
+    ].forEach(prop => {
+      win.style[prop] = '';
+    });
+
+    /*
+     * Restaura iframe antes de maximizar.
+     */
+    if (win.dataset.suspended === 'true') {
+      restoreSession(id);
+    }
+
+    win.classList.add('maximized');
+
+    /*
+     * Maximizado sempre ganha da stack normal.
+     */
+    win.style.zIndex = '94000';
+
+    bringToFront(win);
+
+    syncShell();
+  }
+
+  /* =======================================================
+     MINIMIZE
+     ======================================================= */
+
+  function minimizeWindow(id) {
+    const win = getWin(id);
+
+    if (!win) return;
+
+    timers.delete(id);
+
+    /*
+     * 1 — sai explicitamente do maximizado
+     */
+    win.classList.remove(
+      'maximized',
+      'collapsed',
+      'peeked',
+      'header-hidden',
+      'resizing'
+    );
+
+    /*
+     * 2 — sincroniza imediatamente
+     */
+    syncShell();
+
+    /*
+     * 3 — suspende iframe
+     */
+    suspendSession(id);
+
+    /*
+     * 4 — estado visual minimizado
+     */
+    win.classList.add('minimized');
+
+    /*
+     * 5 — cria/renova dock bubble
+     */
+    document
+      .getElementById('dock-' + id)
+      ?.remove();
+
+    const bubble =
+      document.createElement('button');
+
+    bubble.type = 'button';
+    bubble.className = 'dock-bubble';
+    bubble.id = 'dock-' + id;
+
+    bubble.title = 'Restaurar janela';
+    bubble.setAttribute(
+      'aria-label',
+      'Restaurar janela'
+    );
+
+    bubble.textContent = '۞';
+
+    bubble.addEventListener(
+      'click',
+      function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        win.classList.remove('minimized');
+
+        if (
+          win.dataset.suspended === 'true'
+        ) {
+          restoreSession(id);
+        }
+
+        bringToFront(win);
+
+        requestAnimationFrame(() => {
+          bringToFront(win);
+          syncShell();
+        });
+
+        bubble.remove();
+      }
+    );
+
+    dock?.appendChild(bubble);
+
+    syncShell();
+  }
+
+  /* =======================================================
+     CLOSE
+     ======================================================= */
+
+  function closeWindow(id) {
+    destroySession(id);
+  }
+
+  /* =======================================================
+     HEADER CLICK
+     ======================================================= */
+
+  function handleHeaderClick(e, id) {
+    if (
+      e.target.closest('.win-controls') ||
+      e.target.closest('button') ||
+      e.target.closest('input') ||
+      e.target.closest('.win-navrow')
+    ) {
+      return;
+    }
+
+    const win = getWin(id);
+
+    if (!win) return;
+
+    bringToFront(win);
+
+    const old = timers.get(id);
+
+    if (old) {
+      clearTimeout(old);
+      timers.delete(id);
+
+      maximizeWindow(id);
+
+      return;
+    }
+
+    const timer =
+      setTimeout(() => {
+        timers.delete(id);
+        togglePeek(id);
+      }, 250);
+
+    timers.set(id, timer);
+  }
+
+  /* =======================================================
+     RESIZE
+     ======================================================= */
+
+  function makeResizeHandles(win) {
+    if (win.dataset.resizeReady === '1') return;
+
+    win.dataset.resizeReady = '1';
+
+    const hy =
+      document.createElement('div');
+
+    hy.className =
+      'resize-handle resize-y';
+
+    const hx =
+      document.createElement('div');
+
+    hx.className =
+      'resize-handle resize-x';
+
+    const hc =
+      document.createElement('div');
+
+    hc.className =
+      'resize-handle resize-corner';
+
+    win.append(hy, hx, hc);
+
+    bindResizeY(win, hy);
+    bindResizeX(win, hx);
+    bindResizeCorner(win, hc);
+  }
+
+  function freeFromMaximize(win, rect) {
+    if (isMaximized(win)) {
+      win.classList.remove('maximized');
+
+      win.style.position = 'fixed';
+
+      win.style.left =
+        Math.max(0, rect.left) + 'px';
+
+      win.style.top =
+        Math.max(0, rect.top) + 'px';
+
+      win.style.right = 'auto';
+      win.style.bottom = 'auto';
+
+      win.style.width =
+        Math.min(
+          rect.width,
+          window.innerWidth
+        ) + 'px';
+
+      win.style.height =
+        Math.min(
+          rect.height,
+          window.innerHeight
+        ) + 'px';
+
+      win.style.maxWidth = 'none';
+      win.style.maxHeight = 'none';
+
+      if (
+        win.dataset.suspended === 'true'
+      ) {
+        restoreSession(win.id);
+      }
+    }
+
+    win.classList.remove(
+      'collapsed',
+      'peeked'
+    );
+
+    win.classList.add('resizing');
+
+    syncShell();
+  }
+
+  function finishResize(win) {
+    win.classList.remove('resizing');
+    syncShell();
+  }
+
+  function bindResizeY(win, handle) {
+    let active = false;
+    let pointerId = null;
+    let startY = 0;
+    let startH = 0;
+
+    handle.addEventListener(
+      'pointerdown',
+      function (e) {
+        if (
+          e.button != null &&
+          e.button !== 0
+        ) return;
+
+        const rect =
+          win.getBoundingClientRect();
+
+        active = true;
+        pointerId = e.pointerId;
+        startY = e.clientY;
+        startH = rect.height;
+
+        freeFromMaximize(win, rect);
+
+        handle.setPointerCapture?.(
+          pointerId
+        );
+
+        e.preventDefault();
+
+        const move = ev => {
+          if (
+            !active ||
+            ev.pointerId !== pointerId
+          ) return;
+
+          ev.preventDefault();
+
+          const next =
+            Math.max(
+              44,
+              Math.min(
+                window.innerHeight,
+                startH +
+                (ev.clientY - startY)
+              )
+            );
+
+          win.style.height =
+            next + 'px';
+        };
+
+        const up = ev => {
+          if (
+            ev &&
+            ev.pointerId !== pointerId
+          ) return;
+
+          active = false;
+
+          window.removeEventListener(
+            'pointermove',
+            move
+          );
+
+          window.removeEventListener(
+            'pointerup',
+            up
+          );
+
+          window.removeEventListener(
+            'pointercancel',
+            up
+          );
+
+          finishResize(win);
+        };
+
+        window.addEventListener(
+          'pointermove',
+          move,
+          { passive: false }
+        );
+
+        window.addEventListener(
+          'pointerup',
+          up
+        );
+
+        window.addEventListener(
+          'pointercancel',
+          up
+        );
+      },
+      { passive: false }
+    );
+  }
+
+  function bindResizeX(win, handle) {
+    let active = false;
+    let pointerId = null;
+    let startX = 0;
+    let startW = 0;
+
+    handle.addEventListener(
+      'pointerdown',
+      function (e) {
+        if (
+          e.button != null &&
+          e.button !== 0
+        ) return;
+
+        const rect =
+          win.getBoundingClientRect();
+
+        active = true;
+        pointerId = e.pointerId;
+        startX = e.clientX;
+        startW = rect.width;
+
+        freeFromMaximize(win, rect);
+
+        handle.setPointerCapture?.(
+          pointerId
+        );
+
+        e.preventDefault();
+
+        const move = ev => {
+          if (
+            !active ||
+            ev.pointerId !== pointerId
+          ) return;
+
+          ev.preventDefault();
+
+          const next =
+            Math.max(
+              280,
+              Math.min(
+                window.innerWidth,
+                startW +
+                (ev.clientX - startX)
+              )
+            );
+
+          win.style.width =
+            next + 'px';
+        };
+
+        const up = ev => {
+          if (
+            ev &&
+            ev.pointerId !== pointerId
+          ) return;
+
+          active = false;
+
+          window.removeEventListener(
+            'pointermove',
+            move
+          );
+
+          window.removeEventListener(
+            'pointerup',
+            up
+          );
+
+          window.removeEventListener(
+            'pointercancel',
+            up
+          );
+
+          finishResize(win);
+        };
+
+        window.addEventListener(
+          'pointermove',
+          move,
+          { passive: false }
+        );
+
+        window.addEventListener(
+          'pointerup',
+          up
+        );
+
+        window.addEventListener(
+          'pointercancel',
+          up
+        );
+      },
+      { passive: false }
+    );
+  }
+
+  function bindResizeCorner(win, handle) {
+    let active = false;
+    let pointerId = null;
+
+    let startX = 0;
+    let startY = 0;
+
+    let startW = 0;
+    let startH = 0;
+
+    handle.addEventListener(
+      'pointerdown',
+      function (e) {
+        if (
+          e.button != null &&
+          e.button !== 0
+        ) return;
+
+        const rect =
+          win.getBoundingClientRect();
+
+        active = true;
+        pointerId = e.pointerId;
+
+        startX = e.clientX;
+        startY = e.clientY;
+
+        startW = rect.width;
+        startH = rect.height;
+
+        freeFromMaximize(win, rect);
+
+        handle.setPointerCapture?.(
+          pointerId
+        );
+
+        e.preventDefault();
+
+        const move = ev => {
+          if (
+            !active ||
+            ev.pointerId !== pointerId
+          ) return;
+
+          ev.preventDefault();
+
+          const width =
+            Math.max(
+              280,
+              Math.min(
+                window.innerWidth,
+                startW +
+                (ev.clientX - startX)
+              )
+            );
+
+          const height =
+            Math.max(
+              44,
+              Math.min(
+                window.innerHeight,
+                startH +
+                (ev.clientY - startY)
+              )
+            );
+
+          win.style.width =
+            width + 'px';
+
+          win.style.height =
+            height + 'px';
+        };
+
+        const up = ev => {
+          if (
+            ev &&
+            ev.pointerId !== pointerId
+          ) return;
+
+          active = false;
+
+          window.removeEventListener(
+            'pointermove',
+            move
+          );
+
+          window.removeEventListener(
+            'pointerup',
+            up
+          );
+
+          window.removeEventListener(
+            'pointercancel',
+            up
+          );
+
+          finishResize(win);
+        };
+
+        window.addEventListener(
+          'pointermove',
+          move,
+          { passive: false }
+        );
+
+        window.addEventListener(
+          'pointerup',
+          up
+        );
+
+        window.addEventListener(
+          'pointercancel',
+          up
+        );
+      },
+      { passive: false }
+    );
+  }
+
+  /* =======================================================
+     WIRE SESSION
+     ======================================================= */
+
+  function wireSession(win) {
+    if (
+      !win ||
+      win.dataset.wired === '1'
+    ) return;
+
+    win.dataset.wired = '1';
+
+    makeResizeHandles(win);
+
+    const header =
+      $('.win-hdr', win);
+
+    header?.addEventListener(
+      'click',
+      e => handleHeaderClick(
+        e,
+        win.id
+      )
+    );
+
+    const controls =
+      $('.win-controls', win);
+
+    controls?.addEventListener(
+      'click',
+      function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const btn =
+          e.target.closest('button');
+
+        if (!btn) return;
+
+        const action =
+          btn.dataset.action;
+
+        if (action === 'collapse') {
+          toggleCollapse(win.id);
+        }
+
+        else if (action === 'maximize') {
+          maximizeWindow(win.id);
+        }
+
+        else if (action === 'minimize') {
+          minimizeWindow(win.id);
+        }
+
+        else if (action === 'close') {
+          closeWindow(win.id);
+        }
+      }
+    );
+
+    const input =
+      $('.win-urlbar', win);
+
+    const go =
+      $('.win-go-btn', win);
+
+    go?.addEventListener(
+      'click',
+      e => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!input) return;
+
+        let url =
+          input.value.trim();
+
+        if (!url) return;
+
+        if (!/^https?:\/\//i.test(url)) {
+          url = 'https://' + url;
+        }
+
+        const frame =
+          $('.win-frame', win);
+
+        if (frame) {
+          frame.src = url;
+        }
+
+        input.value = url;
+      }
+    );
+
+    input?.addEventListener(
+      'keydown',
+      e => {
+        if (e.key === 'Enter') {
+          e.stopPropagation();
+          go?.click();
+        }
+      }
+    );
+  }
+
+  /* =======================================================
+     THEME
+     ======================================================= */
+
+  function applyTheme(theme) {
+    const next =
+      theme === 'light'
+        ? 'light'
+        : 'dark';
+
+    ROOT.dataset.theme = next;
+
+    try {
+      localStorage.setItem(
+        THEME_KEY,
+        next
+      );
+    } catch (_) {}
+
+    $$('.theme-dot').forEach(btn => {
+      if (
+        btn.textContent.includes('☀') ||
+        btn.textContent.includes('🌙')
+      ) {
+        btn.textContent =
+          next === 'light'
+            ? '☀️'
+            : '🌙';
+      }
+    });
+
+    window.dispatchEvent(
+      new CustomEvent(
+        'dual:theme-change',
+        {
+          detail: {
+            theme: next
+          }
+        }
+      )
+    );
+  }
+
+  function getInitialTheme() {
+    try {
+      const saved =
+        localStorage.getItem(
+          THEME_KEY
+        );
+
+      if (
+        saved === 'light' ||
+        saved === 'dark'
+      ) {
+        return saved;
+      }
+    } catch (_) {}
+
+    return 'dark';
+  }
+
+  window.DualTheme = {
+    set: applyTheme,
+
+    toggle() {
+      applyTheme(
+        ROOT.dataset.theme === 'light'
+          ? 'dark'
+          : 'light'
+      );
+    },
+
+    get() {
+      return ROOT.dataset.theme || 'dark';
+    }
+  };
+
+  /* =======================================================
+     EXISTING SESSIONS
+     ======================================================= */
+
+  $$('.session-window')
+    .forEach(wireSession);
+
+  /* =======================================================
+     THEME BUTTONS
+     ======================================================= */
+
+  $$('.theme-dot')
+    .forEach(btn => {
+      btn.addEventListener(
+        'click',
+        e => {
+          e.preventDefault();
+          e.stopPropagation();
+          DualTheme.toggle();
+        }
+      );
+    });
+
+  applyTheme(
+    getInitialTheme()
+  );
+
+  /* =======================================================
+     GLOBAL NAV
+     ======================================================= */
+
+  const navInput =
+    document.getElementById(
+      'urlInputNav'
+    );
+
+  const session =
+    document.getElementById(
+      'session-iframe'
+    );
+
+  const navFrame =
+    document.getElementById(
+      'navFrame'
+    );
+
+  function applyGlobalUrl() {
+    if (
+      !navInput ||
+      !session
+    ) return;
+
+    let url =
+      navInput.value.trim();
+
+    if (!url) return;
+
+    if (!/^https?:\/\//i.test(url)) {
+      url = 'https://' + url;
+    }
+
+    const frame =
+      session.querySelector(
+        '.win-frame'
+      );
+
+    if (frame) {
+      frame.src = url;
+    }
+
+    navInput.value = url;
+  }
+
+  navInput?.addEventListener(
+    'keydown',
+    e => {
+      if (e.key === 'Enter') {
+        applyGlobalUrl();
+      }
+    }
+  );
+
+  document
+    .getElementById('goNavBtn')
+    ?.addEventListener(
+      'click',
+      applyGlobalUrl
+    );
+
+  /* =======================================================
+     CREATE SESSION
+     ======================================================= */
+
+  function createSessionWindow({
+    title = '//',
+    src = 'https://www.infodose.com.br'
+  } = {}) {
+
+    const id =
+      'session-' +
+      Date.now() +
+      '-' +
+      counter++;
+
+    const win =
+      document.createElement(
+        'section'
+      );
+
+    win.className =
+      'session-window peeked';
+
+    win.id = id;
+
+    win.innerHTML = `
+      <div class="win-hdr">
+
+        <div class="win-controls">
+
+          <button
+            type="button"
+            data-action="collapse"
+            title="Colapsar"
+            aria-label="Colapsar"
+          >−</button>
+
+          <button
+            type="button"
+            data-action="maximize"
+            title="Maximizar"
+            aria-label="Maximizar"
+          >⛶</button>
+
+          <button
+            type="button"
+            data-action="minimize"
+            title="Minimizar"
+            aria-label="Minimizar"
+          >۞</button>
+
+          <button
+            type="button"
+            data-action="close"
+            title="Fechar"
+            aria-label="Fechar"
+          >×</button>
+
+        </div>
+
+        <div
+          class="win-navrow"
+          style="flex:2;min-width:0;pointer-events:auto;"
+        >
+
+          <input
+            class="win-urlbar"
+            type="text"
+            value="${src}"
+            placeholder="Digite uma URL..."
+            spellcheck="false"
+            autocomplete="off"
+          >
+
+          <button
+            class="win-go-btn"
+            type="button"
+          >Go</button>
+
+        </div>
+
+      </div>
+
+      <iframe
+        class="win-frame"
+        data-runtime="nav"
+        src="${src}"
+      ></iframe>
+    `;
+
+    stackWrap.appendChild(win);
+
+    wireSession(win);
+    bringToFront(win);
+
+    return id;
+  }
+
+  document
+    .getElementById('openKobBtn')
+    ?.addEventListener(
+      'click',
+      () => createSessionWindow()
+    );
+
+  /* =======================================================
+     HEADER GLOBAL COLLAPSE
+     ======================================================= */
+
+  const HEADER =
+    document.getElementById(
+      'main-header'
+    );
+
+  const MAIN =
+    document.getElementById(
+      'main-content'
+    );
+
+  HEADER?.addEventListener(
+    'click',
+    e => {
+      if (
+        e.target.closest('button') ||
+        e.target.closest('input') ||
+        e.target.closest('.win-navrow') ||
+        e.target.closest('.theme-dot')
+      ) {
+        return;
+      }
+
+      MAIN?.classList.toggle(
+        'hidden'
+      );
+
+      const collapsed =
+        MAIN?.classList.contains(
+          'hidden'
+        );
+
+      HEADER.classList.toggle(
+        'is-collapsed',
+        collapsed
+      );
+
+      window.dispatchEvent(
+        new CustomEvent(
+          'dual:content-collapse',
+          {
+            detail: {
+              collapsed
+            }
+          }
+        )
+      );
+    }
+  );
+
+  /* =======================================================
+     SMART SCROLL
+     ======================================================= */
+
+  let lastScrollY =
+    window.scrollY;
+
+  let ticking = false;
+
+  const SCROLL_THRESHOLD = 8;
+
+  function updateHeader() {
+    if (!HEADER) return;
+
+    const current =
+      window.scrollY;
+
+    if (current <= 10) {
+      HEADER.classList.remove(
+        'header-hidden'
+      );
+
+      HEADER.classList.add(
+        'header-visible'
+      );
+
+      lastScrollY = current;
+      ticking = false;
+
+      return;
+    }
+
+    if (
+      current >
+      lastScrollY +
+      SCROLL_THRESHOLD
+    ) {
+      HEADER.classList.remove(
+        'header-visible'
+      );
+
+      HEADER.classList.add(
+        'header-hidden'
+      );
+    }
+
+    else if (
+      current <
+      lastScrollY -
+      SCROLL_THRESHOLD
+    ) {
+      HEADER.classList.remove(
+        'header-hidden'
+      );
+
+      HEADER.classList.add(
+        'header-visible'
+      );
+    }
+
+    lastScrollY = current;
+    ticking = false;
+  }
+
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (!ticking) {
+        requestAnimationFrame(
+          updateHeader
+        );
+
+        ticking = true;
+      }
+    },
+    { passive: true }
+  );
+
+  /* =======================================================
+     INITIAL STATE
+     ======================================================= */
+
+  if (
+    navInput &&
+    navFrame
+  ) {
+    navInput.value =
+      navFrame.src;
+  }
+
+  syncShell();
+
+  /* =======================================================
+     DEBUG API
+     ======================================================= */
+
+  window.createSessionWindow =
+    createSessionWindow;
+
+  window.togglePeek =
+    togglePeek;
+
+  window.toggleCollapse =
+    toggleCollapse;
+
+  window.maximizeWindow =
+    maximizeWindow;
+
+  window.minimizeWindow =
+    minimizeWindow;
+
+  window.closeWindow =
+    closeWindow;
+
+  window.syncShellMode =
+    syncShell;
+
+  console.log(
+    '🚀 Almasliber OS — Unified Core carregado.'
+  );
+
+})();
+</script>
+
+</body>
+</html>

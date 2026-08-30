@@ -1,0 +1,3642 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <meta name="theme-color" content="#080808">
+
+  <title>KODUX OS — Dual Infodose</title>
+
+  <!-- =========================================================
+       SOURCE / VIEW
+       ========================================================= -->
+
+  <link
+    rel="icon"
+    type="image/png"
+    href="./source/view/icon-2.png"
+  >
+
+  <!-- Opcional: stylesheet externo do sistema -->
+  <!--
+  <link
+    rel="stylesheet"
+    href="./source/view/kodux-os.css"
+  >
+  -->
+
+  <style>
+
+    /* =========================================================
+       CORE
+       ========================================================= */
+
+    :root{
+      --safe-top:env(safe-area-inset-top,0px);
+      --safe-bottom:env(safe-area-inset-bottom,0px);
+
+      --bg:#080808;
+      --panel:#111;
+      --panel-2:#171717;
+
+      --text:#f5f5f5;
+      --muted:#9ca3af;
+
+      --accent:#0A84FF;
+      --green:#34D399;
+      --yellow:#FBBF24;
+      --purple:#A855F7;
+      --red:#F87171;
+
+      --radius:18px;
+      --radius-lg:26px;
+
+      --dock-h:68px;
+      --topbar-h:58px;
+    }
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    html,
+    body{
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      background:var(--bg);
+      color:var(--text);
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Helvetica,
+        Arial,
+        sans-serif;
+    }
+
+    button,
+    input,
+    textarea{
+      font:inherit;
+    }
+
+    button{
+      cursor:pointer;
+    }
+
+    ::-webkit-scrollbar{
+      display:none;
+    }
+
+    .glass{
+      background:rgba(255,255,255,.055);
+      backdrop-filter:blur(20px);
+      -webkit-backdrop-filter:blur(20px);
+    }
+
+    .glass-panel{
+      background:rgba(30,30,30,.72);
+      backdrop-filter:blur(24px);
+      -webkit-backdrop-filter:blur(24px);
+    }
+
+    .safe-pt{
+      padding-top:var(--safe-top);
+    }
+
+    .safe-pb{
+      padding-bottom:var(--safe-bottom);
+    }
+
+    /* =========================================================
+       BOOT
+       ========================================================= */
+
+    #boot-screen{
+      position:absolute;
+      inset:0;
+      z-index:9999;
+
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+
+      background:var(--bg);
+
+      transition:
+        opacity .8s ease,
+        visibility .8s ease;
+    }
+
+    #boot-screen.hide{
+      opacity:0;
+      visibility:hidden;
+      pointer-events:none;
+    }
+
+    .boot-title{
+      font-size:24px;
+      font-weight:900;
+      letter-spacing:6px;
+    }
+
+    .boot-track{
+      width:192px;
+      height:4px;
+      margin-top:32px;
+
+      overflow:hidden;
+      border-radius:99px;
+
+      background:#1f2937;
+    }
+
+    #boot-progress{
+      width:0;
+      height:100%;
+      background:#fff;
+      transition:width .25s ease;
+    }
+
+    /* =========================================================
+       VIEWS
+       ========================================================= */
+
+    .app-view{
+      position:absolute;
+      inset:0;
+
+      opacity:0;
+      pointer-events:none;
+
+      transform:
+        scale(.96)
+        translateY(18px);
+
+      transition:
+        transform .3s cubic-bezier(.25,.8,.25,1),
+        opacity .3s ease;
+    }
+
+    .app-view.active{
+      opacity:1;
+      pointer-events:auto;
+
+      transform:
+        scale(1)
+        translateY(0);
+    }
+
+    /* =========================================================
+       HOME
+       ========================================================= */
+
+    #home-screen{
+      position:absolute;
+      inset:0;
+      z-index:1;
+
+      overflow-y:auto;
+
+      padding:
+        calc(78px + var(--safe-top))
+        24px
+        calc(100px + var(--safe-bottom));
+
+      background:var(--bg);
+    }
+
+    .home-title{
+      font-size:32px;
+      font-weight:900;
+      margin-bottom:32px;
+      padding-left:8px;
+    }
+
+    .grid-apps{
+      display:grid;
+      grid-template-columns:
+        repeat(4,1fr);
+
+      gap:28px 16px;
+    }
+
+    .app-tile{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+    }
+
+    .app-icon{
+      width:64px;
+      height:64px;
+
+      display:grid;
+      place-items:center;
+
+      border-radius:18px;
+
+      color:#fff;
+      font-size:30px;
+
+      box-shadow:
+        0 8px 20px rgba(0,0,0,.4);
+
+      transition:
+        transform .15s ease;
+    }
+
+    .app-tile:active .app-icon{
+      transform:scale(.9);
+    }
+
+    .app-name{
+      font-size:11px;
+      color:#e5e7eb;
+      text-align:center;
+    }
+
+    /* =========================================================
+       BUTTONS
+       ========================================================= */
+
+    .btn{
+      border:none;
+
+      color:#fff;
+
+      padding:8px 12px;
+
+      border-radius:10px;
+
+      background:rgba(255,255,255,.1);
+    }
+
+    .btn:active{
+      background:rgba(255,255,255,.2);
+    }
+
+    .btn-primary{
+      border:none;
+
+      background:var(--accent);
+      color:#fff;
+
+      border-radius:12px;
+
+      padding:10px 16px;
+
+      font-weight:700;
+    }
+
+    /* =========================================================
+       TOPBAR
+       ========================================================= */
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      gap:12px;
+
+      min-height:var(--topbar-h);
+
+      padding:
+        calc(8px + var(--safe-top))
+        16px
+        8px;
+    }
+
+    .topbar-title{
+      font-size:13px;
+      font-weight:700;
+    }
+
+    /* =========================================================
+       BROWSER
+       ========================================================= */
+
+    #app-browser{
+      z-index:122;
+
+      background:var(--bg);
+
+      display:flex;
+      flex-direction:column;
+    }
+
+    .browser-bar{
+      display:flex;
+      align-items:center;
+      gap:10px;
+
+      padding:
+        calc(5px + var(--safe-top))
+        12px
+        8px;
+    }
+
+    .addr{
+      flex:1;
+
+      display:flex;
+      align-items:center;
+
+      min-width:0;
+
+      padding:8px 10px;
+
+      border-radius:13px;
+
+      background:rgba(255,255,255,.1);
+    }
+
+    .addr input{
+      width:100%;
+
+      border:none;
+      outline:none;
+
+      background:transparent;
+
+      color:#fff;
+
+      font-size:13px;
+    }
+
+    .tab-badge{
+      width:32px;
+      height:32px;
+
+      display:grid;
+      place-items:center;
+
+      border:none;
+      border-radius:10px;
+
+      background:rgba(255,255,255,.1);
+
+      color:#fff;
+
+      font-size:11px;
+      font-weight:800;
+    }
+
+    #iframe-container{
+      position:relative;
+      flex:1;
+
+      background:#111;
+    }
+
+    #iframe-container iframe{
+      width:100%;
+      height:100%;
+
+      border:none;
+
+      background:var(--bg);
+    }
+
+    #browser-empty-state{
+      position:absolute;
+      inset:0;
+
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+
+      padding:32px;
+
+      text-align:center;
+
+      color:#9ca3af;
+    }
+
+    .browser-links{
+      margin-top:24px;
+
+      display:flex;
+      flex-wrap:wrap;
+
+      justify-content:center;
+
+      gap:8px;
+    }
+
+    /* =========================================================
+       TABS
+       ========================================================= */
+
+    #tab-switcher{
+      z-index:130;
+
+      display:flex;
+      flex-direction:column;
+
+      padding:
+        calc(64px + var(--safe-top))
+        16px
+        calc(96px + var(--safe-bottom));
+
+      overflow-y:auto;
+
+      background:rgba(0,0,0,.28);
+
+      backdrop-filter:blur(24px);
+    }
+
+    .tabs-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+
+      margin-bottom:24px;
+    }
+
+    .tabs-header h2{
+      font-size:24px;
+      font-weight:800;
+    }
+
+    #tabs-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:16px;
+    }
+
+    .tab-card{
+      min-height:160px;
+
+      padding:12px;
+
+      border-radius:16px;
+
+      background:rgba(255,255,255,.055);
+
+      position:relative;
+    }
+
+    .tab-card.active{
+      outline:2px solid var(--accent);
+    }
+
+    .tab-card-title{
+      font-size:11px;
+      font-weight:700;
+
+      overflow:hidden;
+      white-space:nowrap;
+      text-overflow:ellipsis;
+
+      padding-right:24px;
+    }
+
+    .tab-preview{
+      flex:1;
+
+      margin-top:8px;
+
+      min-height:115px;
+
+      display:grid;
+      place-items:center;
+
+      border-radius:12px;
+
+      background:rgba(255,255,255,.05);
+    }
+
+    /* =========================================================
+       NOTES
+       ========================================================= */
+
+    #app-notes{
+      z-index:120;
+
+      display:flex;
+      flex-direction:column;
+
+      background:#101010;
+    }
+
+    .notes-toolbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+
+      gap:8px;
+
+      padding:
+        calc(8px + var(--safe-top))
+        12px
+        8px;
+    }
+
+    .notes-actions{
+      display:flex;
+      gap:6px;
+    }
+
+    #notes-content{
+      flex:1;
+
+      width:100%;
+
+      padding:24px;
+
+      resize:none;
+
+      outline:none;
+      border:none;
+
+      background:transparent;
+
+      color:#e5e7eb;
+
+      font-size:17px;
+
+      line-height:1.6;
+    }
+
+    #notes-preview{
+      display:none;
+
+      flex:1;
+
+      overflow-y:auto;
+
+      padding:24px;
+
+      color:#e5e7eb;
+
+      line-height:1.7;
+    }
+
+    #notes-preview.show{
+      display:block;
+    }
+
+    #notes-content.hidden{
+      display:none;
+    }
+
+    .document-list{
+      max-height:180px;
+
+      overflow-y:auto;
+
+      padding:8px 16px;
+
+      border-top:1px solid rgba(255,255,255,.05);
+    }
+
+    .document-item{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+
+      padding:10px 12px;
+
+      border-radius:10px;
+
+      margin-bottom:4px;
+
+      background:rgba(255,255,255,.035);
+    }
+
+    /* =========================================================
+       PLUGINS
+       ========================================================= */
+
+    #app-plugins{
+      z-index:120;
+
+      display:flex;
+      flex-direction:column;
+
+      background:#080808;
+    }
+
+    #plugins-list{
+      flex:1;
+
+      overflow-y:auto;
+
+      padding:16px;
+    }
+
+    .plugin-card{
+      padding:14px;
+
+      border-radius:16px;
+
+      margin-bottom:10px;
+
+      background:rgba(255,255,255,.055);
+
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+
+      gap:12px;
+    }
+
+    .plugin-meta h4{
+      font-size:13px;
+      font-weight:700;
+    }
+
+    .plugin-meta p{
+      margin-top:3px;
+
+      font-size:10px;
+
+      color:var(--muted);
+    }
+
+    .plugin-status{
+      color:var(--green)!important;
+    }
+
+    /* =========================================================
+       CDN
+       ========================================================= */
+
+    #app-cdn{
+      z-index:120;
+
+      display:flex;
+      flex-direction:column;
+
+      background:#090909;
+    }
+
+    #cdn-results{
+      flex:1;
+
+      overflow-y:auto;
+
+      padding:16px;
+    }
+
+    .cdn-card{
+      padding:14px;
+
+      border-radius:16px;
+
+      margin-bottom:10px;
+
+      background:rgba(255,255,255,.055);
+    }
+
+    .cdn-type{
+      display:inline-block;
+
+      padding:4px 7px;
+
+      border-radius:7px;
+
+      margin-bottom:7px;
+
+      font-size:9px;
+
+      font-weight:800;
+
+      background:rgba(10,132,255,.15);
+
+      color:#60a5fa;
+    }
+
+    .cdn-url{
+      font-family:monospace;
+
+      font-size:10px;
+
+      line-height:1.5;
+
+      word-break:break-all;
+
+      color:#d1d5db;
+    }
+
+    /* =========================================================
+       DOCK
+       ========================================================= */
+
+    .dock-nav{
+      position:absolute;
+
+      bottom:0;
+
+      left:0;
+
+      width:100%;
+
+      z-index:500;
+
+      padding:
+        0
+        16px
+        var(--safe-bottom);
+
+      pointer-events:none;
+    }
+
+    .dock-nav-inner{
+      margin:0 auto;
+
+      max-width:380px;
+
+      height:64px;
+
+      display:flex;
+      align-items:center;
+      justify-content:space-around;
+
+      padding:0 8px;
+
+      border-radius:28px;
+
+      pointer-events:auto;
+    }
+
+    .icon-btn{
+      width:48px;
+      height:48px;
+
+      display:grid;
+      place-items:center;
+
+      border:none;
+
+      border-radius:16px;
+
+      background:transparent;
+
+      color:#9ca3af;
+
+      font-size:22px;
+    }
+
+    .icon-btn:active{
+      background:rgba(255,255,255,.1);
+      color:#fff;
+    }
+
+    /* =========================================================
+       POPUP
+       ========================================================= */
+
+    #popup-layer{
+      position:absolute;
+      inset:0;
+
+      z-index:1000;
+
+      display:none;
+
+      align-items:center;
+      justify-content:center;
+
+      padding:24px;
+
+      background:rgba(0,0,0,.6);
+
+      backdrop-filter:blur(8px);
+
+      opacity:0;
+
+      transition:opacity .25s ease;
+    }
+
+    #popup-box{
+      width:100%;
+      max-width:390px;
+
+      padding:20px;
+
+      border-radius:24px;
+
+      display:flex;
+      flex-direction:column;
+
+      gap:12px;
+
+      transform:scale(.95);
+
+      transition:transform .25s ease;
+    }
+
+    #popup-actions{
+      display:flex;
+      gap:10px;
+      margin-top:8px;
+    }
+
+    /* =========================================================
+       MARKDOWN
+       ========================================================= */
+
+    .md h1{
+      font-size:28px;
+      margin-bottom:16px;
+    }
+
+    .md h2{
+      font-size:22px;
+      margin:20px 0 10px;
+    }
+
+    .md h3{
+      font-size:18px;
+      margin:16px 0 8px;
+    }
+
+    .md p{
+      margin-bottom:12px;
+    }
+
+    .md code{
+      padding:2px 5px;
+
+      border-radius:5px;
+
+      background:rgba(255,255,255,.08);
+
+      font-family:monospace;
+    }
+
+    .md pre{
+      overflow:auto;
+
+      padding:14px;
+
+      margin:12px 0;
+
+      border-radius:12px;
+
+      background:#050505;
+    }
+
+    .md blockquote{
+      border-left:3px solid var(--accent);
+
+      padding-left:12px;
+
+      color:#9ca3af;
+    }
+
+  </style>
+</head>
+
+
+<body>
+
+  <!-- =========================================================
+       BOOT
+       ========================================================= -->
+
+  <div id="boot-screen">
+
+    <div class="boot-title">
+      KODUX OS
+    </div>
+
+    <div class="boot-track">
+      <div id="boot-progress"></div>
+    </div>
+
+  </div>
+
+
+  <!-- =========================================================
+       HOME
+       ========================================================= -->
+
+  <main id="home-screen">
+
+    <h1 class="home-title">
+      oiDual
+    </h1>
+
+    <div
+      id="app-grid"
+      class="grid-apps"
+    ></div>
+
+  </main>
+
+
+  <!-- =========================================================
+       BROWSER
+       ========================================================= -->
+
+  <section
+    id="app-browser"
+    class="app-view"
+  >
+
+    <div class="glass browser-bar">
+
+      <button
+        class="btn"
+        onclick="OS.UI.goHome()"
+      >
+        ◀
+      </button>
+
+      <form
+        class="addr"
+        onsubmit="OS.Browser.navigate(event)"
+      >
+
+        <span
+          style="
+            color:#9ca3af;
+            font-size:10px;
+            margin-right:8px
+          "
+        >
+          🌐
+        </span>
+
+        <input
+          id="address-bar"
+          autocomplete="off"
+          placeholder="Pesquisar ou URL"
+        >
+
+        <button
+          type="button"
+          class="btn"
+          onclick="OS.Browser.reload()"
+          style="background:transparent"
+        >
+          ↻
+        </button>
+
+      </form>
+
+      <button
+        class="tab-badge"
+        onclick="OS.TabEngine.showTabSwitcher()"
+      >
+        <span id="tab-count">1</span>
+      </button>
+
+    </div>
+
+
+    <div id="iframe-container">
+
+      <div id="browser-empty-state">
+
+        <div
+          style="
+            font-size:48px;
+            margin-bottom:16px
+          "
+        >
+          🌐
+        </div>
+
+        <p
+          style="
+            font-size:13px;
+            max-width:280px
+          "
+        >
+          Navegador KODUX. Alguns sites bloqueiam
+          iframe por segurança.
+        </p>
+
+        <div class="browser-links">
+
+          <button
+            class="btn"
+            onclick="
+              OS.Browser.loadUrl(
+                'https://infodose.com.br/splash.html'
+              )
+            "
+          >
+            Infodose
+          </button>
+
+          <button
+            class="btn"
+            onclick="
+              OS.Browser.loadUrl(
+                'https://infodose.com.br'
+              )
+            "
+          >
+            AlmasliberOS
+          </button>
+
+          <button
+            class="btn"
+            onclick="
+              OS.Browser.loadUrl(
+                'https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78F.html'
+              )
+            "
+          >
+            78Frames
+          </button>
+
+          <button
+            class="btn"
+            onclick="
+              OS.Browser.loadUrl(
+                'https://kodux78k.github.io/oiDual--Y-/M0D/DBZP/'
+              )
+            "
+          >
+            DualPlayer
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- =========================================================
+       TAB SWITCHER
+       ========================================================= -->
+
+  <section
+    id="tab-switcher"
+    class="app-view"
+  >
+
+    <div class="tabs-header">
+
+      <h2>
+        Abas
+      </h2>
+
+      <button
+        class="btn-primary"
+        onclick="OS.TabEngine.newTab()"
+        style="
+          width:40px;
+          height:40px;
+          border-radius:99px;
+          padding:0
+        "
+      >
+        +
+      </button>
+
+    </div>
+
+    <div id="tabs-grid"></div>
+
+    <div
+      style="
+        margin-top:auto;
+        padding-top:32px;
+        display:flex;
+        justify-content:center
+      "
+    >
+
+      <button
+        class="glass-panel"
+        onclick="OS.TabEngine.hideTabSwitcher()"
+        style="
+          padding:12px 28px;
+          border-radius:99px;
+          border:none;
+          color:#fff
+        "
+      >
+        Concluído
+      </button>
+
+    </div>
+
+  </section>
+
+
+  <!-- =========================================================
+       NOTES
+       ========================================================= -->
+
+  <section
+    id="app-notes"
+    class="app-view"
+  >
+
+    <div class="notes-toolbar glass">
+
+      <button
+        class="btn"
+        onclick="OS.UI.goHome()"
+      >
+        ◀ OS
+      </button>
+
+      <span class="topbar-title">
+        Notas
+      </span>
+
+      <div class="notes-actions">
+
+        <button
+          class="btn"
+          onclick="OS.Apps.Notes.togglePreview()"
+        >
+          ◉
+        </button>
+
+        <button
+          class="btn"
+          onclick="OS.Apps.Notes.save()"
+        >
+          Salvar
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <textarea
+      id="notes-content"
+      placeholder="# Minha nota
+
+Escreva em Markdown...
+
+## Ideias
+
+- documento
+- projeto
+- plugin
+- CDN"
+    ></textarea>
+
+
+    <article
+      id="notes-preview"
+      class="md"
+    ></article>
+
+
+    <div
+      id="document-list"
+      class="document-list"
+    ></div>
+
+  </section>
+
+
+  <!-- =========================================================
+       PLUGINS
+       ========================================================= -->
+
+  <section
+    id="app-plugins"
+    class="app-view"
+  >
+
+    <div class="topbar glass">
+
+      <button
+        class="btn"
+        onclick="OS.UI.goHome()"
+      >
+        ◀ Voltar
+      </button>
+
+      <span class="topbar-title">
+        Plugins
+      </span>
+
+      <button
+        class="btn"
+        onclick="OS.Plugins.promptInstall()"
+      >
+        +
+      </button>
+
+    </div>
+
+
+    <div
+      id="plugins-list"
+    ></div>
+
+  </section>
+
+
+  <!-- =========================================================
+       CDN SCANNER
+       ========================================================= -->
+
+  <section
+    id="app-cdn"
+    class="app-view"
+  >
+
+    <div class="topbar glass">
+
+      <button
+        class="btn"
+        onclick="OS.UI.goHome()"
+      >
+        ◀ Voltar
+      </button>
+
+      <span class="topbar-title">
+        CDN Scanner
+      </span>
+
+    </div>
+
+
+    <div
+      style="
+        padding:16px;
+        display:flex;
+        gap:8px
+      "
+    >
+
+      <input
+        id="cdn-url"
+        class="addr"
+        style="
+          color:#fff;
+          outline:none
+        "
+        placeholder="https://site.com"
+      >
+
+      <button
+        class="btn-primary"
+        onclick="OS.CDN.scan()"
+      >
+        Scan
+      </button>
+
+    </div>
+
+
+    <div id="cdn-results"></div>
+
+  </section>
+
+
+  <!-- =========================================================
+       DOCK
+       ========================================================= -->
+
+  <nav class="dock-nav">
+
+    <div class="glass dock-nav-inner">
+
+      <button
+        class="icon-btn"
+        onclick="OS.UI.goHome()"
+      >
+        ⌂
+      </button>
+
+      <button
+        class="icon-btn"
+        onclick="OS.UI.openApp('browser')"
+      >
+        ◍
+      </button>
+
+      <button
+        class="icon-btn"
+        onclick="OS.UI.openApp('notes')"
+      >
+        ✎
+      </button>
+
+      <button
+        class="icon-btn"
+        onclick="OS.UI.openApp('plugins')"
+      >
+        ◫
+      </button>
+
+    </div>
+
+  </nav>
+
+
+  <!-- =========================================================
+       POPUP
+       ========================================================= -->
+
+  <div id="popup-layer">
+
+    <div
+      id="popup-box"
+      class="glass-panel"
+    >
+
+      <h3
+        id="popup-title"
+        style="
+          font-size:18px;
+          font-weight:800;
+          text-align:center
+        "
+      >
+        Título
+      </h3>
+
+      <div
+        id="popup-body"
+        style="
+          font-size:13px;
+          color:#d1d5db
+        "
+      ></div>
+
+      <div id="popup-actions"></div>
+
+    </div>
+
+  </div>
+
+
+<script>
+
+/* =============================================================
+   KODUX OS
+   ============================================================= */
+
+const OS = {
+
+  /* ===========================================================
+     CORE STATE
+     =========================================================== */
+
+  state:{
+    activeApp:'home',
+    booted:false
+  },
+
+
+  /* ===========================================================
+     EVENT BUS
+     =========================================================== */
+
+  Events:{
+
+    map:{},
+
+    on(name,fn){
+
+      if(!this.map[name])
+        this.map[name]=[];
+
+      this.map[name].push(fn);
+
+    },
+
+    emit(name,data){
+
+      (this.map[name]||[])
+        .forEach(fn=>{
+          try{
+            fn(data);
+          }catch(e){
+            console.error(
+              '[KODUX EVENT]',
+              name,
+              e
+            );
+          }
+        });
+
+    }
+
+  },
+
+
+  /* ===========================================================
+     STORAGE
+     =========================================================== */
+
+  Storage:{
+
+    prefix:'kodux_',
+
+    save(key,data){
+
+      try{
+
+        localStorage.setItem(
+          this.prefix+key,
+          JSON.stringify(data)
+        );
+
+      }catch(e){
+
+        console.warn(
+          '[KODUX STORAGE]',
+          e
+        );
+
+      }
+
+    },
+
+    load(key,def=null){
+
+      try{
+
+        const raw =
+          localStorage.getItem(
+            this.prefix+key
+          );
+
+        return raw
+          ? JSON.parse(raw)
+          : def;
+
+      }catch(e){
+
+        return def;
+
+      }
+
+    },
+
+    remove(key){
+
+      localStorage.removeItem(
+        this.prefix+key
+      );
+
+    }
+
+  },
+
+
+  /* ===========================================================
+     POPUP
+     =========================================================== */
+
+  Popup:{
+
+    show(title,html,buttons=[]){
+
+      const layer =
+        document.getElementById(
+          'popup-layer'
+        );
+
+      const box =
+        document.getElementById(
+          'popup-box'
+        );
+
+      const titleEl =
+        document.getElementById(
+          'popup-title'
+        );
+
+      const body =
+        document.getElementById(
+          'popup-body'
+        );
+
+      const actions =
+        document.getElementById(
+          'popup-actions'
+        );
+
+      titleEl.innerText=title;
+      body.innerHTML=html;
+      actions.innerHTML='';
+
+      if(!buttons.length){
+
+        buttons=[
+          {
+            text:'OK',
+            type:'primary',
+            onClick:
+              ()=>OS.Popup.hide()
+          }
+        ];
+
+      }
+
+      buttons.forEach(btn=>{
+
+        const el =
+          document.createElement(
+            'button'
+          );
+
+        el.innerText=btn.text;
+
+        el.className =
+          btn.type==='primary'
+            ? 'btn-primary'
+            : 'btn';
+
+        el.style.flex='1';
+
+        el.onclick=()=>{
+
+          if(btn.onClick)
+            btn.onClick();
+
+        };
+
+        actions.appendChild(el);
+
+      });
+
+      layer.style.display='flex';
+
+      requestAnimationFrame(()=>{
+
+        layer.style.opacity='1';
+        box.style.transform='scale(1)';
+
+      });
+
+    },
+
+
+    hide(){
+
+      const layer =
+        document.getElementById(
+          'popup-layer'
+        );
+
+      const box =
+        document.getElementById(
+          'popup-box'
+        );
+
+      layer.style.opacity='0';
+      box.style.transform='scale(.95)';
+
+      setTimeout(()=>{
+
+        layer.style.display='none';
+
+      },250);
+
+    },
+
+
+    prompt(title,placeholder,callback){
+
+      const html=`
+
+        <input
+          id="popup-input"
+          style="
+            width:100%;
+            background:rgba(0,0,0,.5);
+            border:1px solid rgba(255,255,255,.1);
+            border-radius:10px;
+            padding:12px;
+            color:#fff;
+            outline:none
+          "
+          placeholder="${placeholder||''}"
+        >
+
+      `;
+
+      this.show(
+        title,
+        html,
+        [
+
+          {
+            text:'Cancelar',
+            type:'secondary',
+            onClick:
+              ()=>this.hide()
+          },
+
+          {
+            text:'Confirmar',
+            type:'primary',
+            onClick:()=>{
+
+              const value =
+                document.getElementById(
+                  'popup-input'
+                ).value;
+
+              callback(value);
+
+              this.hide();
+
+            }
+          }
+
+        ]
+      );
+
+      setTimeout(()=>{
+
+        document
+          .getElementById(
+            'popup-input'
+          )
+          ?.focus();
+
+      },100);
+
+    }
+
+  },
+
+
+  /* ===========================================================
+     TAB ENGINE
+     =========================================================== */
+
+  TabEngine:{
+
+    tabs:[],
+    activeTabId:null,
+
+    init(){
+
+      this.tabs =
+        OS.Storage.load(
+          'tabs',
+          []
+        );
+
+      if(!this.tabs.length){
+
+        this.createTab();
+
+      }else{
+
+        this.activeTabId =
+          this.tabs[0].id;
+
+        this.renderActiveTab();
+
+      }
+
+      this.updateUI();
+
+    },
+
+
+    createTab(url=''){
+
+      const id =
+        'tab_'+Date.now();
+
+      this.tabs.push({
+
+        id,
+        url,
+        title:url
+          ? url
+          : 'Nova Aba'
+
+      });
+
+      this.activeTabId=id;
+
+      this.saveState();
+
+      this.renderActiveTab();
+      this.updateUI();
+
+      OS.UI.openApp('browser');
+
+    },
+
+
+    newTab(){
+
+      this.createTab();
+
+      this.hideTabSwitcher();
+
+    },
+
+
+    closeTab(id){
+
+      this.tabs =
+        this.tabs.filter(
+          tab=>tab.id!==id
+        );
+
+      const iframe =
+        document.getElementById(
+          `iframe_${id}`
+        );
+
+      iframe?.remove();
+
+      if(!this.tabs.length){
+
+        this.createTab();
+
+        return;
+
+      }
+
+      if(this.activeTabId===id){
+
+        this.activeTabId =
+          this.tabs[
+            this.tabs.length-1
+          ].id;
+
+      }
+
+      this.saveState();
+
+      this.renderActiveTab();
+      this.renderSwitcherGrid();
+      this.updateUI();
+
+    },
+
+
+    switchTab(id){
+
+      this.activeTabId=id;
+
+      this.renderActiveTab();
+
+      this.hideTabSwitcher();
+
+      this.updateUI();
+
+    },
+
+
+    saveState(){
+
+      OS.Storage.save(
+        'tabs',
+        this.tabs
+      );
+
+    },
+
+
+    renderActiveTab(){
+
+      const container =
+        document.getElementById(
+          'iframe-container'
+        );
+
+      const empty =
+        document.getElementById(
+          'browser-empty-state'
+        );
+
+      const address =
+        document.getElementById(
+          'address-bar'
+        );
+
+      container
+        .querySelectorAll('iframe')
+        .forEach(
+          frame=>{
+            frame.style.display='none';
+          }
+        );
+
+      const tab =
+        this.tabs.find(
+          x=>x.id===this.activeTabId
+        );
+
+      if(!tab)
+        return;
+
+      address.value =
+        tab.url||'';
+
+      if(!tab.url){
+
+        empty.style.display='flex';
+
+        return;
+
+      }
+
+      empty.style.display='none';
+
+      let iframe =
+        document.getElementById(
+          `iframe_${tab.id}`
+        );
+
+      if(!iframe){
+
+        iframe =
+          document.createElement(
+            'iframe'
+          );
+
+        iframe.id =
+          `iframe_${tab.id}`;
+
+        iframe.setAttribute(
+          'sandbox',
+          'allow-scripts allow-same-origin allow-forms allow-popups'
+        );
+
+        iframe.src=tab.url;
+
+        iframe.onload=()=>{
+
+          try{
+
+            tab.title =
+              iframe.contentDocument
+                .title
+              || tab.url;
+
+          }catch{
+
+            tab.title =
+              tab.url
+                .replace(
+                  /^https?:\/\//,
+                  ''
+                )
+                .split('/')[0];
+
+          }
+
+          this.saveState();
+
+          this.renderSwitcherGrid();
+
+        };
+
+        container.appendChild(
+          iframe
+        );
+
+      }
+
+      iframe.style.display='block';
+
+    },
+
+
+    updateActiveTabUrl(url){
+
+      const tab =
+        this.tabs.find(
+          x=>x.id===this.activeTabId
+        );
+
+      if(!tab)
+        return;
+
+      tab.url=url;
+      tab.title=url;
+
+      const iframe =
+        document.getElementById(
+          `iframe_${tab.id}`
+        );
+
+      iframe?.remove();
+
+      this.saveState();
+
+      this.renderActiveTab();
+
+      OS.Events.emit(
+        'browser:navigate',
+        {url,tab}
+      );
+
+    },
+
+
+    updateUI(){
+
+      document.getElementById(
+        'tab-count'
+      ).innerText=this.tabs.length;
+
+    },
+
+
+    showTabSwitcher(){
+
+      this.renderSwitcherGrid();
+
+      document
+        .getElementById(
+          'tab-switcher'
+        )
+        .classList.add('active');
+
+    },
+
+
+    hideTabSwitcher(){
+
+      document
+        .getElementById(
+          'tab-switcher'
+        )
+        .classList.remove('active');
+
+    },
+
+
+    renderSwitcherGrid(){
+
+      const grid =
+        document.getElementById(
+          'tabs-grid'
+        );
+
+      grid.innerHTML='';
+
+      this.tabs.forEach(tab=>{
+
+        const active =
+          tab.id===this.activeTabId;
+
+        const card =
+          document.createElement(
+            'div'
+          );
+
+        card.className =
+          'tab-card'+
+          (active?' active':'');
+
+        card.innerHTML=`
+
+          <div
+            class="tab-card-title"
+          >
+            ${this.escape(
+              tab.title||'Nova Aba'
+            )}
+          </div>
+
+          <button
+            class="btn"
+            style="
+              position:absolute;
+              top:8px;
+              right:8px;
+              padding:3px 8px;
+              color:#F87171
+            "
+          >
+            ×
+          </button>
+
+          <div class="tab-preview">
+            ◍
+          </div>
+
+        `;
+
+        card.querySelector(
+          'button'
+        ).onclick=(event)=>{
+
+          event.stopPropagation();
+
+          this.closeTab(tab.id);
+
+        };
+
+        card.querySelector(
+          '.tab-preview'
+        ).onclick=()=>{
+
+          this.switchTab(tab.id);
+
+        };
+
+        grid.appendChild(card);
+
+      });
+
+    },
+
+
+    escape(value){
+
+      return String(value)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;');
+
+    }
+
+  },
+
+
+  /* ===========================================================
+     BROWSER
+     =========================================================== */
+
+  Browser:{
+
+    navigate(event){
+
+      event.preventDefault();
+
+      let url =
+        document
+          .getElementById(
+            'address-bar'
+          )
+          .value
+          .trim();
+
+      if(!url)
+        return;
+
+      if(!/^https?:\/\//i.test(url)){
+
+        if(
+          url.includes('.') &&
+          !url.includes(' ')
+        ){
+
+          url='https://'+url;
+
+        }else{
+
+          url =
+            'https://www.bing.com/search?q='+
+            encodeURIComponent(url);
+
+        }
+
+      }
+
+      OS.TabEngine
+        .updateActiveTabUrl(url);
+
+    },
+
+
+    reload(){
+
+      const tab =
+        OS.TabEngine.tabs.find(
+          x=>
+            x.id===
+            OS.TabEngine.activeTabId
+        );
+
+      if(!tab?.url)
+        return;
+
+      const iframe =
+        document.getElementById(
+          `iframe_${tab.id}`
+        );
+
+      if(iframe)
+        iframe.src=iframe.src;
+
+    },
+
+
+    loadUrl(url){
+
+      document
+        .getElementById(
+          'address-bar'
+        )
+        .value=url;
+
+      OS.TabEngine
+        .updateActiveTabUrl(url);
+
+    }
+
+  },
+
+
+  /* ===========================================================
+     CDN ENGINE
+     =========================================================== */
+
+  CDN:{
+
+    results:[],
+
+    async scan(){
+
+      const input =
+        document.getElementById(
+          'cdn-url'
+        );
+
+      let url =
+        input.value.trim();
+
+      if(!url)
+        return;
+
+      if(!/^https?:\/\//i.test(url))
+        url='https://'+url;
+
+      const result =
+        document.getElementById(
+          'cdn-results'
+        );
+
+      result.innerHTML=`
+
+        <div
+          style="
+            text-align:center;
+            padding:30px;
+            color:#9ca3af
+          "
+        >
+          Analisando...
+        </div>
+
+      `;
+
+      try{
+
+        const response =
+          await fetch(
+            url,
+            {
+              method:'GET',
+              mode:'cors'
+            }
+          );
+
+        const html =
+          await response.text();
+
+        this.results =
+          this.extract(html,url);
+
+        this.render();
+
+      }catch(error){
+
+        result.innerHTML=`
+
+          <div
+            style="
+              padding:24px;
+              text-align:center;
+              color:#F87171
+            "
+          >
+
+            <b>Não foi possível acessar.</b>
+
+            <p
+              style="
+                margin-top:8px;
+                font-size:11px;
+                color:#9ca3af
+              "
+            >
+              O site pode bloquear CORS,
+              impedir acesso externo ou
+              bloquear requisições do navegador.
+            </p>
+
+          </div>
+
+        `;
+
+      }
+
+    },
+
+
+    extract(html,base){
+
+      const doc =
+        new DOMParser()
+          .parseFromString(
+            html,
+            'text/html'
+          );
+
+      const found=[];
+
+      doc
+        .querySelectorAll(
+          'script[src]'
+        )
+        .forEach(node=>{
+
+          found.push({
+
+            type:'JavaScript',
+
+            url:
+              new URL(
+                node.getAttribute('src'),
+                base
+              ).href
+
+          });
+
+        });
+
+      doc
+        .querySelectorAll(
+          'link[href]'
+        )
+        .forEach(node=>{
+
+          const rel =
+            node.getAttribute(
+              'rel'
+            )||'';
+
+          if(
+            rel
+              .toLowerCase()
+              .includes('stylesheet')
+          ){
+
+            found.push({
+
+              type:'CSS',
+
+              url:
+                new URL(
+                  node.getAttribute(
+                    'href'
+                  ),
+                  base
+                ).href
+
+            });
+
+          }
+
+        });
+
+      return found;
+
+    },
+
+
+    render(){
+
+      const container =
+        document.getElementById(
+          'cdn-results'
+        );
+
+      if(!this.results.length){
+
+        container.innerHTML=`
+
+          <div
+            style="
+              text-align:center;
+              color:#6b7280;
+              padding:40px
+            "
+          >
+            Nenhum JS/CSS encontrado.
+          </div>
+
+        `;
+
+        return;
+
+      }
+
+      container.innerHTML =
+        this.results
+          .map((item,index)=>`
+
+            <div class="cdn-card">
+
+              <span class="cdn-type">
+                ${item.type}
+              </span>
+
+              <div class="cdn-url">
+                ${item.url}
+              </div>
+
+              <button
+                class="btn"
+                style="margin-top:10px"
+                onclick="
+                  OS.Plugins.installFromURL(
+                    '${item.url.replace(
+                      /'/g,
+                      "\\'"
+                    )}',
+                    '${item.type}'
+                  )
+                "
+              >
+                Adicionar Plugin
+              </button>
+
+            </div>
+
+          `)
+          .join('');
+
+    }
+
+  },
+
+
+  /* ===========================================================
+     PLUGIN SYSTEM
+     =========================================================== */
+
+  Plugins:{
+
+    list:[],
+
+    init(){
+
+      this.list =
+        OS.Storage.load(
+          'plugins',
+          []
+        );
+
+      this.renderList();
+
+      this.executeAll();
+
+    },
+
+
+    async installFromURL(url,type){
+
+      const name =
+        url
+          .split('/')
+          .pop()
+          ?.split('?')[0]
+          ||'Plugin CDN';
+
+      const plugin={
+
+        id:Date.now(),
+
+        name,
+
+        type,
+
+        source:'url',
+
+        url,
+
+        active:true
+
+      };
+
+      this.list.push(plugin);
+
+      OS.Storage.save(
+        'plugins',
+        this.list
+      );
+
+      this.renderList();
+
+      await this.execute(plugin);
+
+      OS.Popup.show(
+        'Plugin',
+        `
+          <p>
+            ${type} adicionado ao KODUX OS.
+          </p>
+        `
+      );
+
+    },
+
+
+    promptInstall(){
+
+      const html=`
+
+        <input
+          id="plugin-name"
+          style="
+            width:100%;
+            padding:10px;
+            border-radius:10px;
+            border:1px solid rgba(255,255,255,.1);
+            background:#050505;
+            color:#fff;
+            outline:none;
+          "
+          placeholder="Nome do plugin"
+        >
+
+        <select
+          id="plugin-type"
+          style="
+            width:100%;
+            margin-top:8px;
+            padding:10px;
+            border-radius:10px;
+            background:#111;
+            color:#fff;
+          "
+        >
+
+          <option value="js">
+            JavaScript URL
+          </option>
+
+          <option value="css">
+            CSS URL
+          </option>
+
+          <option value="inline-js">
+            JavaScript inline
+          </option>
+
+        </select>
+
+        <input
+          id="plugin-url"
+          style="
+            width:100%;
+            margin-top:8px;
+            padding:10px;
+            border-radius:10px;
+            border:1px solid rgba(255,255,255,.1);
+            background:#050505;
+            color:#fff;
+            outline:none;
+          "
+          placeholder="URL ou código"
+        >
+
+      `;
+
+      OS.Popup.show(
+        'Novo Plugin',
+        html,
+        [
+
+          {
+            text:'Cancelar',
+            type:'secondary',
+            onClick:
+              ()=>OS.Popup.hide()
+          },
+
+          {
+            text:'Instalar',
+            type:'primary',
+            onClick:()=>{
+
+              const name =
+                document
+                  .getElementById(
+                    'plugin-name'
+                  )
+                  .value
+                  .trim()
+                ||
+                'Plugin '+(
+                  this.list.length+1
+                );
+
+              const type =
+                document
+                  .getElementById(
+                    'plugin-type'
+                  )
+                  .value;
+
+              const source =
+                document
+                  .getElementById(
+                    'plugin-url'
+                  )
+                  .value
+                  .trim();
+
+              if(!source)
+                return;
+
+              const plugin={
+
+                id:Date.now(),
+
+                name,
+
+                type,
+
+                source:
+                  type==='inline-js'
+                    ? 'inline'
+                    : 'url',
+
+                url:
+                  type==='inline-js'
+                    ? null
+                    : source,
+
+                code:
+                  type==='inline-js'
+                    ? source
+                    : null,
+
+                active:true
+
+              };
+
+              this.list.push(plugin);
+
+              OS.Storage.save(
+                'plugins',
+                this.list
+              );
+
+              this.renderList();
+
+              this.execute(plugin);
+
+              OS.Popup.hide();
+
+            }
+
+          }
+
+        ]
+      );
+
+    },
+
+
+    async execute(plugin){
+
+      try{
+
+        if(
+          plugin.type==='css'
+        ){
+
+          const link =
+            document.createElement(
+              'link'
+            );
+
+          link.rel='stylesheet';
+
+          link.href=plugin.url;
+
+          link.dataset.koduxPlugin =
+            plugin.id;
+
+          document.head.appendChild(
+            link
+          );
+
+          return;
+
+        }
+
+
+        if(
+          plugin.type==='js'
+        ){
+
+          await new Promise(
+            (resolve,reject)=>{
+
+              const script =
+                document.createElement(
+                  'script'
+                );
+
+              script.src=plugin.url;
+
+              script.async=false;
+
+              script.dataset.koduxPlugin =
+                plugin.id;
+
+              script.onload=resolve;
+
+              script.onerror=reject;
+
+              document.body.appendChild(
+                script
+              );
+
+            }
+          );
+
+          return;
+
+        }
+
+
+        if(
+          plugin.type==='inline-js'
+        ){
+
+          const fn =
+            new Function(
+              'OS',
+              plugin.code
+            );
+
+          fn(OS);
+
+        }
+
+      }catch(error){
+
+        console.error(
+          '[KODUX PLUGIN]',
+          error
+        );
+
+        OS.Popup.show(
+          'Erro no Plugin',
+          `
+            <p
+              style="
+                color:#F87171;
+                font-size:11px
+              "
+            >
+              ${String(
+                error.message
+              )}
+            </p>
+          `
+        );
+
+      }
+
+    },
+
+
+    executeAll(){
+
+      this.list
+        .filter(
+          plugin=>plugin.active
+        )
+        .forEach(
+          plugin=>this.execute(plugin)
+        );
+
+    },
+
+
+    remove(id){
+
+      const plugin =
+        this.list.find(
+          p=>p.id===id
+        );
+
+      if(plugin){
+
+        document
+          .querySelectorAll(
+            `[data-kodux-plugin="${id}"]`
+          )
+          .forEach(
+            el=>el.remove()
+          );
+
+      }
+
+      this.list =
+        this.list.filter(
+          p=>p.id!==id
+        );
+
+      OS.Storage.save(
+        'plugins',
+        this.list
+      );
+
+      this.renderList();
+
+    },
+
+
+    renderList(){
+
+      const container =
+        document.getElementById(
+          'plugins-list'
+        );
+
+      if(!this.list.length){
+
+        container.innerHTML=`
+
+          <div
+            style="
+              text-align:center;
+              color:#6b7280;
+              padding:50px 20px
+            "
+          >
+
+            <div
+              style="
+                font-size:40px
+              "
+            >
+              ◫
+            </div>
+
+            <p
+              style="
+                margin-top:8px;
+                font-size:13px
+              "
+            >
+              Nenhum plugin instalado.
+            </p>
+
+          </div>
+
+        `;
+
+        return;
+
+      }
+
+      container.innerHTML =
+        this.list
+          .map(plugin=>`
+
+            <div class="plugin-card">
+
+              <div class="plugin-meta">
+
+                <h4>
+                  ${plugin.name}
+                </h4>
+
+                <p class="plugin-status">
+                  ● ${plugin.active
+                    ? 'Ativo'
+                    : 'Inativo'}
+                </p>
+
+                <p>
+                  ${plugin.type}
+                </p>
+
+              </div>
+
+              <button
+                class="btn"
+                style="color:#F87171"
+                onclick="
+                  OS.Plugins.remove(
+                    ${plugin.id}
+                  )
+                "
+              >
+                ✕
+              </button>
+
+            </div>
+
+          `)
+          .join('');
+
+    }
+
+  },
+
+
+  /* ===========================================================
+     NOTES / MARKDOWN
+     =========================================================== */
+
+  Apps:{
+
+    registry:[
+
+      {
+        id:'browser',
+        name:'Navegador',
+        icon:'◍',
+        color:'#0A84FF'
+      },
+
+      {
+        id:'notes',
+        name:'Notas',
+        icon:'✎',
+        color:'#FBBF24'
+      },
+
+      {
+        id:'plugins',
+        name:'Plugins',
+        icon:'◫',
+        color:'#A855F7'
+      },
+
+      {
+        id:'cdn',
+        name:'CDN',
+        icon:'⌁',
+        color:'#34D399'
+      },
+
+      {
+        id:'settings',
+        name:'Ajustes',
+        icon:'⚙',
+        color:'#6B7280',
+
+        action:()=>{
+
+          OS.Popup.show(
+            'Sistema',
+            `
+              <p>
+                KODUX OS
+              </p>
+
+              <p
+                style="
+                  margin-top:6px;
+                  color:#9ca3af
+                "
+              >
+                Core local<br>
+                Storage OK<br>
+                Plugin Engine OK<br>
+                Tab Engine OK
+              </p>
+            `
+          );
+
+        }
+
+      }
+
+    ],
+
+
+    Notes:{
+
+      documents:[],
+
+      init(){
+
+        document
+          .getElementById(
+            'notes-content'
+          )
+          .value =
+            OS.Storage.load(
+              'notes_data',
+              ''
+            );
+
+        this.documents =
+          OS.Storage.load(
+            'documents',
+            []
+          );
+
+        this.renderDocuments();
+
+      },
+
+
+      save(){
+
+        const content =
+          document
+            .getElementById(
+              'notes-content'
+            )
+            .value;
+
+        OS.Storage.save(
+          'notes_data',
+          content
+        );
+
+        this.saveDocument(
+          content
+        );
+
+        OS.Popup.show(
+          'Notas',
+          `
+            <p>
+              Documento salvo localmente.
+            </p>
+          `
+        );
+
+      },
+
+
+      saveDocument(content){
+
+        if(!content.trim())
+          return;
+
+        const doc={
+
+          id:Date.now(),
+
+          title:
+            content
+              .split('\n')[0]
+              .replace(/^#+\s*/,'')
+              .trim()
+            ||
+            'Documento',
+
+          content,
+
+          created:
+            new Date().toISOString()
+
+        };
+
+        this.documents.unshift(
+          doc
+        );
+
+        this.documents =
+          this.documents.slice(
+            0,
+            50
+          );
+
+        OS.Storage.save(
+          'documents',
+          this.documents
+        );
+
+        this.renderDocuments();
+
+      },
+
+
+      openDocument(id){
+
+        const doc =
+          this.documents.find(
+            d=>d.id===id
+          );
+
+        if(!doc)
+          return;
+
+        document
+          .getElementById(
+            'notes-content'
+          )
+          .value=doc.content;
+
+        this.togglePreview(
+          false
+        );
+
+      },
+
+
+      renderDocuments(){
+
+        const list =
+          document.getElementById(
+            'document-list'
+          );
+
+        if(!this.documents.length){
+
+          list.innerHTML='';
+
+          return;
+
+        }
+
+        list.innerHTML =
+          this.documents
+            .map(doc=>`
+
+              <div
+                class="document-item"
+              >
+
+                <button
+                  class="btn"
+                  style="
+                    background:transparent;
+                    flex:1;
+                    text-align:left
+                  "
+                  onclick="
+                    OS.Apps.Notes
+                      .openDocument(
+                        ${doc.id}
+                      )
+                  "
+                >
+                  📄 ${this.escape(
+                    doc.title
+                  )}
+                </button>
+
+              </div>
+
+            `)
+            .join('');
+
+      },
+
+
+      togglePreview(force){
+
+        const editor =
+          document.getElementById(
+            'notes-content'
+          );
+
+        const preview =
+          document.getElementById(
+            'notes-preview'
+          );
+
+        const show =
+          typeof force==='boolean'
+            ? force
+            : !preview.classList.contains(
+                'show'
+              );
+
+        if(show){
+
+          preview.innerHTML =
+            this.markdown(
+              editor.value
+            );
+
+          preview.classList.add(
+            'show'
+          );
+
+          editor.classList.add(
+            'hidden'
+          );
+
+        }else{
+
+          preview.classList.remove(
+            'show'
+          );
+
+          editor.classList.remove(
+            'hidden'
+          );
+
+        }
+
+      },
+
+
+      markdown(text){
+
+        let html =
+          this.escape(text);
+
+        html =
+          html.replace(
+            /^### (.*)$/gm,
+            '<h3>$1</h3>'
+          );
+
+        html =
+          html.replace(
+            /^## (.*)$/gm,
+            '<h2>$1</h2>'
+          );
+
+        html =
+          html.replace(
+            /^# (.*)$/gm,
+            '<h1>$1</h1>'
+          );
+
+        html =
+          html.replace(
+            /\*\*(.*?)\*\*/g,
+            '<strong>$1</strong>'
+          );
+
+        html =
+          html.replace(
+            /\*(.*?)\*/g,
+            '<em>$1</em>'
+          );
+
+        html =
+          html.replace(
+            /`([^`]+)`/g,
+            '<code>$1</code>'
+          );
+
+        html =
+          html.replace(
+            /^> (.*)$/gm,
+            '<blockquote>$1</blockquote>'
+          );
+
+        html =
+          html.replace(
+            /^- (.*)$/gm,
+            '<li>$1</li>'
+          );
+
+        html =
+          html.replace(
+            /(<li>.*<\/li>)/gs,
+            '<ul>$1</ul>'
+          );
+
+        html =
+          html.replace(
+            /\n\n/g,
+            '</p><p>'
+          );
+
+        html =
+          '<p>'+html+'</p>';
+
+        return html;
+
+      },
+
+
+      escape(text){
+
+        return String(text)
+          .replace(/&/g,'&amp;')
+          .replace(/</g,'&lt;')
+          .replace(/>/g,'&gt;')
+          .replace(/"/g,'&quot;');
+
+      }
+
+    }
+
+  },
+
+
+  /* ===========================================================
+     SYMBOL BAR BRIDGE
+     =========================================================== */
+
+  SymbolBar:{
+
+    buttons:[],
+
+    init(){
+
+      /*
+       * O OS não precisa conhecer a implementação
+       * interna do Symbol Bar.
+       *
+       * Ele apenas oferece uma API.
+       */
+
+      this.buttons =
+        Array.from(
+          document.querySelectorAll(
+            '.symbol-button'
+          )
+        );
+
+      OS.Events.emit(
+        'symbolbar:ready',
+        {
+          buttons:this.buttons
+        }
+      );
+
+    },
+
+
+    register(button){
+
+      if(!button)
+        return;
+
+      this.buttons.push(
+        button
+      );
+
+      OS.Events.emit(
+        'symbolbar:add',
+        button
+      );
+
+    }
+
+  },
+
+
+  /* ===========================================================
+     DAISY / DAY BUTTONS BRIDGE
+     =========================================================== */
+
+  Daisy:{
+
+    buttons:[],
+
+    init(){
+
+      /*
+       * Compatibilidade com sistemas
+       * Daisy / Day Buttons existentes.
+       *
+       * O OS não depende deles.
+       */
+
+      this.buttons =
+        Array.from(
+          document.querySelectorAll(
+            '[data-day-button], .day-button, .daisy-button'
+          )
+        );
+
+      OS.Events.emit(
+        'daisy:ready',
+        {
+          buttons:this.buttons
+        }
+      );
+
+    },
+
+
+    register(button){
+
+      if(!button)
+        return;
+
+      this.buttons.push(
+        button
+      );
+
+      OS.Events.emit(
+        'daisy:add',
+        button
+      );
+
+    }
+
+  },
+
+
+  /* ===========================================================
+     PUBLIC PLUGIN API
+     =========================================================== */
+
+  API:{
+
+    openApp(id){
+
+      OS.UI.openApp(id);
+
+    },
+
+    save(key,value){
+
+      OS.Storage.save(
+        key,
+        value
+      );
+
+    },
+
+    load(key,defaultValue){
+
+      return OS.Storage.load(
+        key,
+        defaultValue
+      );
+
+    },
+
+    notify(message){
+
+      OS.Popup.show(
+        'KODUX',
+        `<p>${message}</p>`
+      );
+
+    },
+
+    on(event,callback){
+
+      OS.Events.on(
+        event,
+        callback
+      );
+
+    }
+
+  },
+
+
+  /* ===========================================================
+     UI
+     =========================================================== */
+
+  UI:{
+
+    buildHome(){
+
+      const grid =
+        document.getElementById(
+          'app-grid'
+        );
+
+      grid.innerHTML='';
+
+      OS.Apps.registry
+        .forEach(app=>{
+
+          const tile =
+            document.createElement(
+              'div'
+            );
+
+          tile.className=
+            'app-tile';
+
+          tile.innerHTML=`
+
+            <div
+              class="app-icon"
+              style="
+                background:${app.color}
+              "
+            >
+              ${app.icon}
+            </div>
+
+            <span class="app-name">
+              ${app.name}
+            </span>
+
+          `;
+
+          tile.onclick=()=>{
+
+            if(app.action){
+
+              app.action();
+
+            }else{
+
+              this.openApp(
+                app.id
+              );
+
+            }
+
+          };
+
+          grid.appendChild(
+            tile
+          );
+
+        });
+
+    },
+
+
+    openApp(id){
+
+      document
+        .querySelectorAll(
+          '.app-view'
+        )
+        .forEach(
+          view=>
+            view.classList.remove(
+              'active'
+            )
+        );
+
+      OS.TabEngine.hideTabSwitcher();
+
+      if(id==='home'){
+
+        OS.state.activeApp='home';
+
+        return;
+
+      }
+
+      const view =
+        document.getElementById(
+          `app-${id}`
+        );
+
+      if(!view)
+        return;
+
+      view.classList.add(
+        'active'
+      );
+
+      OS.state.activeApp=id;
+
+      OS.Events.emit(
+        'app:open',
+        {id}
+      );
+
+    },
+
+
+    goHome(){
+
+      this.openApp(
+        'home'
+      );
+
+    }
+
+  },
+
+
+  /* ===========================================================
+     BOOT
+     =========================================================== */
+
+  boot(){
+
+    const bar =
+      document.getElementById(
+        'boot-progress'
+      );
+
+    let progress=0;
+
+    const interval =
+      setInterval(()=>{
+
+        progress +=
+          Math.random()*25;
+
+        if(progress>=100){
+
+          progress=100;
+
+          clearInterval(
+            interval
+          );
+
+          setTimeout(
+            ()=>this.finishBoot(),
+            350
+          );
+
+        }
+
+        bar.style.width =
+          progress+'%';
+
+      },120);
+
+  },
+
+
+  finishBoot(){
+
+    const boot =
+      document.getElementById(
+        'boot-screen'
+      );
+
+    boot.classList.add(
+      'hide'
+    );
+
+    setTimeout(()=>{
+
+      boot.remove();
+
+    },800);
+
+
+    this.UI.buildHome();
+
+    this.TabEngine.init();
+
+    this.Apps.Notes.init();
+
+    this.Plugins.init();
+
+    this.SymbolBar.init();
+
+    this.Daisy.init();
+
+    this.state.booted=true;
+
+
+    /* =========================================================
+       CORE READY
+       ========================================================= */
+
+    this.Events.emit(
+      'os:ready',
+      this
+    );
+
+  }
+
+};
+
+
+/* =============================================================
+   GLOBAL
+   ============================================================= */
+
+window.OS=OS;
+
+
+/* =============================================================
+   START
+   ============================================================= */
+
+window.addEventListener(
+  'load',
+  ()=>OS.boot()
+);
+
+</script>
+
+</body>
+</html>
