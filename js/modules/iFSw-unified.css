@@ -1,0 +1,1374 @@
+/* =========================================================
+   ALMASLIBER / iFSw — UNIFIED CORE
+   HEADER + SESSION + DOCK + MAXIMIZE/MINIMIZE
+   ========================================================= */
+
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  --topbar-h: 58px;
+  --header-h: 52px;
+
+  --session-radius: 29px;
+  --session-gap: 20px;
+
+  --collapsed-h: 52px;
+  --peek-h: 178px;
+
+  --resize-hit: 0px;
+  --resize-corner: 54px;
+
+  --dock-bottom-gap: 80px;
+  --dock-offset-x: -12px;
+
+  /* -------------------------------------------------------
+     Z-INDEX ARCHITECTURE
+     ------------------------------------------------------- */
+
+  --z-base: 1;
+  --z-content: 100;
+
+  --z-header-system: 900;
+  --z-header-main: 910;
+
+  --z-session: 1000;
+  --z-session-header: 1010;
+  --z-session-controls: 1020;
+
+  --z-maximized: 94000;
+  --z-maximized-header: 94010;
+  --z-maximized-controls: 94020;
+  --z-resize: 94030;
+
+  --z-dock: 97000;
+}
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+html {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  min-height: 100dvh;
+
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      #2a2a35 0%,
+      #0f0f15 100%
+    );
+
+  color: #fff;
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+}
+
+body.ui-safe-vertical {
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+}
+
+body.ui-immersive {
+  padding: 0;
+  overflow: hidden !important;
+}
+
+/* =========================================================
+   SHELL
+   ========================================================= */
+
+#kxtsk-shell {
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  overflow: visible;
+  z-index: var(--z-base);
+}
+
+/* =========================================================
+   ALMASLIBER SHELL
+   ========================================================= */
+
+.almasliber,
+.almasliber .shell,
+#main-content {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.almasliber {
+  min-height: 100dvh;
+}
+
+/* =========================================================
+   HEADER SYSTEM
+   ========================================================= */
+
+.topbar {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+
+  height: var(--topbar-h);
+  min-height: var(--topbar-h);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+  padding: 0 12px;
+
+  z-index: var(--z-header-system);
+
+  isolation: isolate;
+}
+
+/* Header do sistema */
+#system-topbar {
+  z-index: var(--z-header-system);
+}
+
+/* Header global */
+#main-header {
+  z-index: var(--z-header-main);
+}
+
+/* =========================================================
+   HEADER TRANSITIONS
+   ========================================================= */
+
+#main-header.header-visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#main-header.header-hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+#main-header {
+  transition:
+    transform .25s ease,
+    opacity .2s ease;
+}
+
+/* =========================================================
+   HEADER BRAND
+   ========================================================= */
+
+.brand,
+.brandX,
+.os-brand {
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+
+  min-width: 0;
+
+  font-weight: 800;
+}
+
+.brandX {
+  gap: 7px;
+  font-size: 13px;
+  letter-spacing: 1.3px;
+}
+
+.badgeX {
+  font-size: 9px;
+  opacity: .55;
+}
+
+/* =========================================================
+   TOP ACTIONS
+   ========================================================= */
+
+.top-actions {
+  min-width: 0;
+  flex: 1 1 auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 8px;
+}
+
+.icon-btn,
+.soft-btn,
+.launcher-btn,
+.win-go-btn {
+  flex: 0 0 auto;
+
+  border: 0;
+  border-radius: 12px;
+
+  min-height: 30px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #fff;
+  cursor: pointer;
+
+  font-weight: 600;
+
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  background: rgba(255,255,255,.08);
+}
+
+.soft-btn {
+  padding: 10px 12px;
+  background: rgba(255,255,255,.08);
+}
+
+.launcher-btn {
+  padding: 10px 12px;
+  background: rgba(0,242,255,.12);
+  border: 1px solid rgba(0,242,255,.3);
+}
+
+.win-go-btn {
+  padding: 10px 12px;
+  background: rgba(0,242,255,.12);
+}
+
+.icon-btn:active,
+.win-controls button:active,
+.dock-bubble:active {
+  transform: scale(.94);
+}
+
+/* =========================================================
+   MAIN NAV
+   ========================================================= */
+
+.win-navrow {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  width: 100%;
+  min-width: 0;
+
+  padding: 0 16px 10px;
+}
+
+.win-urlbar {
+  flex: 1 1 auto;
+
+  min-width: 139px;
+
+  padding: 11px 13px;
+
+  border-radius: 13px;
+
+  border: 1px solid rgba(255,255,255,.12);
+
+  background: rgba(255,255,255,.06);
+
+  color: #fff;
+
+  outline: none;
+
+  font-size: 10px;
+}
+
+.win-urlbar::placeholder {
+  color: rgba(255,255,255,.45);
+}
+
+.win-urlbar:focus {
+  border-color: rgba(0,242,255,.45);
+
+  background: rgba(255,255,255,.09);
+
+  box-shadow:
+    0 0 0 3px rgba(0,242,255,.08);
+}
+
+/* =========================================================
+   MAIN CONTENT
+   ========================================================= */
+
+main,
+#main-content {
+  position: relative;
+  z-index: var(--z-content);
+}
+
+/* =========================================================
+   STACK
+   ========================================================= */
+
+#stackWrap {
+  position: relative;
+
+  width: 100%;
+  max-width: 800px;
+
+  min-height:
+    calc(100dvh - var(--topbar-h));
+
+  margin: 0 auto;
+  padding: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: var(--session-gap);
+
+  overflow: visible;
+
+  z-index: var(--z-content);
+
+  isolation: isolate;
+}
+
+/* =========================================================
+   SESSION
+   ========================================================= */
+
+.session-window {
+  position: relative;
+
+  width: 100%;
+  height:
+    calc(100dvh - var(--topbar-h));
+
+  min-height: 0;
+
+  margin: 0;
+  padding: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  background:
+    rgba(30,30,35,.40);
+
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+
+  border:
+    1px solid rgba(255,255,255,.08);
+
+  border-radius: var(--session-radius);
+
+  z-index: var(--z-session);
+
+  transition:
+    height .28s cubic-bezier(.16,1,.3,1),
+    width .28s cubic-bezier(.16,1,.3,1),
+    transform .28s ease,
+    opacity .28s ease;
+}
+
+/* =========================================================
+   SESSION HEADER
+   ========================================================= */
+
+.session-window .win-hdr {
+  position: absolute;
+
+  top: 0;
+  left: 0;
+  right: 0;
+
+  width: 100%;
+  height: var(--header-h);
+
+  min-height: var(--header-h);
+
+  display: flex;
+  align-items: center;
+
+  padding: 10px 14px;
+
+  z-index: var(--z-session-header);
+
+  background: transparent;
+
+  user-select: none;
+  -webkit-user-select: none;
+
+  pointer-events: none;
+
+  touch-action: manipulation;
+
+  isolation: isolate;
+}
+
+/* =========================================================
+   CONTROLES
+   ========================================================= */
+
+.win-controls {
+  position: relative;
+
+  z-index: var(--z-session-controls);
+
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  pointer-events: auto;
+}
+
+.win-controls button {
+  width: 30px;
+  height: 30px;
+
+  min-width: 30px;
+  min-height: 30px;
+
+  padding: 0;
+
+  display: grid;
+  place-items: center;
+
+  border: 0;
+  border-radius: 50%;
+
+  background:
+    rgba(255,255,255,.10);
+
+  color: #fff;
+
+  cursor: pointer;
+
+  font-family:
+    "Noto Sans Symbols 2",
+    "Noto Sans Symbols",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  font-size: 17px;
+  font-weight: 300;
+  line-height: 1;
+
+  touch-action: manipulation;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+.win-controls button:hover {
+  background: rgba(255,255,255,.17);
+}
+
+/* =========================================================
+   FRAME
+   ========================================================= */
+
+.session-window .win-frame {
+  position: absolute;
+
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  min-width: 0;
+  min-height: 0;
+
+  border: 0;
+
+  background: transparent;
+
+  z-index: 1;
+
+  display: block;
+}
+
+/* =========================================================
+   COLLAPSED
+   ========================================================= */
+
+.session-window.collapsed {
+  height: var(--collapsed-h) !important;
+  min-height: var(--collapsed-h) !important;
+  overflow: hidden !important;
+}
+
+.session-window.collapsed .win-frame {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* =========================================================
+   PEEK
+   ========================================================= */
+
+.session-window.peeked {
+  height: var(--peek-h) !important;
+  min-height: var(--peek-h) !important;
+}
+
+.session-window.peeked .win-frame {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* =========================================================
+   MINIMIZED
+   ========================================================= */
+
+.session-window.minimized {
+  position: absolute !important;
+
+  width: 1px !important;
+  height: 1px !important;
+
+  min-width: 1px !important;
+  min-height: 1px !important;
+
+  opacity: 0 !important;
+
+  pointer-events: none !important;
+
+  transform:
+    scale(.90)
+    translateY(50px);
+
+  overflow: hidden !important;
+}
+
+/* =========================================================
+   MAXIMIZED
+   ========================================================= */
+
+.session-window.maximized {
+  position: fixed !important;
+
+  inset: 0 !important;
+
+  width: 100vw !important;
+  height: 100dvh !important;
+
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  max-width: none !important;
+  max-height: none !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  overflow: hidden !important;
+
+  z-index: var(--z-maximized) !important;
+
+  transition: none !important;
+}
+
+/* Header da sessão maximizada */
+.session-window.maximized .win-hdr {
+  position: absolute !important;
+
+  inset:
+    0 0 auto 0 !important;
+
+  width: 100% !important;
+  height: var(--header-h) !important;
+
+  z-index: var(--z-maximized-header) !important;
+
+  pointer-events: none !important;
+}
+
+/* Controles continuam clicáveis */
+.session-window.maximized .win-controls {
+  pointer-events: auto !important;
+  z-index: var(--z-maximized-controls) !important;
+}
+
+/* Frame maximizado */
+.session-window.maximized .win-frame {
+  position: absolute !important;
+
+  inset: 0 !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  z-index: 1 !important;
+}
+
+/* =========================================================
+   MAXIMIZED STATE
+   ========================================================= */
+
+body.has-maximized {
+  overflow: hidden !important;
+}
+
+body.has-maximized .topbar {
+  pointer-events: none;
+}
+
+body.has-maximized .session-window.maximized .win-controls,
+body.has-maximized .session-window.maximized .win-hdr {
+  pointer-events: auto;
+}
+
+/* =========================================================
+   RESIZE
+   ========================================================= */
+
+.session-window .resize-handle {
+  position: absolute;
+
+  z-index: var(--z-resize);
+
+  background: transparent;
+
+  touch-action: none;
+
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.session-window .resize-y {
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  height: var(--resize-hit);
+
+  cursor: ns-resize;
+}
+
+.session-window .resize-x {
+  top: var(--header-h);
+  right: 0;
+  bottom: 0;
+
+  width: var(--resize-hit);
+
+  cursor: ew-resize;
+}
+
+.session-window .resize-corner {
+  right: 0;
+  bottom: 0;
+
+  width: var(--resize-corner);
+  height: var(--resize-corner);
+
+  cursor: nwse-resize;
+}
+
+.session-window .resize-corner::before {
+  content: "";
+
+  position: absolute;
+
+  right: 10px;
+  bottom: 10px;
+
+  width: 16px;
+  height: 16px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255,255,255,.18);
+
+  border:
+    1px solid rgba(255,255,255,.25);
+
+  box-shadow:
+    0 0 14px rgba(0,242,255,.18);
+
+  pointer-events: none;
+}
+
+.session-window.maximized .resize-handle {
+  display: none !important;
+}
+
+/* =========================================================
+   SUSPENDED
+   ========================================================= */
+
+.session-window.suspended .win-frame {
+  display: none;
+}
+
+.session-window.suspended::after {
+  content: "⏸";
+
+  position: absolute;
+
+  top: 50%;
+  left: 50%;
+
+  transform: translate(-50%, -50%);
+
+  font-size: 2rem;
+
+  opacity: .3;
+
+  pointer-events: none;
+}
+
+/* =========================================================
+   SESSION LIFECYCLE — INDICADOR VISUAL DE ESTADO
+   (CREATED/LOADING/ACTIVE não precisam de estilo próprio;
+   IDLE e SUSPENDED têm que ser perceptíveis ao usuário)
+   ========================================================= */
+
+.session-window.state-idle {
+  filter: saturate(.82);
+}
+
+.session-window.state-idle .win-hdr::before {
+  content: "";
+
+  position: absolute;
+
+  top: 8px;
+  right: 8px;
+
+  width: 6px;
+  height: 6px;
+
+  border-radius: 50%;
+
+  background: rgba(255, 200, 60, .75);
+
+  pointer-events: none;
+}
+
+.session-window.state-loading .win-hdr::before {
+  content: "";
+
+  position: absolute;
+
+  top: 8px;
+  right: 8px;
+
+  width: 6px;
+  height: 6px;
+
+  border-radius: 50%;
+
+  background: rgba(0, 242, 255, .8);
+
+  animation: session-loading-pulse 1s ease-in-out infinite;
+
+  pointer-events: none;
+}
+
+@keyframes session-loading-pulse {
+  0%, 100% { opacity: .3; }
+  50% { opacity: 1; }
+}
+
+/* =========================================================
+   DOCK
+   ========================================================= */
+
+#dock {
+  position: fixed;
+
+  left: var(--dock-offset-x);
+
+  bottom:
+    calc(
+      var(--dock-bottom-gap)
+      + var(--safe-bottom)
+    );
+
+  z-index: var(--z-dock);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 12px 10px;
+
+  border-radius: 24px;
+
+  background:
+    rgba(0,0,0,.55);
+
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+
+  border:
+    1px solid rgba(255,255,255,.1);
+}
+
+#dock:empty {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dock-bubble {
+  width: 42px;
+  height: 42px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255,255,255,.10);
+
+  border:
+    1px solid rgba(255,255,255,.20);
+
+  color: #fff;
+
+  cursor: pointer;
+
+  font-family:
+    "Noto Sans Symbols 2",
+    "Noto Sans Symbols",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  font-size: 19px;
+  line-height: 1;
+
+  touch-action: manipulation;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 600px) {
+  :root {
+    --session-radius: 39px;
+    --session-gap: 10px;
+  }
+
+  .session-window {
+    width: 100%;
+  }
+}
+
+@media (hover:none) and (pointer:coarse) {
+  .session-window .resize-corner {
+    width: 58px;
+    height: 58px;
+  }
+}
+
+/* @import "https://infodose.com.br/oiDual/KODUX/78K/APPS/78header/dual-header-app/css/main.css"; */
+
+/* style  */
+
+/* ═══════════════════════════════════════════════════════
+   DUAL CORE · GLOBAL TOKENS
+═══════════════════════════════════════════════════════ */
+:root {
+    color-scheme: dark;
+    --bg: #050507;
+    --panel:
+        rgba(18, 18, 22, .82);
+    --panel-solid:
+        #121216;
+    --border:
+        rgba(255, 255, 255, .10);
+    --text:
+        #f5f5f7;
+    --muted:
+        rgba(255, 255, 255, .52);
+    --cyan:
+        #00e5ff;
+    --purple:
+        #bf5af2;
+    --gold:
+        #ffd60a;
+    --input-bg:
+        rgba(255, 255, 255, .055);
+    --button-bg:
+        rgba(255, 255, 255, .07);
+    --topbar-bg:
+        rgba(5, 5, 7, .82);
+    --dock-bg:
+        rgba(10, 10, 13, .92);
+    --shadow:
+        0 10px 40px
+        rgba(0, 0, 0, .35);
+    --radius:
+        18px;
+    --transition:
+        .25s ease;
+}
+/* ═══════════════════════════════════════════════════════
+   LIGHT
+═══════════════════════════════════════════════════════ */
+html[data-theme="light"] {
+    color-scheme: light;
+    --bg:
+        #f5f5f7;
+    --panel:
+        rgba(255, 255, 255, .85);
+    --panel-solid:
+        #ffffff;
+    --border:
+        rgba(0, 0, 0, .08);
+    --text:
+        #1a1a1e;
+    --muted:
+        rgba(0, 0, 0, .50);
+    --cyan:
+        #007aff;
+    --purple:
+        #af52de;
+    --gold:
+        #d4a017;
+    --input-bg:
+        rgba(0, 0, 0, .035);
+    --button-bg:
+        rgba(0, 0, 0, .045);
+    --topbar-bg:
+        rgba(255, 255, 255, .82);
+    --dock-bg:
+        rgba(255, 255, 255, .92);
+    --shadow:
+        0 10px 40px
+        rgba(0, 0, 0, .10);
+}
+/* ═══════════════════════════════════════════════════════
+   RESET
+═══════════════════════════════════════════════════════ */
+* {
+    box-sizing:
+        border-box;
+    -webkit-tap-highlight-color:
+        transparent;
+}
+html,
+body {
+    margin:
+        0;
+    padding:
+        0;
+    width:
+        100%;
+    min-height:
+        100%;
+    background:
+        var(--bg);
+    color:
+        var(--text);
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "SF Pro Display",
+        "SF Pro Text",
+        Inter,
+        system-ui,
+        sans-serif;
+    transition:
+        background-color
+        var(--transition),
+        color
+        var(--transition);
+}
+/* ═══════════════════════════════════════════════════════
+   APP
+═══════════════════════════════════════════════════════ */
+.dual-app {
+    min-height:
+        100vh;
+    background:
+        var(--bg);
+    color:
+        var(--text);
+}
+/* ═══════════════════════════════════════════════════════
+   HEADER FLUTUANTE
+═══════════════════════════════════════════════════════ */
+.topbar {
+    position:
+        fixed;
+    top:
+        0;
+    left:
+        0;
+    right:
+        0;
+    z-index:
+        1000;
+    display:
+        flex;
+    align-items:
+        center;
+    justify-content:
+        space-between;
+    min-height:
+        56px;
+    padding:
+        10px 16px;
+    background:
+        var(--topbar-bg);
+    border-bottom:
+        1px solid
+        var(--border);
+    backdrop-filter:
+        blur(24px);
+    -webkit-backdrop-filter:
+        blur(24px);
+    transform:
+        translateY(0);
+    transition:
+        transform
+        .32s
+        cubic-bezier(.22, 1, .36, 1),
+        opacity
+        .25s
+        ease,
+        background
+        var(--transition),
+        border-color
+        var(--transition);
+}
+/* ═══════════════════════════════════════════════════════
+   HEADER ESCONDIDO DURANTE SCROLL DOWN
+═══════════════════════════════════════════════════════ */
+.topbar.header-hidden {
+    transform:
+        translateY(
+            calc(-100% - 12px)
+        );
+    opacity:
+        .15;
+    pointer-events:
+        none;
+}
+/* ═══════════════════════════════════════════════════════
+   HEADER VISÍVEL
+═══════════════════════════════════════════════════════ */
+.topbar.header-visible {
+    transform:
+        translateY(0);
+    opacity:
+        1;
+    pointer-events:
+        auto;
+}
+/* ═══════════════════════════════════════════════════════
+   BRAND
+═══════════════════════════════════════════════════════ */
+.brandX {
+    display:
+        flex;
+    align-items:
+        center;
+    gap:
+        10px;
+    font-weight:
+        700;
+    letter-spacing:
+        .08em;
+}
+.badgeX {
+    padding:
+        5px 9px;
+    border-radius:
+        999px;
+    background:
+        var(--button-bg);
+    color:
+        var(--muted);
+    font-size:
+        10px;
+    letter-spacing:
+        .08em;
+}
+/* ═══════════════════════════════════════════════════════
+   THEME DOT
+   UMA ÚNICA BOLINHA
+═══════════════════════════════════════════════════════ */
+.theme-dot {
+    position:
+        relative;
+    width:
+        30px;
+    height:
+        30px;
+    padding:
+        0;
+    border:
+        1px solid
+        var(--border);
+    border-radius:
+        50%;
+    background:
+        var(--button-bg);
+    color:
+        var(--text);
+    cursor:
+        pointer;
+    display:
+        grid;
+    place-items:
+        center;
+    transition:
+        transform
+        .2s ease,
+        background
+        var(--transition),
+        border-color
+        var(--transition),
+        box-shadow
+        var(--transition);
+}
+.theme-dot::before {
+    content:
+        "";
+    width:
+        10px;
+    height:
+        10px;
+    border-radius:
+        50%;
+    background:
+        var(--cyan);
+    box-shadow:
+        0 0 12px
+        var(--cyan);
+    transition:
+        all
+        var(--transition);
+}
+.theme-dot:hover {
+    transform:
+        scale(1.08);
+    border-color:
+        var(--cyan);
+    box-shadow:
+        0 0 20px
+        color-mix(
+            in srgb,
+            var(--cyan) 20%,
+            transparent
+        );
+}
+/* ═══════════════════════════════════════════════════════
+   CONTENT
+═══════════════════════════════════════════════════════ */
+#main-content {
+    padding-top:
+        56px;
+    opacity:
+        1;
+    visibility:
+        visible;
+    pointer-events:
+        auto;
+    max-height:
+        50000px;
+    overflow:
+        hidden;
+    transition:
+        opacity
+        .35s
+        ease,
+        max-height
+        .35s
+        ease,
+        visibility
+        .35s
+        ease,
+        padding
+        .35s
+        ease;
+}
+/* ═══════════════════════════════════════════════════════
+   HEADER COLLAPSE
+   CLIQUE NO HEADER
+═══════════════════════════════════════════════════════ */
+#main-content.hidden {
+    opacity:
+        0;
+    visibility:
+        hidden;
+    pointer-events:
+        none;
+    max-height:
+        0;
+    padding-top:
+        0;
+    padding-bottom:
+        0;
+}
+/* ═══════════════════════════════════════════════════════
+   CONTENT
+═══════════════════════════════════════════════════════ */
+.content {
+    width:
+        min(
+            900px,
+            100%
+        );
+    margin:
+        0 auto;
+    padding:
+        28px 18px 120px;
+}
+/* ═══════════════════════════════════════════════════════
+   PANELS
+═══════════════════════════════════════════════════════ */
+.panel,
+.card,
+.modal,
+.drawer,
+.sidebar,
+.sheet,
+.deck,
+.overlay-panel,
+.fractal-block,
+.preview-card {
+    background:
+        var(--panel);
+    color:
+        var(--text);
+    border:
+        1px solid
+        var(--border);
+    border-radius:
+        var(--radius);
+    box-shadow:
+        var(--shadow);
+    backdrop-filter:
+        blur(20px);
+    -webkit-backdrop-filter:
+        blur(20px);
+    transition:
+        background
+        var(--transition),
+        border-color
+        var(--transition),
+        color
+        var(--transition),
+        box-shadow
+        var(--transition);
+}
+/* ═══════════════════════════════════════════════════════
+   FIELD
+═══════════════════════════════════════════════════════ */
+.field {
+    display:
+        grid;
+    gap:
+        8px;
+    margin-bottom:
+        18px;
+}
+.field label {
+    color:
+        var(--muted);
+    font-size:
+        12px;
+    font-weight:
+        600;
+}
+textarea,
+input,
+select {
+    width:
+        100%;
+    padding:
+        14px;
+    border:
+        1px solid
+        var(--border);
+    border-radius:
+        14px;
+    outline:
+        none;
+    background:
+        var(--input-bg);
+    color:
+        var(--text);
+    font:
+        inherit;
+}
+/* ═══════════════════════════════════════════════════════
+   DEMO
+═══════════════════════════════════════════════════════ */
+.demo {
+    min-height:
+        1200px;
+    padding:
+        24px;
+}
+
+    .session-window.suspended .win-frame { display: none; }
+    .session-window.suspended::after {
+      content: '⏸';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      opacity: 0.3;
+      pointer-events: none;
+    }
+    .session-window.minimized { display: none; }
+    .dock-bubble { cursor: pointer; }
