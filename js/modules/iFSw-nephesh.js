@@ -768,7 +768,7 @@
           created: 'CRIADO',
           closed: 'FECHADO'
         };
-        badge.textContent = `● ${labels[state] || state}`;
+        badge.textContent = `●`;
         badge.style.color = colors[state] || '#aaa';
         badge.style.background = colors[state] + '33';
       });
