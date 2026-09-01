@@ -19,7 +19,7 @@
     { src: "https://kodux78k.github.io/oiDual--Y-/M0D/0RB/js/modules/inline-2.js", type: "module" },
     { src: "https://www.infodose.com.br/js/modules/synk.js", type: "module" },
     { src: "https://www.infodose.com.br/js/modules/myFrameh.js" },
-    { src: "https://infodose.com.br/js/modules/iFSw-base.js" },
+    { src: "https://infodose.com.br/js/modules/iFSw-base-nephesh.js" },
     { src: "https://www.infodose.com.br/js/kob.js", type: "module" },
     { src: "https://kodux78k.github.io/oi-Dual/js/modules/inline-000.js" },
     { src: "https://kodux78k.github.io/oiDual--Y-/js/inline-1.js" },
