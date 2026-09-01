@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>dual.mod — KARD GLASS v2.0</title>
+
+<meta name="theme-color" content="#00e5ff">
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiZHVhbC5tb2QgS0FSRCIsInNob3J0X25hbWUiOiJkdWFsIiwic3RhcnRfdXJsIjoiLyIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMwNTA3MGEiLCJ0aGVtZV9jb2xvciI6IiMwMGU1ZmYifQ==">
+
+<style>
+/* ===========================
+   KARD GLASS DESIGN SYSTEM v2
+=========================== */
+:root {
+  --bg: #05070a;
+  --panel: rgba(255,255,255,.055);
+  --panel-2: rgba(255,255,255,.035);
+  --border: rgba(255,255,255,.11);
+  --accent: #00e5ff;
+  --text: #f4f7fa;
+  --muted: #89939e;
+  --green: #8cf59a;
+  --orange: #ff9f1c;
+  --glow: 0 0 40px rgba(0,229,255,.25);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter,system-ui,-apple-system,sans-serif;
+  background:radial-gradient(1000px 600px at 80% -10%, rgba(0,229,255,.12), transparent 60%),
+             radial-gradient(800px 500px at 20% 110%, rgba(0,229,255,.08), transparent 60%),
+             var(--bg);
+  color:var(--text);
+  min-height:100vh;
+}
+
+header{
+  padding:16px 20px;
+  background:var(--panel-2);
+  border-bottom:1px solid var(--border);
+  font-weight:700;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  backdrop-filter:blur(20px);
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+
+.orb{
+  width:42px;height:42px;border-radius:15px;
+  background:radial-gradient(circle at 35% 30%,white 0 5%,var(--accent) 16%,rgba(0,229,255,.15) 52%,transparent 72%);
+  box-shadow:var(--glow);
+  display:grid;place-items:center;font-size:18px
+}
+
+main{padding:20px;display:flex;flex-direction:column;gap:16px;max-width:1200px;margin:0 auto}
+
+section{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:24px;
+  padding:16px;
+  backdrop-filter:blur(20px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+section h2{margin:0 0 12px 0;font-size:13px;color:var(--accent);text-transform:uppercase;letter-spacing:.5px}
+
+textarea{
+  width:100%;min-height:200px;
+  background:rgba(0,0,0,.3);
+  color:var(--text);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:12px;
+  font-family:'Fira Code',monospace;
+  font-size:12px;
+  resize:vertical;
+}
+textarea:focus, input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 15px rgba(0,229,255,.2);
+}
+
+button{
+  background:rgba(0,229,255,.12);
+  border:1px solid rgba(0,229,255,.3);
+  border-radius:12px;
+  padding:10px 14px;
+  color:var(--accent);
+  font-weight:700;
+  cursor:pointer;
+  font-size:11px;
+  transition:.2s;
+}
+button:hover{transform:translateY(-1px);box-shadow:var(--glow)}
+button.secondary{background:rgba(255,255,255,.045);color:#dfe5e9;border-color:var(--border)}
+button.green{background:rgba(140,245,154,.12);color:var(--green);border-color:rgba(140,245,154,.3)}
+button.orange{background:rgba(255,159,28,.12);color:var(--orange);border-color:rgba(255,159,28,.3)}
+
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+label{font-size:12px;display:flex;align-items:center;gap:8px;color:var(--muted);cursor:pointer}
+
+iframe{
+  width:100%;height:380px;
+  border-radius:16px;
+  border:1px solid var(--border);
+  background:#000;
+  box-shadow:inset 0 0 20px rgba(0,0,0,.5)
+}
+
+.file{
+  font-family:'Fira Code',monospace;
+  font-size:11px;
+  white-space:pre-wrap;
+  background:rgba(0,0,0,.3);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:12px;
+  margin-bottom:8px;
+  max-height:220px;
+  overflow:auto;
+  color:#aab2b8;
+  position:relative;
+}
+
+.panel-item{
+  padding:10px 14px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:rgba(0,0,0,.2);
+  margin-bottom:6px;
+  cursor:pointer;
+  font-size:12px;
+  transition:.2s;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.panel-item:hover{border-color:var(--accent);background:rgba(0,229,255,.05)}
+
+.badge{font-size:9px;padding:4px 10px;border-radius:8px;background:rgba(0,229,255,.15);color:var(--accent);font-weight:700}
+.footer{text-align:center;font-size:9px;color:var(--muted);padding:20px}
+
+/* Toast Notification */
+#toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(5, 7, 10, 0.9);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 12px;
+  box-shadow: var(--glow);
+  display: none;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+}
+</style>
+</head>
+
+<body>
+<header>
+  <div style="display:flex;gap:12px;align-items:center">
+    <div class="orb">∞</div>
+    <div>
+      <div>dual.mod — KARD GLASS</div>
+      <div style="font-size:10px;color:var(--muted)">HUB MONOLITH v2.0</div>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="green" onclick="window.print()">🖨️ PDF / Imprimir</button>
+    <span class="badge">SEAL 369</span>
+  </div>
+</header>
+
+<main>
+
+<section>
+<h2>HTML de Entrada</h2>
+<textarea id="input"><!DOCTYPE html>
+<html>
+<head><title>Teste KARD Glass</title>
+<style>
+  body { background: linear-gradient(135deg, #05070a, #0b1329); color: #f4f7fa; font-family: sans-serif; padding: 20px; text-align: center; }
+  h1 { color: #00e5ff; text-shadow: 0 0 20px rgba(0,229,255,0.4); }
+  .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 16px; backdrop-filter: blur(10px); display: inline-block; margin-top: 20px;}
+</style>
+</head>
+<body>
+  <h1>Olá dual.mod Glass v2</h1>
+  <div class="card">
+    <p>Este componente foi modularizado com sucesso.</p>
+    <button onclick="alert('Sistema KARD Operacional!')">Testar Clique</button>
+  </div>
+<script>
+  console.log('KARD active and running smoothly');
+</script>
+</body>
+</html></textarea>
+
+<div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+  <label>
+    <input type="checkbox" id="injectInfodose" checked>
+    Injetar Infodose + Registro Δ7 Automático
+  </label>
+  <div class="controls">
+    <button class="secondary" onclick="pasteFromClipboard()">📋 Colar</button>
+    <button class="secondary" onclick="importHTML()">📂 Importar</button>
+    <button onclick="processHTML()">⚙️ Modularizar</button>
+    <button class="orange" onclick="limpar()">🧹 Limpar</button>
+  </div>
+</div>
+<input type="file" id="fileInput" accept=".html,text/html" hidden>
+</section>
+
+<section>
+<h2>Preview Glass</h2>
+<iframe id="preview"></iframe>
+</section>
+
+<section>
+<h2>Arquivos Gerados</h2>
+<div class="controls" style="margin-bottom:12px">
+  <button class="secondary" onclick="copyAll()">🧠 Copiar Tudo</button>
+  <button class="secondary" onclick="downloadZIP()">⬇️ Baixar como Pacote</button>
+</div>
+<div id="files"></div>
+</section>
+
+<section>
+<h2>Dual Brain — Presets Salvos</h2>
+<div class="controls" style="margin-bottom:12px">
+  <button class="secondary" onclick="savePreset()">💾 Salvar Preset Atual</button>
+</div>
+<div id="brain"></div>
+</section>
+
+<section>
+<h2>Loja de Snippets KARD</h2>
+<div style="font-size:11px; color:var(--muted); margin-bottom:8px;">Clique em um snippet para adicioná-lo ao projeto gerado.</div>
+<div id="store"></div>
+</section>
+
+</main>
+
+<div id="toast">Notificação</div>
+<div class="footer">3 ↓ DOM ↓ RII ↓ ENTER ↓ T ↓ E MENTS ↓ 369 | KODUX GLASS v2</div>
+
+<script>
+/* CORE + DELTA7 + MOCK ZIP ENGINE */
+const HUB = new BroadcastChannel("dual-hub");
+const DUAL_APP = { id: "dual.mod.kard", version: "2.0", startedAt: Date.now() };
+HUB.postMessage({ type: "app:online", app: DUAL_APP });
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.display = "block";
+  setTimeout(() => { t.style.display = "none"; }, 2500);
+}
+
+const Delta7 = {
+  KEY: "DELTA7_LOG_V2",
+  write(meta){
+    const e = { ts: Date.now(), id: crypto.randomUUID(), meta };
+    const a = JSON.parse(localStorage.getItem(this.KEY)||"[]");
+    a.push(e);
+    localStorage.setItem(this.KEY, JSON.stringify(a));
+    return e;
+  },
+  read(){ return JSON.parse(localStorage.getItem(this.KEY)||"[]") }
+};
+window.Delta7 = Delta7;
+
+// Simulated ZIP generator for clean bundle exporting
+class SimpleBundleZip {
+  constructor() { this.files = {}; }
+  file(path, content) { this.files[path] = content; }
+  async generateAsync() {
+    let manifestContent = "=== DUAL.MOD KARD MANIFEST ===\n\n";
+    Object.entries(this.files).forEach(([p, c]) => {
+      manifestContent += `--------------------------------------------------\nFILE: ${p}\n--------------------------------------------------\n${c}\n\n`;
+    });
+    return new Blob([manifestContent], { type: "text/plain;charset=utf-8" });
+  }
+}
+
+/* BRAIN PRESETS */
+const PRESET_KEY = "DUAL_PRESETS_V2";
+function getPresets(){ return JSON.parse(localStorage.getItem(PRESET_KEY)||"[]") }
+function savePreset(){
+  if(!input.value.trim()) return showToast("HTML vazio para salvar!");
+  const p = getPresets();
+  p.push({ title: extractTitle(input.value), html: input.value, injectInfodose: injectInfodose.checked, ts: Date.now() });
+  localStorage.setItem(PRESET_KEY, JSON.stringify(p));
+  renderBrain();
+  showToast("Preset salvo com sucesso!");
+}
+function loadPreset(p){
+  input.value = p.html;
+  injectInfodose.checked = p.injectInfodose;
+  processHTML();
+  showToast("Preset carregado!");
+}
+function deletePreset(e, idx){
+  e.stopPropagation();
+  const p = getPresets();
+  p.splice(idx, 1);
+  localStorage.setItem(PRESET_KEY, JSON.stringify(p));
+  renderBrain();
+  showToast("Preset removido.");
+}
+function extractTitle(html) {
+  const match = html.match(/<title>(.*?)<\/title>/i);
+  return match ? match[1] : "Projeto sem título";
+}
+function renderBrain(){
+  const b = document.getElementById("brain");
+  b.innerHTML = "";
+  const presets = getPresets();
+  if(presets.length === 0) {
+    b.innerHTML = '<div style="font-size:11px; color:var(--muted); padding:8px;">Nenhum preset salvo ainda.</div>';
+    return;
+  }
+  presets.forEach((p, idx)=>{
+    const d = document.createElement("div");
+    d.className = "panel-item";
+    d.innerHTML = `<div><strong>${p.title}</strong> <span style="font-size:10px; color:var(--muted); margin-left:8px;">${new Date(p.ts).toLocaleDateString()}</span></div>
+                   <button class="secondary" style="padding:4px 8px; font-size:9px;" onclick="event.stopPropagation(); deletePreset(event, ${idx})">🗑️ Excluir</button>`;
+    d.onclick = () => loadPreset(p);
+    b.appendChild(d);
+  });
+}
+renderBrain();
+
+/* STORE SNIPPETS */
+const snippets = [
+  {
+    name: "Glass Button Effect",
+    desc: "Adiciona estilo CSS para botões em vidro fosco.",
+    files: {"css/snippets/glass-btn.css": ".btn-glass-effect { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(15px); border-radius: 12px; color: #fff; transition: 0.3s; }\n.btn-glass-effect:hover { background: rgba(0,229,255,0.15); border-color: var(--accent); }"}
+  },
+  {
+    name: "Neon Glow Pulse",
+    desc: "Efeito de pulsação luminosa em ciber-neon.",
+    files: {"css/snippets/neon-pulse.css": "@keyframes neonPulse { 0% { box-shadow: 0 0 5px rgba(0,229,255,0.2); } 50% { box-shadow: 0 0 25px rgba(0,229,255,0.6); } 100% { box-shadow: 0 0 5px rgba(0,229,255,0.2); } }\n.neon-pulse { animation: neonPulse 3s infinite; }"}
+  },
+  {
+    name: "Logger Module KARD",
+    desc: "Módulo JS utilitário para logs formatados no console.",
+    files: {"js/modules/kard-logger.js": "export function logKard(msg) {\n  console.log('%c[KARD LOG] %c' + msg, 'color:#00e5ff;font-weight:bold', 'color:#f4f7fa');\n}\nlogKard('Módulo injetado com sucesso.');"}
+  }
+];
+
+function renderStore(){
+  const s = document.getElementById("store");
+  s.innerHTML = "";
+  snippets.forEach(snip=>{
+    const d = document.createElement("div");
+    d.className = "panel-item";
+    d.innerHTML = `<div><strong>${snip.name}</strong><div style="font-size:10px; color:var(--muted);">${snip.desc}</div></div>
+                   <button style="padding:6px 12px;" onclick="installSnippet('${snip.name}')">Instalar</button>`;
+    s.appendChild(d);
+  });
+}
+
+function installSnippet(name){
+  const snip = snippets.find(item => item.name === name);
+  if(!snip) return;
+  if(!window.__files) {
+    processHTML();
+  }
+  Object.entries(snip.files).forEach(([p,c]) => {
+    window.__files[p] = c;
+  });
+  renderFiles(window.__files);
+  preview(window.__files);
+  showToast(`Snippet "${name}" instalado!`);
+}
+renderStore();
+
+/* MODULARIZADOR PRINCIPAL */
+function processHTML(){
+  const raw = input.value;
+  if(!raw.trim()) return showToast("Insira um código HTML válido.");
+  
+  const doc = new DOMParser().parseFromString(raw, "text/html");
+  let css = "";
+  let modules = [];
+  let i = 0;
+  
+  doc.querySelectorAll("style").forEach(s => {
+    css += s.textContent + "\n";
+    s.remove();
+  });
+  
+  doc.querySelectorAll("script:not([src])").forEach(s => {
+    modules.push({ name: `module-${i++}.js`, code: s.textContent });
+    s.remove();
+  });
+  
+  doc.querySelectorAll("script[src]").forEach(s => s.remove());
+  
+  const link = doc.createElement("link");
+  link.rel = "stylesheet";
+  link.href = "./css/main.css";
+  
+  const mainScript = doc.createElement("script");
+  mainScript.type = "module";
+  mainScript.src = "./js/main.js";
+  
+  doc.head.appendChild(link);
+  doc.body.appendChild(mainScript);
+  
+  const files = {};
+  files["index.html"] = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+  files["css/main.css"] = css || "/* Nenhum estilo CSS inline extraído */";
+  
+  let mainJS = "";
+  if(injectInfodose.checked){
+    const reg = Delta7.write({ app: "generated.kard.v2", timestamp: new Date().toISOString() });
+    mainJS += `console.log("%c[Infodose KARD v2] Registro Δ7:","color:#00e5ff;font-weight:bold", ${JSON.stringify(reg)});\n\n`;
+  }
+  
+  modules.forEach(m => {
+    files[`js/modules/${m.name}`] = m.code;
+    mainJS += `import "./modules/${m.name}";\n`;
+  });
+  
+  // Preserve any previously installed snippet files if re-running
+  if(window.__files) {
+    Object.keys(window.__files).forEach(path => {
+      if(path.includes("snippets/") || path.includes("modules/kard-")) {
+        files[path] = window.__files[path];
+        if(path.endsWith(".js") && !mainJS.includes(path)) {
+          mainJS += `import "./${path.replace('js/', '')}";\n`;
+        }
+      }
+    });
+  }
+  
+  files["js/main.js"] = mainJS || "// Nenhum script modular encontrado";
+  window.__files = files;
+  
+  renderFiles(files);
+  preview(files);
+  showToast("Código modularizado com sucesso!");
+}
+
+function renderFiles(files){
+  const c = document.getElementById("files");
+  c.innerHTML = "";
+  Object.entries(files).forEach(([n, ct]) => {
+    const d = document.createElement("div");
+    d.className = "file";
+    d.textContent = `// Caminho: ${n}\n\n${ct}`;
+    c.appendChild(d);
+  });
+}
+
+function preview(files){
+  let html = files["index.html"];
+  // Substitui referências internas por ObjectURLs para simular o ambiente modular no iframe
+  Object.entries(files).forEach(([p, ct]) => {
+    let mime = "text/plain";
+    if(p.endsWith(".css")) mime = "text/css";
+    if(p.endsWith(".js")) mime = "text/javascript";
+    const blob = new Blob([ct], { type: mime });
+    const url = URL.createObjectURL(blob);
+    html = html.replaceAll(p, url);
+    // Também substitui variações relativas comuns
+    html = html.replaceAll("./" + p, url);
+  });
+  
+  const previewBlob = new Blob([html], { type: "text/html;charset=utf-8" });
+  document.getElementById("preview").src = URL.createObjectURL(previewBlob);
+}
+
+/* UTILS */
+function pasteFromClipboard(){
+  navigator.clipboard.readText().then(t => {
+    input.value = t;
+    processHTML();
+    showToast("Conteúdo colado com sucesso!");
+  }).catch(() => showToast("Permissão de área de transferência negada."));
+}
+
+function importHTML(){ fileInput.click(); }
+fileInput.addEventListener("change", e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    input.value = r.result;
+    processHTML();
+    showToast("Arquivo importado com sucesso!");
+  };
+  r.readAsText(f);
+});
+
+function copyAll(){
+  if(!window.__files) return showToast("Nenhum arquivo gerado para copiar.");
+  let o = "";
+  Object.entries(window.__files).forEach(([n, c]) => {
+    o += `\n\n// ==========================================\n// ARQUIVO: ${n}\n// ==========================================\n\n${c}`;
+  });
+  navigator.clipboard.writeText(o).then(() => {
+    showToast("🐐 Todos os códigos copiados para a área de transferência!");
+  });
+}
+
+function limpar(){
+  input.value = "";
+  document.getElementById("files").innerHTML = "";
+  document.getElementById("preview").src = "";
+  window.__files = null;
+  showToast("Ambiente limpo.");
+}
+
+async function downloadZIP(){
+  if(!window.__files) return showToast("Gere o projeto primeiro antes de baixar.");
+  const zip = new SimpleBundleZip();
+  Object.entries(window.__files).forEach(([p, c]) => zip.file(p, c));
+  const blob = await zip.generateAsync();
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "dual.mod.kard.bundle.txt";
+  a.click();
+  showToast("Pacote gerado para download!");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  if(input.value.trim()) processHTML();
+});
+</script>
+</body>
+</html>

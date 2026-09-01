@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Almasliber OS — Spacetime & Splash</title>
+
+  <!-- CDNs do Ecossistema -->
+  <link rel="stylesheet" href="https://kodux78k.github.io/oi-Dual/css/main.css">
+  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/css/kob-glass-0.css">
+  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/M0D/LV/css/main.css" data-k-id="L_1">
+
+  <style>
+    /* =========================================================
+       TEMA GLOBAL DO ALMASLIBER
+    ========================================================= */
+    :root {
+      --bg: #050608;
+      --cyan: #00f2ff;
+      --text: #f4f7fa;
+    }
+    body {
+      margin: 0;
+      color: var(--text);
+      background: var(--bg);
+      font-family: Inter, system-ui, sans-serif;
+      overflow: hidden; /* Previne rolagem enquanto o splash está ativo */
+    }
+
+    /* =====================================================
+       SPLASH SCREEN (SLICE DIALOGUE ENGINE)[span_1](start_span)[span_1](end_span)
+    ===================================================== */
+    #splash-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: radial-gradient(circle at 50% 20%, rgba(0,242,255,.08), transparent 35%), #050608;
+      display: flex;
+      flex-direction: column;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+
+    #splash-screen slice {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 8vw;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(30px) scale(.98);
+      transition: opacity .6s ease, transform .8s cubic-bezier(.2,.8,.2,1), visibility .6s;
+    }
+    #splash-screen slice.active {
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+    }
+
+    #splash-screen label {
+      display: inline-flex;
+      width: max-content;
+      margin-bottom: 22px;
+      padding: 7px 12px;
+      border: 1px solid rgba(0,242,255,.35);
+      border-radius: 999px;
+      color: var(--cyan);
+      font-size: 11px;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      background: rgba(0,242,255,.04);
+      box-shadow: 0 0 20px rgba(0,242,255,.08);
+    }
+
+    #splash-screen dialogue {
+      display: block;
+      max-width: 800px;
+      font-size: clamp(28px,5vw,72px);
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -.04em;
+    }
+    #splash-screen dialogue.small {
+      margin-top: 25px;
+      max-width: 600px;
+      color: #8997a2;
+      font-size: clamp(15px,2vw,22px);
+      font-weight: 400;
+      line-height: 1.5;
+    }
+    #splash-screen dialogue span {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(18px);
+      animation: charIn .5s forwards;
+    }
+    @keyframes charIn {
+      to { opacity: 1; transform: none; }
+    }
+
+    #splash-screen .controls {
+      position: absolute;
+      left: 50%;
+      bottom: 35px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 100;
+    }
+    #splash-screen button {
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: white;
+      padding: 10px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      transition: .25s;
+    }
+    #splash-screen button:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      transform: translateY(-2px);
+    }
+    #splash-screen .timeline {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(400px,70vw);
+      height: 2px;
+      background: rgba(255,255,255,.1);
+      z-index: 100;
+    }
+    #splash-screen .timeline i {
+      display: block;
+      width: 0;
+      height: 100%;
+      background: var(--cyan);
+      box-shadow: 0 0 12px var(--cyan);
+      transition: width .5s;
+    }
+
+    /* Conteúdo principal do OS escondido inicialmente */
+    .os-container {
+      display: none;
+      height: 100vh;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- =====================================================
+       SPLASH SCREEN (SLICE DIALOGUE ENGINE)
+  ===================================================== -->
+  <div id="splash-screen">
+    
+    <slice>
+      <label>SLICE 01 · SYSTEM</label>
+      <dialogue>Inicializando Spacetime.</dialogue>
+      <dialogue class="small">Bem-vindo ao ecossistema Almasliber OS.</dialogue>
+    </slice>
+
+    <slice>
+      <label>SLICE 02 · DOCS RECENTES</label>
+      <dialogue>Nebula Gallery & Dual Infodose.</dialogue>
+      <dialogue class="small">Módulos carregados: Slice Reader, Tab Engine, FX Lab[span_2](start_span)[span_2](end_span).</dialogue>
+    </slice>
+
+    <slice>
+      <label>SLICE 03 · KODUX</label>
+      <dialogue>Chaves de cofre sincronizadas.</dialogue>
+      <dialogue class="small">O ambiente modular está pronto para acesso.</dialogue>
+    </slice>
+
+    <div class="timeline">
+      <i id="progress"></i>
+    </div>
+
+    <div class="controls">
+      <button onclick="prevSlice()">←</button>
+      <button id="nextBtn" onclick="nextSlice()">NEXT</button>
+    </div>
+  </div>
+
+  <!-- =====================================================
+       OS CONTAINER PRINCIPAL (Aparece após o Splash)
+  ===================================================== -->
+  <div class="os-container" id="mainOS">
+
+ <!-- CONTEÚDO DA JANELA SUBSTITUINDO O IFRAME PELO CÓDIGO DA VITRINE -->
+              <div class="session-window win-frame-native" data-runtime="native">
+                      <div class="win-hdr">
+          <span class="win-title">
+            <svg class="icon-svg" aria-hidden="true"><use href="#icon-globe"></use></svg>
+            Abas
+          </span>
+          <div class="win-controls">
+          <button
+              class="tab-badge"
+              onclick="OS.TabEngine.showTabSwitcher()"
+            >
+              <span id="tab-count">1</span>
+            </button>
+          </div>
+          <div class="win-controls">
+            <button type="button" data-action="collapse" title="Colapsar">
+            −
+            </button>
+            <button type="button" data-action="maximize" title="Maximizar">
+
+            ⛶
+
+            </button>
+            <button type="button" data-action="minimize" title="Minimizar">
+            ۞
+           </button>
+    <button type="button" onclick="OS.TabEngine.newTab()" style="background:transparent; border:none; color:#fff; font-size:20px; padding:0 8px;">+</button>
+            <button type="button" onclick="OS.TabEngine.hideTabSwitcher()" style="background:transparent; border:none; color:#fff; padding:0 8px;">✕</button>
+          </div>
+        </div>  
+                <div id="galleryApp">
+                  
+                  <!-- =====================================================
+                       HEADER DA VITRINE
+                  ====================================================== -->
+                  <header class="gallery-header">
+                    <div class="brand">
+                      <div class="brand-symbol">◉</div>
+                      <div>
+                        <div class="brand-title">NEBULA GALLERY</div>
+                        <div class="brand-subtitle">DIGITAL APP VITRINE</div>
+                      </div>
+                    </div>
+                    <div class="header-actions">
+                      <button class="icon-btn" onclick="openSearch()" title="Pesquisar">⌕</button>
+                    </div>
+                  </header>
+
+                  <!-- =====================================================
+                       CONTEÚDO ROLÁVEL DA VITRINE
+                  ====================================================== -->
+                  <main class="gallery-scroll" id="galleryScroll">
+                    
+                    <!-- INTRO -->
+                    <section class="gallery-intro">
+                      <span class="eyebrow">KOBLLUX · APP SPACE</span>
+                      <h1>Sua galeria.<br>Seu universo.</h1>
+                      <p>
+                        Explore aplicativos, ferramentas e experiências
+                        em uma vitrine visual construída para navegação
+                        por toque, slide e carrossel.
+                      </p>
+                    </section>
+
+                    <!-- HERO CAROUSEL -->
+                    <section class="hero-wrap">
+                      <div class="hero-track" id="heroTrack">
+                        
+                        <!-- A FÓRMULA DA DOPAMINA -->
+                        <article class="app-card cover-card" data-app="A Fórmula da Dopamina">
+                          <img class="card-cover" src="https://infodose.com.br/fotos/A_formula_da_dopamina_sexy-CAPA.jpg" alt="A Fórmula da Dopamina">
+                          <div class="cover-overlay"></div>
+                          <div class="card-content">
+                            <span class="card-tag">INFODOSE · EDIÇÃO</span>
+                            <h2>A Fórmula<br>da Dopamina</h2>
+                            <p>Uma experiência visual para explorar comportamento, prazer, recompensa e os mecanismos da dopamina.</p>
+                            <div class="card-actions">
+                              <button class="open-app" onclick="openApp('A Fórmula da Dopamina')">ABRIR</button>
+                              <button class="more-app" onclick="appInfo('A Fórmula da Dopamina')">···</button>
+                            </div>
+                          </div>
+                        </article>
+
+                        <!-- O ESPAÇO DA MENTE -->
+                        <article class="app-card cover-card" data-app="O Espaço da Mente">
+                          <img class="card-cover" src="https://infodose.com.br/fotos/O_espaco_da_mente-CAPA.jpg" alt="O Espaço da Mente">
+                          <div class="cover-overlay"></div>
+                          <div class="card-content">
+                            <span class="card-tag">NEBULA READER</span>
+                            <h2>O Espaço<br>da Mente</h2>
+                            <p>Entre em um espaço de leitura pensado para transformar textos em uma experiência imersiva.</p>
+                            <div class="card-actions">
+                              <button class="open-app" onclick="openApp('O Espaço da Mente')">ABRIR</button>
+                              <button class="more-app" onclick="appInfo('O Espaço da Mente')">···</button>
+                            </div>
+                          </div>
+                        </article>
+
+                      </div>
+
+                      <div class="carousel-dots" id="carouselDots">
+                        <button class="active"></button>
+                        <button></button>
+                      </div>
+                    </section>
+
+                    <!-- CATEGORIAS -->
+                    <section class="section">
+                      <div class="section-head">
+                        <div class="section-title">Explorar</div>
+                        <button class="section-link" onclick="showAll()">VER TODOS</button>
+                      </div>
+                      <div class="category-tabs">
+                        <button class="active" onclick="selectCategory(this)">Todos</button>
+                        <button onclick="selectCategory(this)">IA</button>
+                        <button onclick="selectCategory(this)">Leitura</button>
+                        <button onclick="selectCategory(this)">Sistema</button>
+                        <button onclick="selectCategory(this)">Criação</button>
+                        <button onclick="selectCategory(this)">Utilidades</button>
+                      </div>
+                    </section>
+
+                    <!-- MINI APPS -->
+                    <section class="section">
+                      <div class="section-head">
+                        <div class="section-title">Aplicativos</div>
+                        <button class="section-link" onclick="scrollApps()">DESLIZAR →</button>
+                      </div>
+                      <div class="app-rail" id="appRail">
+                        
+                        <article class="mini-card" onclick="openApp('Dual Infodose')">
+                          <div class="mini-icon">◉</div>
+                          <h3>Dual Infodose</h3>
+                          <p>IA · Chat · Voz</p>
+                        </article>
+
+                        <article class="mini-card" onclick="openApp('Slice Reader')">
+                          <div class="mini-icon">◫</div>
+                          <h3>Slice Reader</h3>
+                          <p>Documentos · Reader</p>
+                        </article>
+
+                        <article class="mini-card" onclick="openApp('Tab Engine')">
+                          <div class="mini-icon">▣</div>
+                          <h3>Tab Engine</h3>
+                          <p>Abas · Sessões</p>
+                        </article>
+
+                        <article class="mini-card" onclick="openApp('BaúLite')">
+                          <div class="mini-icon">◈</div>
+                          <h3>BaúLite</h3>
+                          <p>Dados · Biblioteca</p>
+                        </article>
+
+                        <article class="mini-card" onclick="openApp('Cortex')">
+                          <div class="mini-icon">◎</div>
+                          <h3>Cortex</h3>
+                          <p>Conhecimento · RAG</p>
+                        </article>
+
+                        <article class="mini-card" onclick="openApp('Workspace')">
+                          <div class="mini-icon">⌘</div>
+                          <h3>Workspace</h3>
+                          <p>Projetos · Espaços</p>
+                        </article>
+
+                      </div>
+                    </section>
+                  </main>
+
+                  <!-- SIDE SLIDER -->
+                  <div class="side-slider"></div>
+
+                  <!-- BOTTOM NAV DA VITRINE -->
+                  <nav class="bottom-nav">
+                    <button class="active" onclick="goHome(this)">◉<span>VITRINE</span></button>
+                    <button onclick="goApps(this)">▦<span>APPS</span></button>
+                    <button onclick="goTabs(this)">▣<span>ABAS</span></button>
+                    <button onclick="goLibrary(this)">◫<span>LIBRARY</span></button>
+                    <button onclick="goSettings(this)">⚙<span>AJUSTES</span></button>
+                  </nav>
+
+                </div>
+                
+              </div><!-- /win-frame-native -->
+              
+            </div><!-- /session-window -->
+            
+          </div><!-- /stackWrap -->
+        </div><!-- /kxtsk-shell -->
+      </div>
+    </main>
+ <!-- ==========================================
+       HEADERS E CDNS DO iFSw (Arquivo 1)
+  =========================================== -->
+  <style>
+    @import url("https://infodose.com.br/css/a€Ar.css");
+    @import url("https://infodose.com.br/css/iFSw-clean.css");
+    @import url("https://infodose.com.br/css/iFSw-base.css");
+    @import url("https://infodose.com.br/css/iFSw-nephesh.css");
+  </style>
+
+  <style id="ifsw-unified-core">
+    @import "https://infodose.com.br/css/iFSw-unified.css";
+  </style>
+
+  <!-- ==========================================
+       ESTILOS DA VITRINE (Arquivo 2)
+  =========================================== -->
+  <style>
+    /* =========================================================
+       NEBULA APP GALLERY - MOBILE DIGITAL VITRINE
+    ========================================================= */
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+    }
+
+    :root{
+      --bg:#050608;
+      --panel:rgba(14,17,21,.72);
+      --panel-solid:#0d1014;
+      --text:#f4f7fa;
+      --muted:#7c8791;
+      --cyan:#00f2ff;
+      --green:#39ffb6;
+      --pink:#ff2bd6;
+      --orange:#ff9d3d;
+      --border:rgba(255,255,255,.10);
+      --radius:28px;
+      --shadow:0 25px 80px rgba(0,0,0,.45);
+    }
+
+    body[data-theme="light"]{
+      --bg:#f4f7fa;
+      --panel:rgba(255,255,255,.72);
+      --panel-solid:#ffffff;
+      --text:#10151a;
+      --muted:#69747d;
+      --border:rgba(0,0,0,.09);
+      --shadow:0 25px 70px rgba(0,0,0,.12);
+    }
+
+    html, body {
+      width:100%;
+      height:100%;
+      overflow: hidden;
+      background: var(--bg); /* Fundo base para o OS */
+    }
+
+    /* =========================================================
+       APP EMBUTIDO NA JANELA
+    ========================================================= */
+    #galleryApp {
+      position: absolute; /* Modificado de fixed para caber na janela */
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+      /* Movendo o fundo gradiente do body para o app isolado */
+      background:
+        radial-gradient(circle at 50% -10%, rgba(0,242,255,.14), transparent 38%),
+        radial-gradient(circle at 100% 80%, rgba(255,43,214,.07), transparent 35%),
+        var(--bg);
+
+      transition: background .4s ease, color .4s ease;
+      border-bottom-left-radius: inherit;
+      border-bottom-right-radius: inherit;
+      z-index: 1;
+    }
+
+    /* =========================================================
+       COMPONENTES DA VITRINE
+    ========================================================= */
+    .gallery-header{
+      height:64px;
+      flex-shrink:0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--border);
+      background: color-mix(in srgb, var(--bg) 75%, transparent);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      z-index:100;
+    }
+
+    .brand{ display:flex; align-items:center; gap:10px; min-width:0; }
+    
+    .brand-symbol{
+      width:36px; height:36px; display:grid; place-items:center;
+      border: 1px solid rgba(0,242,255,.30); border-radius:13px;
+      color:var(--cyan); background: rgba(0,242,255,.06);
+      box-shadow: 0 0 25px rgba(0,242,255,.08); font-size:18px;
+    }
+    .brand-title{ font-size:13px; font-weight:800; letter-spacing:.08em; }
+    .brand-subtitle{ margin-top:2px; color:var(--muted); font-size:8px; letter-spacing:.16em; text-transform:uppercase; }
+    
+    .header-actions{ display:flex; gap:6px; }
+    .icon-btn{
+      width:38px; height:38px; display:grid; place-items:center;
+      border: 1px solid var(--border); border-radius:12px;
+      background: rgba(255,255,255,.035); color:var(--text); font-size:17px;
+      cursor:pointer; transition:.25s ease;
+    }
+    .icon-btn:active{ transform:scale(.92); }
+
+    .gallery-scroll{
+      flex:1; min-height:0; overflow-y:auto; overflow-x:hidden;
+      padding: 24px 0 120px; scroll-behavior:smooth; scrollbar-width:none;
+    }
+    .gallery-scroll::-webkit-scrollbar{ display:none; }
+
+    .gallery-intro{ padding: 0 22px 20px; }
+    .eyebrow{
+      display:inline-flex; padding: 6px 10px;
+      border: 1px solid rgba(0,242,255,.25); border-radius:999px;
+      color:var(--cyan); background: rgba(0,242,255,.045);
+      font-size:9px; font-weight:800; letter-spacing:.18em;
+    }
+    .gallery-intro h1{ margin-top:15px; max-width:700px; font-size: clamp(38px,10vw,70px); line-height:.96; letter-spacing:-.055em; }
+    .gallery-intro p{ margin-top:14px; max-width:500px; color:var(--muted); font-size:14px; line-height:1.55; }
+
+    /* REAL COVER CARDS */
+    .hero-wrap{ position:relative; margin-top:10px; }
+    .hero-track{ display:flex; gap:14px; overflow-x:auto; padding: 5px 22px 22px; scroll-snap-type:x mandatory; scrollbar-width:none; overscroll-behavior-x:contain; }
+    .hero-track::-webkit-scrollbar{ display:none; }
+
+    .app-card{
+      position:relative; flex: 0 0 min(82vw,380px); min-height:410px;
+      overflow:hidden; scroll-snap-align:center;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--panel-solid); box-shadow: var(--shadow);
+      isolation:isolate; transition: transform .35s ease;
+    }
+    .app-card:active{ transform:scale(.985); }
+
+    .cover-card .card-cover{
+      position:absolute; inset:0; width:100%; height:100%;
+      object-fit:cover; object-position:center; z-index:-3;
+      transform:scale(1.015); transition: transform .8s cubic-bezier(.2,.8,.2,1), filter .5s ease;
+    }
+    .cover-overlay{
+      position:absolute; inset:0; z-index:-2;
+      background: linear-gradient(180deg, rgba(0,0,0,.08) 0%, rgba(0,0,0,.08) 28%, rgba(0,0,0,.35) 48%, rgba(0,0,0,.92) 82%, rgba(0,0,0,.98) 100%);
+    }
+    .cover-card::after{
+      content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
+      background: radial-gradient(circle at 80% 15%, rgba(0,242,255,.12), transparent 35%);
+    }
+    .cover-card:hover .card-cover{ transform: scale(1.055); filter: saturate(1.12) contrast(1.04); }
+
+    .card-content{ position:absolute; inset:auto 0 0; padding:25px; background: linear-gradient(to top, rgba(0,0,0,.94), rgba(0,0,0,.68) 55%, transparent); z-index:3; }
+    
+    .card-tag{
+      display:inline-flex; padding: 6px 9px; border: 1px solid rgba(255,255,255,.14);
+      border-radius:999px; color:var(--cyan); background: rgba(0,0,0,.25);
+      backdrop-filter:blur(10px); font-size:8px; font-weight:800; letter-spacing:.15em;
+    }
+    .cover-card[data-app="A Fórmula da Dopamina"] .card-tag{ color: #ff8adf; border-color: rgba(255,43,214,.35); background: rgba(255,43,214,.10); }
+    .cover-card[data-app="O Espaço da Mente"] .card-tag{ color: #00f2ff; border-color: rgba(0,242,255,.35); background: rgba(0,242,255,.10); }
+
+    .card-content h2{ margin-top:13px; font-size:30px; line-height:1; letter-spacing:-.04em; }
+    .card-content p{ margin-top:10px; max-width:310px; color:#aeb7bd; font-size:12px; line-height:1.55; }
+
+    .card-actions{ display:flex; gap:8px; margin-top:18px; }
+    .open-app{ padding: 11px 16px; border:0; border-radius:12px; background:var(--cyan); color:#001011; font-weight:800; font-size:11px; cursor:pointer; }
+    .more-app{ width:40px; height:40px; border: 1px solid rgba(255,255,255,.14); border-radius:12px; background: rgba(255,255,255,.06); color:white; }
+
+    .carousel-dots{ display:flex; justify-content:center; gap:6px; margin: 0 0 24px; }
+    .carousel-dots button{ width:7px; height:7px; padding:0; border:0; border-radius:50%; background: rgba(255,255,255,.18); }
+    .carousel-dots button.active{ width:22px; border-radius:99px; background:var(--cyan); }
+
+    /* SECTIONS */
+    .section{ margin-top:8px; }
+    .section-head{ display:flex; align-items:center; justify-content:space-between; padding: 0 22px 12px; }
+    .section-title{ font-size:18px; font-weight:800; letter-spacing:-.025em; }
+    .section-link{ border:0; background:none; color:var(--cyan); font-size:10px; font-weight:700; }
+
+    .app-rail{ display:flex; gap:11px; overflow-x:auto; padding: 0 22px 20px; scroll-snap-type:x proximity; scrollbar-width:none; }
+    .app-rail::-webkit-scrollbar{ display:none; }
+
+    .mini-card{
+      flex: 0 0 145px; min-height:155px; padding:15px; scroll-snap-align:start;
+      border: 1px solid var(--border); border-radius:20px; background: var(--panel);
+      backdrop-filter:blur(18px); transition:.25s ease;
+    }
+    .mini-card:active{ transform:scale(.96); }
+    .mini-icon{
+      width:46px; height:46px; display:grid; place-items:center; border-radius:15px;
+      color:var(--cyan); background: rgba(0,242,255,.08); border: 1px solid rgba(0,242,255,.18); font-size:21px;
+    }
+    .mini-card h3{ margin-top:13px; font-size:13px; }
+    .mini-card p{ margin-top:5px; color:var(--muted); font-size:9px; line-height:1.4; }
+
+    .category-tabs{ display:flex; gap:7px; overflow-x:auto; padding: 3px 22px 18px; scrollbar-width:none; }
+    .category-tabs::-webkit-scrollbar{ display:none; }
+    .category-tabs button{
+      flex-shrink:0; padding: 9px 14px; border: 1px solid var(--border); border-radius:999px;
+      background: rgba(255,255,255,.035); color:var(--muted); font-size:10px; font-weight:700;
+    }
+    .category-tabs button.active{ border-color: rgba(0,242,255,.3); background: rgba(0,242,255,.09); color:var(--cyan); }
+
+    /* BOTTOM NAV */
+    .bottom-nav{
+      position:absolute; left:50%; bottom: max(12px,env(safe-area-inset-bottom));
+      transform: translateX(-50%); width: min(420px,calc(100% - 28px)); height:64px;
+      display:flex; align-items:center; justify-content:space-around;
+      border: 1px solid var(--border); border-radius:22px;
+      background: rgba(10,13,16,.82); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+      box-shadow: 0 20px 60px rgba(0,0,0,.4); z-index:200;
+    }
+    body[data-theme="light"] .bottom-nav{ background: rgba(255,255,255,.82); }
+    .bottom-nav button{
+      width:48px; height:48px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:3px; border:0; border-radius:15px; background:none; color:var(--muted); font-size:17px;
+    }
+    .bottom-nav button span{ font-size:7px; font-weight:700; letter-spacing:.08em; }
+    .bottom-nav button.active{ color:var(--cyan); background: rgba(0,242,255,.07); }
+
+    /* SIDE SLIDER HANDLE */
+    .side-slider{
+      position:absolute; right:0; top:50%; transform: translateY(-50%);
+      width:7px; height:115px; border-radius: 10px 0 0 10px;
+      background: rgba(255,255,255,.08); z-index:150;
+    }
+    .side-slider::after{
+      content:""; position:absolute; left:0; top:25%; width:100%; height:35%;
+      border-radius:inherit; background:var(--cyan); box-shadow: 0 0 15px var(--cyan);
+    }
+
+    @media(max-width:650px){
+      .cover-card{ flex-basis: calc(100vw - 44px); min-height: min(540px,72vh); }
+      .cover-card .card-content h2{ font-size: clamp(32px,9vw,46px); }
+    }
+    @media(min-width:700px){
+      .gallery-scroll{ padding-left: max(20px,calc((100vw - 1100px)/2)); padding-right: max(20px,calc((100vw - 1100px)/2)); }
+      .gallery-intro, .hero-track, .section-head, .category-tabs, .app-rail{ padding-left:0; padding-right:0; }
+      .app-card{ flex-basis:360px; }
+    }
+    @media(prefers-reduced-motion:reduce){
+      *{ animation:none!important; transition:none!important; scroll-behavior:auto!important; }
+    }
+
+    /* Classe utilitária para fazer a div do iframe hospedar nativamente o app */
+    .win-frame-native {
+      position: relative;
+      flex: 1;
+   height:100%; wdith:100%;
+    }
+  </style>
+
+<!-- ===== TOASTER ===== -->
+<div class="toaster-wrap" id="toasterWrap"></div>
+<input type="file" id="nebulaFileInput" multiple accept=".txt,.md,.html,.pdf" style="display:none" />
+
+<!-- ===== SCRIPTS DO ALMASLIBER ===== -->
+<script src="https://infodose.com.br/js/modules/iFSw-nephesh.js"></script>
+
+<!-- ==========================================
+     SCRIPTS FINAIS
+=========================================== -->
+<script src="https://infodose.com.br/js/modules/iFSw-base-nephesh-.js"></script>
+
+<script>
+/* =========================================================
+   LÓGICAS ORIGINAIS DA NEBULA GALLERY
+========================================================= */
+
+const heroTrack = document.getElementById('heroTrack');
+const dots = document.querySelectorAll('#carouselDots button');
+
+heroTrack.addEventListener('scroll', () => {
+  const cards = heroTrack.querySelectorAll('.app-card');
+  if(!cards.length) return;
+
+  const center = heroTrack.scrollLeft + heroTrack.clientWidth / 2;
+  let closest = 0;
+  let distance = Infinity;
+
+  cards.forEach((card, index) => {
+    const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+    const d = Math.abs(center - cardCenter);
+    if(d < distance) {
+      distance = d;
+      closest = index;
+    }
+  });
+
+  dots.forEach((dot, index) => {
+    dot.classList.toggle('active', index === closest);
+  });
+}, {passive:true});
+
+dots.forEach((dot, index) => {
+  dot.addEventListener('click', () => {
+    const cards = heroTrack.querySelectorAll('.app-card');
+    cards[index]?.scrollIntoView({
+      behavior:'smooth',
+      inline:'center',
+      block:'nearest'
+    });
+  });
+});
+
+/* THEME */
+function toggleTheme() {
+  const body = document.body;
+  const next = body.dataset.theme === 'dark' ? 'light' : 'dark';
+  body.dataset.theme = next;
+  localStorage.setItem('nebula-gallery-theme', next);
+}
+
+const savedTheme = localStorage.getItem('nebula-gallery-theme');
+if(savedTheme) {
+  document.body.dataset.theme = savedTheme;
+}
+
+function selectCategory(button) {
+  document.querySelectorAll('.category-tabs button').forEach(btn => btn.classList.remove('active'));
+  button.classList.add('active');
+}
+
+function openApp(name) {
+  console.log('Abrindo app:', name);
+  // Simulação de uso em IFSW
+  alert(`Sistema: Iniciando ambiente para "${name}"`);
+}
+
+function appInfo(name) {
+  alert(`${name}\n\nAplicativo da Nebula Gallery.`);
+}
+
+function openSearch() {
+  const query = prompt('Pesquisar aplicativos:');
+  if(query) console.log('Pesquisa:', query);
+}
+
+function scrollApps() {
+  const rail = document.getElementById('appRail');
+  rail.scrollBy({ left:220, behavior:'smooth' });
+}
+
+function activateNav(button) {
+  document.querySelectorAll('.bottom-nav button').forEach(btn => btn.classList.remove('active'));
+  button.classList.add('active');
+}
+
+function goHome(button) {
+  activateNav(button);
+  document.getElementById('galleryScroll').scrollTo({ top:0, behavior:'smooth' });
+}
+
+function goApps(button) {
+  activateNav(button);
+  document.getElementById('appRail').scrollIntoView({ behavior:'smooth' });
+}
+
+function goTabs(button) {
+  activateNav(button);
+  document.querySelector('.category-tabs').scrollIntoView({ behavior:'smooth' });
+}
+
+function goLibrary(button) {
+  activateNav(button);
+  alert('Biblioteca do Sistema');
+}
+
+function goSettings(button) {
+  activateNav(button);
+  toggleTheme();
+}
+
+document.addEventListener('keydown', event => {
+  if(event.key === 'ArrowRight'){
+    heroTrack.scrollBy({ left:heroTrack.clientWidth * .8, behavior:'smooth' });
+  }
+  if(event.key === 'ArrowLeft'){
+    heroTrack.scrollBy({ left:-heroTrack.clientWidth * .8, behavior:'smooth' });
+  }
+});
+</script>
+
+  </div>
+
+  <script>
+    /* =====================================================
+       LÓGICA DO SLICE ENGINE[span_3](start_span)[span_3](end_span)
+    ===================================================== */
+    const slices = [...document.querySelectorAll('#splash-screen slice')];
+    let current = 0;
+
+    function animateDialogue(slice){
+      const dialogues = slice.querySelectorAll('dialogue');
+      dialogues.forEach((dialogue, di) => {
+        const text = dialogue.textContent.trim();
+        dialogue.innerHTML = '';
+        
+        [...text].forEach((char, i) => {
+          const span = document.createElement('span');
+          // Utilização estrita de textContent 
+          span.textContent = char === ' ' ? '\u00A0' : char;
+          span.style.animationDelay = `${di * 350 + i * 25}ms`;
+          dialogue.appendChild(span);
+        });
+      });
+    }
+
+    function showSlice(index){
+      if(index < 0) index = 0;
+      
+      // Se passar do último slice, inicia o OS
+      if(index >= slices.length) {
+        startOS();
+        return;
+      }
+      
+      current = index;
+      
+      slices.forEach((slice, i) => {
+        slice.classList.toggle('active', i === current);
+      });
+      
+      animateDialogue(slices[current]);
+      
+      document.getElementById('progress').style.width = `${((current+1)/slices.length)*100}%`;
+
+      // Atualiza o botão para "ENTRAR" no último slice
+      const nextBtn = document.getElementById('nextBtn');
+      if (current === slices.length - 1) {
+        nextBtn.textContent = "ENTRAR NO OS";
+      } else {
+        nextBtn.textContent = "NEXT";
+      }
+    }
+
+    function nextSlice(){
+      showSlice(current + 1);
+    }
+
+    function prevSlice(){
+      showSlice(current - 1);
+    }
+
+    /* =====================================================
+       TRANSIÇÃO PARA O SISTEMA
+    ===================================================== */
+    function startOS() {
+      const splash = document.getElementById('splash-screen');
+      const os = document.getElementById('mainOS');
+      
+      // Grava a sessão utilizando o prefixo exigido
+      localStorage.setItem('di_splashState', 'completed');
+
+      splash.style.opacity = '0';
+      splash.style.visibility = 'hidden';
+      
+      setTimeout(() => {
+        splash.style.display = 'none';
+        os.style.display = 'block';
+        document.body.style.overflow = 'auto'; // Restaura a rolagem do corpo
+      }, 600);
+    }
+
+    document.addEventListener('keydown', e => {
+      const splashVisible = document.getElementById('splash-screen').style.display !== 'none';
+      if(!splashVisible) return;
+
+      if(e.key === 'ArrowRight') nextSlice();
+      if(e.key === 'ArrowLeft') prevSlice();
+      if(e.key === 'Enter' && current === slices.length - 1) startOS();
+    });
+
+    // START
+    showSlice(0);
+  </script>
+</body>
+</html>

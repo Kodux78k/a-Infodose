@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1,viewport-fit=cover">
+
+<title>HTML Remote Injector</title>
+
+<style>
+
+:root{
+  --bg:#07090d;
+  --panel:#10141b;
+  --panel2:#151b24;
+  --line:rgba(255,255,255,.10);
+  --text:#eaf2ff;
+  --muted:#7f8da3;
+  --cyan:#00f2ff;
+  --green:#39ffb6;
+  --orange:#ff9d42;
+  --red:#ff5577;
+  --radius:18px;
+}
+
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+html,
+body{
+  width:100%;
+  min-height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+body{
+  padding:20px;
+}
+
+button,
+input,
+textarea{
+  font:inherit;
+}
+
+button{
+  cursor:pointer;
+}
+
+.app{
+  width:min(1100px,100%);
+  margin:auto;
+}
+
+.header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:15px;
+  margin-bottom:18px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.orb{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 35% 30%,
+      #fff,
+      var(--cyan) 15%,
+      rgba(0,242,255,.2) 45%,
+      transparent 70%);
+  box-shadow:
+    0 0 20px rgba(0,242,255,.5);
+}
+
+.title{
+  font-size:20px;
+  font-weight:800;
+}
+
+.subtitle{
+  color:var(--muted);
+  font-size:12px;
+  margin-top:3px;
+}
+
+.status{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  color:var(--muted);
+  font-size:12px;
+}
+
+.status-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--muted);
+}
+
+.status.ok .status-dot{
+  background:var(--green);
+  box-shadow:0 0 12px var(--green);
+}
+
+.status.error .status-dot{
+  background:var(--red);
+}
+
+.panel{
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.045),
+      rgba(255,255,255,.015)
+    ),
+    var(--panel);
+
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px;
+  margin-bottom:15px;
+
+  box-shadow:
+    0 20px 60px rgba(0,0,0,.25);
+}
+
+.label{
+  display:block;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  margin-bottom:8px;
+}
+
+.url-row{
+  display:flex;
+  gap:9px;
+}
+
+input[type="text"]{
+  flex:1;
+  min-width:0;
+  height:46px;
+
+  background:#080b10;
+  color:var(--text);
+
+  border:1px solid var(--line);
+  border-radius:13px;
+
+  padding:0 14px;
+  outline:none;
+}
+
+input[type="text"]:focus{
+  border-color:
+    rgba(0,242,255,.55);
+
+  box-shadow:
+    0 0 0 3px
+    rgba(0,242,255,.08);
+}
+
+button{
+  border:1px solid var(--line);
+  border-radius:13px;
+  min-height:44px;
+  padding:0 16px;
+
+  background:var(--panel2);
+  color:var(--text);
+
+  transition:.2s ease;
+}
+
+button:hover{
+  transform:translateY(-1px);
+  border-color:
+    rgba(255,255,255,.22);
+}
+
+.btn-primary{
+  background:
+    linear-gradient(
+      135deg,
+      rgba(0,242,255,.18),
+      rgba(57,255,182,.12)
+    );
+
+  border-color:
+    rgba(0,242,255,.35);
+}
+
+.btn-inject{
+  background:
+    linear-gradient(
+      135deg,
+      rgba(57,255,182,.20),
+      rgba(0,242,255,.10)
+    );
+
+  border-color:
+    rgba(57,255,182,.4);
+}
+
+.btn-danger{
+  border-color:
+    rgba(255,85,119,.3);
+  color:#ff8ba4;
+}
+
+.actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:12px;
+}
+
+textarea{
+  width:100%;
+  min-height:220px;
+
+  resize:vertical;
+
+  background:#080b10;
+  color:#cde8ff;
+
+  border:1px solid var(--line);
+  border-radius:13px;
+
+  padding:14px;
+
+  outline:none;
+
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+
+  font-size:12px;
+  line-height:1.6;
+}
+
+textarea:focus{
+  border-color:
+    rgba(0,242,255,.45);
+}
+
+.hidden{
+  display:none!important;
+}
+
+.mode{
+  display:flex;
+  gap:7px;
+  margin-bottom:15px;
+}
+
+.mode button{
+  flex:1;
+}
+
+.mode .active{
+  border-color:var(--cyan);
+  color:var(--cyan);
+  background:
+    rgba(0,242,255,.07);
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:
+    repeat(4,minmax(0,1fr));
+
+  gap:10px;
+  margin-top:15px;
+}
+
+.card{
+  background:#0b0f15;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:14px;
+}
+
+.card-number{
+  font-size:24px;
+  font-weight:800;
+}
+
+.card-label{
+  margin-top:3px;
+  color:var(--muted);
+  font-size:11px;
+}
+
+.cyan{
+  color:var(--cyan);
+}
+
+.green{
+  color:var(--green);
+}
+
+.orange{
+  color:var(--orange);
+}
+
+.red{
+  color:var(--red);
+}
+
+.log{
+  max-height:250px;
+  overflow:auto;
+
+  background:#05070a;
+  border:1px solid var(--line);
+  border-radius:13px;
+
+  padding:12px;
+
+  font-family:
+    ui-monospace,
+    monospace;
+
+  font-size:11px;
+  line-height:1.7;
+}
+
+.log-line{
+  border-bottom:1px solid
+    rgba(255,255,255,.04);
+
+  padding:3px 0;
+}
+
+.log-line:last-child{
+  border-bottom:0;
+}
+
+.preview{
+  position:relative;
+
+  min-height:150px;
+
+  background:
+    repeating-linear-gradient(
+      45deg,
+      #0b0f15,
+      #0b0f15 10px,
+      #0d1219 10px,
+      #0d1219 20px
+    );
+
+  border:1px solid var(--line);
+  border-radius:14px;
+
+  overflow:hidden;
+}
+
+.preview-label{
+  position:absolute;
+  top:8px;
+  left:10px;
+
+  color:var(--muted);
+  font-size:10px;
+
+  pointer-events:none;
+}
+
+#inject-target{
+  padding:30px 15px 15px;
+}
+
+footer{
+  text-align:center;
+  color:var(--muted);
+  font-size:10px;
+  padding:15px;
+}
+
+@media(max-width:700px){
+
+  body{
+    padding:12px;
+  }
+
+  .url-row{
+    flex-direction:column;
+  }
+
+  .grid{
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+  }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="app">
+
+  <header class="header">
+
+    <div class="brand">
+
+      <div class="orb"></div>
+
+      <div>
+        <div class="title">
+          HTML Remote Injector
+        </div>
+
+        <div class="subtitle">
+          Fetch → Parse → Inspect → Inject
+        </div>
+      </div>
+
+    </div>
+
+    <div
+      id="status"
+      class="status">
+
+      <span class="status-dot"></span>
+
+      <span id="status-text">
+        aguardando
+      </span>
+
+    </div>
+
+  </header>
+
+
+  <!-- =========================================
+       SOURCE
+  ========================================== -->
+
+  <section class="panel">
+
+    <div class="mode">
+
+      <button
+        id="mode-url"
+        class="active"
+        onclick="setMode('url')">
+
+        🌐 URL
+
+      </button>
+
+      <button
+        id="mode-inline"
+        onclick="setMode('inline')">
+
+        ◈ INLINE
+
+      </button>
+
+    </div>
+
+
+    <!-- URL -->
+
+    <div id="url-mode">
+
+      <label class="label">
+        HTML remoto
+      </label>
+
+      <div class="url-row">
+
+        <input
+          id="url"
+          type="text"
+          spellcheck="false"
+          autocomplete="off"
+          placeholder="https://infodose.com.br/apps/meu.html">
+
+        <button
+          class="btn-primary"
+          onclick="loadRemote()">
+
+          CARREGAR
+
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- INLINE -->
+
+    <div
+      id="inline-mode"
+      class="hidden">
+
+      <label class="label">
+        HTML inline
+      </label>
+
+      <textarea
+        id="inline-html"
+        placeholder="<style>...</style>
+
+<div>...</div>
+
+<script>
+  console.log('hello');
+</script>"></textarea>
+
+      <div class="actions">
+
+        <button
+          class="btn-primary"
+          onclick="loadInline()">
+
+          ANALISAR HTML
+
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <div class="actions">
+
+      <button
+        class="btn-inject"
+        onclick="injectAll()">
+
+        ⚡ INJETAR TUDO
+
+      </button>
+
+      <button
+        onclick="injectHTMLOnly()">
+
+        HTML
+
+      </button>
+
+      <button
+        onclick="injectCSSOnly()">
+
+        CSS
+
+      </button>
+
+      <button
+        onclick="injectJSOnly()">
+
+        JS
+
+      </button>
+
+      <button
+        class="btn-danger"
+        onclick="clearInjected()">
+
+        LIMPAR
+
+      </button>
+
+    </div>
+
+  </section>
+
+
+  <!-- =========================================
+       ANALYSIS
+  ========================================== -->
+
+  <section class="panel">
+
+    <label class="label">
+      Estrutura encontrada
+    </label>
+
+    <div class="grid">
+
+      <div class="card">
+
+        <div
+          id="count-html"
+          class="card-number cyan">
+
+          0
+
+        </div>
+
+        <div class="card-label">
+          NODES HTML
+        </div>
+
+      </div>
+
+      <div class="card">
+
+        <div
+          id="count-css"
+          class="card-number green">
+
+          0
+
+        </div>
+
+        <div class="card-label">
+          STYLE
+        </div>
+
+      </div>
+
+      <div class="card">
+
+        <div
+          id="count-js"
+          class="card-number orange">
+
+          0
+
+        </div>
+
+        <div class="card-label">
+          SCRIPT
+        </div>
+
+      </div>
+
+      <div class="card">
+
+        <div
+          id="count-src"
+          class="card-number red">
+
+          0
+
+        </div>
+
+        <div class="card-label">
+          SCRIPT SRC
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- =========================================
+       LOG
+  ========================================== -->
+
+  <section class="panel">
+
+    <label class="label">
+      Runtime
+    </label>
+
+    <div
+      id="log"
+      class="log">
+
+      <div class="log-line">
+        › Injector pronto.
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- =========================================
+       DESTINATION
+  ========================================== -->
+
+  <section class="panel">
+
+    <label class="label">
+      DOM de destino
+    </label>
+
+    <div class="preview">
+
+      <div class="preview-label">
+        #inject-target
+      </div>
+
+      <div id="inject-target"></div>
+
+    </div>
+
+  </section>
+
+
+  <footer>
+    Remote HTML Runtime · CSS + HTML + JS
+  </footer>
+
+</div>
+
+
+<script>
+
+(() => {
+
+  'use strict';
+
+
+  // =================================================
+  // STATE
+  // =================================================
+
+  let sourceDocument = null;
+
+  let sourceURL = null;
+
+
+  // =================================================
+  // ELEMENTS
+  // =================================================
+
+  const $ = id =>
+    document.getElementById(id);
+
+
+  // =================================================
+  // LOG
+  // =================================================
+
+  function log(message, type = '') {
+
+    const line =
+      document.createElement('div');
+
+    line.className =
+      'log-line';
+
+    line.textContent =
+      `› ${message}`;
+
+    if (type === 'error')
+      line.style.color = '#ff8ba4';
+
+    if (type === 'ok')
+      line.style.color = '#39ffb6';
+
+    $('log').appendChild(line);
+
+    $('log').scrollTop =
+      $('log').scrollHeight;
+
+  }
+
+
+  // =================================================
+  // STATUS
+  // =================================================
+
+  function status(text, type = '') {
+
+    const box = $('status');
+
+    box.className =
+      'status ' + type;
+
+    $('status-text').textContent =
+      text;
+
+  }
+
+
+  // =================================================
+  // MODE
+  // =================================================
+
+  window.setMode = function(mode) {
+
+    const urlMode =
+      $('url-mode');
+
+    const inlineMode =
+      $('inline-mode');
+
+    const urlButton =
+      $('mode-url');
+
+    const inlineButton =
+      $('mode-inline');
+
+
+    if (mode === 'url') {
+
+      urlMode.classList.remove('hidden');
+      inlineMode.classList.add('hidden');
+
+      urlButton.classList.add('active');
+      inlineButton.classList.remove('active');
+
+    }
+
+    else {
+
+      urlMode.classList.add('hidden');
+      inlineMode.classList.remove('hidden');
+
+      urlButton.classList.remove('active');
+      inlineButton.classList.add('active');
+
+    }
+
+  };
+
+
+  // =================================================
+  // PARSER
+  // =================================================
+
+  function parseHTML(html) {
+
+    sourceDocument =
+      new DOMParser()
+        .parseFromString(
+          html,
+          'text/html'
+        );
+
+    updateAnalysis();
+
+    return sourceDocument;
+
+  }
+
+
+  // =================================================
+  // ANALYSIS
+  // =================================================
+
+  function updateAnalysis() {
+
+    if (!sourceDocument)
+      return;
+
+
+    const styles =
+      sourceDocument
+        .querySelectorAll('style');
+
+
+    const scripts =
+      sourceDocument
+        .querySelectorAll('script');
+
+
+    const externalScripts =
+      sourceDocument
+        .querySelectorAll(
+          'script[src]'
+        );
+
+
+    const nodes =
+      Array.from(
+        sourceDocument.body.childNodes
+      )
+      .filter(
+        node =>
+          node.nodeName !== 'SCRIPT'
+      );
+
+
+    $('count-html').textContent =
+      nodes.length;
+
+    $('count-css').textContent =
+      styles.length;
+
+    $('count-js').textContent =
+      scripts.length;
+
+    $('count-src').textContent =
+      externalScripts.length;
+
+
+    log(
+      `HTML: ${nodes.length} nodes`
+    );
+
+    log(
+      `CSS: ${styles.length} <style>`
+    );
+
+    log(
+      `JS: ${scripts.length} <script>`
+    );
+
+    log(
+      `JS externo: ${externalScripts.length} src`
+    );
+
+  }
+
+
+  // =================================================
+  // LOAD REMOTE
+  // =================================================
+
+  window.loadRemote = async function() {
+
+    const url =
+      $('url').value.trim();
+
+
+    if (!url) {
+
+      log(
+        'Digite uma URL.',
+        'error'
+      );
+
+      return;
+
+    }
+
+
+    status(
+      'baixando...'
+    );
+
+
+    log(
+      `FETCH ${url}`
+    );
+
+
+    try {
+
+      const response =
+        await fetch(
+          url,
+          {
+            cache:'no-cache'
+          }
+        );
+
+
+      if (!response.ok) {
+
+        throw new Error(
+          `HTTP ${response.status}`
+        );
+
+      }
+
+
+      const html =
+        await response.text();
+
+
+      sourceURL =
+        new URL(
+          url,
+          location.href
+        );
+
+
+      parseHTML(html);
+
+
+      status(
+        'HTML carregado',
+        'ok'
+      );
+
+
+      log(
+        'Documento remoto recebido.',
+        'ok'
+      );
+
+
+    }
+
+    catch(error) {
+
+      status(
+        'erro',
+        'error'
+      );
+
+
+      log(
+        `FETCH ERROR: ${error.message}`,
+        'error'
+      );
+
+
+      log(
+        'Verifique CORS, URL e HTTPS.',
+        'error'
+      );
+
+    }
+
+  };
+
+
+  // =================================================
+  // LOAD INLINE
+  // =================================================
+
+  window.loadInline = function() {
+
+    const html =
+      $('inline-html')
+        .value;
+
+
+    if (!html.trim()) {
+
+      log(
+        'HTML inline vazio.',
+        'error'
+      );
+
+      return;
+
+    }
+
+
+    sourceURL =
+      new URL(
+        location.href
+      );
+
+
+    parseHTML(html);
+
+
+    status(
+      'HTML analisado',
+      'ok'
+    );
+
+
+    log(
+      'HTML inline analisado.',
+      'ok'
+    );
+
+  };
+
+
+  // =================================================
+  // CSS
+  // =================================================
+
+  function injectCSS() {
+
+    if (!sourceDocument)
+      return;
+
+
+    sourceDocument
+      .querySelectorAll('style')
+      .forEach(style => {
+
+        const node =
+          document.createElement('style');
+
+        node.dataset.remoteInjector =
+          'true';
+
+        node.textContent =
+          style.textContent;
+
+        document.head.appendChild(node);
+
+      });
+
+
+    log(
+      'CSS injetado.',
+      'ok'
+    );
+
+  }
+
+
+  // =================================================
+  // HTML
+  // =================================================
+
+  function injectHTML() {
+
+    if (!sourceDocument)
+      return;
+
+
+    const target =
+      $('inject-target');
+
+
+    const fragment =
+      document.createDocumentFragment();
+
+
+    Array.from(
+      sourceDocument.body.childNodes
+    )
+    .forEach(node => {
+
+      if (
+        node.nodeName !== 'SCRIPT'
+      ) {
+
+        fragment.appendChild(
+          document.importNode(
+            node,
+            true
+          )
+        );
+
+      }
+
+    });
+
+
+    target.appendChild(
+      fragment
+    );
+
+
+    log(
+      'HTML injetado.',
+      'ok'
+    );
+
+  }
+
+
+  // =================================================
+  // JS
+  // =================================================
+
+  function injectJS() {
+
+    if (!sourceDocument)
+      return;
+
+
+    sourceDocument
+      .querySelectorAll('script')
+      .forEach(script => {
+
+
+        const node =
+          document.createElement(
+            'script'
+          );
+
+
+        // Copia atributos
+        Array.from(
+          script.attributes
+        )
+        .forEach(attr => {
+
+          node.setAttribute(
+            attr.name,
+            attr.value
+          );
+
+        });
+
+
+        // ============================================
+        // SCRIPT EXTERNO
+        // ============================================
+
+        const src =
+          script.getAttribute('src');
+
+
+        if (src) {
+
+          const base =
+            sourceURL ||
+            new URL(
+              location.href
+            );
+
+
+          node.src =
+            new URL(
+              src,
+              base
+            ).href;
+
+
+          log(
+            `JS externo → ${node.src}`
+          );
+
+        }
+
+
+        // ============================================
+        // SCRIPT INLINE
+        // ============================================
+
+        else {
+
+          node.textContent =
+            script.textContent;
+
+
+          log(
+            'JS inline → executando...',
+            'ok'
+          );
+
+        }
+
+
+        document.body.appendChild(
+          node
+        );
+
+      });
+
+  }
+
+
+  // =================================================
+  // PUBLIC ACTIONS
+  // =================================================
+
+  window.injectHTMLOnly =
+    injectHTML;
+
+
+  window.injectCSSOnly =
+    injectCSS;
+
+
+  window.injectJSOnly =
+    injectJS;
+
+
+  window.injectAll = function() {
+
+    if (!sourceDocument) {
+
+      log(
+        'Nenhum HTML carregado.',
+        'error'
+      );
+
+      return;
+
+    }
+
+
+    injectCSS();
+
+    injectHTML();
+
+    injectJS();
+
+
+    status(
+      'INJETADO',
+      'ok'
+    );
+
+
+    log(
+      '◆ Runtime completo executado.',
+      'ok'
+    );
+
+  };
+
+
+  // =================================================
+  // CLEAR
+  // =================================================
+
+  window.clearInjected = function() {
+
+    $('inject-target').innerHTML = '';
+
+
+    document
+      .querySelectorAll(
+        'style[data-remote-injector="true"]'
+      )
+      .forEach(
+        node =>
+          node.remove()
+      );
+
+
+    status(
+      'limpo'
+    );
+
+
+    log(
+      'DOM injetado e CSS removidos.'
+    );
+
+  };
+
+
+  // =================================================
+  // ENTER
+  // =================================================
+
+  $('url')
+    .addEventListener(
+      'keydown',
+      event => {
+
+        if (
+          event.key === 'Enter'
+        ) {
+
+          loadRemote();
+
+        }
+
+      }
+    );
+
+
+})();
+</script>
+
+</body>
+</html>

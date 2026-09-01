@@ -1,0 +1,2565 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1,viewport-fit=cover">
+
+<meta name="theme-color" content="#050608">
+
+<title>Espaço da Mente — Nebula Reader</title>
+
+
+<style>
+
+/* =========================================================
+   NEBULA READER · CORE
+========================================================= */
+
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+:root{
+
+  --bg:#050608;
+  --panel:rgba(14,17,21,.72);
+
+  --text:#f4f7fa;
+  --muted:#77828d;
+
+  --cyan:#00f2ff;
+  --green:#39ffb6;
+  --pink:#ff2bd6;
+
+  --border:rgba(255,255,255,.10);
+
+  --reader-radius:28px;
+
+}
+
+
+/* =========================================================
+   BODY
+========================================================= */
+
+html,
+body{
+
+  width:100%;
+  height:100%;
+
+}
+
+body{
+
+  overflow:hidden;
+
+  color:var(--text);
+
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  background:
+
+    radial-gradient(
+      circle at 50% 10%,
+      rgba(0,242,255,.08),
+      transparent 38%
+    ),
+
+    radial-gradient(
+      circle at 90% 90%,
+      rgba(255,43,214,.05),
+      transparent 35%
+    ),
+
+    var(--bg);
+
+}
+
+
+/* =========================================================
+   APP
+========================================================= */
+
+#readerApp{
+
+  position:fixed;
+  inset:0;
+
+  display:flex;
+  flex-direction:column;
+
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.reader-header{
+
+  height:64px;
+
+  flex-shrink:0;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  padding:
+    0 18px;
+
+  border-bottom:
+    1px solid var(--border);
+
+  background:
+    rgba(5,6,8,.72);
+
+  backdrop-filter:
+    blur(20px);
+
+  -webkit-backdrop-filter:
+    blur(20px);
+
+  z-index:50;
+
+}
+
+
+.brand{
+
+  display:flex;
+  align-items:center;
+
+  gap:10px;
+
+  min-width:0;
+
+}
+
+.brand-symbol{
+
+  width:34px;
+  height:34px;
+
+  display:grid;
+  place-items:center;
+
+  border:
+    1px solid rgba(0,242,255,.25);
+
+  border-radius:12px;
+
+  color:var(--cyan);
+
+  background:
+    rgba(0,242,255,.05);
+
+}
+
+.brand-info{
+
+  min-width:0;
+
+}
+
+.brand-title{
+
+  font-size:13px;
+  font-weight:700;
+
+  letter-spacing:.08em;
+
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+
+}
+
+.brand-subtitle{
+
+  margin-top:2px;
+
+  color:var(--muted);
+
+  font-size:9px;
+
+  letter-spacing:.16em;
+
+  text-transform:uppercase;
+
+}
+
+
+.header-actions{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:7px;
+
+}
+
+
+.icon-btn{
+
+  width:38px;
+  height:38px;
+
+  display:grid;
+  place-items:center;
+
+  border:
+    1px solid var(--border);
+
+  border-radius:12px;
+
+  background:
+    rgba(255,255,255,.035);
+
+  color:#dfe5e9;
+
+  cursor:pointer;
+
+  transition:
+    .25s ease;
+
+}
+
+.icon-btn:hover{
+
+  border-color:
+    rgba(0,242,255,.45);
+
+  color:var(--cyan);
+
+  transform:
+    translateY(-1px);
+
+}
+
+.icon-btn.active{
+
+  color:var(--green);
+
+  border-color:
+    rgba(57,255,182,.4);
+
+}
+
+
+/* =========================================================
+   VIEWPORT
+========================================================= */
+
+.reader-viewport{
+
+  position:relative;
+
+  flex:1;
+
+  min-height:0;
+
+  overflow:hidden;
+
+}
+
+
+/* =========================================================
+   SLICE
+========================================================= */
+
+#sliceStage{
+
+  position:absolute;
+
+  inset:0;
+
+}
+
+
+/*
+   IMPORTANTE:
+
+   Só a slice ativa fica visualmente montada.
+*/
+
+slice{
+
+  position:absolute;
+
+  inset:0;
+
+  overflow:auto;
+
+  padding:
+
+    clamp(35px,8vw,100px)
+    clamp(22px,9vw,120px)
+    130px;
+
+  opacity:0;
+
+  visibility:hidden;
+
+  transform:
+    translateY(25px)
+    scale(.985);
+
+  transition:
+
+    opacity .55s ease,
+    transform .7s cubic-bezier(.2,.8,.2,1);
+
+  scrollbar-width:thin;
+
+}
+
+
+slice.active{
+
+  opacity:1;
+
+  visibility:visible;
+
+  transform:none;
+
+}
+
+
+/* =========================================================
+   SLICE META
+========================================================= */
+
+.slice-meta{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:10px;
+
+  margin-bottom:28px;
+
+}
+
+slice label{
+
+  display:inline-flex;
+
+  width:max-content;
+
+  padding:
+    7px 12px;
+
+  border:
+    1px solid rgba(0,242,255,.30);
+
+  border-radius:999px;
+
+  color:var(--cyan);
+
+  background:
+    rgba(0,242,255,.04);
+
+  font-size:10px;
+
+  font-weight:700;
+
+  letter-spacing:.18em;
+
+  text-transform:uppercase;
+
+}
+
+.slice-number{
+
+  color:
+    rgba(255,255,255,.28);
+
+  font-size:10px;
+
+  letter-spacing:.15em;
+
+}
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.slice-content{
+
+  width:min(900px,100%);
+
+  margin:auto;
+
+}
+
+
+slice h1{
+
+  margin-bottom:25px;
+
+  font-size:
+    clamp(34px,7vw,76px);
+
+  line-height:1.02;
+
+  letter-spacing:-.045em;
+
+}
+
+
+slice h2{
+
+  margin:
+    35px 0 15px;
+
+  font-size:
+    clamp(25px,4vw,42px);
+
+  letter-spacing:-.03em;
+
+}
+
+
+slice h3{
+
+  margin:
+    28px 0 12px;
+
+  font-size:22px;
+
+}
+
+
+slice p{
+
+  margin:
+    0 0 20px;
+
+  max-width:780px;
+
+  color:#c9d0d5;
+
+  font-size:
+    clamp(17px,2.2vw,22px);
+
+  line-height:1.72;
+
+}
+
+
+slice strong{
+
+  color:white;
+
+}
+
+
+slice em{
+
+  color:var(--cyan);
+
+}
+
+
+slice ul,
+slice ol{
+
+  margin:
+    0 0 25px 24px;
+
+  color:#c9d0d5;
+
+  font-size:18px;
+
+  line-height:1.7;
+
+}
+
+
+slice blockquote{
+
+  margin:
+    30px 0;
+
+  padding:
+    20px 24px;
+
+  border-left:
+    2px solid var(--cyan);
+
+  color:#aeb9c1;
+
+  background:
+    rgba(0,242,255,.035);
+
+  border-radius:
+    0 15px 15px 0;
+
+}
+
+
+slice code{
+
+  padding:
+    3px 7px;
+
+  border-radius:7px;
+
+  background:
+    rgba(255,255,255,.08);
+
+  color:var(--green);
+
+}
+
+
+slice pre{
+
+  overflow:auto;
+
+  margin:
+    25px 0;
+
+  padding:20px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius:18px;
+
+  background:
+    rgba(0,0,0,.35);
+
+}
+
+
+slice pre code{
+
+  padding:0;
+
+  background:none;
+
+}
+
+
+/* =========================================================
+   DIALOGUE
+========================================================= */
+
+dialogue{
+
+  display:block;
+
+  max-width:850px;
+
+  margin:
+    30px 0;
+
+  font-size:
+    clamp(28px,5vw,62px);
+
+  font-weight:700;
+
+  line-height:1.08;
+
+  letter-spacing:-.04em;
+
+}
+
+
+/* =========================================================
+   CHAR ANIMATION
+========================================================= */
+
+.char{
+
+  display:inline-block;
+
+  opacity:0;
+
+  transform:
+    translateY(15px);
+
+  animation:
+    charIn .45s forwards;
+
+}
+
+
+@keyframes charIn{
+
+  to{
+
+    opacity:1;
+
+    transform:none;
+
+  }
+
+}
+
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.empty-state{
+
+  position:absolute;
+
+  inset:0;
+
+  display:grid;
+
+  place-items:center;
+
+  padding:30px;
+
+  text-align:center;
+
+}
+
+
+.empty-box{
+
+  width:min(600px,100%);
+
+  padding:45px 30px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius:
+    var(--reader-radius);
+
+  background:
+    rgba(255,255,255,.025);
+
+  backdrop-filter:
+    blur(20px);
+
+}
+
+
+.empty-symbol{
+
+  font-size:50px;
+
+  margin-bottom:20px;
+
+  color:var(--cyan);
+
+}
+
+
+.empty-box h1{
+
+  margin-bottom:12px;
+
+  font-size:28px;
+
+}
+
+
+.empty-box p{
+
+  margin-bottom:25px;
+
+  color:var(--muted);
+
+  line-height:1.6;
+
+}
+
+
+.import-button{
+
+  display:inline-flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  gap:8px;
+
+  padding:
+    13px 20px;
+
+  border:0;
+
+  border-radius:13px;
+
+  background:
+    rgba(0,242,255,.12);
+
+  color:var(--cyan);
+
+  cursor:pointer;
+
+}
+
+
+/* =========================================================
+   PLAYER
+========================================================= */
+
+.player{
+
+  position:absolute;
+
+  left:50%;
+
+  bottom:20px;
+
+  transform:
+    translateX(-50%);
+
+  width:
+    min(650px,calc(100% - 30px));
+
+  min-height:68px;
+
+  display:flex;
+
+  align-items:center;
+
+  gap:12px;
+
+  padding:
+    10px 12px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius:20px;
+
+  background:
+    rgba(10,13,16,.82);
+
+  backdrop-filter:
+    blur(25px);
+
+  -webkit-backdrop-filter:
+    blur(25px);
+
+  box-shadow:
+    0 20px 60px rgba(0,0,0,.35);
+
+  z-index:40;
+
+  transition:
+    .35s ease;
+
+}
+
+
+.player.minimized{
+
+  width:68px;
+  height:68px;
+  min-height:68px;
+
+  padding:8px;
+
+  border-radius:50%;
+
+}
+
+
+.player.minimized
+.player-info,
+.player.minimized
+.player-controls-secondary,
+.player.minimized
+.progress-wrap{
+
+  display:none;
+
+}
+
+
+.player-main{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:10px;
+
+}
+
+
+.play-btn{
+
+  width:48px;
+  height:48px;
+
+  flex-shrink:0;
+
+  display:grid;
+  place-items:center;
+
+  border:0;
+
+  border-radius:15px;
+
+  color:#001011;
+
+  background:var(--cyan);
+
+  font-size:17px;
+
+  cursor:pointer;
+
+  box-shadow:
+    0 0 25px rgba(0,242,255,.2);
+
+}
+
+
+.player-info{
+
+  min-width:110px;
+  flex:1;
+
+}
+
+
+.player-title{
+
+  font-size:12px;
+  font-weight:700;
+
+}
+
+
+.player-state{
+
+  margin-top:3px;
+
+  color:var(--muted);
+
+  font-size:10px;
+
+}
+
+
+.progress-wrap{
+
+  flex:2;
+
+}
+
+
+.progress{
+
+  width:100%;
+  height:3px;
+
+  overflow:hidden;
+
+  border-radius:99px;
+
+  background:
+    rgba(255,255,255,.08);
+
+}
+
+
+.progress-bar{
+
+  width:0;
+  height:100%;
+
+  background:var(--cyan);
+
+  box-shadow:
+    0 0 10px var(--cyan);
+
+  transition:
+    width .3s ease;
+
+}
+
+
+.player-controls-secondary{
+
+  display:flex;
+  gap:5px;
+
+}
+
+
+.small-btn{
+
+  width:36px;
+  height:36px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius:10px;
+
+  background:
+    rgba(255,255,255,.04);
+
+  color:white;
+
+  cursor:pointer;
+
+}
+
+
+/* =========================================================
+   NAV
+========================================================= */
+
+.nav{
+
+  position:absolute;
+
+  right:25px;
+  top:50%;
+
+  transform:
+    translateY(-50%);
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:8px;
+
+  z-index:20;
+
+}
+
+
+.nav button{
+
+  width:42px;
+  height:42px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius:13px;
+
+  background:
+    rgba(255,255,255,.035);
+
+  color:white;
+
+  cursor:pointer;
+
+}
+
+
+/* =========================================================
+   FILE INPUT
+========================================================= */
+
+#fileInput{
+
+  display:none;
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media(max-width:650px){
+
+  .reader-header{
+
+    height:58px;
+
+    padding:0 12px;
+
+  }
+
+  .brand-subtitle{
+
+    display:none;
+
+  }
+
+  slice{
+
+    padding:
+      40px 24px 120px;
+
+  }
+
+  .nav{
+
+    right:12px;
+
+  }
+
+  .nav button{
+
+    width:36px;
+    height:36px;
+
+  }
+
+  .player{
+
+    bottom:
+      max(12px,env(safe-area-inset-bottom));
+
+  }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div id="readerApp">
+
+
+  <!-- =====================================================
+       HEADER
+  ====================================================== -->
+
+  <header class="reader-header">
+
+    <div class="brand">
+
+      <div class="brand-symbol">
+        ◉
+      </div>
+
+      <div class="brand-info">
+
+        <div
+          class="brand-title"
+          id="documentTitle">
+
+          ESPAÇO DA MENTE
+
+        </div>
+
+        <div class="brand-subtitle">
+
+          NEBULA READER · SLICE ENGINE
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="header-actions">
+
+      <!-- importar -->
+
+      <button
+        class="icon-btn"
+        title="Importar arquivo"
+        onclick="openFile()">
+
+        ＋
+
+      </button>
+
+
+      <!-- colar -->
+
+      <button
+        class="icon-btn"
+        title="Colar texto"
+        onclick="pasteText()">
+
+        ✎
+
+      </button>
+
+
+      <!-- minimizar -->
+
+      <button
+        class="icon-btn"
+        title="Minimizar Player"
+        onclick="togglePlayer()">
+
+        ◌
+
+      </button>
+
+    </div>
+
+  </header>
+
+
+
+  <!-- =====================================================
+       VIEWPORT
+  ====================================================== -->
+
+  <main class="reader-viewport">
+
+
+    <div id="sliceStage"></div>
+
+
+    <!-- EMPTY -->
+
+    <div
+      id="emptyState"
+      class="empty-state">
+
+      <div class="empty-box">
+
+        <div class="empty-symbol">
+          ◉
+        </div>
+
+        <h1>
+          Espaço da Mente
+        </h1>
+
+        <p>
+          Importe um TXT ou Markdown,
+          ou cole um texto para transformar
+          o conteúdo em uma sequência de
+          slices navegáveis.
+        </p>
+
+        <button
+          class="import-button"
+          onclick="openFile()">
+
+          ＋ Importar documento
+
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- NAV -->
+
+    <div class="nav">
+
+      <button
+        onclick="previousSlice()">
+
+        ↑
+
+      </button>
+
+      <button
+        onclick="nextSlice()">
+
+        ↓
+
+      </button>
+
+    </div>
+
+
+    <!-- ===================================================
+         PLAYER
+    ==================================================== -->
+
+    <div
+      id="player"
+      class="player">
+
+
+      <div class="player-main">
+
+        <button
+          id="playButton"
+          class="play-btn"
+          onclick="toggleSpeech()">
+
+          ▶
+
+        </button>
+
+      </div>
+
+
+      <div class="player-info">
+
+        <div
+          id="playerTitle"
+          class="player-title">
+
+          Nenhum documento
+
+        </div>
+
+        <div
+          id="playerState"
+          class="player-state">
+
+          Aguardando conteúdo
+
+        </div>
+
+      </div>
+
+
+      <div class="progress-wrap">
+
+        <div class="progress">
+
+          <div
+            id="progressBar"
+            class="progress-bar">
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class="player-controls-secondary">
+
+        <button
+          class="small-btn"
+          onclick="previousSlice()">
+
+          ‹
+
+        </button>
+
+        <button
+          class="small-btn"
+          onclick="nextSlice()">
+
+          ›
+
+        </button>
+
+        <button
+          class="small-btn"
+          onclick="stopSpeech()">
+
+          ■
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </main>
+
+
+  <input
+    id="fileInput"
+    type="file"
+    accept=".txt,.md,.markdown,text/plain,text/markdown">
+
+</div>
+
+
+
+<script>
+
+/* =========================================================
+   NEBULA SLICE ENGINE
+========================================================= */
+
+const state = {
+
+  slices: [],
+
+  current: 0,
+
+  speaking: false,
+
+  paused: false,
+
+  documentTitle:
+    'ESPAÇO DA MENTE'
+
+};
+
+
+/* =========================================================
+   ELEMENTOS
+========================================================= */
+
+const stage =
+  document.getElementById('sliceStage');
+
+const emptyState =
+  document.getElementById('emptyState');
+
+const fileInput =
+  document.getElementById('fileInput');
+
+const player =
+  document.getElementById('player');
+
+const playButton =
+  document.getElementById('playButton');
+
+const playerTitle =
+  document.getElementById('playerTitle');
+
+const playerState =
+  document.getElementById('playerState');
+
+const progressBar =
+  document.getElementById('progressBar');
+
+const documentTitle =
+  document.getElementById('documentTitle');
+
+
+/* =========================================================
+   IMPORTAÇÃO
+========================================================= */
+
+function openFile(){
+
+  fileInput.click();
+
+}
+
+
+fileInput.addEventListener(
+  'change',
+  async event => {
+
+    const file =
+      event.target.files[0];
+
+    if(!file)
+      return;
+
+    const text =
+      await file.text();
+
+    loadDocument(
+      text,
+      file.name
+    );
+
+  }
+);
+
+
+/* =========================================================
+   COLAR
+========================================================= */
+
+function pasteText(){
+
+  const text =
+    prompt(
+      'Cole aqui o texto do documento:'
+    );
+
+  if(!text)
+    return;
+
+  loadDocument(
+    text,
+    'Documento colado'
+  );
+
+}
+
+
+/* =========================================================
+   DOCUMENT → SLICES
+========================================================= */
+
+function parseDocument(text){
+
+  /*
+     Estratégia inicial:
+
+     1. separa por headings Markdown
+     2. se não houver headings,
+        separa por blocos de parágrafo
+  */
+
+  const lines =
+    text
+      .replace(/\r/g,'')
+      .split('\n');
+
+
+  const slices = [];
+
+  let current = [];
+
+  function push(){
+
+    const value =
+      current.join('\n').trim();
+
+    if(value)
+      slices.push(value);
+
+    current = [];
+
+  }
+
+
+  for(const line of lines){
+
+    /*
+       # Heading
+    */
+
+    if(/^#{1,3}\s+/.test(line)){
+
+      if(current.length)
+        push();
+
+      current.push(line);
+
+      continue;
+
+    }
+
+
+    /*
+       separador explícito
+    */
+
+    if(/^---+$/.test(line.trim())){
+
+      push();
+
+      continue;
+
+    }
+
+
+    current.push(line);
+
+  }
+
+
+  if(current.length)
+    push();
+
+
+  /*
+     Se virou uma única slice,
+     dividimos por blocos grandes.
+  */
+
+  if(slices.length <= 1){
+
+    const blocks =
+      text
+        .split(/\n\s*\n/)
+        .map(x => x.trim())
+        .filter(Boolean);
+
+
+    if(blocks.length > 1)
+      return blocks;
+
+  }
+
+
+  return slices;
+
+}
+
+
+/* =========================================================
+   MARKDOWN → HTML
+========================================================= */
+
+function escapeHTML(text){
+
+  return text
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+
+}
+
+
+function markdownToHTML(text){
+
+  let html =
+    escapeHTML(text);
+
+
+  /*
+     code block
+  */
+
+  html =
+    html.replace(
+      /```([\s\S]*?)```/g,
+      '<pre><code>$1</code></pre>'
+    );
+
+
+  /*
+     headings
+  */
+
+  html =
+    html.replace(
+      /^### (.*)$/gm,
+      '<h3>$1</h3>'
+    );
+
+  html =
+    html.replace(
+      /^## (.*)$/gm,
+      '<h2>$1</h2>'
+    );
+
+  html =
+    html.replace(
+      /^# (.*)$/gm,
+      '<h1>$1</h1>'
+    );
+
+
+  /*
+     bold
+  */
+
+  html =
+    html.replace(
+      /\*\*(.*?)\*\*/g,
+      '<strong>$1</strong>'
+    );
+
+
+  /*
+     italic
+  */
+
+  html =
+    html.replace(
+      /\*(.*?)\*/g,
+      '<em>$1</em>'
+    );
+
+
+  /*
+     inline code
+  */
+
+  html =
+    html.replace(
+      /`([^`]+)`/g,
+      '<code>$1</code>'
+    );
+
+
+  /*
+     blockquote
+  */
+
+  html =
+    html.replace(
+      /^&gt; (.*)$/gm,
+      '<blockquote>$1</blockquote>'
+    );
+
+
+  /*
+     listas simples
+  */
+
+  html =
+    html.replace(
+      /^(?:[-*] .*(?:\n|$))+?/gm,
+      block => {
+
+        const items =
+          block
+            .trim()
+            .split('\n')
+            .map(
+              x =>
+                `<li>${x.replace(/^[-*]\s+/,'')}</li>`
+            )
+            .join('');
+
+        return `<ul>${items}</ul>`;
+
+      }
+    );
+
+
+  /*
+     parágrafos
+
+     Não transforma headings/listas/pre
+     em parágrafos.
+  */
+
+  html =
+    html
+      .split(/\n\s*\n/)
+      .map(block => {
+
+        block =
+          block.trim();
+
+        if(!block)
+          return '';
+
+        if(
+          /^<(h1|h2|h3|ul|pre|blockquote)/.test(block)
+        )
+          return block;
+
+        return `<p>${block.replace(/\n/g,'<br>')}</p>`;
+
+      })
+      .join('');
+
+
+  return html;
+
+}
+
+
+/* =========================================================
+   CRIAR SLICE
+========================================================= */
+
+function createSlice(content,index){
+
+  const slice =
+    document.createElement('slice');
+
+
+  slice.dataset.index =
+    index;
+
+
+  slice.dataset.state =
+    'created';
+
+
+  slice.innerHTML = `
+
+    <div class="slice-content">
+
+      <div class="slice-meta">
+
+        <label>
+          SLICE ${String(index+1).padStart(2,'0')}
+        </label>
+
+        <span class="slice-number">
+          ${index+1}
+          /
+          ${state.slices.length}
+        </span>
+
+      </div>
+
+      <div class="slice-body">
+
+        ${markdownToHTML(content)}
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  return slice;
+
+}
+
+
+/* =========================================================
+   LOAD DOCUMENT
+========================================================= */
+
+function loadDocument(text,title){
+
+  stopSpeech();
+
+
+  state.slices =
+    parseDocument(text);
+
+
+  state.current = 0;
+
+  state.documentTitle =
+    title || 'Documento';
+
+
+  documentTitle.textContent =
+    state.documentTitle;
+
+  playerTitle.textContent =
+    state.documentTitle;
+
+
+  /*
+     limpa DOM anterior
+  */
+
+  stage.replaceChildren();
+
+
+  /*
+     cria somente as estruturas das slices.
+     
+     A classe active controla
+     qual delas está visível.
+  */
+
+  state.slices.forEach(
+    (content,index)=>{
+
+      const slice =
+        createSlice(
+          content,
+          index
+        );
+
+      stage.appendChild(slice);
+
+    }
+  );
+
+
+  emptyState.style.display =
+    state.slices.length
+      ? 'none'
+      : 'grid';
+
+
+  showSlice(0);
+
+}
+
+
+/* =========================================================
+   SHOW SLICE
+========================================================= */
+
+function showSlice(index){
+
+  if(!state.slices.length)
+    return;
+
+
+  if(index < 0)
+    index =
+      state.slices.length - 1;
+
+
+  if(index >= state.slices.length)
+    index = 0;
+
+
+  state.current =
+    index;
+
+
+  const all =
+    stage.querySelectorAll('slice');
+
+
+  all.forEach(
+    (slice,i)=>{
+
+      slice.classList.toggle(
+        'active',
+        i === index
+      );
+
+      slice.dataset.state =
+        i === index
+          ? 'active'
+          : 'sleeping';
+
+    }
+  );
+
+
+  progressBar.style.width =
+    `${
+      ((index + 1) /
+      state.slices.length) *
+      100
+    }%`;
+
+
+  playerState.textContent =
+    `Slice ${index + 1} de ${state.slices.length}`;
+
+
+  /*
+     Se estiver falando,
+     continua automaticamente
+     na nova slice.
+  */
+
+  if(state.speaking){
+
+    speakCurrentSlice();
+
+  }
+
+}
+
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+function nextSlice(){
+
+  if(!state.slices.length)
+    return;
+
+
+  if(
+    state.current <
+    state.slices.length - 1
+  ){
+
+    showSlice(
+      state.current + 1
+    );
+
+  }else{
+
+    /*
+       terminou documento
+    */
+
+    stopSpeech();
+
+  }
+
+}
+
+
+function previousSlice(){
+
+  if(!state.slices.length)
+    return;
+
+  showSlice(
+    state.current - 1
+  );
+
+}
+
+
+/* =========================================================
+   TEXTO DA SLICE
+========================================================= */
+
+function getCurrentText(){
+
+  const slice =
+    state.slices[state.current];
+
+  if(!slice)
+    return '';
+
+
+  /*
+     remove Markdown
+     antes da fala
+  */
+
+  return slice
+
+    .replace(/```[\s\S]*?```/g,' código ')
+
+    .replace(/^#{1,6}\s+/gm,'')
+
+    .replace(/[*_~`]/g,'')
+
+    .replace(/^>\s*/gm,'')
+
+    .replace(/^[-*]\s+/gm,'')
+
+    .replace(/\[([^\]]+)\]\([^)]+\)/g,'$1')
+
+    .replace(/\n+/g,' ')
+
+    .trim();
+
+}
+
+
+/* =========================================================
+   SPEECH SYNTHESIS
+========================================================= */
+
+function speakCurrentSlice(){
+
+  if(!('speechSynthesis' in window)){
+
+    playerState.textContent =
+      'Speech Synthesis indisponível';
+
+    return;
+
+  }
+
+
+  speechSynthesis.cancel();
+
+
+  const text =
+    getCurrentText();
+
+
+  if(!text)
+    return;
+
+
+  const utterance =
+    new SpeechSynthesisUtterance(text);
+
+
+  /*
+     FUTURO:
+
+     aqui entram os PETs.
+
+     utterance.voice = ...
+     utterance.pitch = ...
+     utterance.rate = ...
+  */
+
+
+  utterance.rate = 1;
+
+  utterance.pitch = 1;
+
+  utterance.volume = 1;
+
+
+  utterance.onstart = ()=>{
+
+    state.speaking = true;
+
+    state.paused = false;
+
+    playButton.textContent =
+      'Ⅱ';
+
+    playerState.textContent =
+      `Lendo slice ${state.current + 1}`;
+
+  };
+
+
+  utterance.onend = ()=>{
+
+    /*
+       Se ainda estiver no modo
+       de leitura contínua,
+       avança para próxima.
+    */
+
+    if(state.speaking){
+
+      if(
+        state.current <
+        state.slices.length - 1
+      ){
+
+        state.current++;
+
+        showSlice(
+          state.current
+        );
+
+      }else{
+
+        stopSpeech();
+
+      }
+
+    }
+
+  };
+
+
+  utterance.onerror = ()=>{
+
+    state.speaking = false;
+
+    playButton.textContent =
+      '▶';
+
+  };
+
+
+  speechSynthesis.speak(
+    utterance
+  );
+
+}
+
+
+/* =========================================================
+   PLAY / PAUSE
+========================================================= */
+
+function toggleSpeech(){
+
+  if(!state.slices.length)
+    return;
+
+
+  /*
+     estava falando
+  */
+
+  if(state.speaking){
+
+    if(
+      speechSynthesis.paused
+    ){
+
+      speechSynthesis.resume();
+
+      state.paused = false;
+
+      playButton.textContent =
+        'Ⅱ';
+
+      return;
+
+    }
+
+
+    speechSynthesis.pause();
+
+    state.paused = true;
+
+    playButton.textContent =
+      '▶';
+
+    playerState.textContent =
+      'Pausado';
+
+    return;
+
+  }
+
+
+  /*
+     começar
+  */
+
+  state.speaking = true;
+
+  speakCurrentSlice();
+
+}
+
+
+/* =========================================================
+   STOP
+========================================================= */
+
+function stopSpeech(){
+
+  if(
+    'speechSynthesis'
+    in window
+  ){
+
+    speechSynthesis.cancel();
+
+  }
+
+
+  state.speaking = false;
+
+  state.paused = false;
+
+  playButton.textContent =
+    '▶';
+
+
+  if(state.slices.length){
+
+    playerState.textContent =
+      `Slice ${state.current + 1} de ${state.slices.length}`;
+
+  }
+
+}
+
+
+/* =========================================================
+   PLAYER MINIMIZADO
+========================================================= */
+
+function togglePlayer(){
+
+  player.classList.toggle(
+    'minimized'
+  );
+
+}
+
+
+/* =========================================================
+   TECLADO
+========================================================= */
+
+document.addEventListener(
+  'keydown',
+  event => {
+
+    if(event.key === 'ArrowRight')
+      nextSlice();
+
+    if(event.key === 'ArrowLeft')
+      previousSlice();
+
+    if(event.key === ' '){
+
+      /*
+         evita scroll
+      */
+
+      event.preventDefault();
+
+      toggleSpeech();
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   TOUCH / SWIPE
+========================================================= */
+
+let touchStartX = 0;
+
+
+document.addEventListener(
+  'touchstart',
+  event => {
+
+    touchStartX =
+      event.changedTouches[0].screenX;
+
+  },
+  {passive:true}
+);
+
+
+document.addEventListener(
+  'touchend',
+  event => {
+
+    const endX =
+      event.changedTouches[0].screenX;
+
+    const diff =
+      endX - touchStartX;
+
+
+    if(Math.abs(diff) < 60)
+      return;
+
+
+    if(diff < 0)
+      nextSlice();
+
+    else
+      previousSlice();
+
+  },
+  {passive:true}
+);
+
+
+/* =========================================================
+   START
+========================================================= */
+
+</script>
+
+<link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/M0D/LV/css/main.css" data-k-id="L_1">
+ <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-0.js" data-k-id="JS_0"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-1.js" data-k-id="JS_1"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-2.js" data-k-id="JS_2"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-3.js" data-k-id="JS_3"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-4.js" data-k-id="JS_4"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-5.js" data-k-id="JS_5"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-7.js" data-k-id="JS_6"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-8.js" data-k-id="JS_7"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-9.js" data-k-id="JS_8"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-10.js" data-k-id="JS_9"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-11.js" data-k-id="JS_10"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-12.js" data-k-id="JS_11"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-13.js" data-k-id="JS_12"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-14.js" data-k-id="JS_13"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-15.js" data-k-id="JS_14"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-16.js" data-k-id="JS_15"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-17.js" data-k-id="JS_16"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-18.js" data-k-id="JS_17"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-19.js" data-k-id="JS_18"></script>
+
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-25.js" data-k-id="JS_24"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-26.js" data-k-id="JS_25"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-27.js" data-k-id="JS_26"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-28.js" data-k-id="JS_27"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-29.js" data-k-id="JS_28"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-30.js" data-k-id="JS_29"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-31.js" data-k-id="JS_30"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-32.js" data-k-id="JS_31"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-33.js" data-k-id="JS_32"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-34.js" data-k-id="JS_33"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-35.js" data-k-id="JS_34"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-36.js" data-k-id="JS_35"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-37.js" data-k-id="JS_36"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-38.js" data-k-id="JS_37"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-39.js" data-k-id="JS_38"></script>
+  <script src="https://kodux78k.github.io/oiDual--Y-/M0D/LV/js/modules/inline-40.js" data-k-id="JS_39"></script>
+ <script type="module" data-k-id="JSI_40">
+console.log("[RL] Infodose conectado");
+console.log("[RL] Timestamp:", 17787158713512);
+console.log("[RL] ID da sessão:", "348fab2c-a5ef-4d12-8e5b-3fde8577db6a");
+console.log("[RL] Aplicação:", "generated.app");
+import "https://www.infodose.com.br/js/main.js";
+</script>
+<script data-k-id="JSI_41">
+(function(){
+  const fallbackArchetypes = [
+    {
+      id: 'kobllux',
+      name: 'KOBLLUX',
+      tone: 'Núcleo do sistema, oracular',
+      modulation: 'Grave-médio, presença de comando, ritmo estável.',
+      voice: 'Luciana',
+      lang: 'pt-BR',
+      rate: 0.98,
+      pitch: 0.48,
+      color: '#22D3EE',
+      theme: {
+        primary: '#22D3EE',
+        secondary: '#7dd3fc',
+        bgSoft: 'radial-gradient(circle at 30% 20%, rgba(34,211,238,.08), transparent)',
+        glow: '0 0 18px rgba(34,211,238,.55)'
+      }
+    }
+  ];
+  const ARCHETYPES = Array.isArray(window.ARCHETYPES) && window.ARCHETYPES.length ? window.ARCHETYPES : fallbackArchetypes;
+  window.ARCHETYPES = ARCHETYPES;
+  window.KOBLLUX_VOICES = ARCHETYPES.reduce((acc, a) => {
+    acc[String(a.name || a.id || '').toLowerCase()] = a;
+    acc[String(a.id || '').toLowerCase()] = a;
+    return acc;
+  }, window.KOBLLUX_VOICES || {});
+  const els = {
+    voiceSelect: document.getElementById('voiceSelect'),
+    rateRange: document.getElementById('rateRange'),
+    rateOut: document.getElementById('rateOut'),
+    pitchRange: document.getElementById('pitchRange'),
+    pitchOut: document.getElementById('pitchOut'),
+    voiceCount: document.getElementById('voiceCount'),
+    archSelect: document.getElementById('archSelect'),
+    archStatus: document.getElementById('archStatus'),
+    archUserBadge: document.getElementById('archUserBadge'),
+    saveArchBtn: document.getElementById('saveArchBtn'),
+    exportArchBtn: document.getElementById('exportArchBtn')
+  };
+  const ARCH_KEY = 'di_nebula_arch_v1';
+  const safeUserName = (name) => {
+    const v = String(name || localStorage.getItem('di_userName') || window.di_userName || 'Convidado').trim();
+    return v || 'Convidado';
+  };
+  const normalize = (v) => String(v || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_\-]/g, '');
+  const storageKeyForUser = (userName) => `${ARCH_KEY}:${normalize(userName) || 'convidado'}`;
+  const readSavedArch = (userName) => {
+    try {
+      const raw = localStorage.getItem(storageKeyForUser(userName));
+      return raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      console.warn('[ARCH] leitura falhou', err);
+      return null;
+    }
+  };
+  const writeSavedArch = (userName, payload) => {
+    localStorage.setItem(storageKeyForUser(userName), JSON.stringify(payload));
+    localStorage.setItem('di_nebula_arch_last', JSON.stringify(payload));
+    window.dispatchEvent(new CustomEvent('KOBLLUX_ARCH_SAVED', { detail: payload }));
+  };
+  const resolveArch = (userName) => {
+    const saved = readSavedArch(userName);
+    if (saved?.arch?.id) {
+      const match = ARCHETYPES.find(a => normalize(a.id) === normalize(saved.arch.id) || normalize(a.name) === normalize(saved.arch.id));
+      if (match) return { ...match, ...saved.arch };
+    }
+    const direct = ARCHETYPES.find(a => normalize(a.id) === normalize(userName) || normalize(a.name) === normalize(userName));
+    if (direct) return direct;
+    return ARCHETYPES[0] || {
+      id: normalize(userName) || 'custom',
+      name: String(userName || 'Custom').toUpperCase(),
+      voice: '',
+      lang: '',
+      rate: 1.01,
+      pitch: 0.871,
+    };
+  };
+  const getPlaybackState = () => ({
+    voice: els.voiceSelect?.value || '',
+    rate: +(els.rateRange?.value || 1),
+    pitch: +(els.pitchRange?.value || 1)
+  });
+  const applyArchToPlayback = (arch, { persist = false } = {}) => {
+    if (!arch) return;
+    if (els.archSelect && arch.id) els.archSelect.value = arch.id;
+    if (els.archUserBadge) els.archUserBadge.textContent = `user: ${safeUserName()}`;
+    if (els.archStatus) {
+      els.archStatus.textContent = `${arch.name || arch.id} · id: ${arch.id} · voice: ${arch.voice || '—'}`;
+    }
+    const voiceName = arch.voice || '';
+    if (voiceName && els.voiceSelect) {
+      const opt = [...els.voiceSelect.options].find(o => String(o.value).toLowerCase() === String(voiceName).toLowerCase());
+      if (opt) els.voiceSelect.value = opt.value;
+    }
+    if (typeof arch.rate === 'number' && els.rateRange) {
+      els.rateRange.value = String(arch.rate);
+      if (els.rateOut) els.rateOut.textContent = `${Number(arch.rate).toFixed(1)}×`;
+    }
+    if (typeof arch.pitch === 'number' && els.pitchRange) {
+      els.pitchRange.value = String(arch.pitch);
+      if (els.pitchOut) els.pitchOut.textContent = Number(arch.pitch).toFixed(2);
+    }
+    // APLICAÇÃO VISUAL DAS VARIÁVEIS NO CSS DO ROOT PARA O ORB
+    if (arch.theme) {
+      document.documentElement.style.setProperty('--kob-voice-primary', arch.theme.primary || '#22D3EE');
+      document.documentElement.style.setProperty('--kob-voice-secondary', arch.theme.secondary || '#7dd3fc');
+      document.documentElement.style.setProperty('--kob-voice-glow', arch.theme.glow || '0 0 18px rgba(34,211,238,.55)');
+      document.documentElement.style.setProperty('--kob-voice-bg-soft', arch.theme.bgSoft || 'transparent');
+    }
+    if (persist) {
+      saveCurrentArch();
+    }
+  };
+  const populateArchOptions = () => {
+    if (!els.archSelect || els.archSelect.options.length) return;
+    ARCHETYPES.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = String(a.id || a.name || '');
+      opt.textContent = a.name || a.id || '—';
+      els.archSelect.appendChild(opt);
+    });
+  };
+  const refreshArchStatus = () => {
+    const userName = safeUserName();
+    const currentArch = resolveArch(userName);
+    if (els.archUserBadge) els.archUserBadge.textContent = `user: ${userName}`;
+    if (els.archSelect && ARCHETYPES.length) {
+      populateArchOptions();
+      els.archSelect.value = currentArch.id;
+    }
+    if (els.archStatus) {
+      const saved = readSavedArch(userName);
+      els.archStatus.textContent = saved
+        ? `Salvo em ${userName} · ${saved.arch?.name || saved.arch?.id || '—'} (${saved.arch?.id || '—'})`
+        : `Ativo para ${userName} · ${currentArch.name || currentArch.id}`;
+    }
+    return currentArch;
+  };
+  const saveCurrentArch = () => {
+    const userName = safeUserName();
+    const archId = els.archSelect?.value || resolveArch(userName).id;
+    const arch = ARCHETYPES.find(a => String(a.id) === String(archId)) || resolveArch(userName);
+    const playback = getPlaybackState();
+    const payload = {
+      userName,
+      archId: arch.id,
+      savedAt: new Date().toISOString(),
+      arch: {
+        ...arch,
+        playback,
+        userName
+      }
+    };
+    writeSavedArch(userName, payload);
+    if (els.archStatus) {
+      els.archStatus.textContent = `Salvo em ${userName} · ${arch.name || arch.id} (${arch.id})`;
+    }
+    return payload;
+  };
+  const exportCurrentArch = () => {
+    const userName = safeUserName();
+    const saved = readSavedArch(userName) || saveCurrentArch();
+    const payload = saved?.arch ? saved : saveCurrentArch();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${normalize(userName)}_${normalize(payload.arch?.id || 'arch')}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+  const mountArchUI = () => {
+    const current = refreshArchStatus();
+    if (!els.archSelect) return;
+    populateArchOptions();
+    if (current?.id) els.archSelect.value = current.id;
+    applyArchToPlayback(current, { persist: false });
+    els.archSelect.addEventListener('change', () => {
+      const arch = ARCHETYPES.find(a => String(a.id) === String(els.archSelect.value));
+      if (arch) {
+        applyArchToPlayback(arch, { persist: false });
+        saveCurrentArch();
+      }
+    });
+    els.saveArchBtn?.addEventListener('click', () => {
+      const saved = saveCurrentArch();
+      if (saved) {
+        els.archStatus && (els.archStatus.textContent = `Salvo em ${saved.userName} · ${saved.arch?.name || saved.archId} (${saved.archId})`);
+      }
+    });
+    els.exportArchBtn?.addEventListener('click', exportCurrentArch);
+    ['voiceSelect', 'rateRange', 'pitchRange'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('change', () => {
+        refreshArchStatus();
+      });
+      el.addEventListener('input', () => {
+        refreshArchStatus();
+      });
+    });
+    window.addEventListener('KOBLLUX_ARCH_REQUEST_REFRESH', refreshArchStatus);
+  };
+  const patchUpdateInterface = () => {
+    const original = window.updateInterface;
+    if (typeof original === 'function' && !original.__archPatched) {
+      const wrapped = function(name){
+        const result = original.apply(this, arguments);
+        try {
+          refreshArchStatus();
+        } catch (err) {
+          console.warn('[ARCH] refresh falhou', err);
+        }
+        return result;
+      };
+      wrapped.__archPatched = true;
+      window.updateInterface = wrapped;
+    }
+  };
+  const boot = () => {
+    mountArchUI();
+    patchUpdateInterface();
+    refreshArchStatus();
+    const userName = safeUserName();
+    const saved = readSavedArch(userName);
+    if (saved?.arch) {
+      applyArchToPlayback(saved.arch, { persist: false });
+    } else {
+      const guessed = resolveArch(userName);
+      applyArchToPlayback(guessed, { persist: false });
+      saveCurrentArch();
+    }
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
+  }
+  window.NEBULA_ARCH = {
+    getUserName: safeUserName,
+    get: readSavedArch,
+    save: saveCurrentArch,
+    export: exportCurrentArch,
+    list: () => ARCHETYPES.slice()
+  };
+})();
+</script>
+
+<script>
+(()=>{'use strict';
+const STYLE_ID='INLINE_CSS_RENDER_V1';
+function appendCSS(css){
+  if(!css || !css.trim()) return;
+  let s=document.getElementById(STYLE_ID);
+  if(!s){ s=document.createElement('style'); s.id=STYLE_ID; document.head.appendChild(s); }
+  s.appendChild(document.createTextNode('\n'+css));
+}
+window.CSS_INNER = {
+  // Varre o DOM e injeta CSS encontrado em blocos comuns
+  applyFromDOM(){
+    let css='';
+    document.querySelectorAll('style[data-inline], [data-css-inline], pre[data-lang="css"], code.language-css, pre code.css').forEach(el=>{
+      const t = (el.textContent||'').trim();
+      if(t) css += '\n' + t;
+    });
+    appendCSS(css);
+  },
+  // Extrai <style>...</style> de uma string HTML e aplica
+  applyFromHTML(html){
+    if(!html) return;
+    const re=/<style[^>]*>([\s\S]*?)<\/style>/gi; let m, css='';
+    while((m=re.exec(html))){ css += '\n' + (m[1]||''); }
+    appendCSS(css);
+  }
+};
+document.addEventListener('DOMContentLoaded', ()=> CSS_INNER.applyFromDOM());
+})();
+</script>
+
+</body>
+
+</html>
