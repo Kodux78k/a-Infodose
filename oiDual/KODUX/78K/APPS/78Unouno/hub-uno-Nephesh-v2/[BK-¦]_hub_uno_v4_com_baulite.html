@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<!--
+╔════════════════════════════════════════════════════════════════════════════╗
+║  KOBLLUX ∆³ · HUB UNO v4 · ARQ-12 · MODULAR BUILD · SÜMBUS                ║
+║  Source: KOBLLUX_HUB_UNO_v4_ARQ-12(2).html (1.03 MB · 10.310 linhas)      ║
+║  + BlueCup_TRINITY_HYBRID (painel APPS LOCAIS · 2ª camada em v-apps)      ║
+║  + kobllux-symbolbar-v2 (substitui tabbar com 12 botões data-nav)         ║
+║  + auto-size overrides (frames se ajustam ao conteúdo)                    ║
+║  EQUAÇÃO: VERDADE × INTEGRAR ÷ ∆ = ∞   FRACTAL: 3×6×9×7 = 1134           ║
+╚════════════════════════════════════════════════════════════════════════════╝
+-->
+<html lang="pt-BR" data-layer="corpo-mente-espirito" data-arch="kobllux" data-fractal="3x6x9x7-1134" data-geo="tetraedro-vivo">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <meta name="kobllux-version" content="2.5.0">
+  <meta name="theme-color" content="#0b0f14">
+  <title>KOBLLUX · HUB UNO v4 ARQ-12 · SymbolBar Fix</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/00-core-tokens-base.css">
+  <link rel="stylesheet" href="css/05-katex-overrides.css">
+  <link rel="stylesheet" href="css/10-toaster-overlays.css">
+  <link rel="stylesheet" href="css/20-panel-core.css">
+  <link rel="stylesheet" href="css/30-badges-sotaque.css">
+  <link rel="stylesheet" href="css/40-md-injections.css">
+  <link rel="stylesheet" href="css/60-bluecup-local-panel.css">
+  <link rel="stylesheet" href="css/70-symbolbar-v2.css">
+  <link rel="stylesheet" href="css/99-autosize-overrides.css">
+  <link rel="stylesheet" href="kobllux.css" onerror="this.remove()">
+
+  <style>
+    /* TABBAR sempre visível */
+    .tabbar, .kodux-tabbar, [role="tabbar"], .original-nav-bar {
+      display: flex !important;
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      z-index: 40 !important;
+      transform: translateY(0) !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+    body { padding-bottom: calc(var(--u-base) * 7.5) !important; }
+
+    /* SymbolBar por cima */
+    .symbol-bar, .SymbolBar {
+      z-index: 50 !important;
+      pointer-events: none;
+    }
+    .symbol-bar button, .SymbolBar button,
+    .symbol-bar a, .SymbolBar a {
+      pointer-events: auto;
+    }
+
+    /* Destaque ativo */
+    .tabbar .tab.active,
+    .original-nav-item.active,
+    .SymbolBar .sb-item.active {
+      color: var(--accent, #2E86AB) !important;
+      border-color: var(--accent, #2E86AB) !important;
+      font-weight: 700;
+    }
+
+    /* ═══ SYMBOLBAR v2.1 · CARROSSEL + COLAPSO + DRAG ═══ */
+    .symbol-bar {
+      position: fixed;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 6px;
+      background: rgba(10, 14, 26, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(201, 168, 76, 0.15);
+      border-radius: 24px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(201, 168, 76, 0.05);
+      transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+      user-select: none;
+      touch-action: none;
+      min-width: 52px;
+      max-width: 58px;
+    }
+    .symbol-bar.is-dragging {
+      transition: none !important;
+      cursor: grabbing !important;
+      opacity: 0.9;
+    }
+    .symbol-bar.snap-side {
+      left: 0 !important;
+      right: auto !important;
+      border-radius: 0 24px 24px 0;
+    }
+    .symbol-bar.snap-side-right {
+      right: 0 !important;
+      left: auto !important;
+      border-radius: 24px 0 0 24px;
+    }
+
+    /* ── COLAPSO ── */
+    .symbol-bar.collapsed {
+      min-width: 44px;
+      max-width: 44px;
+      padding: 8px 4px;
+      gap: 6px;
+    }
+    .symbol-bar.collapsed .kblx-carousel-viewport,
+    .symbol-bar.collapsed .kblx-dots,
+    .symbol-bar.collapsed #btn-arch,
+    .symbol-bar.collapsed .view-nav-divider {
+      display: none !important;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .symbol-bar.collapsed .hud-info {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      font-size: 0.5rem;
+      letter-spacing: 0.12em;
+      transform: rotate(180deg);
+      margin-top: 4px;
+    }
+
+    /* ── TOGGLE ── */
+    .toggle-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .symbol-button.main-toggle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(201, 168, 76, 0.12);
+      border: 1px solid rgba(201, 168, 76, 0.25);
+      color: #C9A84C;
+      font-size: 1.1rem;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.25s ease;
+    }
+    .symbol-button.main-toggle:hover {
+      background: rgba(201, 168, 76, 0.22);
+      transform: scale(1.08);
+    }
+
+    /* ── ORB ── */
+    .orb-microphone-container {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tts-orb-mini .orb {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 12px rgba(201, 168, 76, 0.3), inset 0 0 8px rgba(255, 255, 255, 0.1);
+      border: 1.5px solid rgba(201, 168, 76, 0.4);
+    }
+    .orb-core {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #F0C060 0%, rgba(255,255,255,0.05) 14%, transparent 55%),
+                  radial-gradient(circle at 70% 72%, #C9A84C 0%, #8B4513 100%);
+    }
+
+    /* ── CARROSSEL ── */
+    .kblx-carousel-viewport {
+      overflow: hidden;
+      position: relative;
+      width: 100%;
+      mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+    }
+    .kblx-carousel-track {
+      display: flex;
+      flex-direction: column;
+      will-change: transform;
+      touch-action: pan-y;
+      align-items: center;
+    }
+    .kblx-carousel-track.kblx-dragging {
+      cursor: grabbing;
+      transition: none !important;
+    }
+    .symbol-wrap {
+      flex-shrink: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+    }
+    .symbol-button {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 1.05rem;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      position: relative;
+      padding: 0;
+    }
+    .symbol-button:hover {
+      background: rgba(201, 168, 76, 0.1);
+      border-color: rgba(201, 168, 76, 0.3);
+      transform: scale(1.05);
+    }
+    .symbol-button.nav-view-btn.active {
+      background: rgba(201, 168, 76, 0.2) !important;
+      border-color: var(--kob-voice-primary, #C9A84C) !important;
+      box-shadow: 0 0 10px var(--arch-glow, rgba(201, 168, 76, 0.25)) !important;
+      color: var(--kob-voice-primary, #C9A84C) !important;
+    }
+    .kblx-separator {
+      width: 20px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--kob-voice-primary, #C9A84C), transparent);
+      opacity: 0.3;
+      margin: 2px auto;
+    }
+    .kblx-dots {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+      padding: 4px 0;
+      min-height: 10px;
+    }
+    .kblx-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .kblx-dot.active {
+      background: var(--kob-voice-primary, #C9A84C);
+      transform: scale(1.5);
+    }
+
+    /* ── HUD ── */
+    .hud-info {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      color: rgba(201, 168, 76, 0.7);
+      text-align: center;
+      letter-spacing: 0.08em;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+
+    /* ── OVERLAYS ── */
+    .chroma-ripple {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 45;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+    .chroma-ripple.fire {
+      opacity: 0.15;
+      animation: chromaFade 0.8s ease forwards;
+    }
+    @keyframes chromaFade {
+      0% { opacity: 0.15; }
+      100% { opacity: 0; }
+    }
+    
+    
+    /* ═══ SYMBOLBAR Z-INDEX + DRAG HANDLE ═══ */
+.symbol-bar {
+  z-index: 9999 !important;           /* Acima de TUDO */
+  position: fixed !important;
+}
+.symbol-bar .sb-drag-handle {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  cursor: grab;
+  background: transparent;
+  border-radius: inherit;
+}
+.symbol-bar.is-dragging .sb-drag-handle {
+  cursor: grabbing !important;
+}
+
+/* Garante que botões internos fiquem ACIMA do handle */
+.symbol-bar .toggle-wrap,
+.symbol-bar #btn-arch,
+.symbol-bar .kblx-carousel-viewport,
+.symbol-bar .kblx-dots,
+.symbol-bar .hud-info {
+  position: relative;
+  z-index: 2;
+}
+
+/* Botões de view com SVG precisam de ajuste */
+.symbol-button.nav-view-btn img {
+  pointer-events: none;
+  display: block;
+  margin: auto;
+}
+
+/* Carrossel: z-index correto */
+.kblx-carousel-viewport {
+  position: relative;
+  z-index: 2;
+}
+.kblx-carousel-track {
+  position: relative;
+  z-index: 2;
+}
+    
+    
+  </style>
+</head>
+
+<body>
+  <div class="demo-screen">
+    <div class="demo-title">KOBLLUX</div>
+    <div class="demo-sub">SymbolBar · v2.1 · Fix</div>
+  </div>
+
+  <iframe id="kob-bg-frame" src="about:blank"></iframe>
+  <div id="kob-frame-veil"></div>
+  <div id="particles-js"></div>
+  <button id="kob-frame-close" title="Fechar página">✕</button>
+
+  <header class="mast">
+    <button class="ib fx-trans fx-press ring" id="btnBack" title="Voltar" aria-label="Voltar">
+      <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/arrow-left.svg" alt="Voltar" width="20" height="20" onerror="this.onerror=null;this.src='icons/arrow-left.svg'">
+      <span class="ripple"></span>
+    </button>
+    <button class="ib fx-trans fx-press ring" id="btnGeometria" title="Testemunhar Geometria" data-opcode="0×08" data-frequency="852Hz" data-geometry="◉">
+      <img src="icons/eye.svg" alt="Geometria" width="20" height="20" onerror="this.onerror=null;this.src='icons/eye.svg'">
+      <span class="ripple"></span>
+    </button>
+    <div class="title"><h1>HUB UNO</h1><small>Dual · Trinity</small></div>
+    <button class="ib fx-trans fx-press ring" id="btnDownload" title="Baixar HTML">
+      <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/download.svg" alt="Download" width="20" height="20" onerror="this.onerror=null;this.src='icons/download.svg'">
+      <span class="ripple"></span>
+    </button>
+    <button class="ib fx-trans fx-press ring" id="btnHelp" title="Ajuda / Atalhos">
+      <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/question-circle.svg" alt="Ajuda" width="20" height="20" onerror="this.onerror=null;this.src='icons/question-circle.svg'">
+      <span class="ripple"></span>
+    </button>
+    <button class="ib fx-trans fx-press ring" id="btnBrain" title="Brain">
+      <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/brain.svg" alt="Brain" width="20" height="20" onerror="this.onerror=null;this.src='icons/brain.svg'">
+      <span class="ripple"></span>
+    </button>
+    <button class="ib fx-trans fx-press ring" id="btnLS" title="Local Storage (Brain)" aria-label="Local Storage">
+      <span class="ls-badge">LS</span>
+      <span class="ripple"></span>
+    </button>
+    <button class="ib fx-trans fx-press ring" id="btnKobllux" title="KOBLLUX ATIVAR" aria-label="KOBLLUX">
+      <img src="icons/bolt.svg" alt="KOBLLUX" width="20" height="20" onerror="this.onerror=null;this.src='icons/bolt.svg'">
+      <span class="ripple"></span>
+    </button>
+  </header>
+
+  <section id="sessionsAnchor"></section>
+  <div id="custom-bg" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;overflow:hidden;pointer-events:none"></div>
+
+  <main>
+    <section id="v-home" class="view active">
+      <div class="grid">
+        <div id="greetingCard" class="card fx-trans fx-lift" style="display:none">
+          <div id="greetingMsg" style="font-weight:800"></div>
+        </div>
+        <div id="unoCard" class="card fx-trans fx-lift" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%">
+            <div>
+              <div style="font-weight:900;letter-spacing:.08em">UNO • foco e velocidade</div>
+              <div class="mut">Monólito: Apps embutidos + Viewer + Dock + Atalhos</div>
+            </div>
+            <div class="ico">
+              <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/bolt.svg" alt="Energia" width="24" height="24" onerror="this.onerror=null;this.src='icons/bolt.svg'">
+            </div>
+          </div>
+        </div>
+        <div class="arch-container">
+          <div class="arch-switcher">
+            <button class="btn fx-trans fx-press ring" id="arch-prev" title="Anterior">
+              <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/chevron-left.svg" alt="Anterior" width="16" height="16" onerror="this.onerror=null;this.src='icons/chevron-left.svg'">
+            </button>
+            <select id="arch-select" title="Escolher arquétipo"></select>
+            <button class="btn fx-trans fx-press ring" id="arch-next" title="Próximo">
+              <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/chevron-right.svg" alt="Próximo" width="16" height="16" onerror="this.onerror=null;this.src='icons/chevron-right.svg'">
+            </button>
+          </div>
+          <div class="arch-circle">
+            <div id="arch-fadeCover"></div>
+            <div id="audioRipple" class="audio-ripple"></div>
+            <iframe id="arch-frame" title="Archetype Core" sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe>
+          </div>
+          <div id="archMsg" class="arch-msg"></div>
+          <div id="archMenu" class="arch-menu">
+            <button data-nav="apps"><img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/folder-open.svg" alt="Apps" width="20" height="20" onerror="this.onerror=null;this.src='icons/folder-open.svg'"><span>Apps</span></button>
+            <button data-nav="stack"><img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/layer-group.svg" alt="Stack" width="20" height="20" onerror="this.onerror=null;this.src='icons/layer-group.svg'"><span>Stack</span></button>
+            <button data-nav="brain"><img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/user.svg" alt="Usuário" width="20" height="20" onerror="this.onerror=null;this.src='icons/user.svg'"><span>Usuário</span></button>
+            <button data-nav="home"><img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/yin-yang.svg" alt="Arquétipo" width="20" height="20" onerror="this.onerror=null;this.src='icons/yin-yang.svg'"><span>Arquétipo</span></button>
+            <button data-nav="chat"><img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/comments.svg" alt="Chat" width="20" height="20" onerror="this.onerror=null;this.src='icons/comments.svg'"><span>Chat</span></button>
+            <button data-audio="true" id="archAudioBtn"><img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/microphone-lines.svg" alt="Áudio" width="20" height="20" onerror="this.onerror=null;this.src='icons/microphone-lines.svg'"><span>Áudio</span></button>
+          </div>
+        </div>
+        <div id="iaFeed" aria-live="polite" aria-atomic="false">
+          <div class="status">Toque a bolinha para falar com a IA.</div>
+        </div>
+        <div class="cards">
+          <button class="card fx-trans fx-press ring" data-nav="apps">
+            <div class="ico"><img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/folder-open.svg" alt="Apps" width="24" height="24" onerror="this.onerror=null;this.src='icons/folder-open.svg'"></div>
+            <div><div style="font-weight:800">Apps</div><div class="mut" id="homeAppsStatus">–</div></div>
+            <span class="ripple"></span>
+          </button>
+          <button class="card fx-trans fx-press ring" data-nav="stack">
+            <div class="ico"><img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/layer-group.svg" alt="Stack" width="24" height="24" onerror="this.onerror=null;this.src='icons/layer-group.svg'"></div>
+            <div><div style="font-weight:800">Stack</div><div class="mut" id="homeStackStatus">–</div></div>
+            <span class="ripple"></span>
+          </button>
+          <button class="card fx-trans fx-press ring" data-nav="brain">
+            <div class="ico"><img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/user.svg" alt="Usuário" width="24" height="24" onerror="this.onerror=null;this.src='icons/user.svg'"></div>
+            <div><div style="font-weight:800">Usuário</div><div class="mut" id="homeUserStatus">–</div></div>
+            <span class="ripple"></span>
+          </button>
+          <button class="card fx-trans fx-press ring" data-nav="home">
+            <div class="ico"><img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/yin-yang.svg" alt="Arquétipo" width="24" height="24" onerror="this.onerror=null;this.src='icons/yin-yang.svg'"></div>
+            <div><div style="font-weight:800">Arquétipo</div><div class="mut" id="homeArchStatus">–</div></div>
+            <span class="ripple"></span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="v-apps" class="view">
+      <div class="grid">
+        <div class="card fx-trans fx-lift" style="display:block">
+          <div class="grid" style="gap:8px">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <label class="mut" style="display:inline-flex;gap:6px;align-items:center"><input id="openInside" type="checkbox" /> abrir dentro</label>
+              <button id="btnToggleLocal" class="btn fx-trans fx-press ring">
+                <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/folder-open.svg" alt="Locais" width="16" height="16" onerror="this.onerror=null;this.src='icons/folder-open.svg'" style="margin-right:4px">Mostrar Locais<span class="ripple"></span>
+              </button>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <input id="fileLocal" type="file" accept=".html,.htm,.txt,.json" multiple class="input ring" />
+              <button id="btnImport" class="btn fx-trans fx-press ring"><img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/plus-circle.svg" alt="Adicionar" width="16" height="16" onerror="this.onerror=null;this.src='icons/plus-circle.svg'" style="margin-right:4px">Adicionar Locais<span class="ripple"></span></button>
+              <button id="btnExport" class="btn fx-trans fx-press ring"><img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/file-export.svg" alt="Exportar" width="16" height="16" onerror="this.onerror=null;this.src='icons/file-export.svg'" style="margin-right:4px">Exportar Locais<span class="ripple"></span></button>
+              <button id="btnClear" class="btn fx-trans fx-press ring"><img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/trash.svg" alt="Limpar" width="16" height="16" onerror="this.onerror=null;this.src='icons/trash.svg'" style="margin-right:4px">Limpar Locais<span class="ripple"></span></button>
+            </div>
+            <div id="appsCount" class="mut">—</div>
+          </div>
+        </div>
+        <div id="appsWrap" class="apps-wrap"></div>
+      </div>
+      <div class="bluecup-local-shell" data-source="BlueCup_TRINITY_HYBRID">
+        <div class="card localAppsCard">
+          <details>
+            <summary><span class="appsSummary"><span class="appsSummary-dot"></span><span class="appsSummary-title">APPS • LOCAIS</span><span class="appsSummary-sub">upload / editar / abrir #local:</span></span><span class="chev">▸</span></summary>
+            <div class="content">
+              <div class="appsToolbar">
+                <div class="btnRow" style="margin:0">
+                  <button id="localUploadBtn" class="appBtn primary" type="button">Upload HTML</button>
+                  <button id="localNewBtn" class="appBtn" type="button">Novo Local</button>
+                  <button id="localExportBtn" class="appBtn" type="button">Exportar Locais</button>
+                  <button id="localImportBtn" class="appBtn" type="button">Importar Locais</button>
+                </div>
+                <input id="localUploadInput" type="file" accept=".html,text/html" multiple hidden />
+                <input id="localImportInput" type="file" accept=".json,application/json" hidden />
+              </div>
+              <div id="localAppsGrid" class="appsGrid"></div>
+              <div class="appsFooter tiny" id="localAppsHint">HTMLs que você subir aqui viram cards no Hub e abrem como <code>#local:chave</code>.</div>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section id="v-stack" class="view">
+      <div class="grid">
+        <div class="card fx-trans fx-lift" style="display:block">
+          <div style="font-weight:800; display:flex; align-items:center; gap:8px">Sessões<button id="btnCloseAll" class="btn fx-trans fx-press ring" title="Fechar todas">Fechar todas<span class="ripple"></span></button></div>
+          <div class="mut">Reabra rápido pelo dock abaixo.</div>
+        </div>
+        <div id="stackWrap" class="grid"></div>
+      </div>
+    </section>
+
+    <section id="v-brain" class="view">
+      <div class="grid">
+        <div class="card fx-trans fx-lift" style="display:block">
+          <div style="font-weight:800">Usuário</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+            <input id="userName" class="input ring" placeholder="Seu nome" />
+            <button id="saveName" class="btn prime fx-trans fx-press ring">Salvar<span class="ripple"></span></button>
+          </div>
+        </div>
+        <div class="card fx-trans fx-lift" style="display:block">
+          <div style="font-weight:800;display:flex;align-items:center;gap:8px">API Unificada KOBLLUX<span id="keyTypeBadge" style="font-size:.6rem;padding:2px 8px;border-radius:8px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);color:#ffd700;font-family:'Space Mono',monospace;font-weight:700">⚠ sem chave</span></div>
+          <div style="font-size:var(--fs-d2);color:rgba(255,255,255,.38);margin:3px 0 8px;line-height:1.6"><strong style="color:#39ffb6">sk-ant-*</strong> → Anthropic direto &nbsp;|&nbsp; <strong style="color:#ffd700">sk-or-*</strong> → OpenRouter. Uma chave para tudo.</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap">
+            <select id="model" class="input ring" style="max-width:260px"></select>
+            <input id="sk" class="input ring" placeholder="sk-ant-... ou sk-or-v1-…" />
+            <button id="saveSK" class="btn fx-trans fx-press ring">Salvar<span class="ripple"></span></button>
+          </div>
+        </div>
+        <div class="card fx-trans fx-lift" style="display:block">
+          <div style="font-weight:800">Tema &amp; Fundo</div>
+          <div style="margin-top:8px;display:flex;flex-direction:column;gap:12px">
+            <label style="display:flex;align-items:center;gap:8px"><span>Escolha o tema:</span><select id="themeSelect" class="input ring" style="max-width:200px"><option value="default">Padrão (colorido)</option><option value="medium">Cinza médio (tecnológico)</option><option value="custom">Personalizado (sua imagem/vídeo)</option></select></label>
+            <label style="display:flex;align-items:center;gap:8px"><span>Fundo personalizado:</span><input id="bgUpload" type="file" accept="image/*,video/*" class="input ring" style="max-width:260px" /></label>
+            <div class="mut" style="font-size:11px">Envie uma imagem ou vídeo para usar como plano de fundo quando o tema personalizado estiver selecionado. O fundo será salvo automaticamente no seu navegador.</div>
+          </div>
+        </div>
+        <div class="card fx-trans fx-lift" style="display:block">
+          <div style="font-weight:800">CSS Personalizado</div>
+          <div style="margin-top:8px">
+            <textarea id="cssCustom" class="input ring" placeholder="CSS personalizado..." rows="4"></textarea>
+            <div style="margin-top:6px; display:flex; gap:8px; flex-wrap:wrap">
+              <button id="applyCSS" class="btn fx-trans fx-press ring">Aplicar CSS<span class="ripple"></span></button>
+              <button id="clearCSS" class="btn fx-trans fx-press ring">Limpar CSS<span class="ripple"></span></button>
+              <button id="downloadCSS" class="btn fx-trans fx-press ring">Baixar CSS<span class="ripple"></span></button>
+            </div>
+          </div>
+        </div>
+        <div class="card fx-trans fx-lift" style="display:block">
+          <div style="font-weight:800; margin-bottom:6px">Vozes dos Arquétipos</div>
+          <div id="voicesWrap" style="display:grid; gap:10px"></div>
+          <div class="card fx-trans fx-lift" style="display:block">
+            <div style="font-weight:800">Performance</div>
+            <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+              <select id="selPerf" class="input ring" style="max-width:200px"><option value="low">Low</option><option value="med">Med</option><option value="high">High</option></select>
+              <button id="btnPerf" class="btn fx-trans fx-press ring">Aplicar<span class="ripple"></span></button>
+            </div>
+          </div>
+          <div class="card fx-trans fx-lift" style="display:block">
+            <div style="font-weight:800">Voz</div>
+            <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+              <select id="selVoice" class="input ring" style="max-width:200px"><option>Nova</option><option>Elysha</option><option>Kaion</option><option>Serena</option></select>
+              <button id="btnVoice" class="btn fx-trans fx-press ring">Salvar<span class="ripple"></span></button>
+            </div>
+          </div>
+          <div class="card fx-trans fx-lift" style="display:block">
+            <div style="font-weight:800">Logs</div>
+            <div class="mut" style="font-size:11px;margin-bottom:4px">Eventos recentes</div>
+            <pre id="logs" style="margin:0;font:12px/1.4 ui-monospace,monospace;color:var(--mut);max-height:140px;overflow:auto"></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="v-chat" class="view">
+      <div id="chatFeed" style="flex:1;overflow-y:auto;padding-bottom:4px"></div>
+      <div id="chatInputBar">
+        <textarea id="chatInputTA" placeholder="Mensagem para KOBLLUX… (Enter envia, Shift+Enter nova linha)" rows="1"
+          oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();chatInputSend()}"
+        ></textarea>
+        <button id="chatSendBtn" onclick="chatInputSend()" title="Enviar">⚡</button>
+      </div>
+    </section>
+
+    <section id="v-voz" class="view"><div class="grid"><div class="card fx-trans fx-lift" style="display:block"><div style="font-weight:900;letter-spacing:.08em">🎙 M5 · ARQUÉTIPO VOCAL</div></div></div></section>
+    <section id="v-espelho" class="view"><div class="grid"><div class="card fx-trans fx-lift" style="display:block"><div style="font-weight:900;letter-spacing:.08em">🌀 KODUX ⇄ BLLUE · ESPELHO</div></div></div></section>
+    <section id="v-arq" class="view"><div class="grid"><div class="card fx-trans fx-lift" style="display:block"><div style="font-weight:900;letter-spacing:.08em">🧿 12 ARQUÉTIPOS</div></div></div></section>
+    <section id="v-uno" class="view"><div class="grid"><div class="card fx-trans fx-lift" style="display:block"><div style="font-weight:900;letter-spacing:.08em">∞ SYSTEMA · UNO</div></div></div></section>
+    <section id="v-core" class="view"><div class="grid"><div class="card fx-trans fx-lift" style="display:block"><div style="font-weight:900;letter-spacing:.08em">🔮 KOBΦ-NODE · NÚCLEO</div></div></div></section>
+    <section id="v-aion" class="view"><div class="grid"><div class="card fx-trans fx-lift" style="display:block"><div style="font-weight:900;letter-spacing:.08em">◎ AION CHAT</div></div></div></section>
+    <section id="v-img" class="view"><div class="grid"><div class="card fx-trans fx-lift" style="display:block"><div style="font-weight:900;letter-spacing:.08em">🖼 GALERIA VISUAL</div></div></div></section>
+  </main>
+
+  <div id="dock" class="dock"></div>
+
+  <!-- TABBAR ORIGINAL -->
+  <div id="tabbar" class="tabbar">
+    <nav class="tabbar">
+      <div class="inner">
+        <button class="tab fx-trans fx-press ring active" data-nav="home">
+          <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/house.svg" alt="Home" width="18" height="18" onerror="this.onerror=null;this.src='icons/house.svg'">
+          <span class="ripple"></span>
+        </button>
+        <button class="tab fx-trans fx-press ring" data-nav="apps">
+          <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/folder-open.svg" alt="Apps" width="18" height="18" onerror="this.onerror=null;this.src='icons/folder-open.svg'">
+          <span class="ripple"></span>
+        </button>
+        <button class="tab fx-trans fx-press ring" data-nav="stack">
+          <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/layer-group.svg" alt="Stack" width="18" height="18" onerror="this.onerror=null;this.src='icons/layer-group.svg'">
+          <span class="ripple"></span>
+        </button>
+        <button class="tab fx-trans fx-press ring" data-nav="brain">
+          <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/brain.svg" alt="Brain" width="18" height="18" onerror="this.onerror=null;this.src='icons/brain.svg'">
+          <span class="ripple"></span>
+        </button>
+        <button class="tab fx-trans fx-press ring" data-nav="chat">
+          <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/comments.svg" alt="Chat" width="18" height="18" onerror="this.onerror=null;this.src='icons/comments.svg'">
+          <span class="ripple"></span>
+        </button>
+        <button class="tab fx-trans fx-press ring" data-nav="uno" title="SYSTEMA.UNO">
+          <span style="font-size:1.05rem;line-height:1;display:block">∞</span>
+          <span class="ripple"></span>
+        </button>
+        <button class="tab fx-trans fx-press ring" data-nav="arq" title="12 Arquétipos">
+          <span style="font-size:1.05rem;line-height:1;display:block">🧿</span>
+          <span class="ripple"></span>
+        </button>
+        <button class="tab fx-trans fx-press ring" data-nav="core" title="KOBΦ-NODE">
+          <span style="font-size:1.05rem;line-height:1;display:block">🔮</span>
+          <span class="ripple"></span>
+        </button>
+        <button class="tab fx-trans fx-press ring" data-nav="voz" title="M5 · Voz">
+          <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/microphone-lines.svg" alt="Voz" width="18" height="18">
+          <span class="tab-label" style="display:none">Voz</span>
+          <span class="ripple"></span>
+        </button>
+        <button class="tab fx-trans fx-press ring" data-nav="espelho" title="Espelho">
+          <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/rotate.svg" alt="Espelho" width="18" height="18">
+          <span class="tab-label" style="display:none">Espelho</span>
+          <span class="ripple"></span>
+        </button>
+        <button class="tab fx-trans fx-press ring" data-nav="aion" title="AION">
+          <span style="font-size:1.1rem;line-height:1">◎</span>
+          <span class="tab-label" style="display:none">AION</span>
+          <span class="ripple"></span>
+        </button>
+        <button class="tab fx-trans fx-press ring" data-nav="img" title="Imagem">
+          <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/image.svg" alt="Img" width="18" height="18">
+          <span class="tab-label" style="display:none">Img</span>
+          <span class="ripple"></span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- SYMBOLBAR v2.1 -->
+  <div class="symbol-bar floating" id="symbolBar">
+    <div class="toggle-wrap">
+      <button class="symbol-button main-toggle" id="toggleBtn" title="Menu">≡</button>
+    </div>
+    <button class="symbol-button" id="btn-arch" title="Arquétipo">
+      <div class="orb-microphone-container">
+        <div class="tts-orb-mini">
+          <div class="orb" id="main-orb">
+            <div class="orb-core"></div>
+          </div>
+        </div>
+      </div>
+      <div class="kblx-ring">
+        <svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" id="orb-ring-circle" /></svg>
+      </div>
+    </button>
+    <!-- CARROSSEL é populado via JS -->
+    <div class="hud-info" id="hudStatus">KOBLLUX</div>
+  </div>
+
+  <div class="chroma-ripple" id="chromaRipple"></div>
+
+  <div id="arch-overlay">
+    <div class="arch-wheel" id="archWheel">
+      <div class="arch-wheel-title">· SELECIONAR ARQUÉTIPO ·</div>
+    </div>
+  </div>
+
+  <div id="arch-card-overlay">
+    <div class="arch-card-panel">
+      <div class="arch-card-header">
+        <div class="arch-card-chip" id="acp-chip">opcode · 0x00</div>
+        <div class="arch-card-name" id="acp-name">KOBLLUX</div>
+        <div class="arch-card-role" id="acp-role">SISTEMA · NÚCLEO</div>
+        <div class="arch-card-orb-wrap">
+          <div class="arch-card-orb" id="acp-orb"></div>
+          <div><div class="arch-card-freq" id="acp-freq">432 <span>Hz</span></div></div>
+        </div>
+      </div>
+      <div class="arch-card-body">
+        <div class="arch-card-placeholder">
+          <strong id="acp-emoji">∞</strong>
+          <span id="acp-placeholder-text">[ CONTEÚDO DO ARQUÉTIPO ]<br>Este card será linkado ao módulo correspondente.</span>
+        </div>
+        <div class="arch-card-nav">
+          <button id="acp-prev">◀</button>
+          <span class="arch-card-nav-name" id="acp-nav-name">KOBLLUX</span>
+          <button id="acp-next">▶</button>
+        </div>
+        <div class="arch-card-actions">
+          <button class="arch-card-btn primary" id="acp-select">⊙ Ativar Arquétipo</button>
+          <button class="arch-card-btn close" id="acp-close">✕ Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="kblx-back">
+    <div id="kblx-panel">
+      <div class="p-chip">⌘ KOBLLUX HUD · EDITOR DE ROTA</div>
+      <div class="p-title" id="kblx-ttl">Botão</div>
+      <label class="p-lbl" for="kblx-inp">Novo valor para data-url</label>
+      <input id="kblx-inp" type="text" placeholder="arquivo.html ou https://..." spellcheck="false" autocomplete="off">
+      <div class="kblx-row">
+        <button class="kblx-btn kblx-save" id="kblx-btn-save">⊙ Salvar</button>
+        <button class="kblx-btn kblx-close" id="kblx-btn-close">✕ Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="kblx-toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   1. TABELA DE ARQUÉTIPOS
+   ══════════════════════════════════════════════════════════ */
+const ARCHETYPES = [
+  { name: 'atlas',    p: '#8e9aaf', s: '#5c6478', a: '#b0bec5', f: 432, e: '🗿', r: 'FUNDAÇÃO · ESTRUTURA',      opcode: '0x00' },
+  { name: 'nova',     p: '#00e5ff', s: '#0099cc', a: '#80f4ff', f: 528, e: '⚡', r: 'ENERGIA · VELOCIDADE',      opcode: '0x01' },
+  { name: 'vitalis',  p: '#00e070', s: '#00a050', a: '#80ffb8', f: 639, e: '🌿', r: 'VIDA · CRESCIMENTO',        opcode: '0x02' },
+  { name: 'pulse',    p: '#ff7020', s: '#cc3800', a: '#ffaa60', f: 741, e: '🔥', r: 'IMPULSO · AÇÃO',            opcode: '0x03' },
+  { name: 'kaos',     p: '#ff2a6d', s: '#aa0040', a: '#ff80a0', f: 852, e: '🌪', r: 'CAOS · TRANSFORMAÇÃO',      opcode: '0x04' },
+  { name: 'kodux',    p: '#00e28b', s: '#0ea5e9', a: '#80f5c8', f: 432, e: '🤖', r: 'INTERFACE · SISTEMA',       opcode: '0x05' },
+  { name: 'lumine',   p: '#ffd700', s: '#e09000', a: '#fff280', f: 528, e: '✨', r: 'LUZ · ILUMINAÇÃO',          opcode: '0x06' },
+  { name: 'aion',     p: '#9f7aea', s: '#5b21b6', a: '#d4b8ff', f: 963, e: '⏳', r: 'TEMPO · ETERNIDADE',        opcode: '0x07' },
+  { name: 'kobllux',  p: '#C9A84C', s: '#8B4513', a: '#F0C060', f: 432, e: '∞',  r: 'VERDADE · INTEGRAR',        opcode: '0x08' },
+  { name: 'artemis',  p: '#c8c8e0', s: '#7070a0', a: '#f0f0ff', f: 741, e: '🏹', r: 'PRECISÃO · FOCO',           opcode: '0x09' },
+  { name: 'serena',   p: '#c084fc', s: '#7c3aed', a: '#e8c0ff', f: 639, e: '🌸', r: 'PAZ · EQUILÍBRIO',          opcode: '0x0A' },
+  { name: 'genus',    p: '#f59e0b', s: '#b45309', a: '#fcd34d', f: 528, e: '🧬', r: 'CRIAÇÃO · ESPÉCIE',         opcode: '0x0B' },
+  { name: 'solus',    p: '#f5f5f5', s: '#aaaaaa', a: '#ffffff', f: 963, e: '🕯', r: 'SILÊNCIO · VAZIO',          opcode: '0x0C' },
+  { name: 'rhea',     p: '#b5883c', s: '#7c5010', a: '#d4a860', f: 432, e: '🌍', r: 'TERRA · MEMÓRIA',           opcode: '0x0D' },
+  { name: 'trinity',  p: '#D4AF37', s: '#9a7a10', a: '#f0d060', f: 639, e: '🔱', r: 'TRINDADE · SÍNTESE',        opcode: '0x0E' },
+  { name: 'infodose', p: '#38bdf8', s: '#0369a1', a: '#90e0ff', f: 741, e: '💊', r: 'INFORMAÇÃO · DOSE',         opcode: '0x0F' },
+  { name: 'horus',    p: '#f59e0b', s: '#7c3a00', a: '#fbbf24', f: 852, e: '👁', r: 'VISÃO · GUARDIÃO',          opcode: '0x10' },
+  { name: 'bllue',    p: '#3b82f6', s: '#1e3a8a', a: '#93c5fd', f: 432, e: '🔵', r: 'PROFUNDIDADE · FLUXO',      opcode: '0x11' },
+  { name: 'jesus',    p: '#f0d080', s: '#c09040', a: '#fff8c0', f: 528, e: '✝',  r: 'AMOR · VERDADE CENTRAL',    opcode: '0x12' },
+];
+
+let currentIdx = ARCHETYPES.findIndex(a => a.name === 'kobllux');
+let archCardIdx = currentIdx;
+
+function toast(msg, ms = 2200) {
+  const el = document.getElementById('kblx-toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), ms);
+}
+
+function hexToRgba(hex, a) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function buildOrbGradient(arch) {
+  return `radial-gradient(circle at 35% 30%, ${arch.a} 0%, rgba(255,255,255,0.05) 14%, transparent 55%), radial-gradient(circle at 70% 72%, ${arch.p} 0%, ${arch.s} 100%)`;
+}
+
+function applyArchetype(idx, triggerX, triggerY, animate = true) {
+  currentIdx = ((idx % ARCHETYPES.length) + ARCHETYPES.length) % ARCHETYPES.length;
+  const arch = ARCHETYPES[currentIdx];
+  const root = document.documentElement;
+  root.style.setProperty('--kob-voice-primary', arch.p);
+  root.style.setProperty('--kob-voice-secondary', arch.s);
+  root.style.setProperty('--kob-voice-accent', arch.a);
+  root.style.setProperty('--arch-color', arch.p);
+  root.style.setProperty('--arch-glow', hexToRgba(arch.p, 0.32));
+  root.style.setProperty('--arch-glow-strong', hexToRgba(arch.p, 0.6));
+  root.style.setProperty('--arch-emoji', `'${arch.e}'`);
+  const orbCore = document.querySelector('.orb-core');
+  if (orbCore) orbCore.style.background = buildOrbGradient(arch);
+  const hud = document.getElementById('hudStatus');
+  if (hud) hud.textContent = arch.name.toUpperCase();
+  document.querySelectorAll('.arch-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.archName === arch.name);
+  });
+  if (animate) {
+    const ripple = document.getElementById('chromaRipple');
+    const bar = document.getElementById('symbolBar');
+    if (ripple && bar) {
+      const barRect = bar.getBoundingClientRect();
+      const rx = triggerX ?? (barRect.left + barRect.width / 2);
+      const ry = triggerY ?? (barRect.top + barRect.height / 2);
+      ripple.style.background = `radial-gradient(circle at ${rx/window.innerWidth*100}% ${ry/window.innerHeight*100}%, ${arch.p} 0%, ${hexToRgba(arch.s, 0.5)} 30%, transparent 70%)`;
+      ripple.classList.remove('fire');
+      void ripple.offsetWidth;
+      ripple.classList.add('fire');
+      bar.classList.remove('chroma-transition');
+      void bar.offsetWidth;
+      bar.classList.add('chroma-transition');
+      setTimeout(() => bar.classList.remove('chroma-transition'), 500);
+    }
+  }
+  try { localStorage.setItem('kob_arch', arch.name); } catch(e) {}
+}
+
+/* ═══ CARROSSEL v2.1 ═══ */
+const VISIBLE = 5;
+const ITEM_H = 48;
+const GAP = 6;
+
+// ÍCONES como SVG (mesmos da tabbar), não emoji
+const NAV_BUTTONS = [
+  // ── CONTROLES ──
+  { label: '◀',  id: 'btn-prev',  type: 'control', action: 'prev-arch', title: 'Anterior' },
+  { label: '▶',  id: 'btn-play',  type: 'control', action: 'play-tts',  title: 'Play TTS' },
+  { label: '■',  id: 'tts-stop',  type: 'control', action: 'stop-tts',  title: 'Parar TTS' },
+  { label: '▶▶', id: 'btn-next',  type: 'control', action: 'next-arch', title: 'Próximo' },
+  { label: '·',  id: 'sep-1',     type: 'separator' },
+  // ── VIEWS com SVG (mesmos da tabbar) ──
+  { 
+    type: 'view', nav: 'home',    title: 'Home',
+    icon: '<img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/house.svg" width="18" height="18" style="filter:invert(1);opacity:0.85">'
+  },
+  { 
+    type: 'view', nav: 'apps',    title: 'Apps',
+    icon: '<img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/folder-open.svg" width="18" height="18" style="filter:invert(1);opacity:0.85">'
+  },
+  { 
+    type: 'view', nav: 'stack',   title: 'Stack',
+    icon: '<img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/layer-group.svg" width="18" height="18" style="filter:invert(1);opacity:0.85">'
+  },
+  { 
+    type: 'view', nav: 'brain',   title: 'Brain',
+    icon: '<img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/brain.svg" width="18" height="18" style="filter:invert(1);opacity:0.85">'
+  },
+  { 
+    type: 'view', nav: 'chat',    title: 'Chat',
+    icon: '<img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/comments.svg" width="18" height="18" style="filter:invert(1);opacity:0.85">'
+  },
+  { 
+    type: 'view', nav: 'uno',     title: 'Uno',
+    icon: '<span style="font-size:1.1rem;line-height:1">∞</span>'
+  },
+  { 
+    type: 'view', nav: 'arq',     title: 'Arquétipos',
+    icon: '<span style="font-size:1.05rem;line-height:1">🧿</span>'
+  },
+  { 
+    type: 'view', nav: 'core',    title: 'Core',
+    icon: '<span style="font-size:1.05rem;line-height:1">🔮</span>'
+  },
+  { 
+    type: 'view', nav: 'voz',     title: 'Voz',
+    icon: '<img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/microphone-lines.svg" width="18" height="18" style="filter:invert(1);opacity:0.85">'
+  },
+  { 
+    type: 'view', nav: 'espelho', title: 'Espelho',
+    icon: '<img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/rotate.svg" width="18" height="18" style="filter:invert(1);opacity:0.85">'
+  },
+  { 
+    type: 'view', nav: 'aion',    title: 'Aion',
+    icon: '<span style="font-size:1.1rem;line-height:1">◎</span>'
+  },
+  { 
+    type: 'view', nav: 'img',     title: 'Imagem',
+    icon: '<img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/image.svg" width="18" height="18" style="filter:invert(1);opacity:0.85">'
+  },
+  { label: '·',  id: 'sep-2',     type: 'separator' },
+  // ── URL BUTTONS ──
+  { label: '🌌', id: 'btn-phi',   url: 'about:blank', title: 'Phi',  dataId: 'phi' },
+  { label: '🛋', id: 'btn-viv',   url: 'about:blank', title: 'Viv',  dataId: 'viv' },
+  { label: '◌',  id: 'btn-home',  url: 'about:blank', title: 'Home', dataId: 'home' },
+  { label: '◘',  id: 'btn-doc',   url: 'about:blank', title: 'Doc',  dataId: 'doc' },
+];
+
+
+let carouselIdx = 0;
+let carouselDragging = false;
+let carouselDragStart = 0;
+let carouselDragDelta = 0;
+let _track = null;
+let _dots = null;
+
+function buildCarousel() {
+  const bar = document.getElementById('symbolBar');
+  if (!bar) return;
+
+  // Viewport
+  const vp = document.createElement('div');
+  vp.className = 'kblx-carousel-viewport';
+  vp.style.height = (VISIBLE * ITEM_H - GAP) + 'px';
+  bar.insertBefore(vp, bar.querySelector('.hud-info'));
+
+  // Track
+  const track = document.createElement('div');
+  track.className = 'kblx-carousel-track';
+  track.style.gap = GAP + 'px';
+  vp.appendChild(track);
+  _track = track;
+
+  // Dots
+  const dots = document.createElement('div');
+  dots.className = 'kblx-dots';
+  bar.insertBefore(dots, bar.querySelector('.hud-info'));
+  _dots = dots;
+
+  // Populate
+  NAV_BUTTONS.forEach(def => {
+    const wrap = document.createElement('div');
+    wrap.className = 'symbol-wrap';
+    wrap.style.height = (def.type === 'separator' ? 12 : ITEM_H) + 'px';
+
+    if (def.type === 'separator') {
+      wrap.innerHTML = '<div class="kblx-separator"></div>';
+      track.appendChild(wrap);
+      return;
+    }
+
+    const btn = document.createElement('button');
+    btn.className = 'symbol-button';
+    btn.id = def.id || ('nav-' + def.nav);
+    btn.title = def.title || def.nav || '';
+    btn.style.cssText = 'position:relative;overflow:hidden;';
+
+    // Conteúdo: SVG ou texto
+    if (def.icon) {
+      btn.innerHTML = def.icon;
+    } else {
+      btn.textContent = def.label;
+    }
+
+    if (def.type === 'view') {
+      btn.dataset.nav = def.nav;
+      btn.classList.add('nav-view-btn');
+    }
+    if (def.url) btn.dataset.url = def.url;
+    if (def.dataId) btn.dataset.id = def.dataId;
+
+    wrap.appendChild(btn);
+    track.appendChild(wrap);
+  });
+
+  // Wire controls
+  document.getElementById('btn-prev')?.addEventListener('click', () => applyArchetype(currentIdx - 1));
+  document.getElementById('btn-next')?.addEventListener('click', () => applyArchetype(currentIdx + 1));
+  document.getElementById('btn-play')?.addEventListener('click', togglePlay);
+  document.getElementById('tts-stop')?.addEventListener('click', stopTTS);
+
+  // Wire view buttons
+  document.querySelectorAll('.symbol-button[data-nav]').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const navKey = this.dataset.nav;
+      if (window.activateView) window.activateView(navKey, 'symbolbar');
+    });
+  });
+
+  // Wire URL buttons
+  ['btn-phi', 'btn-viv', 'btn-home', 'btn-doc'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.addEventListener('click', function(e) {
+      if (this._longPressed) { this._longPressed = false; return; }
+      const url = this.dataset.url;
+      if (url && url !== 'about:blank') loadInternalFrame(url);
+    });
+  });
+
+  // ── DRAG DO CARROSSEL (apenas no track, não na barra) ──
+  let isTrackDragging = false;
+  let trackStartY = 0;
+  let trackDelta = 0;
+
+  track.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    isTrackDragging = true;
+    trackStartY = e.clientY;
+    trackDelta = 0;
+    track.classList.add('kblx-dragging');
+    e.stopPropagation(); // NÃO deixa a barra capturar
+  });
+  track.addEventListener('mousemove', e => {
+    if (!isTrackDragging) return;
+    trackDelta = e.clientY - trackStartY;
+    applyTrack(carouselIdx * ITEM_H - trackDelta, false);
+    e.stopPropagation();
+  });
+  track.addEventListener('mouseup', e => {
+    if (!isTrackDragging) return;
+    isTrackDragging = false;
+    track.classList.remove('kblx-dragging');
+    snapCarousel(carouselIdx - Math.round(trackDelta / ITEM_H));
+    e.stopPropagation();
+  });
+  track.addEventListener('mouseleave', e => {
+    if (!isTrackDragging) return;
+    isTrackDragging = false;
+    track.classList.remove('kblx-dragging');
+    snapCarousel(carouselIdx - Math.round(trackDelta / ITEM_H));
+  });
+
+  track.addEventListener('touchstart', e => {
+    trackStartY = e.touches[0].clientY;
+    trackDelta = 0;
+    isTrackDragging = true;
+    track.classList.add('kblx-dragging');
+  }, { passive: true });
+  track.addEventListener('touchmove', e => {
+    if (!isTrackDragging) return;
+    trackDelta = e.touches[0].clientY - trackStartY;
+    applyTrack(carouselIdx * ITEM_H - trackDelta, false);
+  }, { passive: true });
+  track.addEventListener('touchend', () => {
+    if (!isTrackDragging) return;
+    isTrackDragging = false;
+    track.classList.remove('kblx-dragging');
+    snapCarousel(carouselIdx - Math.round(trackDelta / ITEM_H));
+  }, { passive: true });
+
+  vp.addEventListener('wheel', e => {
+    e.preventDefault();
+    snapCarousel(carouselIdx + (e.deltaY > 0 ? 1 : -1));
+  }, { passive: false });
+
+  snapCarousel(0);
+}
+
+
+function getMaxIdx() { return Math.max(0, NAV_BUTTONS.length - VISIBLE); }
+
+function applyTrack(offsetPx, animate) {
+  if (!_track) return;
+  _track.style.transition = animate ? 'transform 0.32s cubic-bezier(0.25,0.8,0.25,1)' : 'none';
+  _track.style.transform = `translateY(${-offsetPx}px)`;
+}
+
+function renderDots() {
+  if (!_dots) return;
+  _dots.innerHTML = '';
+  const pages = Math.ceil(NAV_BUTTONS.length / VISIBLE);
+  const active = Math.floor(carouselIdx / VISIBLE);
+  for (let i = 0; i < pages; i++) {
+    const d = document.createElement('div');
+    d.className = 'kblx-dot' + (i === active ? ' active' : '');
+    d.addEventListener('click', () => snapCarousel(i * VISIBLE));
+    _dots.appendChild(d);
+  }
+  _dots.style.display = pages <= 1 ? 'none' : 'flex';
+}
+
+function snapCarousel(idx) {
+  carouselIdx = Math.max(0, Math.min(Math.round(idx), getMaxIdx()));
+  applyTrack(carouselIdx * ITEM_H, true);
+  renderDots();
+}
+
+/* IFRAME */
+function loadInternalFrame(url) {
+  const frame = document.getElementById('kob-bg-frame');
+  const veil = document.getElementById('kob-frame-veil');
+  const close = document.getElementById('kob-frame-close');
+  if (!frame) return;
+  frame.src = url;
+  frame.classList.add('visible');
+  veil?.classList.add('visible');
+  close?.classList.add('visible');
+  toast('⊙ CARREGANDO: ' + url.split('/').pop());
+}
+document.getElementById('kob-frame-close')?.addEventListener('click', () => {
+  const frame = document.getElementById('kob-bg-frame');
+  const veil = document.getElementById('kob-frame-veil');
+  const close = document.getElementById('kob-frame-close');
+  frame?.classList.remove('visible');
+  veil?.classList.remove('visible');
+  close?.classList.remove('visible');
+  setTimeout(() => { if(frame) frame.src = 'about:blank'; }, 500);
+});
+
+/* ARCH WHEEL */
+function buildArchWheel() {
+  const wheel = document.getElementById('archWheel');
+  if (!wheel) return;
+  ARCHETYPES.forEach((arch, idx) => {
+    const chip = document.createElement('div');
+    chip.className = 'arch-chip';
+    chip.dataset.archName = arch.name;
+    chip.style.color = arch.p;
+    chip.innerHTML = `<div class="a-orb" style="background: radial-gradient(circle at 35% 30%, ${arch.a} 0%, transparent 50%), radial-gradient(circle at 70% 70%, ${arch.p} 0%, ${arch.s} 100%);"></div><div class="a-name">${arch.name}</div><div class="a-freq">${arch.f}Hz</div>`;
+    chip.addEventListener('click', () => {
+      const r = chip.getBoundingClientRect();
+      applyArchetype(idx, r.left + r.width/2, r.top + r.height/2);
+      closeArchOverlay();
+    });
+    wheel.appendChild(chip);
+  });
+}
+document.getElementById('btn-arch')?.addEventListener('click', () => {
+  const btn = document.getElementById('btn-arch');
+  if (btn && btn._longPressed) { btn._longPressed = false; return; }
+  openArchOverlay();
+});
+function openArchOverlay() { document.getElementById('arch-overlay')?.classList.add('open'); }
+function closeArchOverlay() { document.getElementById('arch-overlay')?.classList.remove('open'); }
+document.getElementById('arch-overlay')?.addEventListener('click', e => {
+  if (e.target === document.getElementById('arch-overlay')) closeArchOverlay();
+});
+
+/* ARCH CARD */
+function openArchCard(idx) {
+  archCardIdx = ((idx % ARCHETYPES.length) + ARCHETYPES.length) % ARCHETYPES.length;
+  renderArchCard();
+  document.getElementById('arch-card-overlay')?.classList.add('open');
+}
+function closeArchCard() { document.getElementById('arch-card-overlay')?.classList.remove('open'); }
+
+function renderArchCard() {
+  const arch = ARCHETYPES[archCardIdx];
+  const chip = document.getElementById('acp-chip');
+  if (chip) chip.textContent = arch.opcode + ' · ' + arch.name.toUpperCase();
+  const name = document.getElementById('acp-name');
+  if (name) name.textContent = arch.name.toUpperCase();
+  const role = document.getElementById('acp-role');
+  if (role) role.textContent = arch.r;
+  const freq = document.getElementById('acp-freq');
+  if (freq) freq.innerHTML = `${arch.f} <span>Hz</span>`;
+  const emoji = document.getElementById('acp-emoji');
+  if (emoji) emoji.textContent = arch.e;
+  const navName = document.getElementById('acp-nav-name');
+  if (navName) navName.textContent = arch.name.toUpperCase();
+  const placeholder = document.getElementById('acp-placeholder-text');
+  if (placeholder) placeholder.innerHTML = `[ ${arch.name.toUpperCase()} · MÓDULO ]<br>Conteúdo do arquétipo será linkado aqui.`;
+  document.documentElement.style.setProperty('--arch-color', arch.p);
+  document.documentElement.style.setProperty('--arch-glow', hexToRgba(arch.p, 0.32));
+  const orbEl = document.getElementById('acp-orb');
+  if (orbEl) orbEl.style.background = `radial-gradient(circle at 35% 30%, ${arch.a} 0%, rgba(255,255,255,0.06) 15%, transparent 55%), radial-gradient(circle at 70% 72%, ${arch.p} 0%, ${arch.s} 100%)`;
+}
+
+document.getElementById('acp-close')?.addEventListener('click', closeArchCard);
+document.getElementById('acp-select')?.addEventListener('click', () => {
+  applyArchetype(archCardIdx);
+  closeArchCard();
+  toast('⊙ ATIVADO: ' + ARCHETYPES[currentIdx].name.toUpperCase() + ' · ' + ARCHETYPES[currentIdx].f + 'Hz');
+});
+document.getElementById('acp-prev')?.addEventListener('click', () => { archCardIdx = ((archCardIdx - 1 + ARCHETYPES.length) % ARCHETYPES.length); renderArchCard(); });
+document.getElementById('acp-next')?.addEventListener('click', () => { archCardIdx = ((archCardIdx + 1) % ARCHETYPES.length); renderArchCard(); });
+document.getElementById('arch-card-overlay')?.addEventListener('click', e => {
+  if (e.target === document.getElementById('arch-card-overlay')) closeArchCard();
+});
+
+/* LONG-PRESS ORB */
+(function setupOrbLongPress() {
+  const btn = document.getElementById('btn-arch');
+  const circle = document.getElementById('orb-ring-circle');
+  if (!btn) return;
+  const CIRC = 138;
+  const DURATION = 600;
+  let timer, raf, t0;
+  function start() {
+    btn._longPressed = false;
+    t0 = Date.now();
+    timer = setTimeout(() => {
+      btn._longPressed = true;
+      cancelAnimationFrame(raf);
+      if (circle) circle.style.strokeDashoffset = CIRC;
+      openArchCard(currentIdx);
+    }, DURATION);
+    (function tick() {
+      if (t0 === null) return;
+      const p = Math.min((Date.now() - t0) / DURATION, 1);
+      if (circle) { circle.style.transition = 'none'; circle.style.strokeDashoffset = CIRC * (1 - p); }
+      if (p < 1) raf = requestAnimationFrame(tick);
+    })();
+  }
+  function cancel() {
+    clearTimeout(timer); cancelAnimationFrame(raf); t0 = null;
+    if (circle) { circle.style.transition = 'stroke-dashoffset .2s ease'; circle.style.strokeDashoffset = CIRC; }
+  }
+  btn.addEventListener('pointerdown', start, { passive: true });
+  btn.addEventListener('pointerup', cancel, { passive: true });
+  btn.addEventListener('pointerleave', cancel, { passive: true });
+})();
+
+/* TTS */
+let currentUtterance = null;
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  stopTTS();
+  const arch = ARCHETYPES[currentIdx];
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'pt-BR'; utt.pitch = 1.0; utt.rate = 1.0;
+  utt.onstart = () => document.getElementById('main-orb')?.classList.add('speaking');
+  utt.onend = utt.onerror = () => document.getElementById('main-orb')?.classList.remove('speaking');
+  currentUtterance = utt;
+  speechSynthesis.speak(utt);
+}
+function stopTTS() {
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  document.getElementById('main-orb')?.classList.remove('speaking');
+}
+function togglePlay() {
+  if (!window.speechSynthesis) return;
+  if (speechSynthesis.speaking && !speechSynthesis.paused) speechSynthesis.pause();
+  else if (speechSynthesis.paused) speechSynthesis.resume();
+  else {
+    const a = ARCHETYPES[currentIdx];
+    speak(`Arquétipo ${a.name}. Frequência ${a.f} Hertz. ${a.r}.`);
+  }
+}
+
+/* DRAG DA BARRA */
+/* ═══ DRAG DA SYMBOLBAR — Z-INDEX + ÁREA DE CAPTURA CORRIGIDOS ═══ */
+const bar = document.getElementById('symbolBar');
+let sbDragging = false;
+let sbOffX = 0, sbOffY = 0;
+
+// Área de "grab" invisível por trás de tudo, só para drag
+function createDragHandle() {
+  if (!bar) return;
+  let handle = bar.querySelector('.sb-drag-handle');
+  if (handle) return;
+  handle = document.createElement('div');
+  handle.className = 'sb-drag-handle';
+  handle.style.cssText = `
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    cursor: grab;
+    background: transparent;
+    border-radius: inherit;
+  `;
+  bar.insertBefore(handle, bar.firstChild);
+}
+
+function initBarPosition() {
+  if (!bar) return;
+  const savedPos = (() => { 
+    try { return JSON.parse(localStorage.getItem('kob_symbolbar_pos')); } 
+    catch(e) { return null; } 
+  })();
+  if (savedPos && savedPos.top != null && savedPos.left != null) {
+    bar.style.top = savedPos.top + 'px';
+    bar.style.left = savedPos.left + 'px';
+    bar.style.right = 'auto';
+    bar.style.transform = 'none';
+  } else {
+    bar.style.top = '50%';
+    bar.style.left = 'auto';
+    bar.style.right = '12px';
+    bar.style.transform = 'translateY(-50%)';
+  }
+}
+
+if (bar) {
+  createDragHandle();
+  initBarPosition();
+
+  // O drag só começa se clicar no handle (área vazia) ou no padding da barra
+  bar.addEventListener('pointerdown', e => {
+    // Se clicou num botão, no carrossel, ou no orb → NÃO drag
+    if (e.target.closest('button, .kblx-carousel-viewport, .kblx-dots, .orb-microphone-container')) {
+      return;
+    }
+    // Se clicou no handle ou no padding da barra → DRAG
+    sbDragging = true;
+    bar.setPointerCapture(e.pointerId);
+    const r = bar.getBoundingClientRect();
+    sbOffX = e.clientX - r.left;
+    sbOffY = e.clientY - r.top;
+    bar.classList.add('is-dragging');
+    bar.classList.remove('snap-side', 'snap-side-right', 'snap-top', 'snap-bottom', 'floating');
+    bar.style.transform = 'none';
+    bar.style.right = 'auto';
+    bar.style.bottom = 'auto';
+    e.preventDefault();
+  });
+
+  window.addEventListener('pointermove', e => {
+    if (!sbDragging || !bar) return;
+    let x = Math.max(0, Math.min(window.innerWidth - bar.offsetWidth, e.clientX - sbOffX));
+    let y = Math.max(0, Math.min(window.innerHeight - bar.offsetHeight, e.clientY - sbOffY));
+    bar.style.left = x + 'px';
+    bar.style.top = y + 'px';
+  });
+
+  window.addEventListener('pointerup', e => {
+    if (!sbDragging || !bar) return;
+    sbDragging = false;
+    bar.classList.remove('is-dragging');
+    snapBar();
+    try {
+      const r = bar.getBoundingClientRect();
+      localStorage.setItem('kob_symbolbar_pos', JSON.stringify({ top: r.top, left: r.left }));
+    } catch(e) {}
+  });
+}
+
+function snapBar() {
+  if (!bar) return;
+  const r = bar.getBoundingClientRect();
+  const cx = r.left + r.width / 2;
+  const cy = r.top + r.height / 2;
+  const W = window.innerWidth, H = window.innerHeight;
+  const dl = cx, dr = W - cx, dt = cy, db = H - cy;
+
+  bar.classList.remove('snap-side', 'snap-side-right', 'snap-top', 'snap-bottom', 'floating');
+
+  if (dl < 60) {
+    bar.classList.add('snap-side');
+    bar.style.left = '0';
+    bar.style.right = 'auto';
+    bar.style.top = Math.max(10, Math.min(H - bar.offsetHeight - 10, r.top)) + 'px';
+  } else if (dr < 60) {
+    bar.classList.add('snap-side-right');
+    bar.style.left = 'auto';
+    bar.style.right = '0';
+    bar.style.top = Math.max(10, Math.min(H - bar.offsetHeight - 10, r.top)) + 'px';
+  } else if (dt < 60) {
+    bar.classList.add('snap-top');
+    bar.style.top = '10px';
+    bar.style.left = Math.max(10, Math.min(W - bar.offsetWidth - 10, r.left)) + 'px';
+  } else if (db < 90) {
+    bar.classList.add('snap-bottom');
+    bar.style.top = 'auto';
+    bar.style.bottom = '80px';
+    bar.style.left = Math.max(10, Math.min(W - bar.offsetWidth - 10, r.left)) + 'px';
+  } else {
+    bar.classList.add('floating');
+  }
+}
+
+/* IDLE */
+let idleTimer;
+function resetIdle() {
+  bar?.classList.remove('idle');
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => { if (!sbDragging) bar?.classList.add('idle'); }, 4000);
+}
+['pointerdown', 'pointermove', 'touchstart', 'mousemove'].forEach(ev =>
+  document.addEventListener(ev, resetIdle, { passive: true }));
+resetIdle();
+
+/* TOGGLE COLLAPSE */
+document.getElementById('toggleBtn')?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  bar?.classList.toggle('collapsed');
+  const isCollapsed = bar?.classList.contains('collapsed');
+  try { localStorage.setItem('kob_symbolbar_collapsed', isCollapsed ? '1' : '0'); } catch(e) {}
+});
+
+/* NAVEGAÇÃO SINCRONIZADA */
+const NAV_MAP = {
+  home:'v-home', apps:'v-apps', stack:'v-stack', brain:'v-brain',
+  chat:'v-chat', uno:'v-uno', arq:'v-arq', core:'v-core',
+  voz:'v-voz', espelho:'v-espelho', aion:'v-aion', img:'v-img'
+};
+const REVERSE_MAP = Object.fromEntries(Object.entries(NAV_MAP).map(([k,v])=>[v,k]));
+let currentNav = 'home';
+
+window.activateView = function(navKey, source='unknown') {
+  const viewId = NAV_MAP[navKey];
+  if (!viewId) return;
+  currentNav = navKey;
+  document.querySelectorAll('main>section.view').forEach(v => {
+    v.classList.toggle('active', v.id === viewId);
+  });
+  document.querySelectorAll('nav.tabbar .tab[data-nav]').forEach(t => {
+    const a = t.dataset.nav === navKey;
+    t.classList.toggle('active', a);
+    t.setAttribute('aria-selected', a ? 'true' : 'false');
+  });
+  document.querySelectorAll('.symbol-button.nav-view-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.nav === navKey);
+  });
+  const hud = document.getElementById('hudStatus');
+  if (hud) {
+    const arch = ARCHETYPES?.[currentIdx ?? 0];
+    hud.textContent = (arch ? arch.name.toUpperCase() : 'KOBLLUX') + ' · ' + navKey.toUpperCase();
+  }
+  window.scrollTo({top:0, behavior:'smooth'});
+  console.log('[KBLX·SYNC]', source, '→', navKey);
+};
+
+document.querySelectorAll('nav.tabbar .tab[data-nav]').forEach(tab => {
+  tab.addEventListener('click', e => {
+    e.preventDefault(); e.stopPropagation();
+    window.activateView(tab.dataset.nav, 'tabbar');
+  });
+});
+
+const mainEl = document.querySelector('main');
+if (mainEl) {
+  new MutationObserver(ms => ms.forEach(m => {
+    if (m.type === 'attributes' && m.attributeName === 'class') {
+      const v = m.target;
+      if (v.classList.contains('active')) {
+        const k = REVERSE_MAP[v.id];
+        if (k && k !== currentNav) {
+          currentNav = k;
+          document.querySelectorAll('nav.tabbar .tab[data-nav]').forEach(t => {
+            t.classList.toggle('active', t.dataset.nav === k);
+          });
+          document.querySelectorAll('.symbol-button.nav-view-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.nav === k);
+          });
+        }
+      }
+    }
+  })).observe(mainEl, {subtree:true, attributes:true, attributeFilter:['class']});
+}
+
+/* INIT */
+buildArchWheel();
+buildCarousel();
+initBarPosition();
+
+const savedCollapsed = (() => { try { return localStorage.getItem('kob_symbolbar_collapsed'); } catch(e) { return null; } })();
+if (savedCollapsed === '1' && bar) bar.classList.add('collapsed');
+
+const saved = (() => { try { return localStorage.getItem('kob_arch'); } catch(e) { return null; } })();
+const savedIdx = saved ? ARCHETYPES.findIndex(a => a.name === saved) : -1;
+applyArchetype(savedIdx >= 0 ? savedIdx : ARCHETYPES.findIndex(a => a.name === 'kobllux'), null, null, false);
+
+const av = document.querySelector('main>section.view.active');
+window.activateView(av ? (REVERSE_MAP[av.id] || 'home') : 'home', 'init');
+
+console.log('KOBLLUX · SymbolBar v2.1 · Carrossel + Drag + Colapso · VERDADE×INTEGRAR÷Δ=∞');
+</script>
+
+<script>
+document.addEventListener('click', ev => {
+  const n = ev.target.closest('[data-nav]');
+  if (n && !n.classList.contains('tab') && !n.classList.contains('symbol-button')) {
+    const key = n.dataset.nav;
+    if (NAV_MAP[key]) window.activateView(key, 'global');
+  }
+});
+</script>
+
+<script id="APPS_JSON" type="application/json">
+{"apps":[
+  {"key":"atlas","title":"Atlas · Cartesius","desc":"Planejador estratégico com cronogramas e checklists.","url":"about:blank","icon":"atlas"},
+  {"key":"nova","title":"Nova · Inspira","desc":"Criativa que desbloqueia ideias com mapas mentais e exercícios.","url":"about:blank","icon":"nova"},
+  {"key":"vitalis","title":"Vitalis · Momentum","desc":"Rotinas físicas, hacks biológicos e motivação.","url":"about:blank","icon":"vitalis"},
+  {"key":"pulse","title":"Pulse · Resona","desc":"Trilhas sonoras e ajuste de som emocional.","url":"about:blank","icon":"pulse"},
+  {"key":"artemis","title":"Artemis · Naviga","desc":"Explora conhecimentos e rotas de aprendizado.","url":"about:blank","icon":"artemis"},
+  {"key":"serena","title":"Serena · Ampara","desc":"Acolhimento e suporte emocional.","url":"about:blank","icon":"serena"},
+  {"key":"kaos","title":"Kaos · Disruptor","desc":"Questiona padrões e propõe soluções ousadas.","url":"about:blank","icon":"kaos"},
+  {"key":"genus","title":"Genus · Fabricus","desc":"Protótipos e materialização de ideias.","url":"about:blank","icon":"genus"},
+  {"key":"lumine","title":"Lumine · Brilhare","desc":"Inspiração leve e atividades lúdicas.","url":"about:blank","icon":"lumine"},
+  {"key":"rhea","title":"Rhea · Raízes","desc":"Vínculos e memórias emocionais.","url":"about:blank","icon":"rhea"},
+  {"key":"solus","title":"Solus · Arcana","desc":"Harmonização energética e meditação.","url":"about:blank","icon":"solus"},
+  {"key":"aion","title":"Aion · Evolutia","desc":"Microações estratégicas e evolução.","url":"about:blank","icon":"aion"}
+]}
+</script>
+
+<script src="js/30-bluecup-patch-helpers.js" defer></script>
+<script src="js/31-bluecup-local-card.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" defer></script>
+<script src="js/00-archetypes-integration.js" defer></script>
+<script src="js/01-btnLS-meta.js" defer></script>
+<script src="js/02-katex-bind.js" defer></script>
+<script src="js/03-img-or-aion-bind.js" defer></script>
+<script src="js/04-btnLS-purif-engine.js" defer></script>
+<script src="js/05-geometry-subconsciente.js" defer></script>
+<script src="js/06-btnGeometria-bind.js" defer></script>
+<script src="js/07-hub-router-main.js" defer></script>
+<script src="js/08-brain-config-store.js" defer></script>
+<script src="js/09-apps-store.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="kobllux.js"></script>
+<script src="kobllux_chat_trinity_12_arquetipos.js"></script>
+<script src="dual_infodose_script.js"></script>
+<script src="js/10-geometry-activation-engine.js" defer></script>
+<script src="js/11-voz-arquetipos-sotaque.js" defer></script>
+<script src="js/12-sotaque-selector-enhancer.js" defer></script>
+<script src="js/13-voz-m5.js" defer></script>
+<script src="js/14-espelho-arq.js" defer></script>
+<script src="js/15-v-arq.js" defer></script>
+<script src="js/16-v-uno-archetypes.js" defer></script>
+<script src="js/17-v-core-opcodes.js" defer></script>
+<script src="js/18-keybadge-voiceauto.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js" defer></script>
+<script src="js/40-symbolbar-v2.js" defer></script>
+
+</body>
+</html>

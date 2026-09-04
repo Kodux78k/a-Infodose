@@ -1,0 +1,198 @@
+<section id="v-voz" class="view">
+  <div class="grid">
+
+    <!-- HEADER M5 -->
+    <div class="card fx-trans fx-lift" style="display:block" data-frequency="777" data-opcode="0×07" data-geometry="🎙">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div>
+          <div style="font-weight:900;letter-spacing:.08em;font-size:.95rem">🎙 M5 · ARQUÉTIPO VOCAL · H₂O STATE</div>
+          <div class="mut" style="font-size:var(--fs-d2);margin-top:3px;line-height:1.8">
+            <span style="color:#a8d8f0">🧊 SÓLIDO</span> = esqueleto (F0, formantes) ·
+            <span style="color:#00b4ff">💧 LÍQUIDO</span> = dinâmica (envelope, modulação) ·
+            <span style="color:#5cffde">☁️ GASOSO</span> = frequência (vibrato, expansão)<br>
+            <span style="color:#ffd700">⚡ SALTO QUÂNTICO</span> = fusão das 3 camadas · <span style="color:#39ffb6">kblx.V()·kblx.O()·kblx.Z()</span>
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div class="mut" style="font-size:var(--fs-d1)">H₂O FREQ</div>
+          <div id="m5FreqDisplay" style="font-size:1.1rem;font-weight:900;color:#00b4ff">528Hz</div>
+          <div id="m5StateLabel" class="mut" style="font-size:.6rem">LÍQUIDO</div>
+        </div>
+      </div>
+      <div class="m5-h2o" style="margin-top:10px">
+        <div class="m5-state" id="m5Ice" onclick="m5SetState('ice')">
+          <span class="m5-state-ico">🧊</span>
+          <span class="m5-state-lbl" style="color:#a8d8f0">SÓLIDO</span>
+          <span class="m5-state-sub">ARQUÉTIPO · 432Hz</span>
+        </div>
+        <div class="m5-state active-liquid" id="m5Liq" onclick="m5SetState('liquid')">
+          <span class="m5-state-ico">💧</span>
+          <span class="m5-state-lbl" style="color:#00b4ff">LÍQUIDO</span>
+          <span class="m5-state-sub">DINÂMICA · 528Hz</span>
+        </div>
+        <div class="m5-state" id="m5Gas" onclick="m5SetState('gas')">
+          <span class="m5-state-ico">☁️</span>
+          <span class="m5-state-lbl" style="color:#5cffde">GASOSO</span>
+          <span class="m5-state-sub">FREQUÊNCIA · 777Hz</span>
+        </div>
+      </div>
+      <canvas class="m5-osc" id="m5Osc"></canvas>
+    </div>
+
+    <!-- GRID: ARQ + DYN -->
+    <div class="m5-g2">
+      <!-- REFERÊNCIA SÓLIDA -->
+      <div class="card fx-trans" style="display:block;border-left:2px solid #a8d8f0" data-frequency="432">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+          <span>🧊</span>
+          <span style="font-weight:800;font-size:.8rem;color:#a8d8f0">REFERÊNCIA · SÓLIDO</span>
+        </div>
+        <canvas class="m5-wave" id="m5WvArc"></canvas>
+        <div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap">
+          <button class="btn fx-trans fx-press ring" id="m5BtnRecArc" onclick="m5ToggleRec('arc')" style="font-size:var(--fs-d2);padding:5px 9px;color:#ff6b6b;border-color:#ff6b6b">⏺ GRAVAR</button>
+          <label class="btn fx-trans fx-press ring" style="font-size:var(--fs-d2);padding:5px 9px;cursor:pointer;color:#a8d8f0;border-color:#a8d8f0">
+            📁 CARREGAR<input type="file" accept="audio/*" style="display:none" onchange="m5LoadAudio(this,'arc')">
+          </label>
+        </div>
+        <!-- Manual sliders ARQ -->
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+          <div class="m5-row">
+            <span class="m5-lbl" style="color:#a8d8f0">PITCH F0</span>
+            <input type="range" id="m5PitchArc" min="60" max="400" value="150" style="flex:1;height:3px;appearance:none;-webkit-appearance:none;background:rgba(168,216,240,.2);border-radius:2px;outline:none" oninput="m5PitchArcV.textContent=this.value+'Hz';M5.arc.pitch=parseInt(this.value)">
+            <span id="m5PitchArcV" class="m5-val" style="color:#a8d8f0">150Hz</span>
+          </div>
+          <div class="m5-row">
+            <span class="m5-lbl" style="color:#a8d8f0">TIMBRE</span>
+            <input type="range" id="m5TimbreArc" min="0" max="100" value="50" style="flex:1;height:3px;appearance:none;-webkit-appearance:none;background:rgba(168,216,240,.2);border-radius:2px;outline:none" oninput="m5TimbreArcV.textContent=this.value">
+            <span id="m5TimbreArcV" class="m5-val" style="color:#a8d8f0">50</span>
+          </div>
+        </div>
+        <div style="margin-top:8px">
+          <div class="mut" style="font-size:.5rem;margin-bottom:5px;letter-spacing:.1em">PARÂMETROS SÓLIDOS · ESQUELETO</div>
+          <div id="m5SkelArc" class="m5-skel"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:.57rem;color:var(--mut)">
+          <span id="m5DotArc" style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.25);flex-shrink:0"></span>
+          <span id="m5StArc">AGUARDANDO REFERÊNCIA</span>
+          <span id="m5DurArc" style="margin-left:auto">0.0s</span>
+        </div>
+      </div>
+
+      <!-- ALVO LÍQUIDO -->
+      <div class="card fx-trans" style="display:block;border-left:2px solid #00b4ff" data-frequency="528">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+          <span>💧</span>
+          <span style="font-weight:800;font-size:.8rem;color:#00b4ff">ALVO · LÍQUIDO</span>
+        </div>
+        <canvas class="m5-wave" id="m5WvDyn"></canvas>
+        <div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap">
+          <button class="btn fx-trans fx-press ring" id="m5BtnRecDyn" onclick="m5ToggleRec('dyn')" style="font-size:var(--fs-d2);padding:5px 9px;color:#ff6b6b;border-color:#ff6b6b">⏺ GRAVAR</button>
+          <label class="btn fx-trans fx-press ring" style="font-size:var(--fs-d2);padding:5px 9px;cursor:pointer;color:#00b4ff;border-color:#00b4ff">
+            📁 CARREGAR<input type="file" accept="audio/*" style="display:none" onchange="m5LoadAudio(this,'dyn')">
+          </label>
+        </div>
+        <!-- Manual sliders DYN -->
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+          <div class="m5-row">
+            <span class="m5-lbl" style="color:#00b4ff">PITCH</span>
+            <input type="range" id="m5PitchDyn" min="60" max="400" value="200" style="flex:1;height:3px;appearance:none;-webkit-appearance:none;background:rgba(0,180,255,.2);border-radius:2px;outline:none" oninput="m5PitchDynV.textContent=this.value+'Hz';M5.dyn.pitch=parseInt(this.value)">
+            <span id="m5PitchDynV" class="m5-val" style="color:#00b4ff">200Hz</span>
+          </div>
+          <div class="m5-row">
+            <span class="m5-lbl" style="color:#5cffde">VELOCIDADE</span>
+            <input type="range" id="m5SpeedDyn" min="50" max="200" value="100" style="flex:1;height:3px;appearance:none;-webkit-appearance:none;background:rgba(92,255,222,.2);border-radius:2px;outline:none" oninput="m5SpeedDynV.textContent=(this.value/100).toFixed(1)+'x'">
+            <span id="m5SpeedDynV" class="m5-val" style="color:#5cffde">1.0x</span>
+          </div>
+        </div>
+        <div style="margin-top:8px">
+          <div class="mut" style="font-size:.5rem;margin-bottom:5px;letter-spacing:.1em">PARÂMETROS LÍQUIDOS · MODULAÇÃO</div>
+          <div id="m5SkelDyn" class="m5-skel"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:.57rem;color:var(--mut)">
+          <span id="m5DotDyn" style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.25);flex-shrink:0"></span>
+          <span id="m5StDyn">AGUARDANDO ALVO</span>
+          <span id="m5DurDyn" style="margin-left:auto">0.0s</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SOTAQUES + ÁTOMO -->
+    <div class="m5-g2">
+      <div class="card fx-trans" style="display:block;border-left:2px solid #ffd700" data-frequency="777">
+        <div style="font-weight:800;font-size:.8rem;margin-bottom:8px;color:#ffd700">⚡ SOTAQUES ARQUETÍPICOS</div>
+        <div class="m5-sotaques" id="m5Sotaques"></div>
+        <div style="margin-top:8px;display:flex;gap:5px;flex-wrap:wrap">
+          <button class="btn fx-trans fx-press ring" onclick="m5Sintetizar()" style="font-size:var(--fs-d2);padding:5px 10px;color:#ffd700;border-color:#ffd700">🔊 SINTETIZAR</button>
+          <button class="btn fx-trans fx-press ring" onclick="m5SaltoQuantico()" style="font-size:var(--fs-d2);padding:5px 10px;color:#5cffde;border-color:#5cffde">🌀 SALTO ∆</button>
+          <button class="btn fx-trans fx-press ring" onclick="m5ExportarJSON()" style="font-size:var(--fs-d2);padding:5px 10px;color:#00b4ff;border-color:#00b4ff">💾 JSON</button>
+        </div>
+        <canvas id="m5WvOut" height="38" style="display:block;width:100%;margin-top:8px;border-radius:6px;background:rgba(0,0,0,.3)"></canvas>
+        <div class="mut" style="font-size:var(--fs-d1);margin-top:4px" id="m5SynthStatus">— pronto —</div>
+      </div>
+
+      <div class="card fx-trans" style="display:block">
+        <div class="mut" style="font-weight:800;font-size:var(--fs-d3);margin-bottom:6px">⚛ ÁTOMO · H₂O FASE</div>
+        <svg id="m5Atom" viewBox="-80 -80 160 160" style="width:100%;max-width:140px;height:130px;margin:0 auto;display:block">
+          <circle cx="0" cy="0" r="11" fill="#ff8c00" opacity=".9"/>
+          <text x="0" y="4" text-anchor="middle" font-family="monospace" font-size="5" fill="#fff">p+n</text>
+          <ellipse cx="0" cy="0" rx="50" ry="20" fill="none" stroke="#a77cff" stroke-width=".7" opacity=".4"/>
+          <ellipse cx="0" cy="0" rx="50" ry="20" fill="none" stroke="#ff6b6b" stroke-width=".7" opacity=".4" transform="rotate(60)"/>
+          <ellipse cx="0" cy="0" rx="50" ry="20" fill="none" stroke="#5cffde" stroke-width=".7" opacity=".4" transform="rotate(120)"/>
+          <circle id="m5e1" cx="50" cy="0" r="4" fill="#a77cff"/>
+          <circle id="m5e2" cx="-25" cy="18" r="4" fill="#ff6b6b"/>
+          <circle id="m5e3" cx="-25" cy="-18" r="4" fill="#5cffde"/>
+        </svg>
+        <div style="display:flex;gap:7px;font-size:.5rem;justify-content:center;flex-wrap:wrap;margin-top:4px">
+          <span style="color:#ff6b6b">● PRÓTON</span>
+          <span style="color:#ffd700">● NÊUTRON</span>
+          <span style="color:#a77cff">● ELÉTRON</span>
+        </div>
+        <canvas id="m5Phase" height="55" style="display:block;width:100%;margin-top:8px;border-radius:6px;background:rgba(0,0,0,.25)"></canvas>
+        <div class="mut" style="font-size:.5rem;text-align:center;margin-top:3px">TEMPERATURA ↔ ESTADO</div>
+      </div>
+    </div>
+
+    <!-- BLLUE ANÁLISE -->
+    <div class="card fx-trans fx-lift" style="display:block;border-left:2px solid #a77cff" data-frequency="963" data-opcode="0×09">
+      <div style="font-weight:800;font-size:var(--fs-d4);margin-bottom:8px;color:#a77cff">🔮 BLLUE · ESPELHO VOCAL · CLAUDE API</div>
+      <textarea id="m5Query" class="input" style="min-height:56px;margin-bottom:8px;font-size:.7rem"
+        placeholder="Descreva a voz, sotaque ou intenção...&#10;Ex: voz grave Street Fighter, clonar sotaque nordestino"></textarea>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
+        <button class="btn fx-trans fx-press ring" onclick="m5AnalisarBllue()" style="border-color:#a77cff;color:#a77cff;font-size:var(--fs-d2);padding:5px 11px">⚡ ANALISAR ESQUELETO</button>
+        <button class="btn fx-trans fx-press ring" onclick="m5SaltoVoice()" style="border-color:#5cffde;color:#5cffde;font-size:var(--fs-d2);padding:5px 11px">🌀 SALTO QUÂNTICO</button>
+        <button class="btn fx-trans fx-press ring" onclick="m5ClearOut()" style="font-size:var(--fs-d2);padding:5px 9px">✕</button>
+      </div>
+      <div class="m5-out" id="m5Out">
+        <div class="m5-msg m5-msg-sys"><div class="m5-msg-lbl">M5 · BLLUE</div>ARQUÉTIPO VOCAL ONLINE · Carregue vozes → ANALISAR</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:7px;margin-top:6px;font-size:var(--fs-d1);color:var(--mut)">
+        <span id="m5DotBllue" style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.25);flex-shrink:0"></span>
+        <span id="m5StBllue">BLLUE IDLE</span>
+        <span id="m5TkCount" style="margin-left:auto">0 tk</span>
+      </div>
+    </div>
+
+    <!-- ESQUELETO UNIFICADO -->
+    <div class="card fx-trans" style="display:block;border-left:2px solid #ff8c00" data-frequency="672">
+      <div style="font-weight:800;font-size:.8rem;margin-bottom:8px;color:#ff8c00">🦴 ESQUELETO VOCAL UNIFICADO · UNO→DUO→TRINITY</div>
+      <div class="m5-g3">
+        <div>
+          <div style="font-size:var(--fs-d1);color:#a8d8f0;letter-spacing:.1em;margin-bottom:5px">🧊 SÓLIDO</div>
+          <div id="m5OutSolid" class="m5-skel"></div>
+        </div>
+        <div>
+          <div style="font-size:var(--fs-d1);color:#00b4ff;letter-spacing:.1em;margin-bottom:5px">💧 LÍQUIDO</div>
+          <div id="m5OutLiquid" class="m5-skel"></div>
+        </div>
+        <div>
+          <div style="font-size:var(--fs-d1);color:#5cffde;letter-spacing:.1em;margin-bottom:5px">☁️ GASOSO</div>
+          <div id="m5OutGas" class="m5-skel"></div>
+        </div>
+      </div>
+      <div class="mut" style="font-size:.5rem;margin-top:8px;text-align:center;letter-spacing:.1em">
+        VERDADE×INTEGRAR÷∆=∞ · 3×6×9×7=1134 · 🕊️ AMÉM
+      </div>
+    </div>
+
+  </div>
+</section>

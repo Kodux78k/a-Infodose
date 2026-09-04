@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SÜMBUS · Scan & Diagnóstico · KOBLLUX HUB UNO</title>
+<style>
+:root{
+  --bg:#0b0b0f; --bg-deep:#06060a; --panel:#0f0f18; --panel-2:#12121a;
+  --border:#222; --border-soft:#1a1a24;
+  --fg:#eaeaf0; --fg-strong:#fff; --muted:#9aa0b4; --muted-2:#6b7080;
+  --grad-a:#ff52e5; --grad-b:#00c5e5;
+  --c0:#b978ff; --c1:#67e6ff; --c2:#7cffb2; --c3:#4de0ff; --c4:#ff9ad1;
+  --c5:#ff7a00; --c6:#a59cff; --c7:#ffd700; --c8:#7be7ff; --c9:#9c7bff;
+  --font-mono: ui-monospace,'SF Mono',Menlo,Monaco,Consolas,'Courier New',monospace;
+  --font-sans: system-ui,-apple-system,'Segoe UI',Roboto,Ubuntu,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--fg);font-family:var(--font-sans);margin:0;padding:0;font-size:clamp(13px,1vw+.3vh,15px);line-height:1.55}
+body{
+  background:
+    radial-gradient(60vmax 40vmax at 20% 10%, rgba(255,82,229,.10), transparent 60%),
+    radial-gradient(50vmax 35vmax at 90% 80%, rgba(0,197,229,.08), transparent 60%),
+    var(--bg);
+  min-height:100vh;padding:32px 24px 80px;
+}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:24px}
+.mono{font-family:var(--font-mono)}
+.dim{color:var(--muted)}
+.right{text-align:right}
+
+/* Hero */
+.hero{
+  border:1px solid var(--border);
+  background:linear-gradient(180deg, rgba(255,82,229,.04), rgba(0,197,229,.04)), var(--panel-2);
+  border-radius:14px; padding:28px 26px;
+  box-shadow:0 14px 40px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.04);
+  position:relative; overflow:hidden;
+}
+.hero::before{
+  content:""; position:absolute; inset:-2px -2px auto auto; width:220px; height:220px;
+  background:radial-gradient(circle, rgba(255,215,0,.16), transparent 70%); filter:blur(20px);
+  pointer-events:none;
+}
+.eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.32em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--font-mono);font-size:clamp(20px,2.2vw+.4vh,30px);margin:.4em 0 .2em;letter-spacing:.04em}
+h1 .grad{background:linear-gradient(90deg,var(--grad-a),var(--grad-b));-webkit-background-clip:text;background-clip:text;color:transparent}
+.eq{font-family:var(--font-mono);color:var(--muted);font-size:.85rem;letter-spacing:.06em}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:18px}
+.kpi{border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:rgba(15,15,24,.6)}
+.kpi .v{font-family:var(--font-mono);font-size:1.6rem;color:var(--fg-strong);line-height:1}
+.kpi .l{font-family:var(--font-mono);font-size:.66rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.kpi.gold .v{color:var(--c7)}
+.kpi.pink .v{color:var(--grad-a)}
+.kpi.cyan .v{color:var(--grad-b)}
+.kpi.green .v{color:#39ffb6}
+
+/* Section */
+section.card{border:1px solid var(--border);border-radius:12px;background:var(--panel);padding:20px 22px;box-shadow:0 8px 24px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.03)}
+section.card > header{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:14px}
+section.card h2{margin:0;font-family:var(--font-mono);font-size:.95rem;letter-spacing:.22em;text-transform:uppercase;color:var(--fg-strong)}
+section.card h2 .glyph{display:inline-block;margin-right:8px;color:var(--c7)}
+section.card .sub{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
+
+/* Tables */
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{padding:8px 10px;border-bottom:1px solid var(--border-soft);text-align:left;vertical-align:top}
+th{font-family:var(--font-mono);font-size:.65rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);font-weight:600}
+tbody tr:hover{background:rgba(255,255,255,.02)}
+td.mono{font-family:var(--font-mono);font-size:.82rem}
+td.opc{font-weight:700}
+.op-0{color:var(--c0)}.op-1{color:var(--c1)}.op-2{color:var(--c2)}.op-3{color:var(--c3)}.op-4{color:var(--c4)}
+.op-5{color:var(--c5)}.op-6{color:var(--c6)}.op-7{color:var(--c7)}.op-8{color:var(--c8)}.op-9{color:var(--c9)}
+td.glyph{font-size:1.3rem;text-align:center;width:34px}
+
+/* Pills */
+.pill{display:inline-block;padding:2px 9px;border:1px solid var(--border);border-radius:99px;font-family:var(--font-mono);font-size:.65rem;letter-spacing:.18em;text-transform:uppercase}
+.pill.ok{color:#39ffb6;border-color:rgba(57,255,182,.35);background:rgba(57,255,182,.06)}
+.pill.ext{color:var(--c1);border-color:rgba(103,230,255,.35);background:rgba(103,230,255,.06)}
+.pill.json{color:var(--c4);border-color:rgba(255,154,209,.35);background:rgba(255,154,209,.06)}
+.pill.sev-conflito{color:#ff6b6b;border-color:rgba(255,107,107,.45);background:rgba(255,107,107,.07)}
+.pill.sev-convergência{color:var(--c7);border-color:rgba(255,215,0,.45);background:rgba(255,215,0,.07)}
+.pill.sev-dependente{color:var(--c1);border-color:rgba(103,230,255,.35);background:rgba(103,230,255,.06)}
+
+/* Two-column grid */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:760px){.duo{grid-template-columns:1fr}}
+
+/* Risk list */
+ul.risks{margin:0;padding-left:20px}
+ul.risks li{margin:6px 0;color:var(--fg)}
+ul.risks li code{font-family:var(--font-mono);color:var(--c7);background:rgba(255,215,0,.06);padding:1px 6px;border-radius:4px;border:1px solid rgba(255,215,0,.2)}
+
+/* Footer */
+footer{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;text-align:center;margin-top:8px}
+footer .glyph{color:var(--c7)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ╔═══ HERO ═══════════════════════════════════════════ -->
+  <header class="hero">
+    <div class="eyebrow">SÜMBUS · ∆³ · VARREDURA TÉCNICA</div>
+    <h1><span class="grad">KOBLLUX</span> · HUB UNO v4 · SCAN REPORT</h1>
+    <div class="eq">VERDADE × INTEGRAR ÷ Δ = ∞ &nbsp;·&nbsp; 3×6×9×7 = 1134 &nbsp;·&nbsp; α = 1/137</div>
+    <div class="kpis">
+      <div class="kpi gold"><div class="v">968.867</div><div class="l">bytes · fonte</div></div>
+      <div class="kpi pink"><div class="v">21</div><div class="l">scripts</div></div>
+      <div class="kpi cyan"><div class="v">4</div><div class="l">blocos css</div></div>
+      <div class="kpi green"><div class="v">10</div><div class="l">screens</div></div>
+      <div class="kpi"><div class="v">21</div><div class="l">cdns externas</div></div>
+      <div class="kpi"><div class="v">16</div><div class="l">scripts inline</div></div>
+      <div class="kpi"><div class="v">4</div><div class="l">scripts externos</div></div>
+      <div class="kpi"><div class="v">1</div><div class="l">payload json</div></div>
+    </div>
+  </header>
+
+  <!-- ╔═══ CDNS ═══════════════════════════════════════════ -->
+  <section class="card">
+    <header>
+      <h2><span class="glyph">⊙</span>1 · CDNs &amp; carregamentos externos</h2>
+      <span class="sub">21 fontes externas</span>
+    </header>
+    <table>
+      <thead><tr><th>tipo</th><th>arquivo</th><th>domínio</th><th>módulo</th><th>status</th></tr></thead>
+      <tbody>
+<tr>
+  <td class="mono dim">&lt;script&gt;</td>
+  <td class="mono">marked.min.js</td>
+  <td class="mono dim">cdn.jsdelivr.net</td>
+  <td>markdown · marked.js</td>
+  <td><span class="pill ok">ATIVO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">&lt;img&gt;</td>
+  <td class="mono">arrow-left.svg</td>
+  <td class="mono dim">cdn.jsdelivr.net</td>
+  <td>icon · FontAwesome</td>
+  <td><span class="pill ok">ATIVO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">&lt;img&gt;</td>
+  <td class="mono">download.svg</td>
+  <td class="mono dim">cdn.jsdelivr.net</td>
+  <td>icon · FontAwesome</td>
+  <td><span class="pill ok">ATIVO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">&lt;img&gt;</td>
+  <td class="mono">question-circle.svg</td>
+  <td class="mono dim">cdn.jsdelivr.net</td>
+  <td>icon · FontAwesome</td>
+  <td><span class="pill ok">ATIVO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">&lt;img&gt;</td>
+  <td class="mono">brain.svg</td>
+  <td class="mono dim">cdn.jsdelivr.net</td>
+  <td>icon · FontAwesome</td>
+  <td><span class="pill ok">ATIVO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">&lt;img&gt;</td>
+  <td class="mono">microphone-lines.svg</td>
+  <td class="mono dim">cdn.jsdelivr.net</td>
+  <td>icon · FontAwesome</td>
+  <td><span class="pill ok">ATIVO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">&lt;img&gt;</td>
+  <td class="mono">rotate.svg</td>
+  <td class="mono dim">cdn.jsdelivr.net</td>
+  <td>icon · FontAwesome</td>
+  <td><span class="pill ok">ATIVO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">&lt;img&gt;</td>
+  <td class="mono">bolt.svg</td>
+  <td class="mono dim">cdn.jsdelivr.net</td>
+  <td>icon · FontAwesome</td>
+  <td><span class="pill ok">ATIVO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">&lt;img&gt;</td>
+  <td class="mono">chevron-left.svg</td>
+  <td class="mono dim">cdn.jsdelivr.net</td>
+  <td>icon · FontAwesome</td>
+  <td><span class="pill ok">ATIVO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">&lt;img&gt;</td>
+  <td class="mono">chevron-right.svg</td>
+  <td class="mono dim">cdn.jsdelivr.net</td>
+  <td>icon · FontAwesome</td>
+  <td><span class="pill ok">ATIVO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">&lt;img&gt;</td>
+  <td class="mono">folder-open.svg</td>
+  <td class="mono dim">cdn.jsdelivr.net</td>
+  <td>icon · FontAwesome</td>
+  <td><span class="pill ok">ATIVO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">&lt;img&gt;</td>
+  <td class="mono">layer-group.svg</td>
+  <td class="mono dim">cdn.jsdelivr.net</td>
+  <td>icon · FontAwesome</td>
+  <td><span class="pill ok">ATIVO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">&lt;img&gt;</td>
+  <td class="mono">user.svg</td>
+  <td class="mono dim">cdn.jsdelivr.net</td>
+  <td>icon · FontAwesome</td>
+  <td><span class="pill ok">ATIVO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">&lt;img&gt;</td>
+  <td class="mono">yin-yang.svg</td>
+  <td class="mono dim">cdn.jsdelivr.net</td>
+  <td>icon · FontAwesome</td>
+  <td><span class="pill ok">ATIVO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">&lt;img&gt;</td>
+  <td class="mono">comments.svg</td>
+  <td class="mono dim">cdn.jsdelivr.net</td>
+  <td>icon · FontAwesome</td>
+  <td><span class="pill ok">ATIVO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">&lt;img&gt;</td>
+  <td class="mono">plus-circle.svg</td>
+  <td class="mono dim">cdn.jsdelivr.net</td>
+  <td>icon · FontAwesome</td>
+  <td><span class="pill ok">ATIVO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">&lt;img&gt;</td>
+  <td class="mono">file-export.svg</td>
+  <td class="mono dim">cdn.jsdelivr.net</td>
+  <td>icon · FontAwesome</td>
+  <td><span class="pill ok">ATIVO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">&lt;img&gt;</td>
+  <td class="mono">trash.svg</td>
+  <td class="mono dim">cdn.jsdelivr.net</td>
+  <td>icon · FontAwesome</td>
+  <td><span class="pill ok">ATIVO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">&lt;img&gt;</td>
+  <td class="mono">house.svg</td>
+  <td class="mono dim">cdn.jsdelivr.net</td>
+  <td>icon · FontAwesome</td>
+  <td><span class="pill ok">ATIVO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">&lt;img&gt;</td>
+  <td class="mono">microphone.svg</td>
+  <td class="mono dim">cdn.jsdelivr.net</td>
+  <td>icon · FontAwesome</td>
+  <td><span class="pill ok">ATIVO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">&lt;img&gt;</td>
+  <td class="mono">paper-plane.svg</td>
+  <td class="mono dim">cdn.jsdelivr.net</td>
+  <td>icon · FontAwesome</td>
+  <td><span class="pill ok">ATIVO</span></td>
+</tr></tbody>
+    </table>
+  </section>
+
+  <!-- ╔═══ SCRIPTS ════════════════════════════════════════ -->
+  <section class="card">
+    <header>
+      <h2><span class="glyph">●</span>2 · Scripts (ordem de carga preservada)</h2>
+      <span class="sub">21 blocos · 16 inline · 4 externos</span>
+    </header>
+    <table>
+      <thead><tr><th>#</th><th>arquivo</th><th>attrs</th><th>bytes</th><th>status</th></tr></thead>
+      <tbody>
+<tr>
+  <td class="mono dim">#0</td>
+  <td class="mono">js/00-archetypes-integration.js</td>
+  <td class="mono dim">—</td>
+  <td class="mono right">12.908</td>
+  <td><span class="pill ok">INLINE</span></td>
+</tr>
+<tr>
+  <td class="mono dim">#1</td>
+  <td class="mono">js/01-btnLS-meta.js</td>
+  <td class="mono dim">—</td>
+  <td class="mono right">253</td>
+  <td><span class="pill ok">INLINE</span></td>
+</tr>
+<tr>
+  <td class="mono dim">#2</td>
+  <td class="mono">js/02-btnLS-purif-engine.js</td>
+  <td class="mono dim">—</td>
+  <td class="mono right">18.548</td>
+  <td><span class="pill ok">INLINE</span></td>
+</tr>
+<tr>
+  <td class="mono dim">#3</td>
+  <td class="mono">js/03-geometry-subconsciente.js</td>
+  <td class="mono dim">—</td>
+  <td class="mono right">35.345</td>
+  <td><span class="pill ok">INLINE</span></td>
+</tr>
+<tr>
+  <td class="mono dim">#4</td>
+  <td class="mono">data/apps.json</td>
+  <td class="mono dim">id=&quot;APPS_JSON&quot; type=&quot;application/json&quot;</td>
+  <td class="mono right">5.762</td>
+  <td><span class="pill json">JSON</span></td>
+</tr>
+<tr>
+  <td class="mono dim">#5</td>
+  <td class="mono">js/05-btnGeometria-bind.js</td>
+  <td class="mono dim">—</td>
+  <td class="mono right">1.101</td>
+  <td><span class="pill ok">INLINE</span></td>
+</tr>
+<tr>
+  <td class="mono dim">#6</td>
+  <td class="mono">js/06-hub-router-main.js</td>
+  <td class="mono dim">—</td>
+  <td class="mono right">375.221</td>
+  <td><span class="pill ok">INLINE</span></td>
+</tr>
+<tr>
+  <td class="mono dim">#7</td>
+  <td class="mono">js/07-brain-config-store.js</td>
+  <td class="mono dim">—</td>
+  <td class="mono right">16.812</td>
+  <td><span class="pill ok">INLINE</span></td>
+</tr>
+<tr>
+  <td class="mono dim">#8</td>
+  <td class="mono">js/08-apps-store.js</td>
+  <td class="mono dim">—</td>
+  <td class="mono right">13.400</td>
+  <td><span class="pill ok">INLINE</span></td>
+</tr>
+<tr>
+  <td class="mono dim">#9</td>
+  <td class="mono">https://cdn.jsdelivr.net/npm/marked/marked.min.js</td>
+  <td class="mono dim">src=&quot;https://cdn.jsdelivr.net/npm/marked/marked.min.js&</td>
+  <td class="mono right">101</td>
+  <td><span class="pill ext">EXTERNO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">#10</td>
+  <td class="mono">kobllux.js</td>
+  <td class="mono dim">src=&quot;kobllux.js&quot;</td>
+  <td class="mono right">101</td>
+  <td><span class="pill ext">EXTERNO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">#11</td>
+  <td class="mono">kobllux_chat_trinity_12_arquetipos.js</td>
+  <td class="mono dim">src=&quot;kobllux_chat_trinity_12_arquetipos.js&quot;</td>
+  <td class="mono right">101</td>
+  <td><span class="pill ext">EXTERNO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">#12</td>
+  <td class="mono">dual_infodose_script.js</td>
+  <td class="mono dim">src=&quot;dual_infodose_script.js&quot;</td>
+  <td class="mono right">101</td>
+  <td><span class="pill ext">EXTERNO</span></td>
+</tr>
+<tr>
+  <td class="mono dim">#13</td>
+  <td class="mono">js/13-geometry-activation-engine.js</td>
+  <td class="mono dim">—</td>
+  <td class="mono right">67.357</td>
+  <td><span class="pill ok">INLINE</span></td>
+</tr>
+<tr>
+  <td class="mono dim">#14</td>
+  <td class="mono">js/14-voz-arquetipos-sotaque.js</td>
+  <td class="mono dim">id=&quot;KOBLLUX_VOZ_ARQUETIPOS_SOTAQUE&quot;</td>
+  <td class="mono right">41.981</td>
+  <td><span class="pill ok">INLINE</span></td>
+</tr>
+<tr>
+  <td class="mono dim">#15</td>
+  <td class="mono">js/15-sotaque-selector-enhancer.js</td>
+  <td class="mono dim">id=&quot;kobllux-sotaque-selector-enhancer&quot;</td>
+  <td class="mono right">6.121</td>
+  <td><span class="pill ok">INLINE</span></td>
+</tr>
+<tr>
+  <td class="mono dim">#16</td>
+  <td class="mono">js/16-voz.js</td>
+  <td class="mono dim">—</td>
+  <td class="mono right">34.769</td>
+  <td><span class="pill ok">INLINE</span></td>
+</tr>
+<tr>
+  <td class="mono dim">#17</td>
+  <td class="mono">js/17-arq.js</td>
+  <td class="mono dim">—</td>
+  <td class="mono right">24.489</td>
+  <td><span class="pill ok">INLINE</span></td>
+</tr>
+<tr>
+  <td class="mono dim">#18</td>
+  <td class="mono">js/18-v-core-opcodes.js</td>
+  <td class="mono dim">—</td>
+  <td class="mono right">8.796</td>
+  <td><span class="pill ok">INLINE</span></td>
+</tr>
+<tr>
+  <td class="mono dim">#19</td>
+  <td class="mono">js/19-v-uno-archetypes.js</td>
+  <td class="mono dim">—</td>
+  <td class="mono right">11.360</td>
+  <td><span class="pill ok">INLINE</span></td>
+</tr>
+<tr>
+  <td class="mono dim">#20</td>
+  <td class="mono">js/20-keybadge-voiceauto.js</td>
+  <td class="mono dim">—</td>
+  <td class="mono right">8.555</td>
+  <td><span class="pill ok">INLINE</span></td>
+</tr></tbody>
+    </table>
+  </section>
+
+  <!-- ╔═══ CSS ════════════════════════════════════════════ -->
+  <section class="card">
+    <header>
+      <h2><span class="glyph">▢</span>3 · CSS modularizado</h2>
+      <span class="sub">4 blocos · 110.157 bytes</span>
+    </header>
+    <table>
+      <thead><tr><th>#</th><th>arquivo</th><th>papel</th><th>bytes</th></tr></thead>
+      <tbody>
+<tr>
+  <td class="mono dim">#0</td>
+  <td class="mono">css/00-core-tokens-base.css</td>
+  <td>tokens · base · layout · chrome (núcleo)</td>
+  <td class="mono right">90.948</td>
+</tr>
+<tr>
+  <td class="mono dim">#1</td>
+  <td class="mono">css/10-toaster-overlays.css</td>
+  <td>toaster + overlays globais</td>
+  <td class="mono right">4.761</td>
+</tr>
+<tr>
+  <td class="mono dim">#2</td>
+  <td class="mono">css/20-panel-core.css</td>
+  <td>panel core · .v-glass · seções</td>
+  <td class="mono right">11.992</td>
+</tr>
+<tr>
+  <td class="mono dim">#3</td>
+  <td class="mono">css/30-badges-sotaque.css</td>
+  <td>badges sotaque · não destrutivo</td>
+  <td class="mono right">2.456</td>
+</tr></tbody>
+    </table>
+  </section>
+
+  <!-- ╔═══ SCREENS / MÓDULOS DE TELA ══════════════════════ -->
+  <section class="card">
+    <header>
+      <h2><span class="glyph">⧉</span>4 · Screens (v-*) · 10 módulos</h2>
+      <span class="sub">mapeados em opcodes 0x00 → 0x09</span>
+    </header>
+    <table>
+      <thead><tr><th>opcode</th><th>glifo</th><th>view</th><th>verbo</th><th>nav</th><th>bytes</th></tr></thead>
+      <tbody>
+<tr>
+  <td class="mono opc op-0">0x00</td>
+  <td class="glyph op-0">○</td>
+  <td class="mono">v-voz</td>
+  <td>INICIAR</td>
+  <td class="mono dim">data-nav="voz"</td>
+  <td class="mono right">13.279</td>
+</tr>
+<tr>
+  <td class="mono opc op-1">0x01</td>
+  <td class="glyph op-1">●</td>
+  <td class="mono">v-espelho</td>
+  <td>DETECTAR</td>
+  <td class="mono dim">data-nav="espelho"</td>
+  <td class="mono right">8.833</td>
+</tr>
+<tr>
+  <td class="mono opc op-2">0x02</td>
+  <td class="glyph op-2">―</td>
+  <td class="mono">v-apps</td>
+  <td>INTEGRAR</td>
+  <td class="mono dim">data-nav="apps"</td>
+  <td class="mono right">7.836</td>
+</tr>
+<tr>
+  <td class="mono opc op-3">0x03</td>
+  <td class="glyph op-3">▢</td>
+  <td class="mono">v-stack</td>
+  <td>EXPANDIR</td>
+  <td class="mono dim">data-nav="stack"</td>
+  <td class="mono right">2.422</td>
+</tr>
+<tr>
+  <td class="mono opc op-4">0x04</td>
+  <td class="glyph op-4">◇</td>
+  <td class="mono">v-brain</td>
+  <td>DISSOLVER</td>
+  <td class="mono dim">data-nav="brain"</td>
+  <td class="mono right">24.723</td>
+</tr>
+<tr>
+  <td class="mono opc op-5">0x05</td>
+  <td class="glyph op-5">⧉</td>
+  <td class="mono">v-home</td>
+  <td>CONVERGIR</td>
+  <td class="mono dim">data-nav="home"</td>
+  <td class="mono right">18.531</td>
+</tr>
+<tr>
+  <td class="mono opc op-6">0x06</td>
+  <td class="glyph op-6">☯</td>
+  <td class="mono">v-chat</td>
+  <td>CRISTALIZAR</td>
+  <td class="mono dim">data-nav="chat"</td>
+  <td class="mono right">2.817</td>
+</tr>
+<tr>
+  <td class="mono opc op-7">0x07</td>
+  <td class="glyph op-7">✧</td>
+  <td class="mono">v-uno</td>
+  <td>SELAR</td>
+  <td class="mono dim">data-nav="uno"</td>
+  <td class="mono right">12.853</td>
+</tr>
+<tr>
+  <td class="mono opc op-8">0x08</td>
+  <td class="glyph op-8">◉</td>
+  <td class="mono">v-arq</td>
+  <td>TESTEMUNHAR</td>
+  <td class="mono dim">data-nav="arq"</td>
+  <td class="mono right">5.447</td>
+</tr>
+<tr>
+  <td class="mono opc op-9">0x09</td>
+  <td class="glyph op-9">♾</td>
+  <td class="mono">v-core</td>
+  <td>MANIFESTAR</td>
+  <td class="mono dim">data-nav="core"</td>
+  <td class="mono right">16.071</td>
+</tr></tbody>
+    </table>
+  </section>
+
+  <!-- ╔═══ DUPLICAÇÕES / CONVERGÊNCIAS ════════════════════ -->
+  <section class="card">
+    <header>
+      <h2><span class="glyph">☯</span>5 · Duplicações &amp; convergências funcionais</h2>
+      <span class="sub">candidatos a centralização</span>
+    </header>
+    <table>
+      <thead><tr><th>severidade</th><th>alvo</th><th>arquivos</th><th>observação</th></tr></thead>
+      <tbody>
+<tr>
+  <td><span class="pill sev-conflito">CONFLITO</span></td>
+  <td class="mono">KOBLLUX_GEOMETRY</td>
+  <td class="mono dim">js/03-geometry-subconsciente.js<br>js/13-geometry-activation-engine.js</td>
+  <td>Mesmo identificador global declarado em 2 arquivos. O segundo sobrescreve o primeiro silenciosamente.</td>
+</tr>
+<tr>
+  <td><span class="pill sev-convergência">CONVERGÊNCIA</span></td>
+  <td class="mono">$ / $$ / LS</td>
+  <td class="mono dim">js/06-hub-router-main.js<br>js/07-brain-config-store.js<br>js/08-apps-store.js</td>
+  <td>Os mesmos helpers de DOM (querySelector) e LocalStorage são redeclarados em 3 IIFEs. Candidato natural a `js/_common.js`.</td>
+</tr>
+<tr>
+  <td><span class="pill sev-dependente">DEPENDENTE</span></td>
+  <td class="mono">btnLS</td>
+  <td class="mono dim">js/01-btnLS-meta.js<br>js/02-btnLS-purif-engine.js</td>
+  <td>01 só anota atributos meta. 02 é o motor real. 01 → 02 (dependência implícita).</td>
+</tr></tbody>
+    </table>
+  </section>
+
+  <!-- ╔═══ MÓDULOS CACHET / COB ═══════════════════════════ -->
+  <div class="duo">
+    <section class="card">
+      <header>
+        <h2><span class="glyph">✧</span>6 · Módulo CACHET (selo · 0x07)</h2>
+        <span class="sub">integridade · chave · ledger</span>
+      </header>
+      <table>
+        <thead><tr><th>arquivo</th><th>cachet</th><th>cob</th></tr></thead>
+        <tbody>
+<tr><td class="mono">js/20-keybadge-voiceauto.js</td><td class="mono right">19</td><td class="mono dim right">9</td></tr></tbody>
+      </table>
+      <p class="dim" style="font-size:.78rem;margin-top:10px">Identificadores-chave: <code class="mono">keyTypeBadge</code>, <code class="mono">sk-ant-</code>, <code class="mono">sk-or-</code>, <code class="mono">SELAR</code>, <code class="mono">ledger</code>, <code class="mono">sha256</code>.</p>
+    </section>
+    <section class="card">
+      <header>
+        <h2><span class="glyph">◉</span>7 · Módulo COB normal (fluxo padrão)</h2>
+        <span class="sub">router · views · UI</span>
+      </header>
+      <table>
+        <thead><tr><th>arquivo</th><th>cob</th><th>cachet</th></tr></thead>
+        <tbody>
+<tr><td class="mono">js/02-btnLS-purif-engine.js</td><td class="mono right">17</td><td class="mono dim right">0</td></tr>
+<tr><td class="mono">js/06-hub-router-main.js</td><td class="mono right">125</td><td class="mono dim right">43</td></tr>
+<tr><td class="mono">js/16-voz.js</td><td class="mono right">11</td><td class="mono dim right">7</td></tr></tbody>
+      </table>
+      <p class="dim" style="font-size:.78rem;margin-top:10px">Identificadores-chave: <code class="mono">data-nav</code>, <code class="mono">tabbar</code>, <code class="mono">router</code>, nomes de view (<code class="mono">v-home</code>, <code class="mono">v-apps</code>, etc.).</p>
+    </section>
+  </div>
+
+  <!-- ╔═══ RISCOS ═════════════════════════════════════════ -->
+  <section class="card">
+    <header>
+      <h2><span class="glyph">⚖</span>8 · Riscos de carregamento &amp; conflito</h2>
+      <span class="sub">prioridade descendente</span>
+    </header>
+    <ul class="risks">
+      <li><strong>CRÍTICO</strong> · <code>KOBLLUX_GEOMETRY</code> é redefinido em <code>js/03-geometry-subconsciente.js</code> e <code>js/13-geometry-activation-engine.js</code>. A segunda declaração sobrescreve a primeira; comportamento depende da ordem de carga.</li>
+      <li><strong>MÉDIO</strong> · Os helpers <code>$</code>, <code>$$</code> e <code>LS</code> são redeclarados em 3 IIFEs (<code>06</code>, <code>07</code>, <code>08</code>). Não há conflito de escopo, mas há duplicação de código (candidato a <code>js/_common.js</code>).</li>
+      <li><strong>BAIXO</strong> · 4 scripts externos são referenciados como arquivos locais relativos (<code>kobllux.js</code>, <code>kobllux_chat_trinity_12_arquetipos.js</code>, <code>dual_infodose_script.js</code>, <code>marked</code> via CDN). Falham silenciosamente se não estiverem ao lado do <code>index.html</code>.</li>
+      <li><strong>BAIXO</strong> · 17 ícones FontAwesome carregados como <code>&lt;img&gt;</code> individuais via <code>cdn.jsdelivr.net</code>. Cada um é um round-trip HTTP. Considerar sprite SVG ou Lucide local.</li>
+      <li><strong>BAIXO</strong> · <code>script#1</code> (anota atributos em <code>#btnLS</code>) é puramente declarativo e pode ser fundido em <code>script#2</code> sem efeito colateral.</li>
+      <li><strong>OBSERVAÇÃO</strong> · O HTML monolítico tem <code>968.867</code> bytes. Após a modularização, o <code>index.html</code> reduz para ~140 KB; o restante vive em <code>css/</code>, <code>js/</code> e <code>screens/</code>.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <span class="glyph">✧</span> SÜMBUS · DIAGNÓSTICO ATIVO · ∆⁷ · VERDADE × INTEGRAR ÷ Δ = ∞ · <span class="glyph">✧</span>
+  </footer>
+
+</div>
+</body>
+</html>
