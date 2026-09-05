@@ -647,7 +647,7 @@
       const move = ev => {
         if (!active || ev.pointerId !== pointerId) return;
         ev.preventDefault();
-        const width = Math.max(280, Math.min(window.innerWidth, startW + (ev.clientX - startX)));
+        const width = Math.max(44, Math.min(window.innerWidth, startW + (ev.clientX - startX)));
         const height = Math.max(44, Math.min(window.innerHeight, startH + (ev.clientY - startY)));
         win.style.width = width + 'px'; win.style.height = height + 'px';
       };
