@@ -1,17 +1,21 @@
-/* SOURCE: https://kodux78k.github.io/a-Infodose/js/modules/iFSw-base-nephesh-k.js */
 (function () {
   'use strict';
+
   const ROOT = document.documentElement;
   const THEME_KEY = 'dual-theme';
+
   const stackWrap = document.getElementById('stackWrap');
   const dock = document.getElementById('dock');
+
   const timers = new Map();
   const sessionStore = new Map();
   const suspendedQueue = [];
+
   const MAX_SUSPENDED = 5;
   let counter = 1;
   let activeWindow = null;
   const tabDataMap = new WeakMap();
+
   const SessionState = {
     CREATED:   'created',
     LOADING:   'loading',
@@ -20,37 +24,34 @@
     SUSPENDED: 'suspended',
     CLOSED:    'closed'
   };
+
   const Tier = {
     FREE:    'free',
     PRO:     'pro',
     PREMIUM: 'premium'
   };
+
   const TIER_LIMITS = {
     [Tier.FREE]:    { maxActive: 2, maxSuspended: 3,  maxSessions: 5  },
     [Tier.PRO]:     { maxActive: 4, maxSuspended: 6,  maxSessions: 12 },
     [Tier.PREMIUM]: { maxActive: 8, maxSuspended: 12, maxSessions: 30 }
   };
 
-  /* =========================================================
-     SESSION LIFECYCLE · SMART ACTIVITY (PATCH)
-     ========================================================= */
   const IDLE_AFTER_MS = 45000;
   const SUSPEND_AFTER_IDLE_MS = 90000;
-  const ACTIVE_LEASE_MS = 120000;
-  const FRAME_ACTIVITY_LEASE_MS = 180000;
-  const MEDIA_KEEPALIVE = true;
   let currentTier = Tier.FREE;
-
   const sessionMeta = new Map();
-
+  
   function currentLimits() {
     return TIER_LIMITS[currentTier] || TIER_LIMITS[Tier.FREE];
   }
+
   function countByStates(...states) {
     let n = 0;
     sessionMeta.forEach(meta => { if (states.includes(meta.state)) n++; });
     return n;
   }
+
   function setSessionState(id, state) {
     const win = getWin(id);
     const meta = sessionMeta.get(id) || { createdAt: Date.now() };
@@ -75,64 +76,18 @@
       new CustomEvent('session:state-change', { detail: { id, state } })
     );
   }
+
   function getSessionState(id) {
     return sessionMeta.get(id)?.state || null;
   }
 
-  /* ---------------------------------------------------------
-     NOVO touchSession com lease de atividade
-     --------------------------------------------------------- */
-  function touchSession(id, reason = 'interaction') {
+  function touchSession(id) {
     const meta = sessionMeta.get(id);
-    const win = getWin(id);
-    if (!meta || !win) return;
-    const now = Date.now();
-    meta.lastActive = now;
-    meta.lastInteraction = now;
-    meta.lastActivityReason = reason;
-    meta.activityLeaseUntil = now + FRAME_ACTIVITY_LEASE_MS;
-    if (
-      meta.state === SessionState.IDLE ||
-      meta.state === SessionState.SUSPENDED
-    ) {
-      if (meta.state === SessionState.SUSPENDED) {
-        restoreSession(id);
-        return;
-      }
+    if (!meta) return;
+    meta.lastActive = Date.now();
+    if (meta.state === SessionState.IDLE) {
       setSessionState(id, SessionState.ACTIVE);
     }
-    win.dataset.lastActivity = String(now);
-    win.dataset.activityReason = reason;
-  }
-
-  /* ---------------------------------------------------------
-     KEEP ALIVE / MEDIA LEASE
-     --------------------------------------------------------- */
-  function setSessionKeepAlive(id, enabled = true, reason = 'media') {
-    const meta = sessionMeta.get(id);
-    const win = getWin(id);
-    if (!meta || !win) return;
-    meta.keepAlive = !!enabled;
-    meta.keepAliveReason = enabled ? reason : '';
-    win.dataset.keepalive = enabled ? 'true' : 'false';
-    win.dataset.keepaliveReason = enabled ? reason : '';
-    if (enabled) {
-      meta.lastActive = Date.now();
-      meta.lastInteraction = Date.now();
-      meta.activityLeaseUntil = Date.now() + FRAME_ACTIVITY_LEASE_MS;
-      setSessionState(id, SessionState.ACTIVE);
-    }
-  }
-
-  function isSessionProtected(win, meta) {
-    if (!win || !meta) return false;
-    if (isMaximized(win)) return true;
-    if (win === activeWindow) return true;
-    if (meta.keepAlive) return true;
-    if (meta.activityLeaseUntil && Date.now() < meta.activityLeaseUntil) {
-      return true;
-    }
-    return false;
   }
 
   function leastRecentlyActiveSession(excludeId) {
@@ -173,37 +128,20 @@
     enforceActiveBudget();
   }
 
-  /* ---------------------------------------------------------
-     NOVO lifecycle com proteção
-     --------------------------------------------------------- */
   setInterval(() => {
     const now = Date.now();
     sessionMeta.forEach((meta, id) => {
       const win = getWin(id);
       if (!win) return;
-      if (isSessionProtected(win, meta)) {
-        if (
-          meta.state === SessionState.IDLE ||
-          meta.state === SessionState.SUSPENDED
-        ) {
-          setSessionState(id, SessionState.ACTIVE);
-        }
-        if (win === activeWindow) {
-          meta.lastActive = now;
-        }
+      if (isMaximized(win)) {
+        touchSession(id);
         return;
       }
-      if (
-        meta.state === SessionState.ACTIVE &&
-        now - (meta.lastActive || 0) > IDLE_AFTER_MS
-      ) {
+      if (meta.state === SessionState.ACTIVE &&
+          now - (meta.lastActive || 0) > IDLE_AFTER_MS) {
         setSessionState(id, SessionState.IDLE);
-        return;
-      }
-      if (
-        meta.state === SessionState.IDLE &&
-        now - (meta.lastActive || 0) > SUSPEND_AFTER_IDLE_MS
-      ) {
+      } else if (meta.state === SessionState.IDLE &&
+                 now - (meta.lastActive || 0) > SUSPEND_AFTER_IDLE_MS) {
         suspendSession(id);
       }
     });
@@ -219,15 +157,6 @@
     setTier,
     getTier: () => currentTier,
     touch: touchSession,
-    keepAlive(id, enabled = true, reason = 'manual') {
-      setSessionKeepAlive(id, enabled, reason);
-    },
-    protect(id, reason = 'manual') {
-      setSessionKeepAlive(id, true, reason);
-    },
-    unprotect(id) {
-      setSessionKeepAlive(id, false);
-    },
     suspend: id => suspendSession(id),
     restore: id => restoreSession(id),
     close: id => destroySession(id),
@@ -236,10 +165,12 @@
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+
   function getWin(id) { return document.getElementById(id); }
   function isMaximized(win) { return !!win?.classList.contains('maximized'); }
 
   const zStack = [];
+
   function bringToFront(win) {
     if (!win) return;
     const index = zStack.indexOf(win);
@@ -252,11 +183,13 @@
     });
     setActiveWindow(win);
   }
+
   function setActiveWindow(win) {
     if (activeWindow === win) return;
     activeWindow = win;
     syncGlobalHeader();
   }
+
   function syncGlobalHeader() {
     const urlInput = document.getElementById('urlInputNav');
     if (!activeWindow) {
@@ -272,25 +205,17 @@
       urlInput.value = '';
     }
   }
+
   function getTabData(win) {
     if (!tabDataMap.has(win)) {
       const initialUrl = win.querySelector('.win-frame')?.src || 'https://www.infodose.com.br/splash';
-      const tabs = [{
-        id: 'tab-' + Date.now(),
-        url: initialUrl,
-        title: initialUrl.replace(/^https?:\/\//, '').split('/')[0] || 'Nova Aba',
-        fav: false,
-        icon: '◉',
-        state: 'active',
-        keepAlive: false,
-        createdAt: Date.now(),
-        lastUsed: Date.now()
-      }];
+      const tabs = [{ id: 'tab-' + Date.now(), url: initialUrl, title: 'Nova Aba', fav: false }];
       const activeId = tabs[0].id;
       tabDataMap.set(win, { tabs, activeId });
     }
     return tabDataMap.get(win);
   }
+
   function saveTabs(win) {
     const data = tabDataMap.get(win);
     if (!data) return;
@@ -298,6 +223,7 @@
       localStorage.setItem('dual_tabs_' + win.id, JSON.stringify(data));
     } catch (_) {}
   }
+
   function loadTabs(win) {
     try {
       const raw = localStorage.getItem('dual_tabs_' + win.id);
@@ -311,11 +237,13 @@
     } catch (_) {}
     return false;
   }
+
   function getActiveTab(win) {
     const data = tabDataMap.get(win);
     if (!data) return null;
     return data.tabs.find(t => t.id === data.activeId) || data.tabs[0] || null;
   }
+
   function setActiveTab(win, tabId) {
     const data = tabDataMap.get(win);
     if (!data) return;
@@ -331,19 +259,15 @@
       frame.src = tab.url || 'about:blank';
     }
   }
+
   function addTab(win, url = '') {
     const data = tabDataMap.get(win);
     if (!data) return;
     const newTab = {
-      id: 'tab-' + Date.now() + '-' + Math.random().toString(36).slice(2,7),
+      id: 'tab-' + Date.now(),
       url: url || 'https://www.infodose.com.br/splash',
       title: url ? url.replace(/^https?:\/\//, '').split('/')[0] : 'Nova Aba',
-      fav: false,
-      icon: '◉',
-      state: 'active',
-      keepAlive: false,
-      createdAt: Date.now(),
-      lastUsed: Date.now()
+      fav: false
     };
     data.tabs.push(newTab);
     data.activeId = newTab.id;
@@ -354,6 +278,7 @@
     if (frame) frame.src = newTab.url;
     closeTabSwitcher();
   }
+
   function removeTab(win, tabId) {
     const data = tabDataMap.get(win);
     if (!data || data.tabs.length <= 1) return;
@@ -373,6 +298,7 @@
       renderTabSwitcher(win);
     }
   }
+
   function updateTabUrl(win, tabId, newUrl) {
     const data = tabDataMap.get(win);
     if (!data) return;
@@ -390,6 +316,7 @@
       renderTabSwitcher(win);
     }
   }
+
   function toggleFav(win, tabId) {
     const data = tabDataMap.get(win);
     if (!data) return;
@@ -401,35 +328,38 @@
       renderTabSwitcher(win);
     }
   }
+
   function renderTabCounter(win) {
     const data = tabDataMap.get(win);
     if (!data) return;
     const btn = win.querySelector('.tab-counter');
     if (btn) btn.textContent = data.tabs.length;
   }
+
   let currentSwitcherWin = null;
+
   function openTabSwitcher(win) {
     currentSwitcherWin = win;
     const overlay = document.getElementById('tabSwitcherOverlay');
+    const title = document.getElementById('tabSwitcherTitle');
+    title.textContent = 'Abas — ' + (win.querySelector('.win-title')?.textContent || 'janela');
     renderTabSwitcher(win);
     overlay.classList.add('open');
     overlay.onclick = function(e) {
       if (e.target === overlay) closeTabSwitcher();
     };
   }
+
   function closeTabSwitcher() {
     document.getElementById('tabSwitcherOverlay').classList.remove('open');
     currentSwitcherWin = null;
   }
+
   function renderTabSwitcher(win) {
     const grid = document.getElementById('tabGrid');
     const data = tabDataMap.get(win);
     if (!data) {
-      grid.innerHTML = `<div class="tab-empty">
-          <div class="tab-empty-icon">◌</div>
-          <div class="tab-empty-title">Nenhuma aba</div>
-          <div class="tab-empty-text">Abra uma nova aba para começar.</div>
-        </div>`;
+      grid.innerHTML = `<div class="tab-empty"><div class="tab-empty-icon">◌</div><div class="tab-empty-title">Nenhuma aba</div><div class="tab-empty-text">Abra uma nova aba para começar.</div></div>`;
       return;
     }
     grid.innerHTML = '';
@@ -437,24 +367,23 @@
       const card = document.createElement('div');
       card.className = 'tab-card' + (tab.id === data.activeId ? ' active' : '');
       card.dataset.tabId = tab.id;
-      const meta = sessionMeta.get(win.id) || {};
-      card.dataset.state = meta.state || 'active';
-      card.dataset.keepalive = meta.keepAlive ? 'true' : 'false';
-      const stateLabel = {
-        active: 'ATIVA',
-        loading: 'CARREGANDO',
-        idle: 'OCIOSA',
-        suspended: 'SUSPENSA',
-        created: 'CRIADA',
-        closed: 'FECHADA'
-      }[meta.state] || 'ATIVA';
       card.innerHTML = `
-        <div class="tab-icon">${tab.icon || '◉'}</div>
-        <div class="tab-title">${tab.title || 'Nova Aba'}</div>
-        <div class="tab-url">${tab.url || ''}</div>
-        <div class="tab-state"><span class="tab-state-dot"></span>${stateLabel}</div>
-        <button type="button" class="tab-close" data-tabid="${tab.id}" title="Fechar aba">×</button>
-        <button type="button" class="tab-fav ${tab.fav ? 'active' : ''}" data-tabid="${tab.id}" title="${tab.fav ? 'Remover favorito' : 'Favoritar'}">${tab.fav ? '★' : '☆'}</button>
+        <div class="tab-card-inner">
+          <div class="tab-card-main">
+            <div class="tab-card-head">
+              <div class="tab-favicon">${tab.favicon || '◉'}</div>
+              <div class="tab-card-info">
+                <div class="tab-title">${tab.title || 'Nova Aba'}</div>
+                <div class="tab-url">${tab.url || ''}</div>
+              </div>
+            </div>
+            <div class="tab-status">${tab.id === data.activeId ? '<span class="tab-active-dot"></span> Ativa' : ''}</div>
+          </div>
+          <div class="tab-card-actions">
+            <button type="button" class="tab-action tab-fav ${tab.fav ? 'active' : ''}" data-tabid="${tab.id}" title="${tab.fav ? 'Remover favorito' : 'Favoritar aba'}" aria-label="${tab.fav ? 'Remover favorito' : 'Favoritar aba'}">${tab.fav ? '★' : '☆'}</button>
+            <button type="button" class="tab-action tab-close" data-tabid="${tab.id}" title="Fechar aba" aria-label="Fechar aba">×</button>
+          </div>
+        </div>
       `;
       card.addEventListener('click', function(e) {
         if (e.target.closest('.tab-close') || e.target.closest('.tab-fav')) return;
@@ -505,6 +434,7 @@
       destroySession(oldest);
     }
   }
+
   function restoreSession(id) {
     const win = getWin(id);
     if (!win) return;
@@ -539,6 +469,7 @@
     if (win.classList.contains('collapsed') && win.dataset.suspended === 'true') restoreSession(id);
     bringToFront(win); syncShell();
   }
+
   function togglePeek(id) {
     const win = getWin(id); if (!win) return;
     if (isMaximized(win)) { win.classList.remove('maximized'); win.style.zIndex = ''; syncShell(); }
@@ -549,6 +480,7 @@
     }
     bringToFront(win); syncShell();
   }
+
   function maximizeWindow(id) {
     const win = getWin(id); if (!win) return;
     if (isMaximized(win)) {
@@ -562,6 +494,7 @@
     win.classList.add('maximized'); win.style.zIndex = '94000';
     bringToFront(win); syncShell();
   }
+
   function minimizeWindow(id) {
     const win = getWin(id); if (!win) return;
     timers.delete(id);
@@ -585,7 +518,9 @@
     dock?.appendChild(bubble);
     syncShell();
   }
+
   function closeWindow(id) { destroySession(id); }
+
   function destroySession(id) {
     const win = getWin(id);
     setSessionState(id, SessionState.CLOSED);
@@ -620,6 +555,7 @@
     bindResizeX(win, hx);
     bindResizeCorner(win, hc);
   }
+
   function freeFromMaximize(win, rect) {
     if (isMaximized(win)) {
       win.classList.remove('maximized');
@@ -638,6 +574,7 @@
     syncShell();
   }
   function finishResize(win) { win.classList.remove('resizing'); syncShell(); }
+
   function bindResizeY(win, handle) {
     let active = false, pointerId = null, startY = 0, startH = 0;
     handle.addEventListener('pointerdown', function(e) {
@@ -728,61 +665,16 @@
     }, { passive: false });
   }
 
-  /* ---------------------------------------------------------
-     NOVO wireSession com atividade de iframe + postMessage
-     --------------------------------------------------------- */
   function wireSession(win) {
     if (!win || win.dataset.wired === '1') return;
     win.dataset.wired = '1';
 
-    const hostTouch = () => {
-      touchSession(win.id, 'window');
-      bringToFront(win);
-    };
-    win.addEventListener('pointerdown', hostTouch, { passive: true });
-    win.addEventListener('focusin', () => touchSession(win.id, 'focus'), { passive: true });
-    win.addEventListener('mouseenter', () => touchSession(win.id, 'hover'), { passive: true });
-
-    const frame = win.querySelector('.win-frame');
-    if (frame) {
-      ['load','pointerdown','pointerup','touchstart','mouseenter','focus'].forEach(type => {
-        frame.addEventListener(type, () => {
-          touchSession(win.id, 'iframe');
-          const meta = sessionMeta.get(win.id);
-          if (meta) {
-            meta.activityLeaseUntil = Date.now() + FRAME_ACTIVITY_LEASE_MS;
-          }
-        }, { passive: true });
-      });
-    }
-
-    window.addEventListener('message', event => {
-      const data = event.data;
-      if (!data || typeof data !== 'object') return;
-      if (data.type === 'DUAL_SESSION_ACTIVITY') {
-        touchSession(win.id, data.reason || 'iframe-message');
-      }
-      if (data.type === 'DUAL_SESSION_KEEPALIVE') {
-        setSessionKeepAlive(win.id, data.enabled !== false, data.reason || 'iframe');
-      }
-      if (data.type === 'DUAL_SESSION_MEDIA') {
-        setSessionKeepAlive(win.id, data.playing !== false, data.reason || 'media');
-      }
-    });
+    win.addEventListener('pointerdown', () => touchSession(win.id), { passive: true });
 
     if (!loadTabs(win)) {
-      const src = frame?.src || 'https://www.infodose.com.br/splash';
-      const tabs = [{
-        id: 'tab-' + Date.now(),
-        url: src,
-        title: src.replace(/^https?:\/\//, '').split('/')[0] || 'Nova Aba',
-        fav: false,
-        icon: '◉',
-        state: 'active',
-        keepAlive: false,
-        createdAt: Date.now(),
-        lastUsed: Date.now()
-      }];
+      const frame = win.querySelector('.win-frame');
+      const src = frame ? frame.src : 'https://www.infodose.com.br/splash';
+      const tabs = [{ id: 'tab-' + Date.now(), url: src, title: src.replace(/^https?:\/\//, '').split('/')[0] || 'Nova Aba', fav: false }];
       tabDataMap.set(win, { tabs, activeId: tabs[0].id });
       saveTabs(win);
     }
@@ -821,6 +713,7 @@
       if (e.key === 'Enter') { e.stopPropagation(); go?.click(); }
     });
 
+    const frame = win.querySelector('.win-frame');
     frame?.addEventListener('load', function() {
       try {
         const doc = this.contentDocument;
@@ -839,7 +732,6 @@
         syncGlobalHeader();
       }
     });
-
     frame?.addEventListener('click', function() {
       if (!win.classList.contains('maximized')) bringToFront(win);
     });
@@ -867,6 +759,14 @@
           suspended: '#ff6b6b',
           created: '#aaa',
           closed: '#555'
+        };
+        const labels = {
+          active: 'ATIVO',
+          loading: 'CARREGANDO',
+          idle: 'OCIOSO',
+          suspended: 'SUSPENSO',
+          created: 'CRIADO',
+          closed: 'FECHADO'
         };
         badge.textContent = `●`;
         badge.style.color = colors[state] || '#aaa';
@@ -1001,5 +901,6 @@
   window.minimizeWindow = minimizeWindow;
   window.closeWindow = closeWindow;
   window.syncShellMode = syncShell;
+
   console.log('🚀 Almasliber OS — Core com Abas, Snapshot e Badge de Estado (corrigido) carregado.');
 })();
