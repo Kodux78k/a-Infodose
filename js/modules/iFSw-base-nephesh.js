@@ -1,4 +1,5 @@
 /* SOURCE: https://kodux78k.github.io/a-Infodose/js/modules/iFSw-base-nephesh-k.js */
+/* SOURCE: https://kodux78k.github.io/a-Infodose/js/modules/iFSw-base-nephesh-k.js */
 (function () {
   'use strict';
   const ROOT = document.documentElement;
@@ -264,7 +265,10 @@
       return;
     }
     const data = tabDataMap.get(activeWindow);
-    if (!data) return;
+    if (!data) {
+      urlInput.value = '';
+      return;
+    }
     const activeTab = data.tabs.find(t => t.id === data.activeId);
     if (activeTab) {
       urlInput.value = activeTab.url || '';
@@ -324,6 +328,8 @@
     data.activeId = tabId;
     saveTabs(win);
     renderTabCounter(win);
+    // PATCH: garantir que a janela seja trazida à frente
+    bringToFront(win);
     syncGlobalHeader();
     const frame = win.querySelector('.win-frame');
     const tab = getActiveTab(win);
@@ -419,6 +425,11 @@
   }
   function closeTabSwitcher() {
     document.getElementById('tabSwitcherOverlay').classList.remove('open');
+    // PATCH: reativar a janela que estava no switcher
+    if (currentSwitcherWin) {
+      bringToFront(currentSwitcherWin);
+      syncGlobalHeader();
+    }
     currentSwitcherWin = null;
   }
   function renderTabSwitcher(win) {
@@ -837,6 +848,8 @@
         const localInput = win.querySelector('.win-urlbar');
         if (localInput) localInput.value = this.src;
         syncGlobalHeader();
+        // PATCH: trazer a janela para frente ao carregar
+        bringToFront(win);
       }
     });
 
@@ -938,7 +951,13 @@
   const goNavBtn = document.getElementById('goNavBtn');
   const favBtn = document.getElementById('favBtn');
   function applyGlobalUrl() {
-    if (!navInput || !activeWindow) return;
+    // PATCH: se não houver janela ativa, criar uma nova
+    if (!activeWindow) {
+      createSessionWindow();
+      // após criar, tentar novamente (mas activeWindow será atualizado)
+      setTimeout(() => applyGlobalUrl(), 50);
+      return;
+    }
     let url = navInput.value.trim();
     if (!url) return;
     if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
@@ -1001,5 +1020,5 @@
   window.minimizeWindow = minimizeWindow;
   window.closeWindow = closeWindow;
   window.syncShellMode = syncShell;
-  console.log('🚀 Almasliber OS — Core com Abas, Snapshot e Badge de Estado (corrigido) carregado.');
+  console.log('🚀 Almasliber OS — Core com Abas, Snapshot e Badge de Estado (PATCHADO) carregado.');
 })();
