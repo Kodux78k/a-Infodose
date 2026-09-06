@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DJ Visualizer Geométrico - Mobile</title>
+    
+    <!-- Importando os ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            width: 100vw; 
+            height: 100vh; 
+            background-color: #000; 
+            overflow: hidden; 
+            touch-action: none;
+        }
+        
+        #canvas { 
+            display: block; 
+            width: 100%; 
+            height: 100%; 
+            background: #000;
+        }
+        
+        /* Container Glassmorphism para a UI */
+        #ui-container { 
+            position: absolute; 
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 20; 
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+            padding: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px 20px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+        
+        h1 { 
+            margin: 0 0 10px 0; 
+            font-size: 28px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .icon-glow {
+            color: #00ffcc;
+            filter: drop-shadow(0 0 8px rgba(0, 255, 204, 0.8));
+        }
+        
+        p {
+            color: #a0aec0;
+            font-size: 15px;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        
+        /* Botões Estilizados */
+        .btn { 
+            display: flex; 
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 18px; 
+            margin-bottom: 15px;
+            cursor: pointer; 
+            font-size: 18px;
+            font-weight: bold; 
+            border-radius: 16px; 
+            border: none;
+            transition: all 0.2s ease; 
+        }
+
+        .btn:active { transform: scale(0.96); }
+        
+        .btn-upload {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-upload:hover, .btn-upload:active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-play {
+            background: linear-gradient(135deg, #00ffcc 0%, #00b3ff 100%);
+            color: #000;
+            box-shadow: 0 4px 20px rgba(0, 255, 204, 0.4);
+            display: none; /* Escondido até carregar o arquivo */
+        }
+
+        /* Oculta o input padrão */
+        input[type="file"] { display: none; }
+
+        #file-name {
+            color: #00ffcc;
+            font-size: 14px;
+            margin: 15px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: none;
+            background: rgba(0, 255, 204, 0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+
+        /* Indicador de Pausa no meio da tela */
+        #pause-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        /* O Player escondido (Seja vídeo ou áudio, não vai aparecer) */
+        #media-player { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-container">
+        <div class="card">
+            <h1><i data-lucide="waves" class="icon-glow"></i> GeoVisualizer</h1>
+            <p>Selecione um Áudio ou Vídeo.<br>O sistema criará o show visual retro baseado apenas no som.</p>
+            
+            <!-- Aceita arquivos de várias formas para garantir compatibilidade no celular -->
+            <label class="btn btn-upload">
+                <input type="file" id="media-upload" accept="audio/*, video/*, .mp3, .MP3, .mp4, .MP4, .wav, .ogg">
+                <i data-lucide="folder-search"></i> Buscar Mídia
+            </label>
+            
+            <div id="file-name"></div>
+
+            <button id="start-btn" class="btn btn-play">
+                <i data-lucide="play-circle"></i> Iniciar Telão
+            </button>
+        </div>
+    </div>
+
+    <!-- Feedback visual ao pausar -->
+    <div id="pause-overlay">
+        <i data-lucide="pause-circle" style="width: 80px; height: 80px; color: #fff; opacity: 0.8;"></i>
+    </div>
+
+    <canvas id="canvas"></canvas>
+    <!-- Elemento de mídia oculto com playsinline essencial para iOS -->
+    <video id="media-player" playsinline preload="auto"></video>
+
+    <script>
+        // Inicializa os ícones Lucide
+        lucide.createIcons();
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const mediaPlayer = document.getElementById('media-player');
+        const upload = document.getElementById('media-upload');
+        const uiContainer = document.getElementById('ui-container');
+        const startBtn = document.getElementById('start-btn');
+        const fileNameDisplay = document.getElementById('file-name');
+        const pauseOverlay = document.getElementById('pause-overlay');
+
+        let audioCtx, analyser, source;
+        let frequencyData, timeDomainData;
+        let isPlaying = false;
+        let isInitialized = false;
+
+        // Ajuste fluido da tela
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        window.addEventListener('orientationchange', () => setTimeout(resize, 200));
+        resize();
+
+        // Manipulação do Arquivo Escolhido
+        upload.addEventListener('change', function() {
+            const files = this.files;
+            if (files.length === 0) return;
+            
+            const file = files[0];
+            const url = URL.createObjectURL(file);
+            mediaPlayer.src = url;
+            
+            fileNameDisplay.innerHTML = `<i data-lucide="music" style="width:14px; height:14px; margin-right:5px; vertical-align:middle;"></i>${file.name}`;
+            fileNameDisplay.style.display = 'block';
+            lucide.createIcons(); // Recarrega os icones injetados
+            
+            startBtn.style.display = 'flex';
+        });
+
+        // Forçar tela cheia (Tratamento para Mobile)
+        function enterFullscreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch(e => console.warn(e));
+            } else if (elem.webkitRequestFullscreen) { /* Safari / iOS */
+                elem.webkitRequestFullscreen();
+            }
+        }
+
+        // Iniciar o Show
+        startBtn.addEventListener('click', function() {
+            enterFullscreen();
+
+            // Transição suave para esconder a UI
+            uiContainer.style.opacity = '0';
+            setTimeout(() => {
+                uiContainer.style.visibility = 'hidden';
+            }, 500);
+
+            if (!isInitialized) {
+                initWebAudio();
+                isInitialized = true;
+            } else {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+            }
+
+            mediaPlayer.play();
+            isPlaying = true;
+            pauseOverlay.style.display = 'none';
+        });
+
+        // Toque na tela para Pausar/Despausar
+        canvas.addEventListener('click', function() {
+            if (!isInitialized) return;
+
+            if (isPlaying) {
+                mediaPlayer.pause();
+                pauseOverlay.style.display = 'flex';
+            } else {
+                mediaPlayer.play();
+                pauseOverlay.style.display = 'none';
+                enterFullscreen(); // Garante que continue em tela cheia se o usuário saiu
+            }
+            isPlaying = !isPlaying;
+        });
+
+        function initWebAudio() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+            
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 512; 
+            
+            source = audioCtx.createMediaElementSource(mediaPlayer);
+            source.connect(analyser);
+            analyser.connect(audioCtx.destination);
+            
+            frequencyData = new Uint8Array(analyser.frequencyBinCount);
+            timeDomainData = new Uint8Array(analyser.frequencyBinCount);
+            
+            requestAnimationFrame(animate);
+        }
+
+        let time = 0;
+
+        // Função auxiliar para desenhar polígonos
+        function drawPolygon(x, y, radius, sides, rotation) {
+            ctx.beginPath();
+            for (let i = 0; i < sides; i++) {
+                const angle = rotation + (i * Math.PI * 2) / sides;
+                const px = x + Math.cos(angle) * radius;
+                const py = y + Math.sin(angle) * radius;
+                if(i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.stroke();
+        }
+
+        // Loop Visual
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (!isPlaying) return;
+
+            // Pega dados da música: Frequência (graves/agudos) e Domínio de Tempo (Onda do som)
+            analyser.getByteFrequencyData(frequencyData);
+            analyser.getByteTimeDomainData(timeDomainData);
+
+            // Efeito de rastro (Motion Blur clássico dos anos 90/00)
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            // Separação de frequências
+            let bass = 0, mid = 0, treble = 0;
+            for(let i = 0; i < 10; i++) bass += frequencyData[i];
+            for(let i = 20; i < 40; i++) mid += frequencyData[i];
+            for(let i = 100; i < 150; i++) treble += frequencyData[i];
+            
+            bass = bass / 10;
+            mid = mid / 20;
+            treble = treble / 50;
+
+            time += 0.005 + (bass * 0.00005);
+            
+            // --- CAMADA 1: A Onda Sonora (Osciloscópio Clássico) ---
+            ctx.beginPath();
+            ctx.lineWidth = 2 + (treble / 50);
+            ctx.strokeStyle = `hsl(${(time * 100) % 360}, 100%, 60%)`;
+            
+            const sliceWidth = canvas.width / analyser.frequencyBinCount;
+            let x = 0;
+            
+            for(let i = 0; i < analyser.frequencyBinCount; i++) {
+                const v = timeDomainData[i] / 128.0; // 128 é o centro (silêncio)
+                const y = (v * canvas.height / 2.5) + (canvas.height * 0.1); 
+                
+                if(i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+                
+                x += sliceWidth;
+            }
+            ctx.stroke();
+
+            // --- CAMADA 2: Geometria Reativa (Triângulos e Quadrados) ---
+            const baseRadius = Math.min(canvas.width, canvas.height) * 0.15;
+            
+            // Triângulo Central (Reage aos Agudos/Médios) - Gira rápido
+            ctx.strokeStyle = '#ff00ff';
+            ctx.lineWidth = 2 + (treble / 15);
+            drawPolygon(centerX, centerY, baseRadius + (treble * 1.5), 3, time * 2);
+
+            // Quadrado Intermediário (Reage aos Médios) - Gira médio reverso
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 3 + (mid / 20);
+            drawPolygon(centerX, centerY, baseRadius * 1.6 + mid, 4, -time * 1.5);
+
+            // Hexágono Externo (O Subwoofer - Reage pesado ao Grave)
+            if (bass > 100) {
+                const intensity = (bass - 100) / 155; // 0 a 1
+                ctx.strokeStyle = `hsla(${(time * 50) % 360}, 100%, 50%, ${0.3 + intensity})`;
+                ctx.lineWidth = 4 + (intensity * 10);
+                drawPolygon(centerX, centerY, baseRadius * 2.2 + (intensity * 100), 6, time);
+                
+                // Pulso extra (Efeito lente batendo)
+                if (bass > 200) {
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, baseRadius * 2.5 + (bass - 200)*2, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${((bass-200)/55) * 0.5})`;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            }
+            
+            // --- CAMADA 3: Partículas (Estrelas vindo na sua direção) ---
+            // Desenha pequenas linhas/pontos nas quinas das frequências altas
+            if (treble > 80) {
+                const numParticles = 8;
+                for (let i=0; i<numParticles; i++) {
+                    const angle = (i * (Math.PI*2) / numParticles) + (time * 3);
+                    const dist = baseRadius * 3 + (Math.random() * treble * 2);
+                    const px = centerX + Math.cos(angle) * dist;
+                    const py = centerY + Math.sin(angle) * dist;
+                    
+                    ctx.beginPath();
+                    ctx.fillStyle = '#fff';
+                    ctx.arc(px, py, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

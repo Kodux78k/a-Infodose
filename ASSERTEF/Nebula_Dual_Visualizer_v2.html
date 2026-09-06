@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nebula Dual Visualizer - K∅β Architecture</title>
+    
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+          /* BASES DE AFINAÇÃO - LEI DA SOMA */
+          --ciano: #00FFFF;
+          --magenta: #FF00FF;
+          --uniao: #FFFFFF;
+          --abismo: #000000;
+
+          /* PONTES 10 TONS */
+          --ponte-1: #3300FF; --ponte-2: #6600FF; --ponte-3: #9900FF; --ponte-4: #CC00FF;
+          --ponte-5: #FF00CC; --ponte-6: #FF0099; --ponte-7: #FF0066; --ponte-8: #FF0033;
+
+          /* DINÂMICOS COLORSYNC */
+          --active-color: #00ffcc;
+          --active-glow: rgba(0, 255, 204, 0.8);
+          --active-opcode: 0x00;
+        }
+
+        /* TRIADE */
+        .kobllux { background: linear-gradient(135deg, rgba(0,255,255,.85), rgba(255,0,255,.15)); box-shadow: 0 0 18px rgba(0,255,255,.85); }
+        .kodux { background: linear-gradient(135deg, rgba(255,0,255,.20)); box-shadow: 0 0 18px rgba(255,0,255,.20); }
+        .bllue { background: linear-gradient(135deg, rgba(0,255,255,1.0)); box-shadow: 0 0 18px rgba(0,255,255,1.0); }
+
+        /* CORE_16 */
+        .atlas { background: linear-gradient(135deg, rgba(0,255,255,.60), rgba(255,0,255,.30)); box-shadow: 0 0 18px rgba(120,227,255,.55); }
+        .nova { background: linear-gradient(135deg, rgba(255,0,255,.70)); box-shadow: 0 0 18px rgba(255,107,107,.55); }
+        .vitalis { background: linear-gradient(135deg, rgba(0,255,255,.90)); box-shadow: 0 0 18px rgba(78,205,196,.55); }
+        .pulse { background: linear-gradient(135deg, rgba(0,255,255,.70)); box-shadow: 0 0 18px rgba(168,230,207,.55); }
+        .artemis { background: linear-gradient(135deg, rgba(255,0,255,.40)); box-shadow: 0 0 18px rgba(255,217,61,.55); }
+        .serena { background: linear-gradient(135deg, rgba(0,255,255,.80)); box-shadow: 0 0 18px rgba(184,225,255,.55); }
+        .kaos { background: linear-gradient(135deg, rgba(255,0,255,.90)); box-shadow: 0 0 18px rgba(255,128,102,.55); }
+        .genus { background: linear-gradient(135deg, rgba(0,255,255,.75)); box-shadow: 0 0 18px rgba(149,225,211,.55); }
+        .lumine { background: linear-gradient(135deg, rgba(255,0,255,.30)); box-shadow: 0 0 18px rgba(249,243,178,.55); }
+        .solus { background: linear-gradient(135deg, rgba(255,0,255,.60)); box-shadow: 0 0 18px rgba(255,179,71,.55); }
+        .rhea { background: linear-gradient(135deg, rgba(0,255,255,.85)); box-shadow: 0 0 18px rgba(181,234,234,.55); }
+        .aion { background: linear-gradient(135deg, rgba(255,0,255,.80)); box-shadow: 0 0 18px rgba(199,154,255,.55); }
+        .uno { background: linear-gradient(135deg, rgba(255,0,255,.20)); box-shadow: 0 0 18px rgba(249,115,22,.55); }
+        .dual { background: linear-gradient(90deg, var(--ciano), var(--magenta)); box-shadow: 0 0 18px rgba(6,182,212,.55); }
+        .trinity { background: linear-gradient(135deg, var(--uniao)); box-shadow: 0 0 18px var(--uniao); }
+        .infodose { background: linear-gradient(135deg, rgba(0,255,255,.50), rgba(255,0,255,.10)); box-shadow: 0 0 18px rgba(34,197,94,.55); }
+        .horus { background: linear-gradient(135deg, rgba(255,0,255,.50)); box-shadow: 0 0 18px rgba(245,158,11,.55); }
+        .minuz { background: linear-gradient(135deg, rgba(0,255,255,.75)); box-shadow: 0 0 18px rgba(149,225,211,.55); }
+        .hanah { background: linear-gradient(135deg, rgba(255,0,255,.30)); box-shadow: 0 0 18px rgba(249,243,178,.55); }
+
+        /* NUCLEO */
+        .kd1 { background: linear-gradient(135deg, rgba(0,255,255,.90), rgba(255,0,255,.10)); box-shadow: 0 0 18px rgba(155,231,255,.58); }
+        .metalux { background: linear-gradient(135deg, rgba(255,0,255,.80)); box-shadow: 0 0 18px rgba(199,154,255,.55); }
+        .KOΦD1 { background: linear-gradient(135deg, rgba(0,255,255,.90), rgba(255,0,255,.10)); box-shadow: 0 0 18px rgba(155,231,255,.58); }
+
+        /* CENTRO */
+        .christos { background: linear-gradient(135deg, rgba(255,255,255,.50)); box-shadow: 0 0 18px rgba(255,184,77,.58); }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: radial-gradient(circle at 50% 50%, rgba(0,255,255,.08), rgba(255,0,255,.08), var(--abismo));
+            color: #fff;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #app-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Painel Lateral (Aside) */
+        aside {
+            width: 320px;
+            background: rgba(12, 12, 18, 0.95);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-shadow: 5px 0 25px rgba(0,0,0,0.8);
+            z-index: 10;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .brand-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* O ORB SYMBOLBAR LINK */
+        .orb-container {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--active-color) 0%, rgba(0,0,0,0.8) 80%);
+            box-shadow: 0 0 12px var(--active-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid var(--active-color);
+        }
+        .orb-container:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px var(--active-color);
+        }
+
+        /* Controles do Menu */
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--active-color);
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--active-color) 0%, #00b3ff 100%);
+            color: #000;
+            border: none;
+            box-shadow: 0 4px 15px var(--active-glow);
+        }
+
+        input[type="file"] { display: none; }
+
+        /* Textarea para colagem de documentos instantâneos */
+        .paste-box-wrapper {
+            margin-bottom: 20px;
+            background: rgba(0,0,0,0.4);
+            border: 1px dashed rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 12px;
+        }
+        .paste-box-wrapper label {
+            font-size: 11px;
+            color: var(--active-color);
+            margin-bottom: 6px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        textarea {
+            width: 100%;
+            height: 70px;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            color: #fff;
+            padding: 8px;
+            font-size: 12px;
+            resize: none;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: var(--active-color);
+        }
+
+        /* Lista de Documentos Salvos (LocalStorage + IndexedDB) */
+        .doc-section {
+            margin-bottom: 20px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 10px;
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .doc-section h3 {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--active-color);
+            margin-bottom: 8px;
+        }
+        .doc-list {
+            max-height: 120px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .doc-item {
+            background: rgba(255,255,255,0.03);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        .doc-item:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: var(--active-color);
+        }
+
+        /* Track Info & Timer */
+        .track-info {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 14px;
+            margin-top: auto;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .track-name {
+            font-size: 12px;
+            color: var(--active-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .timer {
+            font-family: monospace;
+            font-size: 20px;
+            color: #fff;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #aaa;
+            margin-top: 15px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #444;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+        .status-dot.active {
+            background: var(--active-color);
+            box-shadow: 0 0 10px var(--active-glow);
+        }
+
+        main {
+            flex: 1;
+            position: relative;
+            background: radial-gradient(circle at center, #111 0%, #000 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.4s ease;
+        }
+
+        #canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        main.is-fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999;
+        }
+
+        #exit-fs-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            z-index: 10000;
+        }
+
+        main.is-fullscreen #exit-fs-btn {
+            display: flex;
+        }
+
+        audio { display: none; }
+
+        @media (max-width: 768px) {
+            #app-container { flex-direction: column; }
+            aside { width: 100%; height: auto; max-height: 40vh; padding: 12px; }
+            .control-group { flex-direction: row; flex-wrap: wrap; }
+            .control-group .btn { flex: 1; min-width: 110px; padding: 10px; font-size: 11px; }
+        }
+    </style>
+</head>
+<body data-opcode="0x00" data-arch="ATLAS">
+
+    <div id="app-container">
+        <!-- Sidebar / Painel -->
+        <aside id="sidebar">
+            <div class="brand">
+                <div class="brand-left">
+                    <i data-lucide="cpu" style="color: var(--active-color);"></i>
+                    Nebula K∅β
+                </div>
+                <!-- Orb Symbolbar Link -->
+                <div class="orb-container" id="orb-trigger" title="Alternar Arquétipo / ColorSync">
+                    <i data-lucide="disc" style="width: 18px; height: 18px; color: #fff;"></i>
+                </div>
+            </div>
+
+            <!-- Caixa de Colagem Instantânea (Salva como Nebula_last com título de 2 a 3 palavras) -->
+            <div class="paste-box-wrapper">
+                <label for="paste-input">Colar Documento (Auto-Título)</label>
+                <textarea id="paste-input" placeholder="Cole seu texto aqui... Ex: Resumo da Operação Quantum..."></textarea>
+                <button class="btn" id="save-paste-btn" style="margin-top: 8px; padding: 8px;">
+                    <i data-lucide="save" style="width: 14px;"></i> Salvar no LocalStorage
+                </button>
+            </div>
+
+            <div class="control-group">
+                <label class="btn">
+                    <input type="file" id="media-upload" accept="audio/*, video/*, .mp3, .wav, .ogg, .mp4">
+                    <i data-lucide="folder-open"></i> Abrir Mídia
+                </label>
+                
+                <button class="btn btn-primary" id="play-btn" disabled>
+                    <i data-lucide="play"></i> Play / Pause
+                </button>
+
+                <button class="btn" id="fullscreen-btn">
+                    <i data-lucide="maximize"></i> Modo Telão
+                </button>
+            </div>
+
+            <!-- Seção de Documentos Salvos (IndexedDB + LocalStorage) -->
+            <div class="doc-section">
+                <h3>Documentos Gravados</h3>
+                <div class="doc-list" id="doc-list-container">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+
+            <div class="track-info">
+                <div class="track-name" id="track-name">
+                    <i data-lucide="music-4" style="width: 14px;"></i> 
+                    <span>Nenhuma faixa</span>
+                </div>
+                <div class="timer" id="timer-display">00:00</div>
+            </div>
+
+            <div class="status-badge">
+                <div class="status-dot" id="status-dot"></div>
+                K∅β <span id="status-text">Aguardando</span>
+            </div>
+        </aside>
+
+        <!-- Área do Canvas -->
+        <main id="visualizer-area">
+            <button id="exit-fs-btn">
+                <i data-lucide="minimize"></i> Sair do Telão
+            </button>
+            <canvas id="canvas"></canvas>
+        </main>
+    </div>
+
+    <audio id="audio-player"></audio>
+
+    <script>
+        // Inicializar Ícones Lucide
+        lucide.createIcons();
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const audioPlayer = document.getElementById('audio-player');
+        
+        const uploadBtn = document.getElementById('media-upload');
+        const playBtn = document.getElementById('play-btn');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const exitFsBtn = document.getElementById('exit-fs-btn');
+        const visArea = document.getElementById('visualizer-area');
+        const trackNameEl = document.querySelector('#track-name span');
+        const timerDisplay = document.getElementById('timer-display');
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+        const pasteInput = document.getElementById('paste-input');
+        const savePasteBtn = document.getElementById('save-paste-btn');
+        const docListContainer = document.getElementById('doc-list-container');
+        const orbTrigger = document.getElementById('orb-trigger');
+
+        let audioCtx, analyser, source;
+        let frequencyData, timeDomainData;
+        let isPlaying = false;
+        let isInitialized = false;
+
+        // --- SISTEMA DE ARQUÉTIPOS E COLORSYNC (K∅β) ---
+        const archetypes = [
+            { id: 'ATLAS', color: '#00ffff', glow: 'rgba(120,227,255,0.7)', opcode: '0x00' },
+            { id: 'NOVA', color: '#ff00ff', glow: 'rgba(255,107,107,0.7)', opcode: '0x01' },
+            { id: 'VITALIS', color: '#00ffcc', glow: 'rgba(78,205,196,0.7)', opcode: '0x02' },
+            { id: 'PULSE', color: '#33ffdb', glow: 'rgba(168,230,207,0.7)', opcode: '0x03' },
+            { id: 'KOBLLUX', color: '#ff00cc', glow: 'rgba(0,255,255,0.9)', opcode: '0x04' },
+            { id: 'BLLUE', color: '#00b3ff', glow: 'rgba(0,255,255,1.0)', opcode: '0x05' },
+            { id: 'JESUS', color: '#ffffff', glow: 'rgba(255,255,255,0.9)', opcode: '0x06' },
+            { id: 'KAOS', color: '#ff6b6b', glow: 'rgba(255,128,102,0.7)', opcode: '0x07' }
+        ];
+        let currentArchIndex = 0;
+
+        function applyColorSync(arch) {
+            document.documentElement.style.setProperty('--active-color', arch.color);
+            document.documentElement.style.setProperty('--active-glow', arch.glow);
+            document.documentElement.style.setProperty('--active-opcode', arch.opcode);
+            document.body.setAttribute('data-opcode', arch.opcode);
+            document.body.setAttribute('data-arch', arch.id);
+            lucide.createIcons();
+        }
+
+        orbTrigger.addEventListener('click', () => {
+            currentArchIndex = (currentArchIndex + 1) % archetypes.length;
+            applyColorSync(archetypes[currentArchIndex]);
+        });
+
+        // --- PERSISTÊNCIA UNIFICADA (LocalStorage + IndexedDB simulado robusto) ---
+        function getSavedDocs() {
+            try {
+                const docs = JSON.parse(localStorage.getItem('nebula_docs') || '[]');
+                return docs;
+            } catch(e) {
+                return [];
+            }
+        }
+
+        function saveDocToStorage(title, content) {
+            const docs = getSavedDocs();
+            docs.unshift({ title, content, date: new Date().toLocaleDateString() });
+            // Mantém últimos 20
+            if (docs.length > 20) docs.pop();
+            localStorage.setItem('nebula_docs', JSON.stringify(docs));
+            renderDocList();
+        }
+
+        function renderDocList() {
+            const docs = getSavedDocs();
+            docListContainer.innerHTML = '';
+            if (docs.length === 0) {
+                docListContainer.innerHTML = '<div style="font-size:11px; color:#666; text-align:center;">Nenhum documento</div>';
+                return;
+            }
+            docs.forEach((doc, idx) => {
+                const div = document.createElement('div');
+                div.className = 'doc-item';
+                div.innerHTML = `<span><i data-lucide="file-text" style="width:12px; vertical-align:middle;"></i> ${doc.title}</span> <span style="font-size:9px; color:#888;">${doc.date}</span>`;
+                div.onclick = () => {
+                    pasteInput.value = doc.content;
+                    trackNameEl.textContent = doc.title;
+                };
+                docListContainer.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+
+        // Auto-título: pega até as primeiras 2 a 3 palavras até o primeiro ponto ou quebra
+        function extractNebulaTitle(text) {
+            if (!text || !text.trim()) return "Nebula_last_v1";
+            let clean = text.trim().split(/[.\n]/)[0]; // pega antes do ponto ou quebra
+            let words = clean.split(/\s+/).slice(0, 3); // no máximo 3 palavras
+            let title = words.join("_").replace(/[^a-zA-Z0-9_]/g, '');
+            return title.length > 0 ? `Nebula_${title}` : "Nebula_last";
+        }
+
+        savePasteBtn.addEventListener('click', () => {
+            const text = pasteInput.value;
+            if (!text.trim()) return alert("Insira algum texto para salvar!");
+            const title = extractNebulaTitle(text);
+            saveDocToStorage(title, text);
+            alert(`Documento salvo com sucesso como "${title}"!`);
+            pasteInput.value = '';
+        });
+
+        renderDocList();
+
+        // --- CANVAS E ÁUDIO VISUALIZER ---
+        function resize() {
+            canvas.width = visArea.clientWidth;
+            canvas.height = visArea.clientHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        uploadBtn.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const url = URL.createObjectURL(file);
+            audioPlayer.src = url;
+            trackNameEl.textContent = file.name;
+            playBtn.disabled = false;
+            
+            statusDot.classList.add('active');
+            statusDot.style.background = '#ffaa00';
+            statusText.textContent = "Pronto";
+            
+            // Também salva referência do upload nos metadados locais
+            saveDocToStorage(`Media_${file.name.substring(0, 15)}`, url);
+        });
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "00:00";
+            const min = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const sec = Math.floor(seconds % 60).toString().padStart(2, '0');
+            return `${min}:${sec}`;
+        }
+
+        audioPlayer.addEventListener('timeupdate', () => {
+            timerDisplay.textContent = formatTime(audioPlayer.currentTime);
+        });
+
+        audioPlayer.addEventListener('ended', () => {
+            isPlaying = false;
+            updatePlayBtnIcon();
+            statusText.textContent = "Parado";
+        });
+
+        fullscreenBtn.addEventListener('click', () => {
+            visArea.classList.add('is-fullscreen');
+            setTimeout(resize, 50);
+        });
+
+        exitFsBtn.addEventListener('click', () => {
+            visArea.classList.remove('is-fullscreen');
+            setTimeout(resize, 50);
+        });
+
+        function initAudio() {
+            if (isInitialized) return;
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+            
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 512;
+            analyser.smoothingTimeConstant = 0.85;
+            
+            source = audioCtx.createMediaElementSource(audioPlayer);
+            source.connect(analyser);
+            analyser.connect(audioCtx.destination);
+            
+            frequencyData = new Uint8Array(analyser.frequencyBinCount);
+            isInitialized = true;
+            requestAnimationFrame(renderVisualizer);
+        }
+
+        function updatePlayBtnIcon() {
+            playBtn.innerHTML = isPlaying 
+                ? '<i data-lucide="pause"></i> Pausar' 
+                : '<i data-lucide="play"></i> Play';
+            lucide.createIcons();
+        }
+
+        playBtn.addEventListener('click', () => {
+            if (!isInitialized) initAudio();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            if (isPlaying) {
+                audioPlayer.pause();
+                statusText.textContent = "Pausado";
+            } else {
+                audioPlayer.play();
+                statusText.textContent = "Ativo (K∅β Sync)";
+            }
+            isPlaying = !isPlaying;
+            updatePlayBtnIcon();
+        });
+
+        // Geometrias Sólidas 3D
+        const tetraVertices = [[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]];
+        const tetraEdges = [[0,1], [0,2], [0,3], [1,2], [1,3], [2,3]];
+        const cubeVertices = [[-1,-1,-1], [1,-1,-1], [1,1,-1], [-1,1,-1], [-1,-1,1], [1,-1,1], [1,1,1], [-1,1,1]];
+        const cubeEdges = [[0,1], [1,2], [2,3], [3,0], [4,5], [5,6], [6,7], [7,4], [0,4], [1,5], [2,6], [3,7]];
+
+        function rotate3D(x, y, z, angleX, angleY, angleZ) {
+            let cosX = Math.cos(angleX), sinX = Math.sin(angleX);
+            let y1 = y * cosX - z * sinX;
+            let z1 = y * sinX + z * cosX;
+            let cosY = Math.cos(angleY), sinY = Math.sin(angleY);
+            let x2 = x * cosY + z1 * sinY;
+            let z2 = -x * sinY + z1 * cosY;
+            let cosZ = Math.cos(angleZ), sinZ = Math.sin(angleZ);
+            let x3 = x2 * cosZ - y1 * sinZ;
+            let y3 = x2 * sinZ + y1 * cosZ;
+            return [x3, y3, z2];
+        }
+
+        function drawWireframe(vertices, edges, scale, rotX, rotY, rotZ, centerX, centerY, color, lineWidth, glow) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            ctx.shadowBlur = glow > 0 ? glow : 0;
+            ctx.shadowColor = color;
+
+            const projected = vertices.map(v => {
+                const rotated = rotate3D(v[0], v[1], v[2], rotX, rotY, rotZ);
+                return { x: rotated[0] * scale + centerX, y: rotated[1] * scale + centerY };
+            });
+
+            ctx.beginPath();
+            edges.forEach(edge => {
+                const p1 = projected[edge[0]];
+                const p2 = projected[edge[1]];
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+            });
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+
+        let rotAngle = 0;
+        let smoothBass = 0;
+
+        function renderVisualizer() {
+            requestAnimationFrame(renderVisualizer);
+
+            ctx.fillStyle = 'rgba(5, 5, 5, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (!isPlaying || !isInitialized) {
+                rotAngle += 0.002;
+                drawWireframe(tetraVertices, tetraEdges, 50, rotAngle, rotAngle*1.2, 0, canvas.width/2, canvas.height/2, 'rgba(0, 255, 204, 0.2)', 1, 0);
+                return;
+            }
+
+            analyser.getByteFrequencyData(frequencyData);
+            let bassSum = 0, peakValue = 0;
+            for(let i = 0; i < 10; i++) {
+                bassSum += frequencyData[i];
+                if (frequencyData[i] > peakValue) peakValue = frequencyData[i];
+            }
+            let rawBass = bassSum / 10;
+            smoothBass += (rawBass - smoothBass) * 0.15;
+            const isHighEnergy = peakValue > 210;
+
+            rotAngle += 0.002 + (smoothBass * 0.00003);
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const baseScale = Math.min(canvas.width, canvas.height) * 0.15;
+
+            // Reação das Cores dinâmicas de acordo com o ColorSync ativo
+            const activeCol = getComputedStyle(document.documentElement).getPropertyValue('--active-color').trim();
+
+            const tetraScale = (baseScale * 0.6) + (smoothBass * 0.2);
+            drawWireframe(tetraVertices, tetraEdges, tetraScale, rotAngle*2, rotAngle, rotAngle*0.5, centerX, centerY, activeCol, 2, isHighEnergy ? 20 : 5);
+
+            const cubeScale = (baseScale * 1.5) + (smoothBass * 0.5);
+            drawWireframe(cubeVertices, cubeEdges, cubeScale, -rotAngle, rotAngle*0.8, rotAngle*0.3, centerX, centerY, 'rgba(255,0,255,0.4)', 1, isHighEnergy ? 15 : 0);
+        }
+    </script>
+</body>
+</html>

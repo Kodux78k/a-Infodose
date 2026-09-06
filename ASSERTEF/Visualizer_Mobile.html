@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <!-- Meta tag CRÍTICA para mobile: impede zoom acidental e fixa a tela -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DJ Visualizer - Mobile</title>
+    
+    <style>
+        /* Reset total para mobile */
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent; /* Remove aquele quadrado azul ao tocar em botões no mobile */
+        }
+        
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            width: 100vw; 
+            height: 100vh; 
+            background-color: #000; 
+            overflow: hidden; 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            touch-action: none; /* Evita scroll de puxar pra atualizar no mobile */
+        }
+        
+        #canvas { 
+            display: block; 
+            width: 100%; 
+            height: 100%; 
+            filter: contrast(1.3) brightness(1.2);
+        }
+        
+        /* Container principal da Interface */
+        #ui-container { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(10,0,20,0.95) 0%, rgba(0,0,0,0.95) 100%); 
+            z-index: 20; 
+            transition: opacity 0.4s ease-out; 
+            padding: 20px;
+        }
+        
+        h1 { 
+            margin-top: 0; 
+            font-size: 8vw; /* Tamanho responsivo para celular */
+            text-transform: uppercase; 
+            letter-spacing: 2px;
+            color: #fff;
+            text-shadow: 0 0 15px #00ffff, 0 0 30px #ff00ff;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        p {
+            color: #aaa;
+            text-align: center;
+            font-size: 4vw;
+            margin-bottom: 40px;
+            max-width: 90%;
+        }
+        
+        /* Botões gigantes para dedos grossos (Mobile) */
+        .btn { 
+            display: flex; 
+            align-items: center;
+            justify-content: center;
+            width: 80%;
+            max-width: 350px;
+            padding: 20px; 
+            margin: 10px 0;
+            cursor: pointer; 
+            color: #fff; 
+            font-size: 5vw;
+            font-weight: 900; 
+            border-radius: 15px; 
+            text-transform: uppercase; 
+            border: none;
+            transition: transform 0.1s; 
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+        
+        .btn-upload {
+            background: transparent;
+            border: 3px solid #ff00ff;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.4);
+            color: #ff00ff;
+        }
+
+        .btn-play {
+            background: #00ffff;
+            color: #000;
+            box-shadow: 0 0 25px #00ffff;
+            display: none; /* Escondido até carregar a mídia */
+        }
+
+        input[type="file"] { 
+            display: none; 
+        }
+
+        #file-name {
+            margin-top: 15px;
+            color: #00ffff;
+            font-size: 3.5vw;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 80%;
+            text-align: center;
+            display: none;
+        }
+
+        /* Indicador de Pausa */
+        #pause-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 15vw;
+            z-index: 10;
+            display: none;
+            pointer-events: none;
+        }
+        
+        /* Usamos video em vez de audio para garantir que formatos .mp4 sejam lidos corretamente (mas não mostramos o vídeo) */
+        video { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-container">
+        <h1>Gym Visualizer</h1>
+        <p>Selecione qualquer arquivo de ÁUDIO ou VÍDEO. Ele vai extrair o som e gerar o telão.</p>
+        
+        <label class="btn btn-upload">
+            <input type="file" id="media-upload" accept="audio/*, video/*">
+            📁 Escolher Arquivo
+        </label>
+        
+        <div id="file-name">Nenhum arquivo</div>
+
+        <button id="start-btn" class="btn btn-play">
+            🚀 INICIAR TELÃO
+        </button>
+    </div>
+
+    <div id="pause-indicator">⏸</div>
+    <canvas id="canvas"></canvas>
+    <video id="media-player" playsinline></video>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const mediaPlayer = document.getElementById('media-player');
+        const upload = document.getElementById('media-upload');
+        const uiContainer = document.getElementById('ui-container');
+        const startBtn = document.getElementById('start-btn');
+        const fileNameDisplay = document.getElementById('file-name');
+        const pauseIndicator = document.getElementById('pause-indicator');
+
+        let audioCtx, analyser, source;
+        let dataArray;
+        let isPlaying = false;
+        let isInitialized = false;
+
+        // Ajuste fluido da tela para celular
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        window.addEventListener('orientationchange', () => setTimeout(resize, 100)); // Delay pro mobile ajustar a tela ao girar
+        resize();
+
+        // 1. Ao escolher o arquivo de áudio ou vídeo
+        upload.addEventListener('change', function() {
+            const files = this.files;
+            if (files.length === 0) return;
+            
+            const file = files[0];
+            const url = URL.createObjectURL(file);
+            mediaPlayer.src = url;
+            
+            // Mostra o nome do arquivo
+            fileNameDisplay.textContent = file.name;
+            fileNameDisplay.style.display = 'block';
+            
+            // Mostra botão de iniciar
+            startBtn.style.display = 'flex';
+            
+            // Dica: Não tocamos a música AINDA. Navegadores mobile bloqueiam áudio automático
+            // sem uma interação clara de clique num botão ("Start").
+        });
+
+        // Função para forçar tela cheia no mobile
+        function enterFullscreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch(err => console.log(err));
+            } else if (elem.webkitRequestFullscreen) { /* Safari */
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE11 */
+                elem.msRequestFullscreen();
+            }
+        }
+
+        // 2. Quando clica no botão GIGANTE de iniciar
+        startBtn.addEventListener('click', function() {
+            // Entra em tela cheia imediatamente
+            enterFullscreen();
+
+            // Esconde a UI principal
+            uiContainer.style.opacity = '0';
+            setTimeout(() => uiContainer.style.display = 'none', 400);
+
+            // Inicia ou retoma o contexto de áudio
+            if (!isInitialized) {
+                initWebAudio();
+                isInitialized = true;
+            } else {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+            }
+
+            mediaPlayer.play();
+            isPlaying = true;
+        });
+
+        // 3. Toque na tela para Pausar/Despausar
+        canvas.addEventListener('click', function() {
+            if (!isInitialized) return;
+
+            if (isPlaying) {
+                mediaPlayer.pause();
+                pauseIndicator.style.display = 'block';
+            } else {
+                mediaPlayer.play();
+                pauseIndicator.style.display = 'none';
+                enterFullscreen(); // Força tela cheia novamente caso o usuário tenha saído
+            }
+            isPlaying = !isPlaying;
+        });
+
+        function initWebAudio() {
+            // Compatibilidade iOS e Android
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+            
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256; 
+            
+            // Conecta o arquivo de mídia (seja áudio ou vídeo) ao analisador
+            source = audioCtx.createMediaElementSource(mediaPlayer);
+            source.connect(analyser);
+            analyser.connect(audioCtx.destination);
+            
+            dataArray = new Uint8Array(analyser.frequencyBinCount);
+            
+            // Inicia o Loop Visual
+            requestAnimationFrame(animate);
+        }
+
+        let time = 0;
+
+        // Loop de renderização (Roda a 60fps no celular)
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (!isPlaying) return; // Se pausou, congela a tela
+
+            analyser.getByteFrequencyData(dataArray);
+
+            // Fundo com rastro suave (Glow blur)
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            // Pega as baixas frequências (GRAVE / BASS) para dar o "Pump" EDM
+            let bass = 0;
+            for(let i = 0; i < 6; i++) {
+                bass += dataArray[i];
+            }
+            bass = bass / 6;
+
+            // Velocidade gira baseada no grave
+            time += 0.003 + (bass * 0.00003);
+            
+            // Core central pulsa forte com a batida
+            // Adaptativo ao tamanho da tela (mobile)
+            const baseRadius = Math.min(canvas.width, canvas.height) * 0.15; 
+            const coreRadius = baseRadius + (bass * 0.6);
+            
+            const bars = 48; // Diminuí um pouco a quantidade para máxima performance mobile
+            const step = (Math.PI * 2) / bars;
+            const maxLineHeight = Math.min(canvas.width, canvas.height) * 0.4;
+            
+            for (let i = 0; i < bars; i++) {
+                const value = dataArray[i];
+                const percent = value / 255;
+                const height = percent * maxLineHeight;
+                
+                const angle = (i * step) + time;
+                
+                // Cores psicodélicas que variam com a batida
+                const hue = (i * (360 / bars) + (time * 150)) % 360;
+                
+                // Desenha os raios saindo do centro
+                ctx.strokeStyle = `hsl(${hue}, 100%, 55%)`;
+                ctx.lineWidth = 3 + (percent * 5);
+                ctx.lineCap = 'round';
+                
+                ctx.beginPath();
+                const startX = centerX + Math.cos(angle) * coreRadius;
+                const startY = centerY + Math.sin(angle) * coreRadius;
+                const endX = centerX + Math.cos(angle) * (coreRadius + height);
+                const endY = centerY + Math.sin(angle) * (coreRadius + height);
+                
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+
+                // Efeito Fractais/Teias quando o som estoura
+                if (value > 180) {
+                    // Partícula na ponta
+                    ctx.beginPath();
+                    ctx.fillStyle = '#fff';
+                    ctx.arc(endX, endY, 2 + (percent * 4), 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Liga uma ponta na outra (gera o fractal geométrico)
+                    ctx.beginPath();
+                    ctx.strokeStyle = `hsla(${hue}, 100%, 50%, 0.4)`;
+                    ctx.lineWidth = 1.5;
+                    const prevAngle = ((i-3) * step) + time;
+                    const prevX = centerX + Math.cos(prevAngle) * (coreRadius + (dataArray[Math.abs(i-3)]/255 * maxLineHeight));
+                    const prevY = centerY + Math.sin(prevAngle) * (coreRadius + (dataArray[Math.abs(i-3)]/255 * maxLineHeight));
+                    ctx.moveTo(endX, endY);
+                    ctx.lineTo(prevX, prevY);
+                    ctx.stroke();
+                }
+            }
+            
+            // O Anel Central Pulsante (O "Subwoofer" do Telão)
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, coreRadius * 0.95, 0, Math.PI * 2);
+            ctx.strokeStyle = `hsl(${(time * 200) % 360}, 100%, 60%)`;
+            ctx.lineWidth = 4 + (bass * 0.08);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, coreRadius * 0.7, 0, Math.PI * 2);
+            ctx.strokeStyle = `hsla(${(time * 100 + 180) % 360}, 100%, 50%, 0.6)`;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+    </script>
+</body>
+</html>

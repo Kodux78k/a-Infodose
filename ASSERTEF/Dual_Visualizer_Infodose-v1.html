@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dual Visualizer Infodose</title>
+    
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #050505;
+            color: #fff;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #app-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Painel Lateral (Aside) */
+        aside {
+            width: 300px;
+            background: rgba(15, 15, 20, 0.95);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            box-shadow: 5px 0 25px rgba(0,0,0,0.5);
+            z-index: 10;
+            transition: transform 0.3s ease;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 40px;
+            color: #fff;
+        }
+
+        .brand-icon {
+            color: #00ffcc;
+            filter: drop-shadow(0 0 8px rgba(0, 255, 204, 0.6));
+        }
+
+        /* Controles do Menu */
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00ffcc 0%, #00b3ff 100%);
+            color: #000;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0, 255, 204, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #33ffdb 0%, #33c4ff 100%);
+        }
+
+        input[type="file"] { display: none; }
+
+        /* Track Info & Timer */
+        .track-info {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: auto;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .track-name {
+            font-size: 13px;
+            color: #00ffcc;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .timer {
+            font-family: monospace;
+            font-size: 24px;
+            color: #fff;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #aaa;
+            margin-top: 20px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #444;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+        .status-dot.active {
+            background: #00ffcc;
+            box-shadow: 0 0 10px #00ffcc;
+        }
+
+        main {
+            flex: 1;
+            position: relative;
+            background: radial-gradient(circle at center, #111 0%, #000 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.4s ease;
+        }
+
+        #canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Classe que ativa o Fullscreen Fake (CSS) */
+        main.is-fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999;
+        }
+
+        /* Botão de Sair do Fullscreen (visível apenas em fullscreen) */
+        #exit-fs-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            z-index: 10000;
+            transition: all 0.2s;
+        }
+
+        #exit-fs-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        main.is-fullscreen #exit-fs-btn {
+            display: flex;
+        }
+
+        /* Elemento de áudio oculto */
+        audio { display: none; }
+
+        @media (max-width: 768px) {
+            #app-container { flex-direction: column; }
+            aside { width: 100%; height: auto; padding: 15px; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); flex-shrink: 0; }
+            .brand { margin-bottom: 15px; }
+            .control-group { flex-direction: row; flex-wrap: wrap; margin-bottom: 15px; }
+            .control-group .btn { flex: 1; min-width: 120px; padding: 10px; font-size: 12px; }
+            .track-info { display: flex; align-items: center; justify-content: space-between; padding: 10px; }
+            .track-name { margin-bottom: 0; max-width: 150px; }
+            .timer { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <!-- Sidebar / Painel -->
+        <aside id="sidebar">
+            <div class="brand">
+                <i data-lucide="box" class="brand-icon"></i>
+                Dual Visualizer
+            </div>
+
+            <div class="control-group">
+                <!-- Aceita .mp3, .MP3, .wav, .WAV, .ogg, .OGG, .mp4, .MP4 e correlatos perfeitamente -->
+                <label class="btn">
+                    <input type="file" id="media-upload" accept="audio/*, video/*, .mp3, .MP3, .wav, .WAV, .ogg, .OGG, .mp4, .MP4">
+                    <i data-lucide="folder-open"></i> Abrir Faixa
+                </label>
+                
+                <button class="btn btn-primary" id="play-btn" disabled>
+                    <i data-lucide="play"></i> Play / Pause
+                </button>
+
+                <button class="btn" id="fullscreen-btn">
+                    <i data-lucide="maximize"></i> Modo Telão
+                </button>
+            </div>
+
+            <div class="track-info">
+                <div class="track-name" id="track-name">
+                    <i data-lucide="music-4" style="width: 14px;"></i> 
+                    <span>Nenhuma faixa</span>
+                </div>
+                <div class="timer" id="timer-display">00:00</div>
+            </div>
+
+            <div class="status-badge">
+                <div class="status-dot" id="status-dot"></div>
+                Sistema <span id="status-text">Aguardando</span>
+            </div>
+        </aside>
+
+        <!-- Área do Canvas -->
+        <main id="visualizer-area">
+            <button id="exit-fs-btn">
+                <i data-lucide="minimize"></i> Sair do Telão
+            </button>
+            <canvas id="canvas"></canvas>
+        </main>
+    </div>
+
+    <audio id="audio-player"></audio>
+
+    <script>
+        // Inicializar Ícones
+        lucide.createIcons();
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const audioPlayer = document.getElementById('audio-player');
+        
+        // Elementos da UI
+        const uploadBtn = document.getElementById('media-upload');
+        const playBtn = document.getElementById('play-btn');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const exitFsBtn = document.getElementById('exit-fs-btn');
+        const visArea = document.getElementById('visualizer-area');
+        const trackNameEl = document.querySelector('#track-name span');
+        const timerDisplay = document.getElementById('timer-display');
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+
+        let audioCtx, analyser, source;
+        let frequencyData, timeDomainData;
+        let isPlaying = false;
+        let isInitialized = false;
+
+        // Resize fluido
+        function resize() {
+            canvas.width = visArea.clientWidth;
+            canvas.height = visArea.clientHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize(); // Initial call
+
+        uploadBtn.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const url = URL.createObjectURL(file);
+            audioPlayer.src = url;
+            trackNameEl.textContent = file.name;
+            playBtn.disabled = false;
+            
+            statusDot.classList.add('active');
+            statusDot.style.background = '#ffaa00'; // Cor de carregado
+            statusDot.style.boxShadow = '0 0 10px #ffaa00';
+            statusText.textContent = "Pronto para iniciar";
+        });
+
+        // Formatação do Timer
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "00:00";
+            const min = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const sec = Math.floor(seconds % 60).toString().padStart(2, '0');
+            return `${min}:${sec}`;
+        }
+
+        // Atualizar Timer
+        audioPlayer.addEventListener('timeupdate', () => {
+            timerDisplay.textContent = formatTime(audioPlayer.currentTime);
+        });
+
+        audioPlayer.addEventListener('ended', () => {
+            isPlaying = false;
+            updatePlayBtnIcon();
+            statusDot.style.background = '#ffaa00';
+            statusText.textContent = "Parado";
+        });
+
+        fullscreenBtn.addEventListener('click', () => {
+            visArea.classList.add('is-fullscreen');
+            setTimeout(resize, 50); // Força resize após aplicar classe
+        });
+
+        exitFsBtn.addEventListener('click', () => {
+            visArea.classList.remove('is-fullscreen');
+            setTimeout(resize, 50);
+        });
+
+        function initAudio() {
+            if (isInitialized) return;
+            
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+            
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 512;
+            analyser.smoothingTimeConstant = 0.85; // Suaviza a leitura para evitar tremedeiras
+            
+            source = audioCtx.createMediaElementSource(audioPlayer);
+            source.connect(analyser);
+            analyser.connect(audioCtx.destination);
+            
+            frequencyData = new Uint8Array(analyser.frequencyBinCount);
+            timeDomainData = new Uint8Array(analyser.frequencyBinCount);
+            
+            isInitialized = true;
+            requestAnimationFrame(renderVisualizer);
+        }
+
+        function updatePlayBtnIcon() {
+            playBtn.innerHTML = isPlaying 
+                ? '<i data-lucide="pause"></i> Pausar' 
+                : '<i data-lucide="play"></i> Play';
+            lucide.createIcons();
+        }
+
+        playBtn.addEventListener('click', () => {
+            if (!isInitialized) initAudio();
+            
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            if (isPlaying) {
+                audioPlayer.pause();
+                statusDot.style.background = '#ffaa00';
+                statusDot.style.boxShadow = '0 0 10px #ffaa00';
+                statusText.textContent = "Pausado";
+            } else {
+                audioPlayer.play();
+                statusDot.style.background = '#00ffcc';
+                statusDot.style.boxShadow = '0 0 10px #00ffcc';
+                statusText.textContent = "Ativo (-6dB Thresholding)";
+            }
+            
+            isPlaying = !isPlaying;
+            updatePlayBtnIcon();
+        });
+
+        // Define vértices puros
+        const tetraVertices = [
+            [1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]
+        ];
+        const tetraEdges = [
+            [0,1], [0,2], [0,3], [1,2], [1,3], [2,3]
+        ];
+
+        const octaVertices = [
+            [1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]
+        ];
+        const octaEdges = [
+            [0,2], [0,3], [0,4], [0,5], [1,2], [1,3], [1,4], [1,5],
+            [2,4], [2,5], [3,4], [3,5]
+        ];
+
+        const cubeVertices = [
+            [-1,-1,-1], [1,-1,-1], [1,1,-1], [-1,1,-1],
+            [-1,-1,1], [1,-1,1], [1,1,1], [-1,1,1]
+        ];
+        const cubeEdges = [
+            [0,1], [1,2], [2,3], [3,0], // back
+            [4,5], [5,6], [6,7], [7,4], // front
+            [0,4], [1,5], [2,6], [3,7]  // connections
+        ];
+
+        // Rotação em eixos 3D
+        function rotate3D(x, y, z, angleX, angleY, angleZ) {
+            // Rot X
+            let cosX = Math.cos(angleX), sinX = Math.sin(angleX);
+            let y1 = y * cosX - z * sinX;
+            let z1 = y * sinX + z * cosX;
+            
+            // Rot Y
+            let cosY = Math.cos(angleY), sinY = Math.sin(angleY);
+            let x2 = x * cosY + z1 * sinY;
+            let z2 = -x * sinY + z1 * cosY;
+            
+            // Rot Z
+            let cosZ = Math.cos(angleZ), sinZ = Math.sin(angleZ);
+            let x3 = x2 * cosZ - y1 * sinZ;
+            let y3 = x2 * sinZ + y1 * cosZ;
+            
+            return [x3, y3, z2];
+        }
+
+        // Desenhar forma de arame (Wireframe)
+        function drawWireframe(vertices, edges, scale, rotX, rotY, rotZ, centerX, centerY, color, lineWidth, glow) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            if (glow > 0) {
+                ctx.shadowBlur = glow;
+                ctx.shadowColor = color;
+            } else {
+                ctx.shadowBlur = 0;
+            }
+
+            const projected = vertices.map(v => {
+                const rotated = rotate3D(v[0], v[1], v[2], rotX, rotY, rotZ);
+                // Projeção ortogonal simples + scale
+                return {
+                    x: rotated[0] * scale + centerX,
+                    y: rotated[1] * scale + centerY
+                };
+            });
+
+            ctx.beginPath();
+            edges.forEach(edge => {
+                const p1 = projected[edge[0]];
+                const p2 = projected[edge[1]];
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+            });
+            ctx.stroke();
+            ctx.shadowBlur = 0; // reset
+        }
+
+        let particles = [];
+        function emitParticles(x, y, color, amount) {
+            for(let i=0; i<amount; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    life: 1.0,
+                    color: color
+                });
+            }
+        }
+
+        let time = 0;
+        let smoothBass = 0; // Lerp para evitar saltos bruscos (vertigem)
+        let rotAngle = 0;
+        let targetRotSpeed = 0.002;
+        let currentRotSpeed = 0.002;
+
+        function renderVisualizer() {
+            requestAnimationFrame(renderVisualizer);
+
+            // Fundo escuro com leve rastro (trail mais limpo)
+            ctx.fillStyle = 'rgba(5, 5, 5, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (!isPlaying || !isInitialized) {
+                // Desenhar formas de base devagar se estiver pausado
+                rotAngle += 0.002;
+                drawWireframe(tetraVertices, tetraEdges, 50, rotAngle, rotAngle*1.2, 0, canvas.width/2, canvas.height/2, 'rgba(0, 255, 204, 0.2)', 1, 0);
+                drawWireframe(cubeVertices, cubeEdges, 100, -rotAngle, rotAngle, rotAngle*0.5, canvas.width/2, canvas.height/2, 'rgba(0, 179, 255, 0.1)', 1, 0);
+                return;
+            }
+
+            analyser.getByteFrequencyData(frequencyData);
+            
+            // Analisar Médias e Picos
+            let bassSum = 0;
+            let peakValue = 0; // Procurar o volume máximo para o threshold
+            for(let i = 0; i < 10; i++) {
+                bassSum += frequencyData[i];
+                if (frequencyData[i] > peakValue) peakValue = frequencyData[i];
+            }
+            let rawBass = bassSum / 10;
+            
+            // Lerp para suavizar o grave (Evita "vertigem")
+            smoothBass += (rawBass - smoothBass) * 0.15;
+
+            // Threshold: Se peak ultrapassar ~200 (equivalente a uma batida muito alta, ex: -6dB)
+            const isHighEnergy = peakValue > 210;
+
+            // Velocidade de Rotação Suave
+            targetRotSpeed = isHighEnergy ? 0.015 : 0.002 + (smoothBass * 0.00002);
+            currentRotSpeed += (targetRotSpeed - currentRotSpeed) * 0.05; // transição fluida de velocidade
+            rotAngle += currentRotSpeed;
+            time += 0.01;
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const baseScale = Math.min(canvas.width, canvas.height) * 0.15;
+
+            // 1. Sólido Interno (Tetraedro) - Limpo, reage suavemente
+            const tetraScale = (baseScale * 0.6) + (smoothBass * 0.2);
+            const tetraColor = isHighEnergy ? '#00ffcc' : 'rgba(0, 255, 204, 0.6)';
+            const tetraGlow = isHighEnergy ? 15 : 5;
+            drawWireframe(tetraVertices, tetraEdges, tetraScale, rotAngle*2, rotAngle, rotAngle*0.5, centerX, centerY, tetraColor, 2, tetraGlow);
+
+            // 2. Sólido Médio (Octaedro)
+            const octaScale = (baseScale * 1.2) + (smoothBass * 0.4);
+            const octaColor = isHighEnergy ? '#ff00ff' : 'rgba(255, 0, 255, 0.4)';
+            drawWireframe(octaVertices, octaEdges, octaScale, -rotAngle, rotAngle*1.5, rotAngle, centerX, centerY, octaColor, 1.5, isHighEnergy ? 10 : 0);
+
+            // 3. Sólido Externo (Cubo) - Expande muito nos picos
+            const cubeExp = isHighEnergy ? smoothBass * 1.2 : smoothBass * 0.5;
+            const cubeScale = (baseScale * 1.8) + cubeExp;
+            const cubeColor = isHighEnergy ? '#00b3ff' : 'rgba(0, 179, 255, 0.2)';
+            drawWireframe(cubeVertices, cubeEdges, cubeScale, rotAngle*0.5, -rotAngle, rotAngle*1.2, centerX, centerY, cubeColor, isHighEnergy ? 3 : 1, isHighEnergy ? 20 : 0);
+
+            // Partículas só ativam em High Energy (Threshold ultrapassado)
+            if (isHighEnergy && Math.random() > 0.5) {
+                emitParticles(centerX, centerY, '#fff', 3);
+                // Flash sutil no fundo
+                ctx.fillStyle = 'rgba(255,255,255,0.02)';
+                ctx.fillRect(0,0, canvas.width, canvas.height);
+            }
+
+            // Atualizar e Desenhar Partículas
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.02;
+
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                } else {
+                    ctx.beginPath();
+                    ctx.fillStyle = `rgba(255, 255, 255, ${p.life})`;
+                    ctx.arc(p.x, p.y, 1.5, 0, Math.PI*2);
+                    ctx.fill();
+                }
+            }
+        }
+
+    </script>
+</body>
+</html>
