@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dual Visualizer Infodose</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #050505;
+            color: #fff;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #app-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Painel Lateral (Aside) */
+        aside {
+            width: 320px;
+            background: rgba(15, 15, 20, 0.95);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            padding: 16px 20px;
+            box-shadow: 5px 0 25px rgba(0,0,0,0.5);
+            z-index: 10;
+            transition: transform 0.3s ease;
+            overflow: hidden;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .brand-icon {
+            font-size: 24px;
+            color: #00ffcc;
+            filter: drop-shadow(0 0 8px rgba(0, 255, 204, 0.6));
+        }
+
+        .icon {
+            display: inline-block;
+            font-size: 1.2rem;
+            line-height: 1;
+            vertical-align: middle;
+        }
+
+        /* Controles */
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            justify-content: center;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00ffcc 0%, #00b3ff 100%);
+            color: #000;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0, 255, 204, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #33ffdb 0%, #33c4ff 100%);
+        }
+
+        .btn-sm {
+            padding: 6px 10px;
+            font-size: 12px;
+            width: auto;
+        }
+
+        input[type="file"] { display: none; }
+
+        /* Playlist */
+        .playlist-section {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            margin-top: 5px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 10px;
+        }
+
+        .playlist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+
+        .playlist-header .total-time {
+            color: #00ffcc;
+            font-weight: 600;
+        }
+
+        .playlist-list {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .playlist-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .playlist-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .playlist-list::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+        }
+
+        .track-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 8px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.03);
+            margin-bottom: 4px;
+            font-size: 12px;
+            gap: 8px;
+            transition: background 0.2s;
+            cursor: default;
+        }
+
+        .track-item.active {
+            background: rgba(0, 255, 204, 0.1);
+            border-left: 2px solid #00ffcc;
+        }
+
+        .track-item .track-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+        }
+
+        .track-item .track-dur {
+            color: #888;
+            font-size: 11px;
+            font-family: monospace;
+        }
+
+        .track-item .remove-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0 4px;
+            transition: color 0.2s;
+        }
+        .track-item .remove-btn:hover {
+            color: #ff4466;
+        }
+
+        /* Status */
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #aaa;
+            margin-top: 10px;
+            flex-shrink: 0;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            background: #444;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+        .status-dot.active {
+            background: #00ffcc;
+            box-shadow: 0 0 10px #00ffcc;
+        }
+
+        main {
+            flex: 1;
+            position: relative;
+            background: radial-gradient(circle at center, #111 0%, #000 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.4s ease;
+        }
+
+        #canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        main.is-fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999;
+        }
+
+        #exit-fs-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            z-index: 10000;
+            transition: all 0.2s;
+        }
+
+        #exit-fs-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        main.is-fullscreen #exit-fs-btn {
+            display: flex;
+        }
+
+        /* Áudio oculto */
+        audio { display: none; }
+
+        @media (max-width: 768px) {
+            #app-container { flex-direction: column; }
+            aside { width: 100%; height: 45vh; padding: 12px 16px; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); flex-shrink: 0; }
+            .brand { margin-bottom: 10px; }
+            .control-group { flex-direction: row; flex-wrap: wrap; margin-bottom: 10px; }
+            .control-group .btn { flex: 1; min-width: 80px; padding: 8px 10px; font-size: 11px; }
+            .playlist-section { margin-top: 5px; padding-top: 5px; }
+            .track-item { font-size: 11px; padding: 4px 6px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <!-- Sidebar -->
+        <aside id="sidebar">
+            <div class="brand">
+                <span class="icon brand-icon">◇</span>
+                Dual Visualizer
+            </div>
+
+            <div class="control-group">
+                <label class="btn" id="add-tracks-btn">
+                    <input type="file" id="media-upload" accept="audio/*, video/*, .mp3, .MP3, .wav, .WAV, .ogg, .OGG, .mp4, .MP4" multiple>
+                    <span class="icon">➕</span> Adicionar faixas
+                </label>
+                
+                <button class="btn btn-primary" id="play-btn" disabled>
+                    <span class="icon">▶</span> Play
+                </button>
+
+                <button class="btn" id="fullscreen-btn">
+                    <span class="icon">⛶</span> Telão
+                </button>
+            </div>
+
+            <!-- Playlist -->
+            <div class="playlist-section">
+                <div class="playlist-header">
+                    <span>Playlist</span>
+                    <span class="total-time" id="total-time">00:00</span>
+                </div>
+                <div class="playlist-list" id="playlist-list"></div>
+            </div>
+
+            <div class="status-badge">
+                <div class="status-dot" id="status-dot"></div>
+                <span id="status-text">Aguardando</span>
+                <span style="margin-left:auto; font-size:10px; opacity:0.5;" id="preset-indicator">Preset 1/7</span>
+            </div>
+        </aside>
+
+        <!-- Visualizador -->
+        <main id="visualizer-area">
+            <button id="exit-fs-btn">
+                <span class="icon">⤡</span> Sair do Telão
+            </button>
+            <canvas id="canvas"></canvas>
+        </main>
+    </div>
+
+    <!-- Dois elementos de áudio para crossfade -->
+    <audio id="audio1"></audio>
+    <audio id="audio2"></audio>
+
+    <script>
+        // ============================================================
+        // 1. ELEMENTOS DA UI
+        // ============================================================
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const audio1 = document.getElementById('audio1');
+        const audio2 = document.getElementById('audio2');
+
+        const uploadInput = document.getElementById('media-upload');
+        const playBtn = document.getElementById('play-btn');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const exitFsBtn = document.getElementById('exit-fs-btn');
+        const visArea = document.getElementById('visualizer-area');
+        const playlistList = document.getElementById('playlist-list');
+        const totalTimeEl = document.getElementById('total-time');
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+        const presetIndicator = document.getElementById('preset-indicator');
+
+        let audioCtx, analyser;
+        let source1, source2, gain1, gain2;
+        let isInitialized = false;
+        let isPlaying = false;
+        let currentTrackIndex = -1;
+        let playlist = []; // array de objetos { id, name, blob, url, duration }
+        let nextTrackIndex = -1;
+        let crossfadeActive = false;
+        let crossfadeStartTime = 0;
+        const CROSSFADE_DURATION = 2.0; // segundos
+        let presetTimer = 0;
+        let currentPresetIndex = 0;
+        const PRESET_INTERVAL = 39; // segundos
+        let lastTimestamp = 0;
+        let frameId = null;
+
+        // ============================================================
+        // 2. INDEXEDDB
+        // ============================================================
+        const DB_NAME = 'PlaylistDB';
+        const STORE_NAME = 'tracks';
+        let db = null;
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = (e) => {
+                    const d = e.target.result;
+                    if (!d.objectStoreNames.contains(STORE_NAME)) {
+                        d.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function loadTracksFromDB() {
+            if (!db) db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function saveTrackToDB(track) {
+            if (!db) db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                const req = store.add({ name: track.name, blob: track.blob, duration: track.duration });
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function removeTrackFromDB(id) {
+            if (!db) db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                const req = store.delete(id);
+                req.onsuccess = () => resolve();
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        // ============================================================
+        // 3. PLAYLIST MANAGEMENT
+        // ============================================================
+        function updatePlaylistUI() {
+            playlistList.innerHTML = '';
+            let total = 0;
+            playlist.forEach((track, idx) => {
+                total += track.duration || 0;
+                const div = document.createElement('div');
+                div.className = 'track-item' + (idx === currentTrackIndex ? ' active' : '');
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'track-name';
+                nameSpan.textContent = track.name || 'sem nome';
+                const durSpan = document.createElement('span');
+                durSpan.className = 'track-dur';
+                durSpan.textContent = formatTime(track.duration || 0);
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-btn';
+                removeBtn.innerHTML = '✕';
+                removeBtn.title = 'Remover';
+                removeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    removeTrack(idx);
+                });
+                div.appendChild(nameSpan);
+                div.appendChild(durSpan);
+                div.appendChild(removeBtn);
+                playlistList.appendChild(div);
+            });
+            totalTimeEl.textContent = formatTime(total);
+            playBtn.disabled = (playlist.length === 0);
+            if (playlist.length === 0) {
+                statusText.textContent = 'Nenhuma faixa';
+                statusDot.className = 'status-dot';
+            }
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds) || seconds < 0) return '00:00';
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+
+        async function addTracks(files) {
+            for (const file of files) {
+                // Ler como blob para armazenar no IndexedDB
+                const blob = new Blob([await file.arrayBuffer()], { type: file.type });
+                const url = URL.createObjectURL(blob);
+                // Criar objeto temporário para obter duração
+                const tempAudio = new Audio(url);
+                await new Promise((resolve) => {
+                    tempAudio.addEventListener('loadedmetadata', () => {
+                        const duration = tempAudio.duration || 0;
+                        const track = { name: file.name, blob, url, duration };
+                        // Salvar no IndexedDB
+                        saveTrackToDB(track).then((id) => {
+                            track.id = id;
+                            playlist.push(track);
+                            updatePlaylistUI();
+                            resolve();
+                        });
+                    });
+                    tempAudio.load();
+                });
+            }
+            // Se não houver música tocando e houver faixas, selecionar a primeira
+            if (!isPlaying && playlist.length > 0 && currentTrackIndex === -1) {
+                currentTrackIndex = 0;
+                updatePlaylistUI();
+            }
+        }
+
+        async function removeTrack(index) {
+            const track = playlist[index];
+            if (!track) return;
+            // Se for a faixa atual, parar e limpar
+            if (index === currentTrackIndex) {
+                stopPlayback();
+                currentTrackIndex = -1;
+            } else if (index < currentTrackIndex) {
+                currentTrackIndex--;
+            }
+            await removeTrackFromDB(track.id);
+            playlist.splice(index, 1);
+            updatePlaylistUI();
+            if (playlist.length === 0) {
+                currentTrackIndex = -1;
+                playBtn.innerHTML = '<span class="icon">▶</span> Play';
+                isPlaying = false;
+                statusDot.className = 'status-dot';
+                statusText.textContent = 'Aguardando';
+            }
+        }
+
+        // ============================================================
+        // 4. ÁUDIO / CROSSFADE
+        // ============================================================
+        function initAudio() {
+            if (isInitialized) return;
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 512;
+            analyser.smoothingTimeConstant = 0.85;
+
+            // Criar nós para dois canais
+            source1 = audioCtx.createMediaElementSource(audio1);
+            source2 = audioCtx.createMediaElementSource(audio2);
+            gain1 = audioCtx.createGain();
+            gain2 = audioCtx.createGain();
+            gain1.gain.value = 0;
+            gain2.gain.value = 0;
+
+            source1.connect(gain1);
+            gain1.connect(analyser);
+            source2.connect(gain2);
+            gain2.connect(analyser);
+            analyser.connect(audioCtx.destination);
+
+            isInitialized = true;
+        }
+
+        function playTrack(index) {
+            if (index < 0 || index >= playlist.length) return;
+            const track = playlist[index];
+            if (!track) return;
+            // Se já estiver tocando essa faixa, não faz nada
+            if (currentTrackIndex === index && isPlaying) return;
+
+            // Parar qualquer crossfade em andamento
+            crossfadeActive = false;
+
+            // Atualizar índice atual
+            currentTrackIndex = index;
+            updatePlaylistUI();
+
+            // Selecionar qual elemento de áudio usar (alternar para crossfade)
+            // Vamos usar sempre o audio1 para a faixa atual, e audio2 para a próxima
+            // Mas se já estiver usando audio1, precisamos carregar a próxima em audio2
+            // Para simplificar, sempre recarregamos a faixa atual no audio1 e paramos audio2
+            // e a próxima será carregada no audio2 quando necessário.
+
+            // Para evitar recarregar desnecessariamente, verificamos se a fonte atual já é a mesma.
+            // Vamos simplesmente carregar a faixa no audio1 e parar audio2.
+            audio1.src = track.url;
+            audio1.load();
+            audio2.pause();
+            audio2.src = '';
+            gain1.gain.value = 1;
+            gain2.gain.value = 0;
+
+            // Iniciar reprodução
+            audio1.play().catch(e => console.warn(e));
+            isPlaying = true;
+            updatePlayBtnIcon();
+            statusDot.className = 'status-dot active';
+            statusDot.style.background = '#00ffcc';
+            statusDot.style.boxShadow = '0 0 10px #00ffcc';
+            statusText.textContent = `Tocando: ${track.name}`;
+
+            // Resetar timer de preset
+            presetTimer = 0;
+
+            // Se não estiver em loop de animação, iniciar
+            if (!frameId) {
+                frameId = requestAnimationFrame(renderLoop);
+            }
+        }
+
+        function stopPlayback() {
+            audio1.pause();
+            audio2.pause();
+            audio1.src = '';
+            audio2.src = '';
+            gain1.gain.value = 0;
+            gain2.gain.value = 0;
+            isPlaying = false;
+            crossfadeActive = false;
+            updatePlayBtnIcon();
+            statusDot.className = 'status-dot';
+            statusText.textContent = 'Parado';
+            if (frameId) {
+                cancelAnimationFrame(frameId);
+                frameId = null;
+            }
+        }
+
+        function togglePlay() {
+            if (playlist.length === 0) return;
+            if (!isInitialized) initAudio();
+
+            if (isPlaying) {
+                // Pausar
+                audio1.pause();
+                audio2.pause();
+                isPlaying = false;
+                updatePlayBtnIcon();
+                statusDot.style.background = '#ffaa00';
+                statusDot.style.boxShadow = '0 0 10px #ffaa00';
+                statusText.textContent = 'Pausado';
+                return;
+            }
+
+            // Se não há faixa atual, começar da primeira
+            if (currentTrackIndex === -1 || currentTrackIndex >= playlist.length) {
+                currentTrackIndex = 0;
+            }
+            playTrack(currentTrackIndex);
+        }
+
+        function updatePlayBtnIcon() {
+            playBtn.innerHTML = isPlaying
+                ? '<span class="icon">⏸</span> Pausar'
+                : '<span class="icon">▶</span> Play';
+        }
+
+        // ============================================================
+        // 5. CROSSFADE (monitorado no loop)
+        // ============================================================
+        function startCrossfade() {
+            if (crossfadeActive) return;
+            const nextIdx = currentTrackIndex + 1;
+            if (nextIdx >= playlist.length) {
+                // Fim da playlist
+                return;
+            }
+            const nextTrack = playlist[nextIdx];
+            if (!nextTrack) return;
+
+            // Carregar a próxima faixa no audio2
+            audio2.src = nextTrack.url;
+            audio2.load();
+            // Iniciar com volume 0
+            gain2.gain.value = 0;
+            audio2.play().catch(e => console.warn(e));
+
+            crossfadeActive = true;
+            crossfadeStartTime = performance.now() / 1000;
+            nextTrackIndex = nextIdx;
+        }
+
+        function updateCrossfade() {
+            if (!crossfadeActive) return;
+            const now = performance.now() / 1000;
+            const elapsed = now - crossfadeStartTime;
+            const progress = Math.min(elapsed / CROSSFADE_DURATION, 1);
+            // Gain1 decresce, Gain2 cresce
+            gain1.gain.value = 1 - progress;
+            gain2.gain.value = progress;
+
+            if (progress >= 1) {
+                // Crossfade completo
+                crossfadeActive = false;
+                // Atualizar faixa atual
+                currentTrackIndex = nextTrackIndex;
+                updatePlaylistUI();
+                // Trocar os players: agora audio1 deve ser o que está tocando (audio2)
+                // Mas como audio2 já está tocando, podemos trocar as referências?
+                // Vamos apenas manter, mas precisamos que o próximo crossfade use o outro.
+                // Estratégia: após o crossfade, trocar os papéis dos elementos de áudio.
+                // Simples: mover a src de audio2 para audio1 e parar audio2.
+                // Mas é melhor manter e alternar: se audio1 é o antigo, agora audio2 é o principal.
+                // Vamos fazer uma troca de referências.
+                // Como temos source1 e source2 conectados a gain1 e gain2, podemos apenas trocar os elementos.
+                // Mas source1 está conectado a audio1, source2 a audio2.
+                // Para evitar recriar, vamos apenas parar audio1 e manter audio2 como principal.
+                // E para o próximo crossfade, usaremos audio1 como "próximo".
+                // Então precisamos saber qual está ativo.
+                // Vamos ter uma variável activeAudioElement.
+                // Vamos definir activeAudioElement = audio2 após o crossfade.
+                // E para o próximo, carregaremos a próxima no outro.
+                // Vamos manter uma variável activePlayer: 1 ou 2.
+                // Inicialmente activePlayer = 1 (audio1).
+                // Após crossfade, activePlayer = 2.
+                // No próximo crossfade, carregamos no outro.
+
+                if (!window.activePlayer) window.activePlayer = 1;
+                if (window.activePlayer === 1) {
+                    // audio1 era o principal, agora audio2 é o principal
+                    window.activePlayer = 2;
+                    // Parar audio1
+                    audio1.pause();
+                    audio1.src = '';
+                    gain1.gain.value = 0;
+                } else {
+                    window.activePlayer = 1;
+                    audio2.pause();
+                    audio2.src = '';
+                    gain2.gain.value = 0;
+                }
+                // Atualizar status
+                const track = playlist[currentTrackIndex];
+                if (track) statusText.textContent = `Tocando: ${track.name}`;
+
+                // Se a playlist acabou, parar
+                if (currentTrackIndex >= playlist.length - 1) {
+                    // Última faixa, não há próxima
+                }
+            }
+        }
+
+        // ============================================================
+        // 6. PRESETS DE ANIMAÇÃO (7 tipos)
+        // ============================================================
+        // Cada preset é um objeto com: name, init(), update(analyser, freqData, time), render(ctx, w, h, time)
+        // Vamos manter um estado global de partículas por preset? Cada preset terá seu próprio array.
+        // Vamos definir uma classe genérica para partículas.
+
+        class Particle {
+            constructor(x, y, vx, vy, life, color, size) {
+                this.x = x; this.y = y;
+                this.vx = vx; this.vy = vy;
+                this.life = life;
+                this.maxLife = life;
+                this.color = color || '#fff';
+                this.size = size || 2;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= 0.02;
+                return this.life > 0;
+            }
+            draw(ctx) {
+                const alpha = this.life / this.maxLife;
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size * alpha, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        // Função auxiliar para emitir partículas
+        function emitSpray(particles, cx, cy, count, speed, color) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * 2 * Math.PI;
+                const sp = speed * (0.5 + Math.random() * 0.5);
+                const vx = Math.cos(angle) * sp;
+                const vy = Math.sin(angle) * sp;
+                particles.push(new Particle(cx, cy, vx, vy, 1.0 + Math.random() * 0.5, color, 1.5 + Math.random() * 2));
+            }
+        }
+
+        function emitRing(particles, cx, cy, radius, count, speed, color) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * 2 * Math.PI;
+                const r = radius * (0.8 + Math.random() * 0.4);
+                const x = cx + Math.cos(angle) * r;
+                const y = cy + Math.sin(angle) * r;
+                const vx = -Math.sin(angle) * speed * (0.5 + Math.random());
+                const vy = Math.cos(angle) * speed * (0.5 + Math.random());
+                particles.push(new Particle(x, y, vx, vy, 1.2 + Math.random() * 0.6, color, 1.5));
+            }
+        }
+
+        function emitExplosion(particles, cx, cy, count, speed, color) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * 2 * Math.PI;
+                const sp = speed * (1 + Math.random() * 2);
+                const vx = Math.cos(angle) * sp;
+                const vy = Math.sin(angle) * sp;
+                particles.push(new Particle(cx, cy, vx, vy, 0.8 + Math.random() * 0.6, color, 2 + Math.random() * 3));
+            }
+        }
+
+        function emitRain(particles, w, h, count, color) {
+            for (let i = 0; i < count; i++) {
+                const x = Math.random() * w;
+                const y = Math.random() * h;
+                const vy = 2 + Math.random() * 4;
+                particles.push(new Particle(x, y, 0, vy, 1.5 + Math.random() * 1, color, 1));
+            }
+        }
+
+        // Presets
+        const presets = [];
+
+        // Preset 0: Original (tetra, octa, cubo, spray)
+        presets.push({
+            name: 'Clássico',
+            particles: [],
+            init() {
+                this.particles = [];
+            },
+            update(analyser, freqData, time, w, h) {
+                // Obter energia
+                let peak = 0;
+                for (let i = 0; i < 10; i++) if (freqData[i] > peak) peak = freqData[i];
+                const isHigh = peak > 210;
+                if (isHigh && Math.random() > 0.6) {
+                    emitSpray(this.particles, w/2, h/2, 4, 6, '#fff');
+                }
+                // Atualizar partículas
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    if (!this.particles[i].update()) {
+                        this.particles.splice(i, 1);
+                    }
+                }
+                // Limitar número
+                if (this.particles.length > 200) this.particles.splice(0, this.particles.length - 200);
+            },
+            render(ctx, w, h, time, freqData, analyser) {
+                // Obter dados de frequência (já temos freqData)
+                let smoothBass = 0;
+                for (let i = 0; i < 10; i++) smoothBass += freqData[i];
+                smoothBass = smoothBass / 10;
+                const isHigh = freqData[0] > 210;
+
+                const centerX = w / 2, centerY = h / 2;
+                const baseScale = Math.min(w, h) * 0.15;
+                const rotAngle = time * 0.02;
+
+                // Tetra
+                const tetraScale = baseScale * 0.6 + smoothBass * 0.2;
+                drawWireframe(tetraVertices, tetraEdges, tetraScale, rotAngle * 2, rotAngle, rotAngle * 0.5, centerX, centerY, isHigh ? '#00ffcc' : 'rgba(0,255,204,0.6)', 2, isHigh ? 15 : 5);
+                // Octa
+                const octaScale = baseScale * 1.2 + smoothBass * 0.4;
+                drawWireframe(octaVertices, octaEdges, octaScale, -rotAngle, rotAngle * 1.5, rotAngle, centerX, centerY, isHigh ? '#ff00ff' : 'rgba(255,0,255,0.4)', 1.5, isHigh ? 10 : 0);
+                // Cubo
+                const cubeScale = baseScale * 1.8 + (isHigh ? smoothBass * 1.2 : smoothBass * 0.5);
+                drawWireframe(cubeVertices, cubeEdges, cubeScale, rotAngle * 0.5, -rotAngle, rotAngle * 1.2, centerX, centerY, isHigh ? '#00b3ff' : 'rgba(0,179,255,0.2)', isHigh ? 3 : 1, isHigh ? 20 : 0);
+
+                // Desenhar partículas
+                for (const p of this.particles) p.draw(ctx);
+            }
+        });
+
+        // Preset 1: Cubo + Anel
+        presets.push({
+            name: 'Anel',
+            particles: [],
+            init() {
+                this.particles = [];
+            },
+            update(analyser, freqData, time, w, h) {
+                let peak = 0;
+                for (let i = 0; i < 10; i++) if (freqData[i] > peak) peak = freqData[i];
+                const isHigh = peak > 210;
+                if (isHigh && Math.random() > 0.7) {
+                    emitRing(this.particles, w/2, h/2, 80, 10, 3, '#00ccff');
+                }
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    if (!this.particles[i].update()) {
+                        this.particles.splice(i, 1);
+                    }
+                }
+                if (this.particles.length > 300) this.particles.splice(0, this.particles.length - 300);
+            },
+            render(ctx, w, h, time, freqData, analyser) {
+                let smoothBass = 0;
+                for (let i = 0; i < 10; i++) smoothBass += freqData[i];
+                smoothBass = smoothBass / 10;
+                const isHigh = freqData[0] > 210;
+                const centerX = w/2, centerY = h/2;
+                const baseScale = Math.min(w, h) * 0.2;
+                const rotAngle = time * 0.015;
+
+                // Cubo grande
+                const cubeScale = baseScale * 1.2 + smoothBass * 0.3;
+                drawWireframe(cubeVertices, cubeEdges, cubeScale, rotAngle, rotAngle * 1.3, rotAngle * 0.7, centerX, centerY, isHigh ? '#ffaa00' : 'rgba(255,170,0,0.5)', 2, isHigh ? 15 : 0);
+
+                // Anel de pontos (usando partículas desenhadas separadamente)
+                // Vamos desenhar um anel estático de pontos
+                const ringRadius = baseScale * 1.5 + smoothBass * 0.2;
+                ctx.strokeStyle = 'rgba(0,200,255,0.2)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, ringRadius, 0, Math.PI * 2);
+                ctx.stroke();
+                // Pontos no anel
+                const count = 20;
+                for (let i = 0; i < count; i++) {
+                    const angle = (i / count) * Math.PI * 2 + time * 0.02;
+                    const x = centerX + Math.cos(angle) * ringRadius;
+                    const y = centerY + Math.sin(angle) * ringRadius;
+                    ctx.fillStyle = 'rgba(0,200,255,0.6)';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 2 + smoothBass * 0.02, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                for (const p of this.particles) p.draw(ctx);
+            }
+        });
+
+        // Preset 2: Tetra + Cubo (cores trocadas) + explosão
+        presets.push({
+            name: 'Explosão',
+            particles: [],
+            init() {
+                this.particles = [];
+            },
+            update(analyser, freqData, time, w, h) {
+                let peak = 0;
+                for (let i = 0; i < 10; i++) if (freqData[i] > peak) peak = freqData[i];
+                const isHigh = peak > 210;
+                if (isHigh && Math.random() > 0.5) {
+                    emitExplosion(this.particles, w/2, h/2, 15, 8, '#ff8844');
+                }
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    if (!this.particles[i].update()) {
+                        this.particles.splice(i, 1);
+                    }
+                }
+                if (this.particles.length > 400) this.particles.splice(0, this.particles.length - 400);
+            },
+            render(ctx, w, h, time, freqData, analyser) {
+                let smoothBass = 0;
+                for (let i = 0; i < 10; i++) smoothBass += freqData[i];
+                smoothBass = smoothBass / 10;
+                const isHigh = freqData[0] > 210;
+                const centerX = w/2, centerY = h/2;
+                const baseScale = Math.min(w, h) * 0.16;
+                const rotAngle = time * 0.025;
+
+                const tetraScale = baseScale * 0.8 + smoothBass * 0.2;
+                drawWireframe(tetraVertices, tetraEdges, tetraScale, rotAngle * 1.5, -rotAngle, rotAngle * 0.8, centerX, centerY, isHigh ? '#ff44aa' : 'rgba(255,68,170,0.5)', 2, isHigh ? 12 : 0);
+                const cubeScale = baseScale * 1.4 + smoothBass * 0.4;
+                drawWireframe(cubeVertices, cubeEdges, cubeScale, -rotAngle * 0.8, rotAngle * 1.2, rotAngle, centerX, centerY, isHigh ? '#44ffaa' : 'rgba(68,255,170,0.3)', 1.5, isHigh ? 10 : 0);
+
+                for (const p of this.particles) p.draw(ctx);
+            }
+        });
+
+        // Preset 3: Octaedro + Espiral
+        presets.push({
+            name: 'Espiral',
+            particles: [],
+            init() {
+                this.particles = [];
+            },
+            update(analyser, freqData, time, w, h) {
+                let peak = 0;
+                for (let i = 0; i < 10; i++) if (freqData[i] > peak) peak = freqData[i];
+                const isHigh = peak > 210;
+                if (isHigh && Math.random() > 0.6) {
+                    emitSpiral(this.particles, w/2, h/2, 8, 2, '#ff66ff');
+                }
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    if (!this.particles[i].update()) {
+                        this.particles.splice(i, 1);
+                    }
+                }
+                if (this.particles.length > 300) this.particles.splice(0, this.particles.length - 300);
+            },
+            render(ctx, w, h, time, freqData, analyser) {
+                let smoothBass = 0;
+                for (let i = 0; i < 10; i++) smoothBass += freqData[i];
+                smoothBass = smoothBass / 10;
+                const isHigh = freqData[0] > 210;
+                const centerX = w/2, centerY = h/2;
+                const baseScale = Math.min(w, h) * 0.2;
+                const rotAngle = time * 0.02;
+
+                const octaScale = baseScale * 1.2 + smoothBass * 0.3;
+                drawWireframe(octaVertices, octaEdges, octaScale, rotAngle * 2, rotAngle * 0.5, rotAngle * 1.5, centerX, centerY, isHigh ? '#00ff88' : 'rgba(0,255,136,0.4)', 2, isHigh ? 12 : 0);
+
+                // Espiral de partículas (desenhamos algumas estáticas)
+                const spiralCount = 30;
+                for (let i = 0; i < spiralCount; i++) {
+                    const t = i / spiralCount;
+                    const angle = t * Math.PI * 6 + time * 0.05;
+                    const radius = baseScale * 0.3 + t * baseScale * 1.5;
+                    const x = centerX + Math.cos(angle) * radius;
+                    const y = centerY + Math.sin(angle) * radius;
+                    ctx.fillStyle = `hsla(${i * 10 + 200}, 100%, 60%, 0.6)`;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 2 + smoothBass * 0.03, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                for (const p of this.particles) p.draw(ctx);
+            }
+        });
+
+        // Função auxiliar para espiral (emitir partículas em espiral)
+        function emitSpiral(particles, cx, cy, count, speed, color) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * 2 * Math.PI;
+                const r = 20 + Math.random() * 50;
+                const x = cx + Math.cos(angle) * r;
+                const y = cy + Math.sin(angle) * r;
+                const vx = -Math.sin(angle) * speed * (1 + Math.random());
+                const vy = Math.cos(angle) * speed * (1 + Math.random());
+                particles.push(new Particle(x, y, vx, vy, 1.0 + Math.random() * 0.5, color, 2));
+            }
+        }
+
+        // Preset 4: Grade 3D + Onda
+        presets.push({
+            name: 'Onda',
+            particles: [],
+            init() {
+                this.particles = [];
+                // Gerar grade de pontos para a onda
+                this.gridPoints = [];
+                const cols = 20, rows = 20;
+                for (let i = 0; i < cols; i++) {
+                    for (let j = 0; j < rows; j++) {
+                        this.gridPoints.push({
+                            x: (i / cols - 0.5) * 2,
+                            y: (j / rows - 0.5) * 2,
+                            z: 0
+                        });
+                    }
+                }
+            },
+            update(analyser, freqData, time, w, h) {
+                let peak = 0;
+                for (let i = 0; i < 10; i++) if (freqData[i] > peak) peak = freqData[i];
+                const isHigh = peak > 210;
+                if (isHigh && Math.random() > 0.8) {
+                    emitRain(this.particles, w, h, 3, '#88ddff');
+                }
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    if (!this.particles[i].update()) {
+                        this.particles.splice(i, 1);
+                    }
+                }
+                if (this.particles.length > 200) this.particles.splice(0, this.particles.length - 200);
+            },
+            render(ctx, w, h, time, freqData, analyser) {
+                let smoothBass = 0;
+                for (let i = 0; i < 10; i++) smoothBass += freqData[i];
+                smoothBass = smoothBass / 10;
+                const isHigh = freqData[0] > 210;
+                const centerX = w/2, centerY = h/2;
+                const scale = Math.min(w, h) * 0.3;
+
+                // Desenhar grade como wireframe 3D com onda
+                const points = this.gridPoints;
+                const rotX = time * 0.01;
+                const rotY = time * 0.015;
+                const rotZ = time * 0.005;
+
+                const projected = points.map(p => {
+                    // Adicionar onda baseada no tempo e na posição
+                    const wave = Math.sin(p.x * 3 + time * 2) * 0.2 + Math.cos(p.y * 3 + time * 1.5) * 0.2;
+                    const z = wave + (smoothBass / 100) * 0.5;
+                    // Rotação 3D simples (projeção ortogonal)
+                    const x = p.x;
+                    const y = p.y;
+                    // Aplicar rotação em X
+                    let y1 = y * Math.cos(rotX) - z * Math.sin(rotX);
+                    let z1 = y * Math.sin(rotX) + z * Math.cos(rotX);
+                    // Rotação em Y
+                    let x2 = x * Math.cos(rotY) + z1 * Math.sin(rotY);
+                    let z2 = -x * Math.sin(rotY) + z1 * Math.cos(rotY);
+                    // Rotação em Z
+                    let x3 = x2 * Math.cos(rotZ) - y1 * Math.sin(rotZ);
+                    let y3 = x2 * Math.sin(rotZ) + y1 * Math.cos(rotZ);
+                    return { x: x3 * scale + centerX, y: y3 * scale + centerY, z: z2 };
+                });
+
+                // Desenhar linhas da grade
+                const cols = 20, rows = 20;
+                ctx.strokeStyle = isHigh ? 'rgba(0,200,255,0.3)' : 'rgba(100,100,255,0.15)';
+                ctx.lineWidth = 0.5;
+                for (let i = 0; i < cols; i++) {
+                    for (let j = 0; j < rows; j++) {
+                        const idx = i * rows + j;
+                        if (i < cols - 1) {
+                            const idx2 = (i+1) * rows + j;
+                            ctx.beginPath();
+                            ctx.moveTo(projected[idx].x, projected[idx].y);
+                            ctx.lineTo(projected[idx2].x, projected[idx2].y);
+                            ctx.stroke();
+                        }
+                        if (j < rows - 1) {
+                            const idx2 = i * rows + (j+1);
+                            ctx.beginPath();
+                            ctx.moveTo(projected[idx].x, projected[idx].y);
+                            ctx.lineTo(projected[idx2].x, projected[idx2].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                // Partículas
+                for (const p of this.particles) p.draw(ctx);
+            }
+        });
+
+        // Preset 5: Formas concêntricas + Chuva
+        presets.push({
+            name: 'Chuva',
+            particles: [],
+            init() {
+                this.particles = [];
+            },
+            update(analyser, freqData, time, w, h) {
+                let peak = 0;
+                for (let i = 0; i < 10; i++) if (freqData[i] > peak) peak = freqData[i];
+                const isHigh = peak > 210;
+                if (isHigh && Math.random() > 0.9) {
+                    emitRain(this.particles, w, h, 5, '#88ddff');
+                }
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    if (!this.particles[i].update()) {
+                        this.particles.splice(i, 1);
+                    }
+                }
+                if (this.particles.length > 400) this.particles.splice(0, this.particles.length - 400);
+            },
+            render(ctx, w, h, time, freqData, analyser) {
+                let smoothBass = 0;
+                for (let i = 0; i < 10; i++) smoothBass += freqData[i];
+                smoothBass = smoothBass / 10;
+                const isHigh = freqData[0] > 210;
+                const centerX = w/2, centerY = h/2;
+                const baseScale = Math.min(w, h) * 0.2;
+                const rotAngle = time * 0.01;
+
+                // Desenhar círculos concêntricos
+                const count = 5;
+                for (let i = 0; i < count; i++) {
+                    const radius = baseScale * (0.4 + i * 0.25) + smoothBass * 0.1;
+                    ctx.strokeStyle = `hsla(${200 + i * 20}, 80%, 60%, ${0.2 + (1 - i/count) * 0.3})`;
+                    ctx.lineWidth = 1 + (1 - i/count) * 1.5;
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                    // Pequenos pontos nos círculos
+                    const dots = 12;
+                    for (let j = 0; j < dots; j++) {
+                        const angle = (j / dots) * Math.PI * 2 + time * 0.01 * (i+1);
+                        const x = centerX + Math.cos(angle) * radius;
+                        const y = centerY + Math.sin(angle) * radius;
+                        ctx.fillStyle = `hsla(${200 + i * 20}, 100%, 70%, 0.5)`;
+                        ctx.beginPath();
+                        ctx.arc(x, y, 2 + smoothBass * 0.02, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+
+                for (const p of this.particles) p.draw(ctx);
+            }
+        });
+
+        // Preset 6: Estrelas (partículas radiais) + Pulsação
+        presets.push({
+            name: 'Estrelas',
+            particles: [],
+            init() {
+                this.particles = [];
+                // Pré-criar estrelas estáticas
+                for (let i = 0; i < 100; i++) {
+                    const angle = Math.random() * 2 * Math.PI;
+                    const radius = 50 + Math.random() * 300;
+                    const x = Math.cos(angle) * radius;
+                    const y = Math.sin(angle) * radius;
+                    this.particles.push(new Particle(x, y, 0, 0, 1 + Math.random() * 2, '#fff', 1 + Math.random() * 2));
+                }
+            },
+            update(analyser, freqData, time, w, h) {
+                // Atualizar partículas (estrelas não se movem, mas podem pulsar)
+                for (const p of this.particles) {
+                    // Não atualizar posição, mas podemos variar tamanho com a música
+                    p.size = 1 + Math.random() * 2;
+                }
+                // Adicionar partículas explosivas em picos
+                let peak = 0;
+                for (let i = 0; i < 10; i++) if (freqData[i] > peak) peak = freqData[i];
+                const isHigh = peak > 210;
+                if (isHigh && Math.random() > 0.5) {
+                    emitExplosion(this.particles, w/2, h/2, 10, 10, '#ffaa88');
+                }
+                // Limitar
+                if (this.particles.length > 500) this.particles.splice(0, this.particles.length - 500);
+            },
+            render(ctx, w, h, time, freqData, analyser) {
+                let smoothBass = 0;
+                for (let i = 0; i < 10; i++) smoothBass += freqData[i];
+                smoothBass = smoothBass / 10;
+                const isHigh = freqData[0] > 210;
+                const centerX = w/2, centerY = h/2;
+                const baseScale = Math.min(w, h) * 0.2;
+
+                // Fundo estrelado com brilho
+                for (const p of this.particles) {
+                    const dist = Math.hypot(p.x - centerX, p.y - centerY);
+                    const pulse = 1 + Math.sin(time * 3 + dist * 0.05) * 0.2;
+                    const alpha = 0.5 + 0.5 * Math.sin(time * 2 + dist * 0.1);
+                    ctx.globalAlpha = alpha * 0.6;
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size * pulse, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+
+                // Círculo pulsante central
+                const radius = baseScale * 1.2 + smoothBass * 0.3;
+                const glow = isHigh ? 30 : 10;
+                ctx.shadowBlur = glow;
+                ctx.shadowColor = '#00ffcc';
+                ctx.strokeStyle = isHigh ? '#00ffcc' : 'rgba(0,255,204,0.3)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                // Desenhar partículas ativas (explosões)
+                for (const p of this.particles) {
+                    if (p.vx !== 0 || p.vy !== 0) p.draw(ctx);
+                }
+            }
+        });
+
+        // ============================================================
+        // 7. FUNÇÕES DE DESENHO (wireframes)
+        // ============================================================
+        const tetraVertices = [
+            [1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]
+        ];
+        const tetraEdges = [
+            [0,1], [0,2], [0,3], [1,2], [1,3], [2,3]
+        ];
+        const octaVertices = [
+            [1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]
+        ];
+        const octaEdges = [
+            [0,2], [0,3], [0,4], [0,5], [1,2], [1,3], [1,4], [1,5],
+            [2,4], [2,5], [3,4], [3,5]
+        ];
+        const cubeVertices = [
+            [-1,-1,-1], [1,-1,-1], [1,1,-1], [-1,1,-1],
+            [-1,-1,1], [1,-1,1], [1,1,1], [-1,1,1]
+        ];
+        const cubeEdges = [
+            [0,1], [1,2], [2,3], [3,0],
+            [4,5], [5,6], [6,7], [7,4],
+            [0,4], [1,5], [2,6], [3,7]
+        ];
+
+        function rotate3D(x, y, z, angleX, angleY, angleZ) {
+            let cosX = Math.cos(angleX), sinX = Math.sin(angleX);
+            let y1 = y * cosX - z * sinX;
+            let z1 = y * sinX + z * cosX;
+            let cosY = Math.cos(angleY), sinY = Math.sin(angleY);
+            let x2 = x * cosY + z1 * sinY;
+            let z2 = -x * sinY + z1 * cosY;
+            let cosZ = Math.cos(angleZ), sinZ = Math.sin(angleZ);
+            let x3 = x2 * cosZ - y1 * sinZ;
+            let y3 = x2 * sinZ + y1 * cosZ;
+            return [x3, y3, z2];
+        }
+
+        function drawWireframe(vertices, edges, scale, rotX, rotY, rotZ, centerX, centerY, color, lineWidth, glow) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            if (glow > 0) {
+                ctx.shadowBlur = glow;
+                ctx.shadowColor = color;
+            } else {
+                ctx.shadowBlur = 0;
+            }
+            const projected = vertices.map(v => {
+                const rotated = rotate3D(v[0], v[1], v[2], rotX, rotY, rotZ);
+                return { x: rotated[0] * scale + centerX, y: rotated[1] * scale + centerY };
+            });
+            ctx.beginPath();
+            edges.forEach(edge => {
+                const p1 = projected[edge[0]];
+                const p2 = projected[edge[1]];
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+            });
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+
+        // ============================================================
+        // 8. LOOP DE RENDERIZAÇÃO
+        // ============================================================
+        function renderLoop(timestamp) {
+            if (!isPlaying) {
+                // Se não estiver tocando, ainda podemos desenhar algo? Vamos manter o último quadro.
+                // Mas podemos parar o loop.
+                frameId = null;
+                return;
+            }
+
+            const now = timestamp / 1000;
+            const delta = lastTimestamp ? (now - lastTimestamp) : 0;
+            lastTimestamp = now;
+
+            // 1. Atualizar dados de áudio
+            if (analyser) {
+                analyser.getByteFrequencyData(frequencyData);
+            }
+
+            // 2. Verificar crossfade
+            if (crossfadeActive) {
+                updateCrossfade();
+            } else {
+                // Verificar se a faixa atual está perto do fim
+                const activePlayer = window.activePlayer || 1;
+                const audioEl = activePlayer === 1 ? audio1 : audio2;
+                if (audioEl.src && audioEl.duration > 0) {
+                    const remaining = audioEl.duration - audioEl.currentTime;
+                    if (remaining < 3 && remaining > 0 && currentTrackIndex < playlist.length - 1) {
+                        startCrossfade();
+                    }
+                }
+            }
+
+            // 3. Atualizar preset a cada 39 segundos
+            if (isPlaying) {
+                presetTimer += delta;
+                if (presetTimer >= PRESET_INTERVAL) {
+                    presetTimer = 0;
+                    currentPresetIndex = (currentPresetIndex + 1) % presets.length;
+                    presets[currentPresetIndex].init();
+                    presetIndicator.textContent = `Preset ${currentPresetIndex+1}/${presets.length}`;
+                }
+            }
+
+            // 4. Limpar canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Fundo escuro
+            ctx.fillStyle = 'rgba(5, 5, 5, 1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 5. Renderizar preset atual
+            const preset = presets[currentPresetIndex];
+            if (preset) {
+                // Atualizar partículas do preset
+                if (analyser && frequencyData) {
+                    preset.update(analyser, frequencyData, now, canvas.width, canvas.height);
+                }
+                // Renderizar
+                preset.render(ctx, canvas.width, canvas.height, now, frequencyData || new Uint8Array(0), analyser);
+            }
+
+            // 6. Continuar loop
+            frameId = requestAnimationFrame(renderLoop);
+        }
+
+        // ============================================================
+        // 9. INICIALIZAÇÃO
+        // ============================================================
+        let frequencyData = new Uint8Array(0);
+
+        async function init() {
+            // Carregar playlist do IndexedDB
+            try {
+                const tracks = await loadTracksFromDB();
+                for (const t of tracks) {
+                    const url = URL.createObjectURL(t.blob);
+                    playlist.push({
+                        id: t.id,
+                        name: t.name,
+                        blob: t.blob,
+                        url: url,
+                        duration: t.duration || 0
+                    });
+                }
+                updatePlaylistUI();
+                if (playlist.length > 0) {
+                    currentTrackIndex = 0;
+                    updatePlaylistUI();
+                    statusText.textContent = 'Pronto';
+                    statusDot.className = 'status-dot';
+                }
+            } catch (e) {
+                console.warn('Erro ao carregar IndexedDB:', e);
+            }
+
+            // Inicializar contexto de áudio na primeira interação
+            document.addEventListener('click', () => {
+                if (!isInitialized) {
+                    initAudio();
+                }
+            }, { once: true });
+
+            // Event listeners
+            uploadInput.addEventListener('change', async (e) => {
+                const files = e.target.files;
+                if (files.length > 0) {
+                    await addTracks(files);
+                }
+                uploadInput.value = '';
+            });
+
+            playBtn.addEventListener('click', togglePlay);
+
+            fullscreenBtn.addEventListener('click', () => {
+                visArea.classList.toggle('is-fullscreen');
+                setTimeout(resize, 50);
+            });
+
+            exitFsBtn.addEventListener('click', () => {
+                visArea.classList.remove('is-fullscreen');
+                setTimeout(resize, 50);
+            });
+
+            window.addEventListener('resize', resize);
+            resize();
+
+            // Iniciar loop de renderização apenas se houver música tocando
+            // Mas o loop só inicia quando play for pressionado.
+        }
+
+        function resize() {
+            canvas.width = visArea.clientWidth;
+            canvas.height = visArea.clientHeight;
+        }
+
+        // Iniciar
+        init();
+
+        // ============================================================
+        // 10. EXPOR FUNÇÕES PARA DEBUG (opcional)
+        // ============================================================
+        console.log('Dual Visualizer carregado. Use addTracks(files) para adicionar manualmente.');
+    </script>
+</body>
+</html>

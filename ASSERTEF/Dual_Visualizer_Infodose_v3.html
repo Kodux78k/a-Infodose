@@ -4,12 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dual Visualizer Infodose</title>
-    
-    <!-- Ícones Lucide -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-<link rel="apple-touch-icon" href="./icon-192.png">
-
-    <style>
+   <link rel="apple-touch-icon" href="./icon-192.png">
+ <style>
         * {
             box-sizing: border-box;
             margin: 0;
@@ -57,8 +53,16 @@
         }
 
         .brand-icon {
+            font-size: 28px;
             color: #00ffcc;
             filter: drop-shadow(0 0 8px rgba(0, 255, 204, 0.6));
+        }
+
+        .icon {
+            display: inline-block;
+            font-size: 1.2rem;
+            line-height: 1;
+            vertical-align: middle;
         }
 
         /* Controles do Menu */
@@ -234,28 +238,28 @@
         <!-- Sidebar / Painel -->
         <aside id="sidebar">
             <div class="brand">
-                <i data-lucide="box" class="brand-icon"></i>
+                <span class="icon brand-icon">◇</span>
                 Dual Visualizer
             </div>
 
             <div class="control-group">
                 <label class="btn">
-                    <input type="file" id="media-upload" accept="audio/*">
-                    <i data-lucide="folder-open"></i> Abrir Faixa
+                    <input type="file" id="media-upload" accept="audio/*, video/*, .mp3, .MP3, .wav, .WAV, .ogg, .OGG, .mp4, .MP4">
+                    <span class="icon">📂</span> Abrir Faixa
                 </label>
                 
                 <button class="btn btn-primary" id="play-btn" disabled>
-                    <i data-lucide="play"></i> Play / Pause
+                    <span class="icon">▶</span> Play
                 </button>
 
                 <button class="btn" id="fullscreen-btn">
-                    <i data-lucide="maximize"></i> Modo Telão
+                    <span class="icon">⛶</span> Modo Telão
                 </button>
             </div>
 
             <div class="track-info">
                 <div class="track-name" id="track-name">
-                    <i data-lucide="music-4" style="width: 14px;"></i> 
+                    <span class="icon">♫</span>
                     <span>Nenhuma faixa</span>
                 </div>
                 <div class="timer" id="timer-display">00:00</div>
@@ -270,7 +274,7 @@
         <!-- Área do Canvas -->
         <main id="visualizer-area">
             <button id="exit-fs-btn">
-                <i data-lucide="minimize"></i> Sair do Telão
+                <span class="icon">⤡</span>
             </button>
             <canvas id="canvas"></canvas>
         </main>
@@ -279,9 +283,6 @@
     <audio id="audio-player"></audio>
 
     <script>
-        // Inicializar Ícones
-        lucide.createIcons();
-
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const audioPlayer = document.getElementById('audio-player');
@@ -292,7 +293,7 @@
         const fullscreenBtn = document.getElementById('fullscreen-btn');
         const exitFsBtn = document.getElementById('exit-fs-btn');
         const visArea = document.getElementById('visualizer-area');
-        const trackNameEl = document.querySelector('#track-name span');
+        const trackNameEl = document.querySelector('#track-name span:last-child');
         const timerDisplay = document.getElementById('timer-display');
         const statusDot = document.getElementById('status-dot');
         const statusText = document.getElementById('status-text');
@@ -302,13 +303,23 @@
         let isPlaying = false;
         let isInitialized = false;
 
+        // Carregar faixa padrão
+        const DEFAULT_AUDIO_URL = "https://infodose.com.br/ASSERTEF/Dia-amannte.mp3";
+        audioPlayer.src = DEFAULT_AUDIO_URL;
+        trackNameEl.textContent = "Dia amannte";
+        playBtn.disabled = false;
+        statusDot.classList.add('active');
+        statusDot.style.background = '#ffaa00';
+        statusDot.style.boxShadow = '0 0 10px #ffaa00';
+        statusText.textContent = "Pronto para iniciar";
+
         // Resize fluido
         function resize() {
             canvas.width = visArea.clientWidth;
             canvas.height = visArea.clientHeight;
         }
         window.addEventListener('resize', resize);
-        resize(); // Initial call
+        resize();
 
         uploadBtn.addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -320,7 +331,7 @@
             playBtn.disabled = false;
             
             statusDot.classList.add('active');
-            statusDot.style.background = '#ffaa00'; // Cor de carregado
+            statusDot.style.background = '#ffaa00';
             statusDot.style.boxShadow = '0 0 10px #ffaa00';
             statusText.textContent = "Pronto para iniciar";
         });
@@ -347,7 +358,7 @@
 
         fullscreenBtn.addEventListener('click', () => {
             visArea.classList.add('is-fullscreen');
-            setTimeout(resize, 50); // Força resize após aplicar classe
+            setTimeout(resize, 50);
         });
 
         exitFsBtn.addEventListener('click', () => {
@@ -363,7 +374,7 @@
             
             analyser = audioCtx.createAnalyser();
             analyser.fftSize = 512;
-            analyser.smoothingTimeConstant = 0.85; // Suaviza a leitura para evitar tremedeiras
+            analyser.smoothingTimeConstant = 0.85;
             
             source = audioCtx.createMediaElementSource(audioPlayer);
             source.connect(analyser);
@@ -378,9 +389,8 @@
 
         function updatePlayBtnIcon() {
             playBtn.innerHTML = isPlaying 
-                ? '<i data-lucide="pause"></i> Pausar' 
-                : '<i data-lucide="play"></i> Play';
-            lucide.createIcons();
+                ? '<span class="icon">⏸</span> Pausar' 
+                : '<span class="icon">▶</span> Play';
         }
 
         playBtn.addEventListener('click', () => {
@@ -425,24 +435,20 @@
             [-1,-1,1], [1,-1,1], [1,1,1], [-1,1,1]
         ];
         const cubeEdges = [
-            [0,1], [1,2], [2,3], [3,0], // back
-            [4,5], [5,6], [6,7], [7,4], // front
-            [0,4], [1,5], [2,6], [3,7]  // connections
+            [0,1], [1,2], [2,3], [3,0],
+            [4,5], [5,6], [6,7], [7,4],
+            [0,4], [1,5], [2,6], [3,7]
         ];
 
-        // Rotação em eixos 3D
         function rotate3D(x, y, z, angleX, angleY, angleZ) {
-            // Rot X
             let cosX = Math.cos(angleX), sinX = Math.sin(angleX);
             let y1 = y * cosX - z * sinX;
             let z1 = y * sinX + z * cosX;
             
-            // Rot Y
             let cosY = Math.cos(angleY), sinY = Math.sin(angleY);
             let x2 = x * cosY + z1 * sinY;
             let z2 = -x * sinY + z1 * cosY;
             
-            // Rot Z
             let cosZ = Math.cos(angleZ), sinZ = Math.sin(angleZ);
             let x3 = x2 * cosZ - y1 * sinZ;
             let y3 = x2 * sinZ + y1 * cosZ;
@@ -450,7 +456,6 @@
             return [x3, y3, z2];
         }
 
-        // Desenhar forma de arame (Wireframe)
         function drawWireframe(vertices, edges, scale, rotX, rotY, rotZ, centerX, centerY, color, lineWidth, glow) {
             ctx.strokeStyle = color;
             ctx.lineWidth = lineWidth;
@@ -463,7 +468,6 @@
 
             const projected = vertices.map(v => {
                 const rotated = rotate3D(v[0], v[1], v[2], rotX, rotY, rotZ);
-                // Projeção ortogonal simples + scale
                 return {
                     x: rotated[0] * scale + centerX,
                     y: rotated[1] * scale + centerY
@@ -478,7 +482,7 @@
                 ctx.lineTo(p2.x, p2.y);
             });
             ctx.stroke();
-            ctx.shadowBlur = 0; // reset
+            ctx.shadowBlur = 0;
         }
 
         let particles = [];
@@ -495,7 +499,7 @@
         }
 
         let time = 0;
-        let smoothBass = 0; // Lerp para evitar saltos bruscos (vertigem)
+        let smoothBass = 0;
         let rotAngle = 0;
         let targetRotSpeed = 0.002;
         let currentRotSpeed = 0.002;
@@ -503,12 +507,10 @@
         function renderVisualizer() {
             requestAnimationFrame(renderVisualizer);
 
-            // Fundo escuro com leve rastro (trail mais limpo)
             ctx.fillStyle = 'rgba(5, 5, 5, 0.3)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             if (!isPlaying || !isInitialized) {
-                // Desenhar formas de base devagar se estiver pausado
                 rotAngle += 0.002;
                 drawWireframe(tetraVertices, tetraEdges, 50, rotAngle, rotAngle*1.2, 0, canvas.width/2, canvas.height/2, 'rgba(0, 255, 204, 0.2)', 1, 0);
                 drawWireframe(cubeVertices, cubeEdges, 100, -rotAngle, rotAngle, rotAngle*0.5, canvas.width/2, canvas.height/2, 'rgba(0, 179, 255, 0.1)', 1, 0);
@@ -517,24 +519,20 @@
 
             analyser.getByteFrequencyData(frequencyData);
             
-            // Analisar Médias e Picos
             let bassSum = 0;
-            let peakValue = 0; // Procurar o volume máximo para o threshold
+            let peakValue = 0;
             for(let i = 0; i < 10; i++) {
                 bassSum += frequencyData[i];
                 if (frequencyData[i] > peakValue) peakValue = frequencyData[i];
             }
             let rawBass = bassSum / 10;
             
-            // Lerp para suavizar o grave (Evita "vertigem")
             smoothBass += (rawBass - smoothBass) * 0.15;
 
-            // Threshold: Se peak ultrapassar ~200 (equivalente a uma batida muito alta, ex: -6dB)
             const isHighEnergy = peakValue > 210;
 
-            // Velocidade de Rotação Suave
             targetRotSpeed = isHighEnergy ? 0.015 : 0.002 + (smoothBass * 0.00002);
-            currentRotSpeed += (targetRotSpeed - currentRotSpeed) * 0.05; // transição fluida de velocidade
+            currentRotSpeed += (targetRotSpeed - currentRotSpeed) * 0.05;
             rotAngle += currentRotSpeed;
             time += 0.01;
 
@@ -542,32 +540,26 @@
             const centerY = canvas.height / 2;
             const baseScale = Math.min(canvas.width, canvas.height) * 0.15;
 
-            // 1. Sólido Interno (Tetraedro) - Limpo, reage suavemente
             const tetraScale = (baseScale * 0.6) + (smoothBass * 0.2);
             const tetraColor = isHighEnergy ? '#00ffcc' : 'rgba(0, 255, 204, 0.6)';
             const tetraGlow = isHighEnergy ? 15 : 5;
             drawWireframe(tetraVertices, tetraEdges, tetraScale, rotAngle*2, rotAngle, rotAngle*0.5, centerX, centerY, tetraColor, 2, tetraGlow);
 
-            // 2. Sólido Médio (Octaedro)
             const octaScale = (baseScale * 1.2) + (smoothBass * 0.4);
             const octaColor = isHighEnergy ? '#ff00ff' : 'rgba(255, 0, 255, 0.4)';
             drawWireframe(octaVertices, octaEdges, octaScale, -rotAngle, rotAngle*1.5, rotAngle, centerX, centerY, octaColor, 1.5, isHighEnergy ? 10 : 0);
 
-            // 3. Sólido Externo (Cubo) - Expande muito nos picos
             const cubeExp = isHighEnergy ? smoothBass * 1.2 : smoothBass * 0.5;
             const cubeScale = (baseScale * 1.8) + cubeExp;
             const cubeColor = isHighEnergy ? '#00b3ff' : 'rgba(0, 179, 255, 0.2)';
             drawWireframe(cubeVertices, cubeEdges, cubeScale, rotAngle*0.5, -rotAngle, rotAngle*1.2, centerX, centerY, cubeColor, isHighEnergy ? 3 : 1, isHighEnergy ? 20 : 0);
 
-            // Partículas só ativam em High Energy (Threshold ultrapassado)
             if (isHighEnergy && Math.random() > 0.5) {
                 emitParticles(centerX, centerY, '#fff', 3);
-                // Flash sutil no fundo
                 ctx.fillStyle = 'rgba(255,255,255,0.02)';
                 ctx.fillRect(0,0, canvas.width, canvas.height);
             }
 
-            // Atualizar e Desenhar Partículas
             for (let i = particles.length - 1; i >= 0; i--) {
                 let p = particles[i];
                 p.x += p.vx;
@@ -584,7 +576,6 @@
                 }
             }
         }
-
     </script>
 </body>
 </html>
