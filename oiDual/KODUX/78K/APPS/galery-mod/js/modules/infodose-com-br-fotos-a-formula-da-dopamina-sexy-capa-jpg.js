@@ -1,34 +1,41 @@
 (function(){
-        const APP_CARDS = [
-            {
-                id: 'dopamina',
-                title: "A Fórmula da Dopamina",
-                tag: "INFODOSE · EDIÇÃO",
-                desc: "Uma experiência visual para explorar comportamento, prazer, recompensa e os mecanismos da dopamina.",
-                image: "https://infodose.com.br/fotos/A_formula_da_dopamina_sexy-CAPA.jpg"
-            },
-            {
-                id: 'espaco',
-                title: "O Espaço da Mente",
-                tag: "NEBULA READER",
-                desc: "Entre em um espaço de leitura pensado para transformar textos em uma experiência imersiva.",
-                image: "https://infodose.com.br/fotos/O_espaco_da_mente-CAPA.jpg"
-            },
-            {
-                id: 'eco',
-                title: "Eco Urbano",
-                tag: "CONCEITO · VISUAL",
-                desc: "Descubra como metrópoles estão integrando o verde selvagem em meio ao concreto para o futuro da humanidade.",
-                image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d880?q=80&w=1200&auto=format&fit=crop"
-            },
-            {
-                id: 'neon',
-                title: "Neon Distópico",
-                tag: "EXPERIÊNCIA · 3D",
-                desc: "Acelere através do tempo em luzes saturadas e ruelas chuvosas onde a tecnologia encontra a tradição.",
-                image: "https://www.infodose.com.br/fotos/A_formula_da_dopamina_sexy-uCAPA.jpg"
-            }
-        ];
+const APP_CARDS = [
+    {
+        id: 'dopamina',
+        title: "A Fórmula da Dopamina",
+        tag: "INFODOSE · EDIÇÃO",
+        desc: "Uma experiência visual para explorar comportamento, prazer, recompensa e os mecanismos da dopamina.",
+        image: "https://infodose.com.br/fotos/A_formula_da_dopamina_sexy-CAPA.jpg",
+        url: "https://kodux78k.github.io/NosSolar-dualInfodose/"
+    },
+    
+    {
+        id: 'espaco',
+        title: "O Espaço da Mente",
+        tag: "NEBULA READER",
+        desc: "Entre em um espaço de leitura pensado para transformar textos em uma experiência imersiva.",
+        image: "https://infodose.com.br/fotos/O_espaco_da_mente-CAPA.jpg",
+        url: "https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78HERO/"
+    },
+    
+    {
+        id: 'eco',
+        title: "Eco Urbano",
+        tag: "CONCEITO · VISUAL",
+        desc: "Descubra como metrópoles estão integrando o verde selvagem em meio ao concreto para o futuro da humanidade.",
+        image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d880?q=80&w=1200&auto=format&fit=crop",
+        url: "https://www.78frames.com.br/"
+    },
+    
+    {
+        id: 'neon',
+        title: "Neon Distópico",
+        tag: "EXPERIÊNCIA · 3D",
+        desc: "Acelere através do tempo em luzes saturadas e ruelas chuvosas onde a tecnologia encontra a tradição.",
+        image: "https://www.infodose.com.br/fotos/A_formula_da_dopamina_sexy-uCAPA.jpg",
+        url: "https://www.78frames.com.br/"
+    }
+];
         window.__NEBULA_APP_CARDS = APP_CARDS;
 
         // Responsividade para tamanho da pílula baseada na largura da tela
@@ -105,7 +112,18 @@
             window.addEventListener('pointerup', handlePointerUp);
             window.addEventListener('pointercancel', handlePointerUp);
 
-            pBtn.addEventListener('click', () => { openApp(APP_CARDS[activeIndex].title); });
+            pBtn.addEventListener('click', () => {
+    const app = APP_CARDS[activeIndex];
+    if (!app) return;
+    
+    openApp({
+        id: `pill-${app.id}`,
+        name: app.title,
+        type: 'html',
+        url: app.url,
+        content: ''
+    });
+});
 
             updateActiveIndex(0);
             requestAnimationFrame(loop);
