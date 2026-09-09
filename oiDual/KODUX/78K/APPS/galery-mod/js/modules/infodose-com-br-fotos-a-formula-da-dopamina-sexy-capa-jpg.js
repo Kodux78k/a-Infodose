@@ -1,12 +1,21 @@
 (function(){
 const APP_CARDS = [
     {
+        id: 'nosolar',
+        title: "NoSolar",
+        tag: "INFODOSE · NOSOLAR",
+        desc: "Experiência NoSolar · Dual Infodose.",
+        image: "https://kodux78k.github.io/NosSolar-dualInfodose/icons/icon-192.png",
+        url: "https://kodux78k.github.io/NosSolar-dualInfodose/"
+    },
+    
+    {
         id: 'dopamina',
-        title: "A Fórmula da Dopamina",
+        title: "A Fórmula da Dopamina Sexy",
         tag: "INFODOSE · EDIÇÃO",
         desc: "Uma experiência visual para explorar comportamento, prazer, recompensa e os mecanismos da dopamina.",
         image: "https://infodose.com.br/fotos/A_formula_da_dopamina_sexy-CAPA.jpg",
-        url: "https://kodux78k.github.io/NosSolar-dualInfodose/"
+        url: "https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78LV.html"
     },
     
     {
@@ -14,26 +23,26 @@ const APP_CARDS = [
         title: "O Espaço da Mente",
         tag: "NEBULA READER",
         desc: "Entre em um espaço de leitura pensado para transformar textos em uma experiência imersiva.",
-        image: "https://infodose.com.br/fotos/O_espaco_da_mente-CAPA.jpg",
-        url: "https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78HERO/"
+        image: "https://www.infodose.com.br/fotos/O_espaco_da_mente-CAPA.jpg",
+        url: "https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78NP/index.html"
     },
     
     {
-        id: 'eco',
-        title: "Eco Urbano",
-        tag: "CONCEITO · VISUAL",
-        desc: "Descubra como metrópoles estão integrando o verde selvagem em meio ao concreto para o futuro da humanidade.",
-        image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d880?q=80&w=1200&auto=format&fit=crop",
-        url: "https://www.78frames.com.br/"
+        id: 'editor-mix',
+        title: "Editor Mix",
+        tag: "INFODOSE · CRIAÇÃO",
+        desc: "Ferramenta criativa para editar, combinar e experimentar conteúdos.",
+        image: "https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78EM/icon-192.png",
+        url: "https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78EM/index.html"
     },
     
     {
-        id: 'neon',
-        title: "Neon Distópico",
-        tag: "EXPERIÊNCIA · 3D",
-        desc: "Acelere através do tempo em luzes saturadas e ruelas chuvosas onde a tecnologia encontra a tradição.",
-        image: "https://www.infodose.com.br/fotos/A_formula_da_dopamina_sexy-uCAPA.jpg",
-        url: "https://www.78frames.com.br/"
+        id: 'player',
+        title: "Player",
+        tag: "INFODOSE · PLAYER",
+        desc: "Player multimídia do ecossistema Infodose.",
+        image: "https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78PLAYER/icon-192.png",
+        url: "https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78PLAYER/Kodux-Player-global-[BASE]-OK-v1.html"
     }
 ];
         window.__NEBULA_APP_CARDS = APP_CARDS;
