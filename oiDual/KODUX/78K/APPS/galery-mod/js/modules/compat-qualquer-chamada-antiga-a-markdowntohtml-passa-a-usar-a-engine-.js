@@ -127,7 +127,7 @@
                 const bubble = document.getElementById(`nb-dock-${doc.id}`); if (bubble) bubble.remove(); bringToFront(win); return;
             }
 
-            const win = document.createElement("div"); win.className = "nb-session-window session-window peeked"; win.id = `nb-win-${doc.id}`;
+            const win = document.createElement("div"); win.className = "nb-session-window peeked"; win.id = `nb-win-${doc.id}`;
             const icon = { pdf: "📕", html: "🌐", markdown: "📝", json: "📋", txt: "📄" }[doc.type] || "📄";
 
             win.innerHTML = `
