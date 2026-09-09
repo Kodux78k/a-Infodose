@@ -50,7 +50,7 @@
 
         function renderBody(doc) {
             if (doc.type === "slice") return `<div class="nb-slice-host" data-slice-host></div>`;
-            if ((doc.type === "pdf" || doc.type === "html") && doc.url) return `<iframe src="${escapeHTMLLocal(doc.url)}" sandbox="allow-scripts allow-same-origin allow-popups allow-forms" loading="lazy"></iframe>`;
+            if ((doc.type === "pdf" || doc.type === "html") && doc.url) return `<iframe src="${escapeHTMLLocal(doc.url)}"></iframe>`;
             if (doc.type === "markdown" && typeof window.markdownToHTML === "function") return `<div class="nb-md-view">${window.markdownToHTML(doc.content || "")}</div>`;
             if (doc.type === "json") {
                 let pretty = doc.content || ""; try { pretty = JSON.stringify(JSON.parse(doc.content), null, 2); } catch (e) {}
@@ -127,7 +127,7 @@
                 const bubble = document.getElementById(`nb-dock-${doc.id}`); if (bubble) bubble.remove(); bringToFront(win); return;
             }
 
-            const win = document.createElement("div"); win.className = "nb-session-window peeked"; win.id = `nb-win-${doc.id}`;
+            const win = document.createElement("div"); win.className = "nb-session-window session-window peeked"; win.id = `nb-win-${doc.id}`;
             const icon = { pdf: "📕", html: "🌐", markdown: "📝", json: "📋", txt: "📄" }[doc.type] || "📄";
 
             win.innerHTML = `
@@ -581,18 +581,66 @@
         criacao:{title:"Criação",icon:"✦",filter:x=>x.type==='html'}
       };
 
-      /* ======================================================
-         REGISTRO CENTRAL DOS MINI APPS
-         Troque apenas url para apontar um mini app real.
-      ====================================================== */
-      const REGISTRY=[
-        {id:'dual-infodose',name:'Dual Infodose',kind:'ia',icon:'◉',desc:'IA · Chat · Voz',url:null},
-        {id:'slice-reader',name:'Slice Reader',kind:'leitura',icon:'◫',desc:'Texto · Slices · Player',url:null,internal:'slice-reader'},
-        {id:'tab-engine',name:'Tab Engine',kind:'sistema',icon:'▣',desc:'Abas · Sessões',url:null},
-        {id:'baulite',name:'BaúLite',kind:'sistema',icon:'◈',desc:'Dados · Biblioteca',url:null},
-        {id:'cortex',name:'Cortex',kind:'ia',icon:'◎',desc:'Conhecimento · RAG',url:null},
-        {id:'workspace',name:'Workspace',kind:'criacao',icon:'⌘',desc:'Projetos · Espaços',url:null}
-      ];
+   /* ======================================================
+   REGISTRO CENTRAL DOS MINI APPS
+   Troque apenas url para apontar um mini app real.
+====================================================== */
+const REGISTRY = [
+  {
+    id: 'dual-infodose',
+    name: 'Dual Infodose',
+    kind: 'ia',
+    icon: '◉',
+    desc: 'IA · Chat · Voz',
+    url: 'https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78Unouno/index.html'
+  },
+
+  {
+    id: 'slice-reader',
+    name: 'Slice Reader',
+    kind: 'leitura',
+    icon: '◫',
+    desc: 'Texto · Slices · Player',
+    url: null,
+    internal: 'slice-reader'
+  },
+
+  {
+    id: 'tab-engine',
+    name: 'Tab Engine',
+    kind: 'sistema',
+    icon: '▣',
+    desc: 'Abas · Sessões',
+    url: 'https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78iFSwOS/'
+  },
+
+  {
+    id: 'baulite',
+    name: 'BaúLite',
+    kind: 'sistema',
+    icon: '◈',
+    desc: 'Dados · Biblioteca',
+    url: 'https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78HERO/'
+  },
+
+  {
+    id: 'cortex',
+    name: 'Cortex',
+    kind: 'ia',
+    icon: '◎',
+    desc: 'Conhecimento · RAG',
+    url: 'https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78iFSwOS/'
+  },
+
+  {
+    id: 'workspace',
+    name: 'Workspace',
+    kind: 'criacao',
+    icon: '⌘',
+    desc: 'Projetos · Espaços',
+    url: 'https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78Dual/'
+  }
+];
       window.NEBULA_APP_REGISTRY=REGISTRY;
 
       const docs=()=>typeof currentDocs!=='undefined'&&Array.isArray(currentDocs)?currentDocs:[];
