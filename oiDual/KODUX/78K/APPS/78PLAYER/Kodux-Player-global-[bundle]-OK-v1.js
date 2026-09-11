@@ -443,10 +443,6 @@ document.body.appendChild(n);
 
 <style>
 
-/* ═══════════════════════════════════════════════════════
-   GLOBAL PLAYER · UNIFIED
-   ═══════════════════════════════════════════════════════ */
-
 #global-player.session-window {
   position: relative;
   overflow: hidden;
@@ -542,21 +538,6 @@ document.body.appendChild(n);
 }
 
 </style>
-  <div id="global-player" class="v-glass session-window">
-    <div class="gp-toolbar">
-        <button class="gp-btn" onclick="Player.minimize()" title="Minimizar">
-            <span class="gp-icon">−</span>
-        </button>
-        <button class="gp-btn expand" id="player-expand-btn" onclick="Player.expand()" title="Expandir">
-            <span class="gp-icon">⤢</span>
-        </button>
-        <button class="gp-btn close" onclick="Player.stop()" title="Fechar">
-            <span class="gp-icon">✕</span>
-        </button>
-    </div>
-    <div id="player-frame-wrap" class="w-full h-full bg-black"></div>
-    <div class="gp-title" id="gp-title">Nenhuma faixa</div>
-</div>
 
 <!-- SPRITE DE ÍCONES (KODUX) -->
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none;">
