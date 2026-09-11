@@ -541,9 +541,8 @@ document.body.appendChild(n);
   text-shadow: 0 1px 8px rgba(0,0,0,.8);
 }
 
-</style> <
-!-- === == GLOBAL PLAYER(Fusion OS)– com ícones UTF‑ 8 === == -- >
-  <div id="global-player" class="v-glass">
+</style>
+  <div id="global-player" class="v-glass session-window">
     <div class="gp-toolbar">
         <button class="gp-btn" onclick="Player.minimize()" title="Minimizar">
             <span class="gp-icon">−</span>
