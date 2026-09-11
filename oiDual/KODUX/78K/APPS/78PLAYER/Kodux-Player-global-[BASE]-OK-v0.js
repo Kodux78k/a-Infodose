@@ -444,7 +444,7 @@ document.body.appendChild(n);
 <!-- ===== GLOBAL PLAYER (Fusion OS) – com ícones UTF‑8 ===== -->
  <div id="global-player" class="v-glass session-window overflow-hidden">
     <div class="absolute top-3 right-3 z-20 flex gap-2">
-      <button onclick="Player.minimize()" data-action="minimize" class="w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition border border-white/5"><i data-lucide="minus" class="w-3 h-3 text-white"></i></button>
+      <button onclick="Player.minimize()" class="w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition border border-white/5"><i data-lucide="minus" class="w-3 h-3 text-white"></i></button>
       <button onclick="Player.expand()" id="player-expand-btn" class="w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center hover:bg-[var(--active-color)]/40 transition border border-white/5"><i data-lucide="maximize-2" class="w-3 h-3 text-white"></i></button>
       <button onclick="Player.stop()" class="w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center hover:bg-red-500/30 transition border border-white/5"><i data-lucide="x" class="w-3 h-3 text-white"></i></button>
     </div>
