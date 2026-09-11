@@ -541,9 +541,9 @@ document.body.appendChild(n);
 
 </style>
 <!-- ===== GLOBAL PLAYER (Fusion OS) – com ícones UTF‑8 ===== -->
-<div id="global-player" class="session-window v-glass">
+<div id="global-player" class="session-window v-glass overflow-hidden">
     <div class="gp-toolbar">
-        <button class="gp-btn" onclick="Player.minimize()" data-action="minimize" title="Minimizar">
+        <button class="gp-btn" onclick="Player.minimize()" title="Minimizar">
             <span class="gp-icon">−</span>
         </button>
         <button class="gp-btn expand" id="player-expand-btn" onclick="Player.expand()" title="Expandir">
