@@ -248,7 +248,7 @@ document.body.appendChild(n);
         transition: border-color 0.3s, box-shadow 0.3s;
     }
     .visualizer-btn.has-track {
-        color: var(--primary, #00d2ff) !important;
+        border-color: var(--primary, #00d2ff) !important;
         box-shadow: 0 0 0 2px rgba(0, 210, 255, 0.4), 0 0 12px rgba(0, 210, 255, 0.2);
         animation: vizPulse 29s ease-in-out infinite;
     }
