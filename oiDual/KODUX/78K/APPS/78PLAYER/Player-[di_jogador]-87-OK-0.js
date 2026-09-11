@@ -1543,14 +1543,26 @@ window.KOBLLUX_ARCHETYPES = {
     }
   }
 
-  function initDrag() {
+    function initDrag() {
     if (!dom.widget) return;
     const handleEls = [dom.ball, ...document.querySelectorAll(".drag-header")].filter(Boolean);
     let initialX = 0, initialY = 0, dragStartY = 0;
+    let startedFromState = "ball";
 
     const onStart = (e) => {
-      if (state.widgetState === "full" || e.target.closest("button, input, select, textarea")) return;
+      if (e.target.closest("button, input, select, textarea")) return;
+
       state.isDragging = false;
+      startedFromState = state.widgetState;
+
+      const rect = dom.widget.getBoundingClientRect();
+      state.currentX = rect.left;
+      state.currentY = rect.top;
+      dom.widget.style.transform = "none";
+      dom.widget.style.bottom = "auto";
+      dom.widget.style.left = \`\${state.currentX}px\`;
+      dom.widget.style.top = \`\${state.currentY}px\`;
+
       const touch = e.type === "touchstart" ? e.touches[0] : e;
       initialX = touch.clientX - state.currentX;
       initialY = touch.clientY - state.currentY;
@@ -1562,9 +1574,17 @@ window.KOBLLUX_ARCHETYPES = {
       document.addEventListener("touchend", onEnd);
     };
     const onMove = (e) => {
+      const touch = e.type === "touchmove" ? e.touches[0] : e;
+      const movedEnough = Math.abs(touch.clientY - dragStartY) > 6 || Math.abs((touch.clientX - initialX) - state.currentX) > 6;
+      if (!state.isDragging && !movedEnough) return;
       state.isDragging = true;
       e.preventDefault();
-      const touch = e.type === "touchmove" ? e.touches[0] : e;
+
+      if (startedFromState === "full" || startedFromState === "footer") {
+        dom.widget.style.width = "";
+        dom.widget.style.height = "";
+      }
+
       state.currentX = touch.clientX - initialX;
       state.currentY = touch.clientY - initialY;
       dom.widget.style.left = \`\${state.currentX}px\`;
@@ -1576,12 +1596,17 @@ window.KOBLLUX_ARCHETYPES = {
       document.removeEventListener("touchmove", onMove);
       document.removeEventListener("touchend", onEnd);
       dom.widget.style.transition = "";
+
+      if (!state.isDragging) return;
+
       const deltaY = dragStartY - state.currentY;
-      if (deltaY > 50 && state.widgetState === "ball") {
-        updateWidgetState("preview");
-      } else if (state.currentY > window.innerHeight - 120) {
+      const droppedNearBottom = state.currentY > window.innerHeight - 140;
+
+      if (droppedNearBottom) {
         updateWidgetState("footer");
-      } else if (state.isDragging) {
+      } else if (deltaY > 50 && startedFromState === "ball") {
+        updateWidgetState("preview");
+      } else {
         updateWidgetState("ball");
       }
     };
@@ -1590,6 +1615,7 @@ window.KOBLLUX_ARCHETYPES = {
       h.addEventListener("touchstart", onStart);
     });
   }
+
 
   // ── PLAYBACK ─────────────────────────────────────────────────────
   function ensureYTPlayer() {
