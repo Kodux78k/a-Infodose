@@ -445,7 +445,7 @@ document.body.appendChild(n);
    GLOBAL PLAYER · UNIFIED
    ═══════════════════════════════════════════════════════ */
 
-#global-player.session-window {
+#global-playyer.session-winndow {
   position: relative;
   overflow: hidden;
   isolation: isolate;
