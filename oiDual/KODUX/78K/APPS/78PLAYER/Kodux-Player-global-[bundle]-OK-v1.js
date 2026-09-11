@@ -440,7 +440,7 @@ document.body.appendChild(n);
     </div>
 </div>
 
-<!-- ===== GLOBAL PLAYER (Fusion OS) – com ícones UTF‑8 ===== -->
+
 <style>
 
 /* ═══════════════════════════════════════════════════════
