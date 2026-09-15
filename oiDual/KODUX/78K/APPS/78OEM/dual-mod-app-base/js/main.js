@@ -1,0 +1,16 @@
+import "./modules/idempotente.js";
+import "./modules/title.js";
+import "./modules/v.js";
+import "./modules/tokval.js";
+import "./modules/norm.js";
+import "./modules/normalize.js";
+import "./modules/updprogress.js";
+import "./modules/escaperegex.js";
+import "./modules/apply-bg-immediately.js";
+import "./modules/mxp-extras-data-sn.js";
+import "./modules/no-op.js";
+import "./modules/botoes-de-backup.js";
+import "./modules/1-detectar-se-legacy-esta-ativo-exports-tipicos-de-ifsw-base-full-js.js";
+import "./modules/nebula-beauty-render.js";
+import "./modules/nebula-beauty-enhance.js";
+import "./modules/nebula-rich-js.js";
