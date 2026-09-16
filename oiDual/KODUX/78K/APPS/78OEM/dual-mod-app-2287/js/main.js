@@ -1,0 +1,15 @@
+import "./modules/sessionize.js";
+import "./modules/kblxdockread.js";
+import "./modules/v.js";
+import "./modules/tokval.js";
+import "./modules/norm.js";
+import "./modules/normalize.js";
+import "./modules/updprogress.js";
+import "./modules/escaperegex.js";
+import "./modules/cyclesolar.js";
+import "./modules/split-0-nova-aba-fav-false-createdat-date-now.js";
+import "./modules/www-infodose-com-br-splash-host.js";
+import "./modules/migratelegacybg.js";
+import "./modules/i-test-u-u-startswith-about-u-https-u-active-src-u.js";
+import "./modules/inline.js";
+import "./modules/wraplists.js";
