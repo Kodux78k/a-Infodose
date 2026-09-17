@@ -1154,6 +1154,540 @@ window.DualSession = {
 };
 })();
 
+/* ===== kblx-tabs-links-unified.js =====
+   Fonte ÚNICA de verdade pras abas (substitui os 2 tabDataMap).
+   - persistência em localStorage (kobllux:tabs)
+   - histórico de links (kobllux:links)
+   - arrastar session-window → outra = merge em abas
+   - arrastar aba do Tab Switcher → desktop = nova session
+   - tudo via data-action
+*/
+(function(){
+"use strict";
+if (window.__KBLX_TABS_UNIFIED__) return;
+window.__KBLX_TABS_UNIFIED__ = true;
+
+const $  = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const uid = (p='id')=>p+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const now = ()=>Date.now();
+
+/* ═══════════════════════════════════════════════════════════
+   1. TABSTORE — fonte única, persistida
+   ═══════════════════════════════════════════════════════════ */
+const TabStore = {
+  _mem: new Map(),
+  _read(){ try{return JSON.parse(localStorage.getItem('kobllux:tabs'))||{};}catch(_){return{};} },
+  _write(o){ try{localStorage.setItem('kobllux:tabs',JSON.stringify(o));}catch(_){} },
+
+  get(winId){
+    if(!winId) return null;
+    if(this._mem.has(winId)) return this._mem.get(winId);
+    const disk = this._read()[winId];
+    if(disk){ this._mem.set(winId,disk); return disk; }
+    return null;
+  },
+  set(winId,data){
+    if(!winId) return;
+    this._mem.set(winId,data);
+    const all=this._read(); all[winId]=data; this._write(all);
+    document.dispatchEvent(new CustomEvent('tabstore:changed',{detail:{winId,data}}));
+  },
+  ensure(winId,seedUrl){
+    let d=this.get(winId); if(d) return d;
+    const u = seedUrl||'about:blank';
+    const tab={ id:uid('tab'), url:u,
+      title:u.replace(/^https?:\/\//,'').split('/')[0]||'Nova Aba',
+      fav:false, createdAt:now() };
+    d={tabs:[tab], activeId:tab.id};
+    this.set(winId,d);
+    return d;
+  },
+  addTab(winId,url,opts={}){
+    const d=this.ensure(winId);
+    const u=url||'about:blank';
+    const t={ id:uid('tab'), url:u,
+      title:opts.title||u.replace(/^https?:\/\//,'').split('/')[0]||'Nova Aba',
+      fav:!!opts.fav, createdAt:now() };
+    d.tabs.push(t); d.activeId=t.id; this.set(winId,d);
+    LinkHistory.record(u,t.title,winId);
+    return t;
+  },
+  removeTab(winId,tabId){
+    const d=this.get(winId); if(!d||d.tabs.length<=1) return null;
+    const i=d.tabs.findIndex(t=>t.id===tabId); if(i<0) return null;
+    const [r]=d.tabs.splice(i,1);
+    if(d.activeId===tabId) d.activeId=d.tabs[Math.min(i,d.tabs.length-1)].id;
+    this.set(winId,d); return r;
+  },
+  detachTab(winId,tabId){
+    const d=this.get(winId); if(!d||d.tabs.length<=1) return null;
+    const i=d.tabs.findIndex(t=>t.id===tabId); if(i<0) return null;
+    const [t]=d.tabs.splice(i,1);
+    if(d.activeId===tabId) d.activeId=d.tabs[Math.min(i,d.tabs.length-1)].id;
+    this.set(winId,d); return t;
+  },
+  attachTab(winId,tab){
+    const d=this.ensure(winId);
+    const copy={...tab, id:uid('tab')};
+    d.tabs.push(copy); d.activeId=copy.id; this.set(winId,d);
+    return copy;
+  },
+  setActive(winId,tabId){
+    const d=this.get(winId); if(!d) return;
+    if(!d.tabs.some(t=>t.id===tabId)) return;
+    d.activeId=tabId; this.set(winId,d);
+  },
+  updateUrl(winId,tabId,url,title){
+    const d=this.get(winId); if(!d) return;
+    const t=d.tabs.find(x=>x.id===tabId); if(!t) return;
+    t.url=url; if(title) t.title=title;
+    this.set(winId,d);
+    LinkHistory.record(url,title||t.title,winId);
+  },
+  dropAll(winId){ this._mem.delete(winId); const a=this._read(); delete a[winId]; this._write(a); }
+};
+window.TabStore = TabStore;
+
+/* ═══════════════════════════════════════════════════════════
+   2. LINK HISTORY — histórico persistido
+   ═══════════════════════════════════════════════════════════ */
+const LinkHistory = {
+  _read(){ try{return JSON.parse(localStorage.getItem('kobllux:links'))||[];}catch(_){return[];} },
+  _write(l){ try{localStorage.setItem('kobllux:links',JSON.stringify(l.slice(-800)));}catch(_){} },
+  record(url,title,sessionId){
+    if(!url||url==='about:blank') return;
+    const l=this._read(); const last=l[l.length-1];
+    if(last && last.url===url && (now()-last.ts)<2500) return;
+    l.push({url,title:title||url,ts:now(),sessionId:sessionId||null});
+    this._write(l);
+    document.dispatchEvent(new CustomEvent('link:visited',{detail:{url,title,sessionId}}));
+  },
+  list(){ return this._read(); },
+  clear(){ this._write([]); }
+};
+window.LinkHistory = LinkHistory;
+
+/* ═══════════════════════════════════════════════════════════
+   3. APLICAR TABDATA NA WINDOW (visual)
+   ═══════════════════════════════════════════════════════════ */
+function applyTabsToWindow(win, data){
+  if(!win||!data) return;
+  const frame = win.querySelector('.win-frame');
+  const active = data.tabs.find(t=>t.id===data.activeId) || data.tabs[0];
+  if(frame && active && frame.src !== active.url) frame.src = active.url;
+  const counter = win.querySelector('.tab-counter');
+  if(counter) counter.textContent = data.tabs.length;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   4. SINCRONIZA DualSession + iFSw com o TabStore
+   ═══════════════════════════════════════════════════════════ */
+function patchExisting(){
+  /* DualSession (mxp-extras-data-sn.js) */
+  const DS = window.DualSession;
+  if(DS && !DS.__unified){
+    DS.__unified = true;
+    const orig = DS.renderSessions?.bind(DS);
+    DS.renderSessions = function(){
+      orig?.();
+      requestAnimationFrame(()=>{
+        $$('.session-window').forEach(win=>{
+          const id = win.dataset.sessionId; if(!id) return;
+          const d = TabStore.ensure(id, win.querySelector('.win-frame')?.src);
+          applyTabsToWindow(win, d);
+        });
+      });
+    };
+  }
+  /* iFSw: mesma ideia — intercepta antes do render dele */
+  const SL = window.SessionLifecycle;
+  if(SL && !SL.__unified){
+    SL.__unified = true;
+    /* a API pública dele continua funcionando; só espelhamos pro TabStore */
+    const _restore = SL.restore;
+    SL.restore = function(id){
+      const win = document.getElementById(id);
+      if(win){
+        const d = TabStore.get(win.dataset.sessionId || id);
+        if(d) applyTabsToWindow(win, d);
+      }
+      return _restore?.call(SL, id);
+    };
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   5. DRAG: session-window → session-window = MERGE em abas
+   ═══════════════════════════════════════════════════════════ */
+let dragWin=null, dragGhost=null, hoverTarget=null, dragStartPt=null;
+
+function moveGhost(x,y){ if(dragGhost){ dragGhost.style.left=x+'px'; dragGhost.style.top=y+'px'; } }
+function winUnder(x,y,exclude){ 
+  const el = document.elementFromPoint(x,y);
+  const w = el?.closest?.('.session-window');
+  return (w && w!==exclude) ? w : null;
+}
+
+function startWinDrag(win,e){
+  dragWin = win;
+  win.classList.add('is-being-dragged');
+  dragGhost = document.createElement('div');
+  dragGhost.className='session-drag-ghost';
+  dragGhost.innerHTML = `<span class="sd-icon">◫</span><span>${win.querySelector('[data-part="title"],.mxp-title')?.textContent||'session'}</span>`;
+  document.body.appendChild(dragGhost);
+  moveGhost(e.clientX,e.clientY);
+  document.body.classList.add('session-dragging');
+}
+
+function mergeWinIntoTarget(src,dst){
+  const srcId = src.dataset.sessionId, dstId = dst.dataset.sessionId;
+  if(!srcId||!dstId||srcId===dstId) return;
+
+  const srcData = TabStore.ensure(srcId, src.querySelector('.win-frame')?.src);
+  const dstData = TabStore.ensure(dstId, dst.querySelector('.win-frame')?.src);
+
+  srcData.tabs.forEach(t=>{
+    const copy = {...t, id:uid('tab')};
+    dstData.tabs.push(copy);
+    if(copy.url) LinkHistory.record(copy.url, copy.title, dstId);
+  });
+  dstData.activeId = dstData.tabs[dstData.tabs.length-1].id;
+  TabStore.set(dstId,dstData);
+
+  /* remove origem */
+  try{ window.MXP?.removeSession?.(srcId); }catch(_){}
+  TabStore.dropAll(srcId);
+  src.remove();
+
+  applyTabsToWindow(dst, dstData);
+  document.dispatchEvent(new CustomEvent('session:merged',{
+    detail:{ from:srcId, into:dstId, tabs:srcData.tabs.length }
+  }));
+  window.KBLX_TOAST?.(`${srcData.tabs.length} aba(s) absorvida(s)`);
+  window.KBLX_SAVE?.();
+}
+
+function endWinDrag(e){
+  if(!dragWin) return;
+  const tgt = winUnder(e.clientX,e.clientY,dragWin);
+  if(tgt) mergeWinIntoTarget(dragWin,tgt);
+  dragWin.classList.remove('is-being-dragged');
+  dragGhost?.remove(); dragGhost=null;
+  hoverTarget?.classList.remove('is-merge-target'); hoverTarget=null;
+  dragWin=null; dragStartPt=null;
+  document.body.classList.remove('session-dragging');
+}
+
+function installWinMerge(){
+  document.addEventListener('pointerdown', e=>{
+    if(!e.target.closest('.win-hdr')) return;
+    if(e.target.closest('button,input,.win-controls,[data-part="title"],.mxp-title')) return;
+    const win = e.target.closest('.session-window');
+    if(!win) return;
+    dragStartPt = { x:e.clientX, y:e.clientY, win };
+  }, true);
+
+  document.addEventListener('pointermove', e=>{
+    if(!dragStartPt && !dragWin) return;
+    if(!dragWin){
+      const dx = e.clientX - dragStartPt.x, dy = e.clientY - dragStartPt.y;
+      if(Math.hypot(dx,dy) > 24) startWinDrag(dragStartPt.win, e);
+      return;
+    }
+    moveGhost(e.clientX,e.clientY);
+    const t = winUnder(e.clientX,e.clientY,dragWin);
+    if(t !== hoverTarget){
+      hoverTarget?.classList.remove('is-merge-target');
+      hoverTarget = t;
+      hoverTarget?.classList.add('is-merge-target');
+    }
+  }, { passive:true });
+
+  document.addEventListener('pointerup', e=>{ if(dragWin) endWinDrag(e); dragStartPt=null; });
+  document.addEventListener('pointercancel', ()=>{ 
+    if(dragWin){ endWinDrag({clientX:0,clientY:0}); dragStartPt=null; }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   6. DRAG: aba do Tab Switcher → desktop = NOVA session
+   ═══════════════════════════════════════════════════════════ */
+let dragTab=null, tabGhost=null, tabStartPt=null;
+
+function beginTabDrag(card,winId,tab,e){
+  dragTab = { sourceWinId:winId, tabId:tab.id, tab:{...tab} };
+  tabGhost = document.createElement('div');
+  tabGhost.className='tab-drag-ghost';
+  tabGhost.textContent = tab.title || tab.url || 'aba';
+  document.body.appendChild(tabGhost);
+  moveTabGhost(e.clientX,e.clientY);
+  document.body.classList.add('tab-dragging');
+  document.getElementById('tabSwitcherOverlay')?.classList.remove('open');
+}
+function moveTabGhost(x,y){ if(tabGhost){ tabGhost.style.left=x+'px'; tabGhost.style.top=y+'px'; } }
+
+function createSessionFromTab(drag,x,y){
+  const name = drag.tab.title || 'aba';
+  const s = window.MXP?.createSession?.(name);
+  if(!s) return;
+  requestAnimationFrame(()=>{
+    const win = document.querySelector(`.session-window[data-session-id="${s.id}"]`);
+    if(!win) return;
+    win.style.position='fixed';
+    win.style.left = Math.max(10, x-160)+'px';
+    win.style.top  = Math.max(60, y-30)+'px';
+    win.style.zIndex = '9650';
+    win.style.margin = '0';
+
+    /* 1) tira a aba da origem */
+    TabStore.detachTab(drag.sourceWinId, drag.tabId);
+
+    /* 2) injeta na nova window */
+    const tab = TabStore.addTab(s.id, drag.tab.url, { title:drag.tab.title, fav:drag.tab.fav });
+    applyTabsToWindow(win, TabStore.get(s.id));
+
+    /* 3) atualiza origem visual */
+    const srcWin = document.querySelector(`.session-window[data-session-id="${drag.sourceWinId}"]`);
+    if(srcWin) applyTabsToWindow(srcWin, TabStore.get(drag.sourceWinId));
+
+    window.KBLX_TOAST?.('Session criada da aba');
+    window.KBLX_SAVE?.();
+  });
+}
+
+function cleanupTabDrag(){
+  tabGhost?.remove(); tabGhost=null;
+  dragTab=null; tabStartPt=null;
+  document.body.classList.remove('tab-dragging');
+}
+
+function installTabOutDrag(){
+  document.addEventListener('pointerdown', e=>{
+    const card = e.target.closest('#tabGrid .tab-card');
+    if(!card || e.target.closest('.tab-close,.tab-fav')) return;
+    const tabId = card.dataset.tabId;
+    /* descobre a window dona dessa aba via TabStore */
+    let ownerWinId = null, tabObj = null;
+    for(const win of $$('.session-window')){
+      const id = win.dataset.sessionId;
+      const d = TabStore.get(id);
+      if(d && d.tabs.some(t=>t.id===tabId)){ ownerWinId=id; tabObj=d.tabs.find(t=>t.id===tabId); break; }
+    }
+    if(!ownerWinId||!tabObj) return;
+    tabStartPt = { x:e.clientX, y:e.clientY, card, ownerWinId, tabObj };
+  }, true);
+
+  document.addEventListener('pointermove', e=>{
+    if(dragTab){
+      moveTabGhost(e.clientX,e.clientY);
+      return;
+    }
+    if(!tabStartPt) return;
+    const dx = e.clientX - tabStartPt.x, dy = e.clientY - tabStartPt.y;
+    if(Math.hypot(dx,dy) > 18){
+      beginTabDrag(tabStartPt.card, tabStartPt.ownerWinId, tabStartPt.tabObj, e);
+    }
+  }, { passive:true });
+
+  document.addEventListener('pointerup', e=>{
+    if(!dragTab) return;
+    const overSwitcher = e.target.closest?.('#tabSwitcherOverlay');
+    if(!overSwitcher){
+      createSessionFromTab(dragTab, e.clientX, e.clientY);
+    }
+    cleanupTabDrag();
+  });
+  document.addEventListener('pointercancel', cleanupTabDrag);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   7. DATA-ACTION: ações tab:* unificadas
+   ═══════════════════════════════════════════════════════════ */
+function installTabActions(){
+  document.addEventListener('click', e=>{
+    const btn = e.target.closest('[data-action]');
+    if(!btn) return;
+    const action = btn.dataset.action;
+
+    if(action === 'tab:new'){
+      e.preventDefault(); e.stopPropagation();
+      const win = btn.closest('.session-window') || window.DualSession?.activeWindow;
+      if(!win) return window.KBLX_TOAST?.('sem session ativa');
+      const id = win.dataset.sessionId;
+      TabStore.addTab(id, 'about:blank');
+      applyTabsToWindow(win, TabStore.get(id));
+      window.DualSession?.openTabSwitcher?.(win);
+    }
+
+    if(action === 'tab:close'){
+      e.preventDefault(); e.stopPropagation();
+      const card = btn.closest('.tab-card');
+      const tabId = btn.dataset.tabId || card?.dataset.tabId;
+      const win = btn.closest('.session-window') || window.DualSession?.activeWindow;
+      if(!tabId||!win) return;
+      const id = win.dataset.sessionId;
+      TabStore.removeTab(id, tabId);
+      applyTabsToWindow(win, TabStore.get(id));
+      /* redesenha switcher se aberto */
+      if(document.getElementById('tabSwitcherOverlay')?.classList.contains('open')){
+        window.DualSession?.openTabSwitcher?.(win);
+      }
+    }
+
+    if(action === 'tab:activate'){
+      e.preventDefault(); e.stopPropagation();
+      const card = btn.closest('.tab-card');
+      const tabId = btn.dataset.tabId || card?.dataset.tabId;
+      const win = btn.closest('.session-window') || window.DualSession?.activeWindow;
+      if(!tabId||!win) return;
+      const id = win.dataset.sessionId;
+      TabStore.setActive(id, tabId);
+      applyTabsToWindow(win, TabStore.get(id));
+      window.DualSession?.closeTabSwitcher?.();
+    }
+  }, true);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   8. LINK TRACKER — todo iframe que carrega = histórico
+   ═══════════════════════════════════════════════════════════ */
+function hookFrame(f){
+  if(f.__linkTracked) return;
+  f.__linkTracked = true;
+  f.addEventListener('load', ()=>{
+    const win = f.closest('.session-window');
+    const id = win?.dataset.sessionId;
+    if(!id) return;
+    const d = TabStore.get(id); if(!d) return;
+    const active = d.tabs.find(t=>t.id===d.activeId);
+    if(active){
+      active.url = f.src;
+      try{ active.title = f.contentDocument?.title || active.title; }catch(_){}
+      TabStore.set(id,d);
+      LinkHistory.record(f.src, active.title, id);
+    }
+  });
+}
+function installLinkTracker(){
+  const mo = new MutationObserver(muts=>{
+    for(const m of muts){
+      for(const n of m.addedNodes||[]){
+        if(n.nodeType!==1) continue;
+        if(n.matches?.('.win-frame')) hookFrame(n);
+        n.querySelectorAll?.('.win-frame').forEach(hookFrame);
+      }
+    }
+  });
+  mo.observe(document.body,{childList:true,subtree:true});
+  $$('.win-frame').forEach(hookFrame);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   9. PAINEL DE HISTÓRICO (Ctrl+K)
+   ═══════════════════════════════════════════════════════════ */
+function showLinkPanel(){
+  let p = document.getElementById('kblx-link-panel');
+  if(!p){
+    p = document.createElement('div');
+    p.id = 'kblx-link-panel';
+    p.style.cssText = `
+      position:fixed; inset:8vh 15vw; background:rgba(8,10,22,.97);
+      border:1px solid rgba(120,200,255,.28); border-radius:14px;
+      z-index:99999; padding:18px; overflow:auto; color:#cfe;
+      font-family:ui-monospace,monospace; box-shadow:0 24px 80px rgba(0,0,0,.7);
+      backdrop-filter:blur(8px);`;
+    document.body.appendChild(p);
+    p.addEventListener('click', e=>{ if(e.target===p) p.remove(); });
+  }
+  const links = LinkHistory.list().slice(-150).reverse();
+  p.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px">
+      <b style="letter-spacing:2px">HISTÓRICO DE LINKS · ${links.length}</b>
+      <div style="display:flex;gap:8px">
+        <button data-action="links:clear" style="background:none;border:1px solid #445;color:#9ab;border-radius:6px;padding:4px 10px;cursor:pointer">LIMPAR</button>
+        <button data-action="links:close" style="background:none;border:1px solid #445;color:#9ab;border-radius:6px;padding:4px 10px;cursor:pointer">✕</button>
+      </div>
+    </div>
+    ${links.length ? links.map(l=>`
+      <div style="padding:8px 10px;border-bottom:1px solid rgba(120,200,255,.08);display:flex;justify-content:space-between;gap:12px;align-items:center">
+        <a href="#" data-action="links:open" data-url="${l.url.replace(/"/g,'&quot;')}"
+           style="color:#7cf;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">
+          ${l.title || l.url}
+        </a>
+        <span style="color:#456;font-size:11px;flex-shrink:0">${new Date(l.ts).toLocaleTimeString()}</span>
+        <button data-action="links:remove" data-url="${l.url.replace(/"/g,'&quot;')}"
+          style="background:none;border:none;color:#655;cursor:pointer;font-size:14px">×</button>
+      </div>`).join('') : '<div style="color:#456;text-align:center;padding:40px">vazio</div>'}
+  `;
+  p.querySelector('[data-action="links:close"]').onclick = ()=>p.remove();
+  p.querySelector('[data-action="links:clear"]').onclick = ()=>{ LinkHistory.clear(); showLinkPanel(); };
+  p.querySelectorAll('[data-action="links:open"]').forEach(a=>{
+    a.onclick = ev=>{
+      ev.preventDefault();
+      const url = a.dataset.url;
+      const active = window.DualSession?.activeWindow 
+                  || $$('.session-window').find(w=>!w.classList.contains('minimized'));
+      if(active){
+        const id = active.dataset.sessionId;
+        TabStore.addTab(id, url);
+        applyTabsToWindow(active, TabStore.get(id));
+      } else {
+        const s = window.MXP?.createSession?.(url.split('/').pop()||'link');
+        if(s) TabStore.addTab(s.id, url);
+      }
+      p.remove();
+    };
+  });
+  p.querySelectorAll('[data-action="links:remove"]').forEach(b=>{
+    b.onclick = ()=>{
+      const url = b.dataset.url;
+      const list = LinkHistory.list().filter(x=>x.url!==url);
+      localStorage.setItem('kobllux:links', JSON.stringify(list));
+      showLinkPanel();
+    };
+  });
+}
+window.showLinkHistory = showLinkPanel;
+
+document.addEventListener('keydown', e=>{
+  if((e.ctrlKey||e.metaKey) && e.key === 'k'){
+    e.preventDefault(); showLinkPanel();
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════
+   10. BOOT + RE-BOOT em eventos
+   ═══════════════════════════════════════════════════════════ */
+function boot(){
+  patchExisting();
+  installWinMerge();
+  installTabOutDrag();
+  installTabActions();
+  installLinkTracker();
+  $$('.session-window').forEach(win=>{
+    const id = win.dataset.sessionId; if(!id) return;
+    const d = TabStore.ensure(id, win.querySelector('.win-frame')?.src);
+    applyTabsToWindow(win, d);
+  });
+  console.log('[UNIFIED] TabStore + LinkHistory + drag-merge online');
+}
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', ()=>setTimeout(boot,80), {once:true});
+} else {
+  setTimeout(boot, 80);
+}
+document.addEventListener('mxp:session-created', ()=>setTimeout(boot,60));
+document.addEventListener('kblx:session-restored', ()=>setTimeout(boot,60));
+
+/* reexpõe API */
+window.KBLX_TABS = {
+  store: TabStore, links: LinkHistory,
+  merge: (a,b)=>mergeWinIntoTarget(a,b),
+  showHistory: showLinkPanel,
+};
+})();
+
 /* ===== no-op.js ===== */
 (function(){
 "use strict";
