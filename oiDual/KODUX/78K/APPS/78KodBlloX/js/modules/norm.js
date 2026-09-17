@@ -1,0 +1,8 @@
+(function(){
+if(!("speechSynthesis" in window)) return;
+const VOZ={ATLAS:{nome:"Daniel",lang:"en-US",rate:1.02,pitch:1.39},NOVA:{nome:"Luciana",lang:"pt-BR",rate:1.063,pitch:1.34},VITALIS:{nome:"Rocko",lang:"pt-BR",rate:0.96,pitch:1.42},PULSE:{nome:"Reed",lang:"pt-BR",rate:1.0,pitch:1.78},ARTEMIS:{nome:"Paulina",lang:"es-MX",rate:1.0,pitch:1.23},SERENA:{nome:"Joana",lang:"pt-BR",rate:0.92,pitch:0.90},KAOS:{nome:"Rocko",lang:"pt-BR",rate:1.28,pitch:0.67},GENUS:{nome:"Reed",lang:"pt-BR",rate:0.98,pitch:1.20},LUMINE:{nome:"Flo",lang:"fr-FR",rate:1.03,pitch:1.55},SOLUS:{nome:"Satu",lang:"fi-FI",rate:0.90,pitch:0.58},RHEA:{nome:"Alice",lang:"it-IT",rate:1.02,pitch:1.44},AION:{nome:"Milena",lang:"ru-RU",rate:1.07,pitch:1.08},KODUX:{nome:"Rocko",lang:"pt-BR",rate:1.0,pitch:0.07},BLLUE:{nome:"Zuzana",lang:"cs-CZ",rate:0.94,pitch:1.69},JESUS:{nome:"Sara",lang:"da-DK",rate:1.09,pitch:0.03},KOBLLUX:{nome:"Luciana",lang:"pt-BR",rate:0.98,pitch:0.48}};
+function norm(s){return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()}
+function findVoice(cfg){const vs=speechSynthesis.getVoices(); if(!vs.length) return null;const vl=Array.from(vs); const n=norm(cfg.nome), lg=norm(cfg.lang).split("-")[0];return vl.find(v=>norm(v.name).includes(n)&&norm(v.lang).startsWith(lg))||vl.find(v=>norm(v.lang).startsWith(lg))||vl.find(v=>norm(v.lang).startsWith("pt"))||vl[0];}
+function voiceFor(archName,text){const cfg=VOZ[archName]||VOZ.JESUS;const u=new SpeechSynthesisUtterance(text);u.lang=cfg.lang; u.rate=cfg.rate; u.pitch=cfg.pitch;const v=findVoice(cfg);if(v){u.voice=v;u.lang=v.lang||cfg.lang;}return u;}
+window.KBLX_VOICE={map:VOZ,forArch:voiceFor,find:findVoice};
+})();
