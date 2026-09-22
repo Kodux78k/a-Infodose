@@ -1,5 +1,4 @@
-
-  const App = {
+const App = {
     config: {
       vaultKey: 'dual_vault_data',
       themeKey: 'dual_theme_mode',
@@ -28,25 +27,28 @@
     },
 
     cacheDOM() {
-      this.dom = {
-        body: document.body,
-        navFrame: document.getElementById('navFrame'),
-        orbBtn: document.getElementById('orbBtn'),
-        sysStatus: document.getElementById('sysStatus'),
-        stackList: document.getElementById('stackList'),
-        viewVault: document.getElementById('viewVault'),
-        viewEditor: document.getElementById('viewEditor'),
-        runtimeLayer: document.getElementById('runtimeLayer'),
-        appFrame: document.getElementById('appFrame'),
-        modTitle: document.getElementById('modTitle'),
-        modContent: document.getElementById('modContent'),
-        toast: document.getElementById('toast'),
-        pulseBar: document.getElementById('pulseBar'),
-        safeLabel: document.getElementById('safeLabel'),
-        uploadInput: document.getElementById('uploadInput'),
-        remoteBtn: document.getElementById('remoteBtn')
-      };
-    },
+  this.dom = {
+    body: document.body,
+    navFrame:
+      document.getElementById('navFrame') ||
+      document.getElementById('frame'),
+
+    orbBtn: document.getElementById('orbBtn'),
+    sysStatus: document.getElementById('sysStatus'),
+    stackList: document.getElementById('stackList'),
+    viewVault: document.getElementById('viewVault'),
+    viewEditor: document.getElementById('viewEditor'),
+    runtimeLayer: document.getElementById('runtimeLayer'),
+    appFrame: document.getElementById('appFrame'),
+    modTitle: document.getElementById('modTitle'),
+    modContent: document.getElementById('modContent'),
+    toast: document.getElementById('toast'),
+    pulseBar: document.getElementById('pulseBar'),
+    safeLabel: document.getElementById('safeLabel'),
+    uploadInput: document.getElementById('uploadInput'),
+    remoteBtn: document.getElementById('remoteBtn')
+  };
+},
 
     bindEvents() {
       this.dom.orbBtn.addEventListener('click', () => this.toggleSystem());
