@@ -192,7 +192,7 @@ if (HEADER && MAIN) {
              */
             if (
                 event.target.closest(
-                    "#theme-dot2"
+                    "#theme-dot2, .top-actions"
                 )
             ) {
                 return;

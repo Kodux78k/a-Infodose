@@ -1567,7 +1567,7 @@ HEADER.forEach(
                  */
                 if (
                     event.target.closest(
-                        "#theme-dot, .theme-dot"
+                        "#theme-dot, .theme-dot, .top-actions"
                     )
                 ) {
                     return;
