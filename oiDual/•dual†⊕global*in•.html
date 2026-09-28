@@ -1,0 +1,2209 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f7fb">
+  <title>Almasliber OS — Dual Infodose</title>
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+ <style>@import url("https://infodose.com.br/css/iFSw-unifiedg.css");</style>
+
+<style>
+/* ============================================================
+   A · TOKENS MESCLADOS (Dual ⊕ Nebula)
+   ============================================================ */
+:root{
+  /* safe area */
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-right:env(safe-area-inset-right,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+  --safe-left:env(safe-area-inset-left,0px);
+
+  /* Dual layout */
+  --topbar-h:58px;
+  --header-h:52px;
+  --session-radius:29px;
+  --session-gap:20px;
+  --collapsed-h:52px;
+  --peek-h:178px;
+  --resize-hit:0px;
+  --resize-corner:54px;
+  --dock-bottom-gap:80px;
+  --dock-offset-x:-12px;
+
+  /* z-index */
+  --z-base:1;
+  --z-content:100;
+  --z-header-system:900;
+  --z-header-main:910;
+  --z-session:1000;
+  --z-session-header:1010;
+  --z-session-controls:1020;
+  --z-maximized:94000;
+  --z-maximized-header:94010;
+  --z-maximized-controls:94020;
+  --z-resize:94030;
+  --z-dock:97000;
+  --z-tab-switcher:98000;
+
+  /* CORES — Nebula ganha onde colide, Dual preserva os extras */
+  color-scheme:dark;
+  --bg:#06060b;
+  --panel:rgba(20,22,34,.55);
+  --panel-strong:rgba(13,15,24,.88);
+  --panel-solid:#121216;
+  --ink:#eef0f7;
+  --text:#f5f5f7;
+  --muted:#8f96ad;
+  --dim:#5d6478;
+  --border:rgba(255,255,255,.10);
+  --border-strong:rgba(255,255,255,.20);
+  --pill:999px;
+  --blur:20px;
+
+  --cyan:#00e5ff;
+  --purple:#bf5af2;
+  --gold:#ffd60a;
+  --input-bg:rgba(255,255,255,.055);
+  --button-bg:rgba(255,255,255,.07);
+  --topbar-bg:rgba(5,5,7,.82);
+  --dock-bg:rgba(10,10,13,.92);
+  --shadow:0 10px 40px rgba(0,0,0,.35);
+  --radius:18px;
+  --transition:.25s ease;
+
+  /* Nebula dinâmico (archetype) */
+  --active:#7c5cff;
+  --active-2:#19d3c5;
+  --active-glow:rgba(124,92,255,.45);
+}
+html[data-theme="light"]{
+  color-scheme:light;
+  --bg:#f5f5f7;
+  --panel:rgba(255,255,255,.85);
+  --panel-strong:rgba(255,255,255,.92);
+  --panel-solid:#ffffff;
+  --ink:#1a1a1e;
+  --text:#1a1a1e;
+  --muted:rgba(0,0,0,.50);
+  --dim:rgba(0,0,0,.35);
+  --border:rgba(0,0,0,.08);
+  --border-strong:rgba(0,0,0,.16);
+  --cyan:#007aff;
+  --purple:#af52de;
+  --gold:#d4a017;
+  --input-bg:rgba(0,0,0,.035);
+  --button-bg:rgba(0,0,0,.045);
+  --topbar-bg:rgba(255,255,255,.82);
+  --dock-bg:rgba(255,255,255,.92);
+  --shadow:0 10px 40px rgba(0,0,0,.10);
+}
+
+/* ============================================================
+   B · RESET / BODY
+   ============================================================ */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{
+  width:100%;min-width:0;min-height:100%;
+  margin:0;padding:0;overflow-x:hidden;
+}
+html{overflow-y:auto;-webkit-overflow-scrolling:touch}
+body{
+  min-height:100dvh;
+  background:radial-gradient(circle at 50% 0%, #2a2a35 0%, #0f0f15 100%);
+  color:var(--text);
+  font:400 15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,system-ui,sans-serif;
+  overflow-y:auto;
+  -webkit-font-smoothing:antialiased;
+  transition:background .5s ease;
+}
+body.solar-day{background:#0d0f18}
+body.solar-sunset{background:#0a0810}
+body.solar-night{background:#05060a}
+body.ui-safe-vertical{padding-top:var(--safe-top);padding-bottom:var(--safe-bottom)}
+body.ui-immersive{padding:0;overflow:hidden!important}
+
+*{scrollbar-width:none!important;-ms-overflow-style:none!important}
+*::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
+
+/* ============================================================
+   C · SHELL DUAL
+   ============================================================ */
+#kxtsk-shell{position:relative;width:100%;min-height:100dvh;overflow:visible;z-index:var(--z-base)}
+.almasliber,.almasliber .shell,#main-content{position:relative;width:100%;min-width:0}
+.almasliber{min-height:100dvh}
+
+/* TOPBAR */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:var(--z-header-main);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  min-height:56px;padding:10px 16px;
+  background:var(--topbar-bg);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  transition:transform .32s cubic-bezier(.22,1,.36,1),opacity .25s ease,background var(--transition),border-color var(--transition);
+}
+.topbar.header-visible{transform:translateY(0);opacity:1;pointer-events:auto}
+.topbar.header-hidden{transform:translateY(calc(-100% - 12px));opacity:.15;pointer-events:none}
+
+.brandX{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.08em;font-size:13px}
+.badgeX{padding:5px 9px;border-radius:999px;background:var(--button-bg);color:var(--muted);font-size:10px;letter-spacing:.08em}
+
+.win-navrow{display:flex;align-items:center;gap:8px;flex:1;min-width:139px;max-width:520px;padding:0}
+.win-urlbar{
+  flex:1 1 auto;min-width:139px;padding:10px 13px;border-radius:13px;
+  border:1px solid var(--border);background:var(--input-bg);color:var(--text);
+  outline:none;font:500 12px/1 inherit;transition:.2s;
+}
+.win-urlbar::placeholder{color:var(--muted)}
+.win-urlbar:focus{border-color:var(--cyan);box-shadow:0 0 0 3px color-mix(in srgb,var(--cyan) 15%,transparent)}
+
+.icon-btn,.soft-btn,.launcher-btn,.win-go-btn{
+  flex:0 0 auto;border:0;border-radius:12px;min-height:34px;
+  display:inline-flex;align-items:center;justify-content:center;
+  color:#fff;cursor:pointer;font-weight:600;font-family:inherit;
+  touch-action:manipulation;
+}
+.icon-btn{width:34px;height:34px;padding:0;background:var(--button-bg)}
+.soft-btn{padding:10px 12px;background:var(--button-bg)}
+.launcher-btn{padding:10px 12px;background:rgba(0,242,255,.12);border:1px solid rgba(0,242,255,.3)}
+.win-go-btn{padding:10px 12px;background:rgba(0,242,255,.12);color:#fff}
+.icon-btn:active,.win-go-btn:active,.dock-bubble:active{transform:scale(.94)}
+
+/* THEME DOT */
+.theme-dot{
+  position:relative;width:34px;height:34px;padding:0;flex:none;
+  border:1px solid var(--border);border-radius:50%;
+  background:var(--button-bg);color:var(--text);cursor:pointer;
+  display:grid;place-items:center;transition:.2s;
+}
+.theme-dot::before{
+  content:"";width:10px;height:10px;border-radius:50%;
+  background:var(--cyan);box-shadow:0 0 12px var(--cyan);transition:.3s;
+}
+.theme-dot:hover{transform:scale(1.08);border-color:var(--cyan);box-shadow:0 0 20px color-mix(in srgb,var(--cyan) 20%,transparent)}
+.theme-dot svg{display:none}
+
+/* MAIN CONTENT */
+main,#main-content{position:relative;z-index:var(--z-content);padding-top:56px;transition:opacity .35s ease,max-height .35s ease,visibility .35s ease,padding .35s ease}
+#main-content.hidden{opacity:0;visibility:hidden;pointer-events:none;max-height:0;padding-top:0;padding-bottom:0;overflow:hidden}
+
+/* STACK + SESSION WINDOWS (Dual) */
+#stackWrap{
+  position:relative;width:100%;max-width:800px;
+  min-height:calc(100dvh - var(--topbar-h));
+  margin:0 auto;padding:0;display:flex;flex-direction:column;
+  gap:var(--session-gap);overflow:visible;z-index:var(--z-content);isolation:isolate;
+}
+.session-window{
+  position:relative;width:100%;height:calc(100dvh - var(--topbar-h));min-height:0;
+  margin:0;padding:0;display:flex;flex-direction:column;overflow:hidden;
+  background:rgba(30,30,35,.40);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--border);border-radius:var(--session-radius);
+  z-index:var(--z-session);
+  transition:height .28s cubic-bezier(.16,1,.3,1),width .28s cubic-bezier(.16,1,.3,1),transform .28s ease,opacity .28s ease;
+}
+.session-window .win-hdr{
+  position:absolute;top:0;left:0;right:0;width:100%;height:var(--header-h);min-height:var(--header-h);
+  display:flex;align-items:center;padding:10px 14px;z-index:var(--z-session-header);
+  background:transparent;user-select:none;-webkit-user-select:none;pointer-events:none;touch-action:manipulation;
+}
+.win-controls{position:relative;z-index:var(--z-session-controls);flex:0 0 auto;display:flex;align-items:center;gap:7px;pointer-events:auto}
+.win-controls button{
+  width:30px;height:30px;min-width:30px;min-height:30px;padding:0;
+  display:grid;place-items:center;border:0;border-radius:50%;
+  background:rgba(255,255,255,.10);color:#fff;cursor:pointer;
+  font-family:"Noto Sans Symbols 2","Noto Sans Symbols",-apple-system,sans-serif;
+  font-size:17px;font-weight:300;line-height:1;touch-action:manipulation;
+}
+.win-controls button:hover{background:rgba(255,255,255,.17)}
+.win-controls .win-title{flex:1;text-align:center;font-size:12px;color:var(--muted);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px}
+.win-frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;z-index:1;display:block}
+.win-content{
+  position:absolute;inset:var(--header-h) 0 0 0;overflow:auto;z-index:1;
+  padding:20px 22px;color:var(--text);font-size:14px;line-height:1.7;
+}
+.session-window.collapsed{height:var(--collapsed-h)!important;min-height:var(--collapsed-h)!important;overflow:hidden!important}
+.session-window.collapsed .win-frame,.session-window.collapsed .win-content{visibility:hidden;pointer-events:none}
+.session-window.peeked{height:var(--peek-h)!important;min-height:var(--peek-h)!important}
+.session-window.minimized{
+  position:absolute!important;width:1px!important;height:1px!important;
+  min-width:1px!important;min-height:1px!important;opacity:0!important;pointer-events:none!important;
+  transform:scale(.90) translateY(50px);overflow:hidden!important;
+}
+.session-window.maximized{
+  position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;
+  min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;
+  margin:0!important;padding:0!important;border:0!important;border-radius:0!important;
+  overflow:hidden!important;z-index:var(--z-maximized)!important;transition:none!important;
+}
+.session-window.maximized .win-hdr{position:absolute!important;inset:0 0 auto 0!important;width:100%!important;height:var(--header-h)!important;z-index:var(--z-maximized-header)!important;pointer-events:none!important}
+.session-window.maximized .win-controls{pointer-events:auto!important;z-index:var(--z-maximized-controls)!important}
+.session-window.maximized .win-frame,.session-window.maximized .win-content{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;z-index:1!important}
+.session-window.maximized .win-content{padding-top:calc(var(--header-h) + 20px)}
+
+body.has-maximized{overflow:hidden!important}
+body.has-maximized .topbar{pointer-events:none}
+
+/* RESIZE */
+.session-window .resize-handle{position:absolute;z-index:var(--z-resize);background:transparent;touch-action:none}
+.session-window .resize-y{left:0;right:0;bottom:0;height:14px;cursor:ns-resize}
+.session-window .resize-x{top:var(--header-h);right:0;bottom:0;width:14px;cursor:ew-resize}
+.session-window .resize-corner{right:0;bottom:0;width:var(--resize-corner);height:var(--resize-corner);cursor:nwse-resize}
+.session-window .resize-corner::before{
+  content:"";position:absolute;right:10px;bottom:10px;width:16px;height:16px;border-radius:50%;
+  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);
+  box-shadow:0 0 14px rgba(0,242,255,.18);pointer-events:none;
+}
+.session-window.maximized .resize-handle{display:none!important}
+
+/* DOCK (Dual) */
+#dock{
+  position:fixed;left:var(--dock-offset-x);bottom:calc(var(--dock-bottom-gap) + var(--safe-bottom));
+  z-index:var(--z-dock);display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:12px 10px;border-radius:24px;
+  background:var(--dock-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);
+  border:1px solid var(--border);
+}
+#dock:empty{opacity:0;pointer-events:none}
+.dock-bubble{
+  width:42px;height:42px;display:grid;place-items:center;border-radius:50%;
+  background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.20);
+  color:#fff;cursor:pointer;
+  font-family:"Noto Sans Symbols 2",sans-serif;font-size:19px;line-height:1;
+  touch-action:manipulation;
+}
+
+/* ============================================================
+   D · NEBULA APP (escopado em .nebula-root)
+   ============================================================ */
+.nebula-root{
+  position:fixed;inset:0;z-index:2;pointer-events:none;
+  color:var(--ink);
+}
+.nebula-root > *{pointer-events:auto}
+
+/* FUNDO */
+.nebula-root .bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.nebula-root .orb{
+  position:absolute;border-radius:50%;filter:blur(110px);opacity:.5;
+  will-change:transform;transition:background 1s ease;
+}
+.nebula-root .o1{width:600px;height:600px;top:-200px;left:-160px;
+  background:radial-gradient(circle,var(--active) 0%,transparent 70%);animation:fl1 22s ease-in-out infinite}
+.nebula-root .o2{width:560px;height:560px;bottom:-220px;right:-140px;
+  background:radial-gradient(circle,var(--active-2) 0%,transparent 70%);animation:fl2 26s ease-in-out infinite}
+.nebula-root .o3{width:440px;height:440px;top:35%;left:58%;opacity:.28;
+  background:radial-gradient(circle,var(--active) 0%,transparent 70%);animation:fl3 30s ease-in-out infinite}
+@keyframes fl1{50%{transform:translate(90px,70px) scale(1.12)}}
+@keyframes fl2{50%{transform:translate(-110px,-70px) scale(1.15)}}
+@keyframes fl3{50%{transform:translate(-70px,90px) scale(.9)}}
+.nebula-root .noise{position:absolute;inset:0;opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E")}
+.nebula-root .vign{position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 35%,transparent 32%,rgba(3,3,8,.78))}
+
+/* PILLS / CHIPS */
+.nebula-root .pill{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:9px 15px;border-radius:var(--pill);
+  border:1px solid var(--border);background:var(--panel);
+  backdrop-filter:blur(var(--blur)) saturate(1.3);
+  -webkit-backdrop-filter:blur(var(--blur)) saturate(1.3);
+  color:var(--ink);font:600 13px/1 inherit;cursor:pointer;
+  transition:.22s cubic-bezier(.22,1,.36,1);white-space:nowrap;font-family:inherit;
+}
+.nebula-root .pill:hover{background:rgba(255,255,255,.11);border-color:var(--border-strong);transform:translateY(-1px)}
+.nebula-root .pill:active{transform:scale(.96)}
+.nebula-root .pill.primary{
+  background:linear-gradient(140deg,var(--active),color-mix(in oklab,var(--active) 55%,#000));
+  border-color:transparent;color:#000;
+  box-shadow:0 8px 26px var(--active-glow);
+}
+.nebula-root .pill.ghost{background:rgba(255,255,255,.05)}
+.nebula-root .pill.sm{padding:7px 12px;font-size:11.5px}
+.nebula-root .pill.xs{padding:5px 10px;font-size:10.5px}
+.nebula-root .pill.on{background:linear-gradient(140deg,var(--active),var(--active-2));color:#000;border-color:transparent;box-shadow:0 6px 20px var(--active-glow)}
+.nebula-root .tab-pill{
+  padding:7px 14px;border-radius:var(--pill);border:1px solid var(--border);
+  background:rgba(255,255,255,.04);color:var(--muted);font:600 12px/1 inherit;
+  cursor:pointer;transition:.2s;font-family:inherit;
+}
+.nebula-root .tab-pill:hover{color:var(--ink);background:rgba(255,255,255,.08)}
+.nebula-root .tab-pill.on{color:#000;border-color:transparent;
+  background:linear-gradient(120deg,var(--active),var(--active-2));
+  box-shadow:0 6px 20px var(--active-glow)}
+
+/* ARCH BAR */
+.nebula-root .arch-bar{
+  position:fixed;top:72px;left:50%;transform:translateX(-50%);
+  z-index:55;display:flex;gap:6px;padding:6px;border-radius:var(--pill);
+  background:rgba(10,12,20,.6);border:1px solid var(--border);
+  backdrop-filter:blur(18px);max-width:min(94vw,760px);overflow-x:auto;scrollbar-width:none;
+}
+.nebula-root .arch-chip{
+  padding:6px 12px;border-radius:var(--pill);border:1px solid var(--border);
+  background:rgba(255,255,255,.04);color:var(--muted);
+  font:600 10.5px/1 inherit;cursor:pointer;transition:.2s;letter-spacing:.4px;
+  flex:none;display:flex;align-items:center;gap:6px;font-family:inherit;
+}
+.nebula-root .arch-chip:hover{color:var(--ink);background:rgba(255,255,255,.08)}
+.nebula-root .arch-chip.on{color:#000;border-color:transparent;
+  background:linear-gradient(120deg,var(--chip-c1),var(--chip-c2));
+  box-shadow:0 4px 14px var(--chip-glow)}
+.nebula-root .arch-chip .swatch{width:8px;height:8px;border-radius:50%;
+  background:linear-gradient(120deg,var(--chip-c1),var(--chip-c2));
+  box-shadow:0 0 8px var(--chip-c1)}
+
+/* DOC PILLS BAR */
+.nebula-root .doc-pills-bar{
+  position:fixed;top:118px;left:50%;transform:translateX(-50%);
+  z-index:54;display:flex;gap:8px;padding:8px 10px;border-radius:20px;
+  background:rgba(10,12,20,.6);border:1px solid var(--border);
+  backdrop-filter:blur(18px);max-width:min(94vw,900px);overflow-x:auto;scrollbar-width:none;
+}
+.nebula-root .doc-pills-bar .dp-empty{font-size:11px;color:var(--muted);padding:6px 10px;white-space:nowrap}
+.nebula-root .doc-pill{
+  flex:none;display:flex;align-items:center;gap:8px;
+  padding:6px 10px;border-radius:var(--pill);
+  border:1px solid var(--border);background:rgba(255,255,255,.04);transition:.2s;
+}
+.nebula-root .doc-pill:hover{background:rgba(255,255,255,.09)}
+.nebula-root .doc-pill.is-seed{border-color:var(--active);box-shadow:0 0 0 1px var(--active) inset}
+.nebula-root .dp-glyph{width:22px;height:22px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-size:10px;font-weight:800;color:#000;
+  background:linear-gradient(140deg,var(--c),color-mix(in srgb,var(--c) 40%,#000))}
+.nebula-root .dp-info{display:flex;flex-direction:column;line-height:1.3;min-width:0;max-width:120px}
+.nebula-root .dp-name{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nebula-root .dp-info .when{font-size:9px;color:var(--dim)}
+.nebula-root .dp-acts{display:flex;gap:2px;flex:none}
+.nebula-root .dp-acts button{
+  width:22px;height:22px;border-radius:50%;border:none;
+  background:rgba(255,255,255,.06);color:var(--ink);font-size:10.5px;
+  cursor:pointer;display:grid;place-items:center;transition:.15s;font-family:inherit;
+}
+.nebula-root .dp-acts button:hover{background:rgba(255,255,255,.18)}
+
+/* STAGE / CARROSSEL */
+.nebula-root .stage-wrap{
+  position:fixed;inset:0;z-index:2;display:grid;place-items:center;
+  perspective:1900px;perspective-origin:50% 45%;padding-top:110px;
+}
+.nebula-root .stage{position:relative;width:100%;height:100%;transform-style:preserve-3d;touch-action:none;cursor:grab}
+.nebula-root .stage.dragging{cursor:grabbing}
+.nebula-root .stage.dragging .card{transition:none!important}
+.nebula-root .card{
+  position:absolute;left:50%;top:39%;
+  width:min(239px,56vw);height:min(400px,78vh);border-radius:178px;
+  background:
+    radial-gradient(120% 90% at 25% 0%,var(--glow,rgba(124,92,255,.28)),transparent 62%),
+    linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.025));
+  border:1px solid var(--border);
+  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+  box-shadow:0 30px 70px -20px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.14);
+  display:flex;flex-direction:column;overflow:hidden;
+  transition:transform .6s cubic-bezier(.22,1,.36,1),opacity .5s,box-shadow .4s;
+  will-change:transform,opacity;user-select:none;
+}
+.nebula-root .card.is-active{
+  box-shadow:0 40px 90px -20px rgba(0,0,0,.9),0 0 0 1px var(--active) inset,inset 0 1px 0 rgba(255,255,255,.2);
+  cursor:pointer;
+}
+.nebula-root .card.is-active::after{
+  content:'';position:absolute;inset:0;border-radius:26px;pointer-events:none;
+  background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.09) 48%,transparent 62%);
+  transform:translateX(-120%);animation:shine 5s ease-in-out infinite;
+}
+@keyframes shine{0%,70%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+.nebula-root .thumb{
+  position:relative;height:24%;flex:none;overflow:hidden;
+  background:linear-gradient(150deg,var(--c),transparent 120%);
+  display:grid;place-items:center;border-bottom:1px solid rgba(255,255,255,.07);
+}
+.nebula-root .thumb::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(120% 100% at 50% 0%,rgba(255,255,255,.22),transparent 65%)}
+.nebula-root .thumb .glyph{
+  font-size:48px;font-weight:800;letter-spacing:-2px;color:rgba(255,255,255,.92);
+  font-family:ui-monospace,'SF Mono',Menlo,monospace;
+  text-shadow:0 6px 30px rgba(0,0,0,.35);position:relative;
+}
+.nebula-root .thumb-img{position:absolute;inset:0;background-size:cover;background-position:top center;opacity:0;transition:opacity .5s}
+.nebula-root .thumb-img.on{opacity:1}
+.nebula-root .card-body{padding:16px 18px;display:flex;flex-direction:column;gap:9px;flex:1;min-height:0}
+.nebula-root .badge{
+  align-self:flex-start;font-size:9.5px;font-weight:800;letter-spacing:1.1px;
+  padding:4px 9px;border-radius:var(--pill);color:var(--c);
+  background:color-mix(in srgb,var(--c) 16%,transparent);
+  border:1px solid color-mix(in srgb,var(--c) 32%,transparent);
+}
+.nebula-root .card h3{font-size:15px;font-weight:700;line-height:1.3;
+  overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.nebula-root .snippet{font-size:14px;line-height:1.55;color:var(--muted);flex:1;overflow-y:auto;
+  display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical}
+.nebula-root .card-foot{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:10.5px;color:var(--dim);letter-spacing:.3px;
+  padding:12px 18px;border-top:1px solid rgba(255,255,255,.06);
+}
+.nebula-root .del{
+  position:absolute;top:12px;right:12px;z-index:3;
+  width:30px;height:30px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(10,10,18,.55);backdrop-filter:blur(10px);
+  color:#fff;cursor:pointer;opacity:0;transition:.22s;
+  display:grid;place-items:center;font-size:13px;
+}
+.nebula-root .card:hover .del{opacity:1}
+.nebula-root .del:hover{background:#ff4d6a;border-color:#ff4d6a;transform:scale(1.08)}
+
+/* FILTER + NAV */
+.nebula-root .filter-bar{
+  position:fixed;bottom:82px;left:50%;transform:translateX(-50%);
+  z-index:50;display:flex;gap:6px;padding:6px;border-radius:var(--pill);
+  background:rgba(10,12,20,.6);border:1px solid var(--border);
+  backdrop-filter:blur(18px);max-width:min(94vw,660px);overflow-x:auto;scrollbar-width:none;
+}
+.nebula-root .nav-dock{
+  position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
+  z-index:50;display:flex;align-items:center;gap:10px;
+  padding:8px 12px;border-radius:var(--pill);
+  background:var(--panel-strong);border:1px solid var(--border);
+  backdrop-filter:blur(24px) saturate(1.2);
+  box-shadow:0 20px 50px -18px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.04) inset;
+}
+.nebula-root .nav-dock button{
+  width:36px;height:36px;border-radius:50%;border:1px solid var(--border);
+  background:rgba(255,255,255,.05);color:var(--ink);font-size:17px;
+  cursor:pointer;display:grid;place-items:center;transition:.22s;font-family:inherit;
+}
+.nebula-root .nav-dock button:hover{background:rgba(255,255,255,.13);transform:scale(1.06)}
+.nebula-root .nav-dock button:active{transform:scale(.94)}
+.nebula-root .dots{display:flex;gap:6px;align-items:center;padding:0 6px;max-width:44vw;overflow:hidden}
+.nebula-root .dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);cursor:pointer;transition:.3s;flex:none}
+.nebula-root .dot.on{background:linear-gradient(140deg,var(--active),var(--active-2));width:22px;border-radius:5px;box-shadow:0 0 14px var(--active-glow)}
+
+/* EMPTY */
+.nebula-root .empty{position:fixed;inset:0;z-index:5;display:none;place-items:center;padding:24px}
+.nebula-root .empty.on{display:grid}
+.nebula-root .empty-inner{
+  width:min(460px,92vw);padding:44px 32px;border-radius:28px;text-align:center;
+  background:var(--panel);border:1px dashed var(--border-strong);backdrop-filter:blur(18px);
+}
+.nebula-root .empty-inner .big{
+  width:74px;height:74px;margin:0 auto 20px;border-radius:50%;
+  background:linear-gradient(140deg,var(--active),var(--active-2));
+  display:grid;place-items:center;font-size:30px;color:#000;
+  box-shadow:0 16px 44px var(--active-glow);animation:bob 3.5s ease-in-out infinite;
+}
+@keyframes bob{50%{transform:translateY(-9px)}}
+.nebula-root .empty-inner h2{font-size:19px;margin-bottom:9px;letter-spacing:-.3px}
+.nebula-root .empty-inner p{font-size:13px;color:var(--muted);line-height:1.65;margin-bottom:22px}
+.nebula-root .empty-inner .hint{font-size:11px;color:var(--dim);margin-top:16px;margin-bottom:0}
+
+/* READER */
+.nebula-root .reader{
+  position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;padding:22px;
+  background:rgba(4,4,9,.72);backdrop-filter:blur(14px);
+}
+.nebula-root .reader.on{display:flex;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0}}
+.nebula-root .reader-panel{
+  width:min(960px,100%);height:min(88vh,900px);border-radius:28px;overflow:hidden;
+  display:flex;flex-direction:column;
+  background:linear-gradient(180deg,rgba(20,20,32,.96),rgba(12,12,20,.98));
+  border:1px solid var(--border-strong);
+  box-shadow:0 50px 120px -30px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,255,255,.1);
+  animation:pop .38s cubic-bezier(.22,1,.36,1);
+}
+@keyframes pop{from{transform:scale(.93) translateY(18px);opacity:0}}
+.nebula-root .reader-head{
+  display:flex;align-items:center;gap:12px;padding:14px 18px;flex:none;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  background:linear-gradient(180deg,rgba(255,255,255,.03),transparent);
+}
+.nebula-root .r-icon{
+  width:40px;height:40px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-size:11px;font-weight:800;font-family:ui-monospace,monospace;
+  background:linear-gradient(140deg,var(--c),color-mix(in srgb,var(--c) 40%,#000));
+  color:#000;box-shadow:0 8px 24px color-mix(in srgb,var(--c) 45%,transparent);
+}
+.nebula-root .reader-head .t{flex:1;min-width:0}
+.nebula-root .reader-head h2{font-size:14.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nebula-root .reader-head p{font-size:11px;color:var(--muted);margin-top:2px}
+.nebula-root .r-actions{display:flex;gap:6px;flex:none;flex-wrap:wrap;justify-content:flex-end}
+.nebula-root .reader-body{
+  flex:1;overflow-y:auto;overflow-x:hidden;padding:30px 40px 60px;
+}
+.nebula-root .md{font-size:15px;line-height:1.78;color:#dcdfeb;max-width:760px;margin:0 auto}
+.nebula-root .md h1,.nebula-root .md h2,.nebula-root .md h3,.nebula-root .md h4{
+  color:#fff;font-weight:700;letter-spacing:-.4px;margin:1.6em 0 .6em;line-height:1.3;
+}
+.nebula-root .md h1{font-size:28px;margin-top:0;
+  background:linear-gradient(120deg,#fff,var(--active));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.nebula-root .md h2{font-size:21px;padding-bottom:.35em;border-bottom:1px solid rgba(255,255,255,.1)}
+.nebula-root .md h3{font-size:17px}
+.nebula-root .md p{margin:.9em 0}
+.nebula-root .md a{color:var(--active);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--active) 40%,transparent)}
+.nebula-root .md ul,.nebula-root .md ol{margin:.9em 0;padding-left:1.5em}
+.nebula-root .md li{margin:.35em 0}
+.nebula-root .md li::marker{color:var(--active)}
+.nebula-root .md code{font-family:ui-monospace,'SF Mono',monospace;font-size:.86em;
+  background:color-mix(in srgb,var(--active) 16%,transparent);
+  color:var(--active);padding:2px 7px;border-radius:6px;
+  border:1px solid color-mix(in srgb,var(--active) 25%,transparent)}
+.nebula-root .md pre{background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.09);
+  border-radius:14px;padding:18px 20px;overflow-x:auto;margin:1.2em 0;font-size:13px;line-height:1.65}
+.nebula-root .md pre code{background:none;border:none;padding:0;color:#b9e8ff;font-size:13px}
+.nebula-root .md blockquote{border-left:3px solid var(--active);margin:1.2em 0;
+  padding:6px 0 6px 18px;color:#9aa2ba;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--active) 10%,transparent),transparent);
+  border-radius:0 10px 10px 0}
+.nebula-root .md table{border-collapse:collapse;width:100%;font-size:13.5px;margin:1.2em 0}
+.nebula-root .md th,.nebula-root .md td{border:1px solid rgba(255,255,255,.1);padding:9px 14px;text-align:left}
+.nebula-root .md th{background:color-mix(in srgb,var(--active) 14%,transparent);color:#fff}
+.nebula-root .plain{font-family:ui-monospace,'SF Mono',monospace;font-size:13px;line-height:1.75;
+  color:#c8cddd;white-space:pre-wrap;word-break:break-word;max-width:800px;margin:0 auto}
+.nebula-root .pdf-wrap{display:flex;flex-direction:column;align-items:center;gap:20px}
+.nebula-root .pdf-page{width:100%;max-width:820px;border-radius:12px;overflow:hidden;background:#fff;
+  box-shadow:0 22px 60px -14px rgba(0,0,0,.9);border:1px solid rgba(255,255,255,.1)}
+.nebula-root .pdf-page canvas{display:block;width:100%;height:auto}
+.nebula-root .pdf-loading{display:flex;flex-direction:column;align-items:center;gap:14px;
+  padding:70px 0;color:var(--muted);font-size:13px}
+.nebula-root .spinner{width:34px;height:34px;border-radius:50%;
+  border:3px solid rgba(255,255,255,.12);border-top-color:var(--active);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* SYMBOL BAR */
+.nebula-root .symbol-bar{
+  position:fixed;bottom:22px;right:22px;z-index:100;
+  display:flex;flex-direction:column;gap:8px;align-items:flex-end;
+}
+.nebula-root .sb-toggle{
+  width:54px;height:54px;border-radius:50%;
+  background:linear-gradient(140deg,var(--active),var(--active-2));
+  border:none;color:#000;font-size:22px;cursor:pointer;
+  box-shadow:0 12px 32px var(--active-glow),inset 0 1px 0 rgba(255,255,255,.4);
+  transition:.3s;display:grid;place-items:center;font-weight:700;font-family:inherit;
+}
+.nebula-root .sb-toggle:hover{transform:scale(1.08) rotate(90deg)}
+.nebula-root .sb-items{
+  display:flex;flex-direction:column;gap:6px;align-items:flex-end;
+  max-height:0;overflow:hidden;opacity:0;transition:.4s cubic-bezier(.22,1,.36,1);
+}
+.nebula-root .symbol-bar.open .sb-items{max-height:70vh;opacity:1;overflow-y:auto;padding:4px 0}
+.nebula-root .sb-items .pill{justify-content:flex-start;width:100%}
+
+/* COCKPIT */
+.nebula-root .cockpit-backdrop{position:fixed;inset:0;z-index:130;display:none;
+  background:rgba(3,3,8,.6);backdrop-filter:blur(6px)}
+.nebula-root .cockpit-backdrop.on{display:block;animation:fadeIn .25s ease}
+.nebula-root .cockpit{
+  position:fixed;top:0;right:0;bottom:0;z-index:131;width:min(400px,92vw);
+  display:flex;flex-direction:column;background:var(--panel-strong);
+  border-left:1px solid var(--border-strong);
+  backdrop-filter:blur(24px) saturate(1.3);
+  -webkit-backdrop-filter:blur(24px) saturate(1.3);
+  box-shadow:-40px 0 90px rgba(0,0,0,.7);
+  transform:translateX(100%);transition:transform .4s cubic-bezier(.22,1,.36,1);
+}
+.nebula-root .cockpit.on{transform:translateX(0)}
+.nebula-root .cockpit-head{display:flex;align-items:center;gap:10px;padding:16px 18px;flex:none;
+  border-bottom:1px solid rgba(255,255,255,.07)}
+.nebula-root .cockpit-head h3{font-size:14px;font-weight:700;flex:1;letter-spacing:.3px}
+.nebula-root .cockpit-body{flex:1;overflow-y:auto;padding:16px 18px 30px;
+  display:flex;flex-direction:column;gap:20px}
+.nebula-root .cockpit-section{padding:14px 16px;border-radius:18px;
+  background:rgba(255,255,255,.035);border:1px solid var(--border)}
+.nebula-root .cockpit-section h4{font-size:10.5px;font-weight:800;letter-spacing:1.4px;
+  text-transform:uppercase;color:var(--active);margin-bottom:12px}
+.nebula-root .cockpit-row{display:flex;gap:8px;flex-wrap:wrap}
+.nebula-root .cockpit-field{display:flex;flex-direction:column;gap:5px;flex:1;min-width:120px}
+.nebula-root .cockpit-field label{font-size:10.5px;color:var(--muted);letter-spacing:.3px}
+.nebula-root .cockpit-field input,.nebula-root .cockpit-field select{
+  padding:9px 12px;border-radius:12px;background:rgba(0,0,0,.28);
+  border:1px solid var(--border);color:var(--ink);font:500 13px/1 inherit;
+  outline:none;transition:.2s;font-family:inherit;
+}
+.nebula-root .cockpit-field input:focus,.nebula-root .cockpit-field select:focus{
+  border-color:var(--active);box-shadow:0 0 0 3px var(--active-glow)}
+.nebula-root .cockpit-field input[type=range]{padding:0;background:none;border:none}
+
+/* TOAST */
+.nebula-root .toast{
+  position:fixed;bottom:96px;left:50%;transform:translate(-50%,20px);
+  z-index:200;padding:12px 20px;border-radius:var(--pill);
+  font-size:13px;font-weight:600;background:var(--panel-strong);
+  border:1px solid var(--border-strong);backdrop-filter:blur(16px);
+  box-shadow:0 18px 44px -12px rgba(0,0,0,.9);
+  opacity:0;pointer-events:none;transition:.35s cubic-bezier(.22,1,.36,1);
+  max-width:90vw;text-align:center;color:var(--ink);
+}
+.nebula-root .toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* DROP */
+.nebula-root .drop{position:fixed;inset:0;z-index:180;display:none;place-items:center;
+  background:rgba(6,6,11,.82);backdrop-filter:blur(10px)}
+.nebula-root .drop.on{display:grid}
+.nebula-root .drop-box{padding:52px 66px;border-radius:28px;border:2px dashed var(--active);
+  background:color-mix(in srgb,var(--active) 9%,transparent);text-align:center;
+  animation:pop .3s cubic-bezier(.22,1,.36,1)}
+.nebula-root .drop-box .ic{font-size:44px;margin-bottom:14px}
+.nebula-root .drop-box h3{font-size:18px;margin-bottom:6px}
+.nebula-root .drop-box p{font-size:13px;color:var(--muted)}
+
+/* RESPONSIVO */
+@media(max-width:760px){
+  .nebula-root .topbar{padding:10px 12px;gap:8px}
+  .nebula-root .arch-bar{top:62px}
+  .nebula-root .doc-pills-bar{top:106px}
+  .nebula-root .stage-wrap{padding-top:96px}
+  .nebula-root .reader{padding:0}
+  .nebula-root .reader-panel{width:100%;height:100%;border-radius:0;border:none}
+  .nebula-root .reader-body{padding:22px 18px 60px}
+  .nebula-root .md{font-size:14.5px}
+  .nebula-root .nav-dock{bottom:14px;gap:8px;padding:7px 10px}
+  .nebula-root .filter-bar{bottom:68px}
+  .nebula-root .card{top:44%}
+  .nebula-root .symbol-bar{bottom:14px;right:14px}
+  .nebula-root .sb-toggle{width:48px;height:48px;font-size:20px}
+  .nebula-root .cockpit{width:100vw}
+}
+@media(max-width:600px){
+  .tab-grid{grid-template-columns:1fr 1fr;gap:8px}
+}
+</style>
+
+
+
+
+  <!-- CDNs KODUX (opcional, mas mantido para compatibilidade) -->
+
+  
+<!--  <link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/css/kob-glass-.css">
+  
+<link rel="stylesheet" href="https://infodose.com.br/oiDual/KODUX/78K/APPS/78Dual/css/main.css"> -->
+
+</head>
+
+<body data="mode-night">
+
+<!-- <script type="module" src="https://www.infodose.com.br/js/modules/kob-outline-uni-3.js"></script> 
+
+<script type="module" src="https://www.infodose.com.br/js/modules/Dual_[Theme]-js.js"></script> 
+-->
+  <div class="almasliber" data-app="almasliber">
+    <div class="shell">
+
+      <!-- ===== TOPBAR ===== --
+      <header style="z-index:0" class="topbar">
+        <button class="icon-btn" id="menuBtn" aria-label="Abrir menu">☰</button>
+        <div class="brand">
+          A.<span>INFODOSE</span>
+          <span class="mini-orb-wrap" id="topbarMiniOrb"></span>
+        </div>
+        <div style="z-index:1; display:flex;gap:8px;">
+          <button class="icon-btn" id="themeToggle" aria-label="Alternar tema">🌙</button>
+          <button class="icon-btn" id="notifBtn" aria-label="Notificações">♧</button>
+        </div>
+      </header> -->
+
+<!--
+<script type="module" src="https://www.infodose.com.br/Nebula/NEB.js"></script>
+  
+  <script type="module" src="https://www.infodose.com.br/Nebula/di_Jogador.js"></script>
+-->
+  
+
+
+
+     <div class="wrap">
+<!-- ═══════════════════════════════════════════════════════
+     HEADER GLOBAL
+     1. TOCAR NO HEADER
+        → COLAPSA MAIN
+     2. TOCAR NA BOLINHA
+        → MUDA TEMA
+     3. ROLAR PARA BAIXO
+        → HEADER SOBE
+     4. ROLAR PARA CIMA
+        → HEADER VOLTA
+═══════════════════════════════════════════════════════ -->
+<header class="topbar header-visible" id="main-header">
+    <!-- ÁREA DO SISTEMA -->
+    <div class="brandX">
+        <span>
+            DUAL
+        </span>
+        <span class="badgeX">
+            GLOBAL
+        </span>
+    </div>
+   
+ <div class="win-navrow" onclick="event.stopPropagation()">
+          <input class="win-urlbar" type="text" id="urlInputNav" placeholder="Digite uma URL..." spellcheck="false" autocomplete="off">
+          <button class="win-go-btn" type="button" id="goNavBtn">Go</button>
+        </div>
+
+ <!-- ÚNICO CONTROLE DE TEMA -->
+
+ <button id="theme-dot2" class="theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>
+       </button>  
+
+                <!--    <button class="launcher-btn" id="openKobBtn">+</button> -->
+<!-- 
+-->
+
+</header>
+<!-- ═══════════════════════════════════════════════════════
+     MAIN
+═══════════════════════════════════════════════════════ -->
+
+ 
+    <!-- ═══════════════════════════════════════════════════════
+             MAIN · agora hospeda o #kxtsk-shell (dock + stackWrap)
+             ═══════════════════════════════════════════════════════ -->
+        <main>
+          <div id="main-content">
+
+<div id="kxtsk-shell">
+ <!-- <div id="kxtsk-shell"> -->
+  <div id="inject-here"> </div>
+  <!--  <script src="https://infodose.com.br/oiDual/KODUX/78K/APPS/78PLAYER/Player-[di_jogador]-87-OK-0.js"></script>   --> 
+
+
+            <div id="dock"></div>
+
+            <!-- STACK -->
+            <div id="stackWrap">
+
+              <!-- SESSÃO INICIAL -->
+              <div class="session-window peeked" id="session-iframe">
+
+                <div class="win-hdr">
+                  <div class="win-controls">
+
+                    <button type="button" data-action="collapse" title="Colapsar" aria-label="Colapsar">−</button>
+
+                    <span class="win-title">۞ //</span>
+
+                    <button type="button" data-action="maximize" title="Maximizar" aria-label="Maximizar">⛶</button>
+
+                    <button type="button" data-action="minimize" title="Minimizar" aria-label="Minimizar">۞</button>
+
+                    <!-- ÚNICO CONTROLE DE TEMA "CANÔNICO" — é o que já
+                         está confirmado funcionando; os outros dois
+                         (themeToggle e theme-dot-header) apenas
+                         disparam um clique nele, ver script no fim -->
+                    <button id="theme-dot" class="theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>
+                    </button>
+
+                    <button class="launcher-btn" id="openKobBtn">+</button>
+
+                  </div>
+                </div>
+
+                <iframe class="win-frame" data-runtime="nav" id="navFrame" src="https://www.infodose.com.br"></iframe>
+
+              </div>
+            </div>
+            <!-- /STACK -->
+
+          </div>
+          <!-- /#kxtsk-shell -->
+        </main>
+
+      <!-- ===== BOTTOM NAV ===== -->
+      <nav style="display:none" class="symbol-bar bottom-nav" data-module="navigation" aria-label="Navegação principal">
+        <button class="nav-item active" data-tab="home"><span class="nav-icon">⌂</span><span>Início</span></button>
+        <button class="nav-item" id="navLibraryBtn"><span class="nav-icon">▣</span><span>Library</span></button>
+        <button class="nav-main" id="navCreateBtn">+</button>
+        <button class="nav-item" id="navResultsBtn"><span class="nav-icon">▥</span><span>Resultados</span></button>
+        <button class="nav-item" id="navProfileBtn"><span class="nav-icon">♙</span><span>Perfil</span></button>
+      </nav>
+
+    </div>
+  </div>
+
+  <!-- TOASTER -->
+  <div class="toaster-wrap" id="toasterWrap"></div>
+
+  <input type="file" id="nebulaFileInput" multiple="" accept=".txt,.md,.html,.pdf" style="display:none">
+
+  <!-- ============================================================
+       NÉBULA: input file + reader (elementos HTML)
+       ============================================================ 
+
+  <div class="reader" id="nebulaReader">
+    <div class="reader-head">
+      <div class="reader-title" id="nebulaReaderTitle">Título do Documento</div>
+      <button class="reader-close" id="nebulaReaderClose">✕</button>
+    </div>
+    <div class="reader-body" id="nebulaReaderBody"></div>
+  </div>
+-->
+  <!-- ============================================================
+       SCRIPTS (V10 + Nébula)
+       ============================================================ -->
+  
+
+  <!-- ============================================================
+       NÉBULA UNIFICADO — motor de biblioteca (fundido da V7)
+       ============================================================ -->
+  
+
+  <!-- ============================================================
+       SCRIPTS ADICIONAIS (KODUX / INFODOSE)
+       ============================================================ -->
+  
+
+ 
+<!-- ============================================================
+     KOB BUS (cross-frame TTS bridge)
+     ============================================================ -->
+<script data-kodux-source="https://www.infodose.com.br/js/modules/kob-outline-uni-3.js" type="module">
+/* === KOB BUS original === */
+(function KOB_BUS(global){
+  'use strict';
+  const VERSION='KOB-BUS.v1.0.0';
+  const CONFIG={debug:false,maxText:1200,minText:2,debounce:180,iframeSelector:'iframe',targetOrigin:'*',
+    ignoredTags:['SCRIPT','STYLE','NOSCRIPT','INPUT','TEXTAREA','SELECT','OPTION']};
+  const STATE={started:false,frames:new Map(),documents:new WeakSet(),lastText:'',lastTime:0,observer:null};
+  const log=(...a)=>{if(CONFIG.debug)console.log('%c[KOB BUS]','color:#0ff;font-weight:900',...a)};
+  const cleanText=t=>String(t||'').replace(/\u200B/g,'').replace(/\u00A0/g,' ').replace(/\s+/g,' ').trim().slice(0,CONFIG.maxText);
+  const ignored=el=>{if(!el||el.nodeType!==1)return true;
+    if(CONFIG.ignoredTags.includes(el.tagName))return true;
+    if(el.closest?.('[data-kob-ignore],[data-tts-ignore],.kob-tts-ignore'))return true;return false};
+  function extractText(target){
+    if(!target)return'';let el=target;
+    if(el.tagName==='SVG'||el.tagName==='PATH'||el.tagName==='USE')
+      el=el.closest?.('button,a,[role="button"]')||el.parentElement;
+    const control=el.closest?.('button,input,textarea,select');
+    if(control){if(!control.hasAttribute('data-kob-tts'))return'';el=control}
+    if(ignored(el))return'';
+    let text=cleanText(el.innerText||el.textContent||el.getAttribute?.('aria-label')||el.getAttribute?.('title')||'');
+    if(text.length>CONFIG.maxText){
+      const cands=['article','section','p','h1','h2','h3','h4','.card','[data-kob-content]'];
+      for(const s of cands){const p=el.closest?.(s);if(!p)continue;
+        const c=cleanText(p.innerText||p.textContent||'');if(c&&c.length<text.length)text=c}
+    }
+    return cleanText(text);
+  }
+  function getTTS(){
+    if(global.CobTTS&&typeof global.CobTTS.speak==='function')return t=>global.CobTTS.speak(t);
+    for(const o of [global.KOB_TTS,global.KOBTTS,global.COB_TTS,global.TTS,global.tts]){
+      if(!o)continue;
+      if(typeof o.speak==='function')return t=>o.speak(t);
+      if(typeof o.say==='function')return t=>o.say(t);
+      if(typeof o.speakText==='function')return t=>o.speakText(t);
+    }
+    for(const n of ['kobSpeak','KOBSpeak','speakText','speak','ttsSpeak','speakTTS'])
+      if(typeof global[n]==='function')return t=>global[n](t);
+    if(global.speechSynthesis)return t=>{try{global.speechSynthesis.cancel();
+      const u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';global.speechSynthesis.speak(u)}
+      catch(e){log('speech err',e)}};
+    return null;
+  }
+  function speak(text,meta={}){
+    text=cleanText(text);if(text.length<CONFIG.minText)return false;
+    const now=Date.now();
+    if(text===STATE.lastText&&now-STATE.lastTime<CONFIG.debounce)return false;
+    STATE.lastText=text;STATE.lastTime=now;
+    const tts=getTTS();if(!tts){console.warn('[KOB BUS] TTS não encontrado.');return false}
+    try{tts(text);return true}catch(e){console.error('[KOB BUS] err',e);return false}
+  }
+  const frameId=f=>{if(f.dataset.kobBusId)return f.dataset.kobBusId;
+    const id='kob-frame-'+Math.random().toString(36).slice(2,10);
+    f.dataset.kobBusId=id;return id};
+  const getFrameOrigin=f=>{try{return new URL(f.src||f.getAttribute('src')||location.href,location.href).origin}catch{return location.origin}};
+  const isSameOrigin=f=>{try{return getFrameOrigin(f)===location.origin}catch{return false}};
+  function connectSameOrigin(f){
+    try{const doc=f.contentDocument||f.contentWindow?.document;if(!doc)return false;
+      if(STATE.documents.has(doc))return true;STATE.documents.add(doc);
+      doc.addEventListener('click',ev=>{const t=extractText(ev.target);if(t)speak(t,{source:'same-origin',iframe:frameId(f)})},true);
+      return true}catch(e){log('same-origin falhou',e);return false}
+  }
+  function connectCrossOrigin(f){
+    const id=frameId(f);const origin=getFrameOrigin(f);
+    STATE.frames.set(id,{iframe:f,origin,crossOrigin:true});
+    try{f.contentWindow.postMessage({type:'KOB_BUS_INIT',bus:VERSION,frameId:id,parentOrigin:location.origin},CONFIG.targetOrigin)}catch(e){log('postMessage INIT err',e)}
+  }
+  function connectFrame(f){
+    if(!f)return;const id=frameId(f);
+    if(!f.__kobBusLoad){f.__kobBusLoad=true;
+      f.addEventListener('load',()=>{if(isSameOrigin(f))connectSameOrigin(f);else connectCrossOrigin(f)},true)}
+    if(isSameOrigin(f))connectSameOrigin(f);else connectCrossOrigin(f);
+    log('FRAME',id,f.src);
+  }
+  function receiveMessage(event){
+    const data=event.data;if(!data||typeof data.type!=='string')return;
+    if(data.type==='KOB_TTS'){const t=cleanText(data.text);if(!t)return;
+      speak(t,{source:'cross-origin',frameId:data.frameId||'?',url:data.url||event.origin});return}
+    if(data.type==='KOB_BUS_PING'){
+      try{event.source?.postMessage({type:'KOB_BUS_PONG',version:VERSION,parent:location.origin},
+        event.origin==='null'?'*':event.origin)}catch{}
+    }
+  }
+  function scan(){document.querySelectorAll(CONFIG.iframeSelector).forEach(connectFrame)}
+  function observe(){if(!global.MutationObserver||STATE.observer)return;
+    STATE.observer=new MutationObserver(muts=>{for(const m of muts)for(const n of m.addedNodes){
+      if(n.nodeType!==1)continue;
+      if(n.matches?.('iframe'))connectFrame(n);
+      n.querySelectorAll?.('iframe').forEach(connectFrame)}});
+    STATE.observer.observe(document.documentElement,{childList:true,subtree:true})}
+  function installParentClick(){
+    document.addEventListener('click',ev=>{
+      if(ev.target?.closest?.('iframe'))return;
+      const t=extractText(ev.target);if(!t)return;
+      if(global.KOB_TTS_IFRAME_BRIDGE)return;
+      speak(t,{source:'parent'});
+    },true);
+  }
+  const API={version:VERSION,state:STATE,scan,connectFrame,speak,getTTS,config:CONFIG,
+    debug:v=>{CONFIG.debug=!!v}};
+  global.KOBBus=API;global.KOB_BUS=API;
+  function boot(){if(STATE.started)return;STATE.started=true;
+    global.addEventListener('message',receiveMessage,false);
+    installParentClick();scan();observe();
+    setTimeout(scan,500);setTimeout(scan,1500);setTimeout(scan,3500);
+    log('BOOT OK',VERSION);}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
+  else boot();
+})(window);
+</script>
+
+<!-- ============================================================
+     DUAL · Theme + Smart Header
+     ============================================================ -->
+<script data-kodux-source="https://www.infodose.com.br/js/modules/Dual_[Theme]-js.js" type="module">
+(() => {
+"use strict";
+const ROOT=document.documentElement;
+const HEADER=document.getElementById("main-header");
+const MAIN=document.getElementById("main-content");
+const THEME_DOT=document.getElementById("theme-dot2");
+const STORAGE_KEY="dual-theme";
+function applyTheme(theme){
+  const next=theme==="light"?"light":"dark";
+  ROOT.dataset.theme=next;
+  try{localStorage.setItem(STORAGE_KEY,next)}catch{}
+  window.dispatchEvent(new CustomEvent("dual:theme-change",{detail:{theme:next}}));
+}
+function getInitialTheme(){
+  try{const s=localStorage.getItem(STORAGE_KEY);if(s==="light"||s==="dark")return s}catch{}
+  return "dark";
+}
+window.DualTheme={
+  set:applyTheme,
+  toggle(){applyTheme((ROOT.dataset.theme||"dark")==="light"?"dark":"light")},
+  get(){return ROOT.dataset.theme||"dark"}
+};
+if(THEME_DOT)THEME_DOT.addEventListener("click",e=>{e.stopPropagation();DualTheme.toggle()});
+if(HEADER&&MAIN){
+  HEADER.addEventListener("click",e=>{
+    if(e.target.closest("#theme-dot2, .win-navrow, input, button, .top-actions"))return;
+    MAIN.classList.toggle("hidden");
+    const c=MAIN.classList.contains("hidden");
+    HEADER.classList.toggle("is-collapsed",c);
+    window.dispatchEvent(new CustomEvent("dual:content-collapse",{detail:{collapsed:c}}));
+  });
+}
+let lastY=window.scrollY,ticking=false;
+const TH=8;
+function updateHeader(){
+  const y=window.scrollY;
+  if(y<=10){HEADER.classList.remove("header-hidden");HEADER.classList.add("header-visible");lastY=y;ticking=false;return}
+  if(y>lastY+TH){HEADER.classList.remove("header-visible");HEADER.classList.add("header-hidden")}
+  else if(y<lastY-TH){HEADER.classList.remove("header-hidden");HEADER.classList.add("header-visible")}
+  lastY=y;ticking=false;
+}
+window.addEventListener("scroll",()=>{if(!ticking){requestAnimationFrame(updateHeader);ticking=true}},{passive:true});
+applyTheme(getInitialTheme());
+console.log("DUAL · GLOBAL SYSTEM READY");
+})();
+</script>
+
+<!-- ============================================================
+     DUAL · Session Runtime (janelas flutuantes)
+     ============================================================ -->
+<script data-kodux-source="https://kodux78k.github.io/a-Infodose/js/modules/iFSw-base.js">
+(() => {
+  'use strict';
+  const stackWrap=document.getElementById('stackWrap');
+  const dock=document.getElementById('dock');
+  const DEFAULT_SRC='https://www.infodose.com.br';
+  const DEFAULT_TITLE='//';
+  let counter=1;
+  const timers=new Map();
+  const $=(s,r=document)=>r.querySelector(s);
+  const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+  const getWin=id=>document.getElementById(id);
+  const isMax=w=>w?.classList.contains('maximized')||false;
+
+  function syncShell(){
+    const m=!!document.querySelector('.session-window.maximized:not(.minimized)');
+    document.body.classList.toggle('has-maximized',m);
+    document.body.classList.toggle('ui-immersive',m);
+  }
+  function bringToFront(win){
+    if(!win)return;
+    $$('.session-window').forEach(w=>{if(w!==win)w.style.zIndex='100'});
+    win.style.zIndex='94000';
+  }
+  function togglePeek(id){const w=getWin(id);if(!w||isMax(w))return;
+    w.classList.toggle('peeked');if(w.classList.contains('peeked'))w.classList.remove('collapsed');
+    bringToFront(w);syncShell()}
+  function toggleCollapse(id){const w=getWin(id);if(!w||isMax(w))return;
+    w.classList.toggle('collapsed');if(w.classList.contains('collapsed'))w.classList.remove('peeked');
+    bringToFront(w);syncShell()}
+  function maximizeWindow(id){const w=getWin(id);if(!w)return;
+    if(isMax(w)){w.classList.remove('maximized','header-hidden');w.style.zIndex='100';syncShell();return}
+    w.classList.remove('collapsed','peeked','minimized','resizing','header-hidden');
+    ['top','left','right','bottom','width','height','maxWidth','maxHeight'].forEach(p=>w.style[p]='');
+    w.classList.add('maximized');bringToFront(w);syncShell()}
+  function minimizeWindow(id){const w=getWin(id);if(!w)return;
+    timers.delete(id);
+    w.classList.remove('maximized','collapsed','peeked','header-hidden','resizing');
+    w.classList.add('minimized');
+    document.getElementById('dock-'+id)?.remove();
+    const b=document.createElement('button');
+    b.type='button';b.className='dock-bubble';b.id='dock-'+id;
+    b.title='Restaurar janela';b.setAttribute('aria-label','Restaurar janela');b.textContent='۞';
+    b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();b.remove();
+      w.classList.remove('minimized');bringToFront(w);
+      requestAnimationFrame(()=>bringToFront(w));syncShell()});
+    dock?.appendChild(b);syncShell()}
+  function closeWindow(id){const w=getWin(id);if(!w)return;timers.delete(id);
+    document.getElementById('dock-'+id)?.remove();w.remove();syncShell()}
+  function handleHeaderClick(e,id){
+    if(e.target.closest('.win-controls')||e.target.closest('button')||e.target.closest('input')||e.target.closest('.win-navrow'))return;
+    const w=getWin(id);if(!w)return;bringToFront(w);
+    const old=timers.get(id);if(old){clearTimeout(old);timers.delete(id);maximizeWindow(id);return}
+    const t=setTimeout(()=>{timers.delete(id);togglePeek(id)},250);timers.set(id,t)}
+  function setFrameUrl(section,url){
+    const frame=$('.win-frame',section);if(!frame)return;
+    let clean=String(url||'').trim();if(!clean)return;
+    if(!/^https?:\/\//i.test(clean))clean='https://'+clean;
+    frame.src=clean;
+    const input=$('.win-urlbar',section);if(input)input.value=clean}
+  function makeResizeHandles(win){
+    if(win.dataset.resizeReady==='1')return;win.dataset.resizeReady='1';
+    const hy=document.createElement('div');hy.className='resize-handle resize-y';
+    const hx=document.createElement('div');hx.className='resize-handle resize-x';
+    const hc=document.createElement('div');hc.className='resize-handle resize-corner';
+    win.append(hy,hx,hc);
+    bindResize(win,hy,'y');bindResize(win,hx,'x');bindResize(win,hc,'xy')}
+  function freeFromMax(win,rect){
+    if(isMax(win)){
+      win.classList.remove('maximized','header-hidden');
+      win.style.position='fixed';
+      win.style.left=Math.max(0,rect.left)+'px';
+      win.style.top=Math.max(0,rect.top)+'px';
+      win.style.right='auto';win.style.bottom='auto';
+      win.style.width=Math.min(rect.width,window.innerWidth)+'px';
+      win.style.height=Math.min(rect.height,window.innerHeight)+'px';
+      win.style.maxWidth='none';win.style.maxHeight='none'}
+    win.classList.remove('collapsed','peeked');win.classList.add('resizing');syncShell()}
+  function bindResize(win,handle,axis){
+    let active=false,pid=null,sx=0,sy=0,sw=0,sh=0;
+    handle.addEventListener('pointerdown',e=>{
+      if(e.button!=null&&e.button!==0)return;
+      const r=win.getBoundingClientRect();
+      active=true;pid=e.pointerId;sx=e.clientX;sy=e.clientY;sw=r.width;sh=r.height;
+      freeFromMax(win,r);handle.setPointerCapture?.(pid);e.preventDefault();
+      const move=ev=>{if(!active||ev.pointerId!==pid)return;ev.preventDefault();
+        if(axis.includes('x'))win.style.width=Math.max(280,Math.min(window.innerWidth,sw+(ev.clientX-sx)))+'px';
+        if(axis.includes('y'))win.style.height=Math.max(44,Math.min(window.innerHeight,sh+(ev.clientY-sy)))+'px'};
+      const up=ev=>{if(ev&&ev.pointerId!==pid)return;active=false;
+        window.removeEventListener('pointermove',move);
+        window.removeEventListener('pointerup',up);
+        window.removeEventListener('pointercancel',up);
+        win.classList.remove('resizing');syncShell()};
+      window.addEventListener('pointermove',move,{passive:false});
+      window.addEventListener('pointerup',up,{passive:true});
+      window.addEventListener('pointercancel',up,{passive:true});
+    },{passive:false})}
+  function wireSession(win){
+    if(!win||win.dataset.wired==='1')return;win.dataset.wired='1';
+    makeResizeHandles(win);
+    const header=$('.win-hdr',win);
+    header?.addEventListener('click',e=>handleHeaderClick(e,win.id));
+    const controls=$('.win-controls',win);
+    controls?.addEventListener('click',e=>{
+      e.preventDefault();e.stopPropagation();
+      const btn=e.target.closest('button');if(!btn)return;
+      const a=btn.dataset.action;
+      if(a==='collapse')toggleCollapse(win.id);
+      else if(a==='maximize')maximizeWindow(win.id);
+      else if(a==='minimize')minimizeWindow(win.id);
+      else if(a==='close')closeWindow(win.id)});
+    const input=$('.win-urlbar',win);
+    const go=$('.win-go-btn',win);
+    go?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();setFrameUrl(win,input?.value)});
+    input?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.stopPropagation();setFrameUrl(win,input.value)}});
+  }
+  function createSessionWindow({title=DEFAULT_TITLE,src='',contentHtml=''}={}){
+    const id='session-'+Date.now()+'-'+counter++;
+    const win=document.createElement('section');
+    win.className='session-window peeked';win.id=id;
+    const safeTitle=String(title).replace(/[<>&"']/g,'');
+    const safeSrc=String(src||'').replace(/"/g,'&quot;');
+    const bodyHtml = src
+      ? `<iframe class="win-frame" data-runtime="nav" src="${safeSrc}"></iframe>`
+      : `<div class="win-content">${contentHtml||''}</div>`;
+    const navValue = src ? safeSrc : '';
+    win.innerHTML=`
+      <div class="win-hdr">
+        <div class="win-controls">
+          <button type="button" data-action="collapse" title="Colapsar">−</button>
+          <span class="win-title">۞ ${safeTitle}</span>
+          <button type="button" data-action="maximize" title="Maximizar">⛶</button>
+          <button type="button" data-action="minimize" title="Minimizar">۞</button>
+          <button type="button" data-action="close" title="Fechar" style="color:#ff6b6b">×</button>
+        </div>
+        <div class="win-navrow" style="flex:1;min-width:0;">
+          <input class="win-urlbar" type="text" value="${navValue}" placeholder="Digite uma URL..." spellcheck="false" autocomplete="off">
+          <button class="win-go-btn" type="button">Go</button>
+        </div>
+      </div>
+      ${bodyHtml}`;
+    stackWrap.appendChild(win);
+    wireSession(win);bringToFront(win);
+    return win;
+  }
+  // URL bar global
+  const navInput=document.getElementById('urlInputNav');
+  function applyGlobalUrl(){
+    const v=(navInput?.value||'').trim();if(!v)return;
+    createSessionWindow({title:v,src:v});
+    navInput.value='';
+  }
+  navInput?.addEventListener('keydown',e=>{if(e.key==='Enter')applyGlobalUrl()});
+  document.getElementById('goNavBtn')?.addEventListener('click',applyGlobalUrl);
+  document.getElementById('openKobBtn')?.addEventListener('click',()=>createSessionWindow());
+  // Wire existentes
+  $$('.session-window').forEach(wireSession);
+  syncShell();
+
+  // API
+  window.handleHeaderClick=handleHeaderClick;
+  window.togglePeek=togglePeek;
+  window.toggleCollapse=toggleCollapse;
+  window.maximizeWindow=maximizeWindow;
+  window.minimizeWindow=minimizeWindow;
+  window.closeWindow=closeWindow;
+  window.createSessionWindow=createSessionWindow;
+  window.syncShellMode=syncShell;
+})();
+</script>
+
+<!-- ============================================================
+     NEBULA · Runtime
+     ============================================================ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+/* ============================================================
+   NEBULA UNIFICADO
+   ============================================================ */
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+/* 1 · ARQUÉTIPOS */
+const ARCHS = {
+  KOBLLUX:{c1:'#00d8d8',c2:'#d800d8',pitch:.94,rate:.94,langs:['pt-BR']},
+  ATLAS:{c1:'#6CCFF6',c2:'#1B4965',pitch:.78,rate:.94,langs:['pt-BR']},
+  NOVA:{c1:'#FF6FB5',c2:'#FFD6E8',pitch:1.22,rate:1.05,langs:['pt-BR']},
+  VITALIS:{c1:'#00F5A0',c2:'#00D9F5',pitch:1.08,rate:1.18,langs:['pt-BR']},
+  PULSE:{c1:'#A259FF',c2:'#2D1B69',pitch:1.18,rate:1.06,langs:['pt-BR']},
+  KAOS:{c1:'#FF5C8A',c2:'#3D000F',pitch:1.42,rate:1.18,langs:['pt-BR']},
+  SERENA:{c1:'#7AD3A8',c2:'#154734',pitch:1.06,rate:.90,langs:['pt-BR']},
+  LUMINE:{c1:'#FFE066',c2:'#FF9F1C',pitch:1.32,rate:1.10,langs:['pt-BR']},
+  KODUX:{c1:'#F97316',c2:'#431407',pitch:.86,rate:1.02,langs:['pt-BR']},
+  JESUS:{c1:'#FFD700',c2:'#7c5c00',pitch:1.00,rate:.92,langs:['pt-PT','pt']}
+};
+let currentArch='KOBLLUX';
+const hex2rgb=(h,a)=>{h=h.replace('#','');
+  const n=parseInt(h.length===3?h.split('').map(c=>c+c).join(''):h,16);
+  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`};
+function applyArch(key){
+  const a=ARCHS[key]||ARCHS.KOBLLUX;currentArch=key;
+  const r=document.documentElement;
+  r.style.setProperty('--active',a.c1);
+  r.style.setProperty('--active-2',a.c2);
+  r.style.setProperty('--active-glow',hex2rgb(a.c1,.45));
+  document.body.dataset.arch=key.toLowerCase();
+  $$('.arch-chip').forEach(c=>c.classList.toggle('on',c.dataset.k===key));
+  const sel=$('#archSelect');if(sel)sel.value=key;
+  const lbl=$('#archLabel');if(lbl)lbl.textContent=key+' · '+a.c1;
+  try{localStorage.setItem('nebula.arch',key)}catch{}
+}
+function buildArchBar(){
+  const bar=$('#archBar');
+  bar.innerHTML=Object.keys(ARCHS).map(k=>{
+    const a=ARCHS[k];
+    return `<button class="arch-chip" data-k="${k}"
+      style="--chip-c1:${a.c1};--chip-c2:${a.c2};--chip-glow:${hex2rgb(a.c1,.45)}">
+      <span class="swatch"></span>${k}</button>`;
+  }).join('');
+  bar.addEventListener('click',e=>{
+    const c=e.target.closest('.arch-chip');if(!c)return;
+    applyArch(c.dataset.k);speak(c.dataset.k+' ativo');
+  });
+  const sel=$('#archSelect');
+  if(sel){sel.innerHTML=Object.keys(ARCHS).map(k=>`<option value="${k}">${k}</option>`).join('');
+    sel.addEventListener('change',()=>applyArch(sel.value))}
+}
+
+/* 2 · TTS */
+let voices=[];
+const loadVoices=()=>{voices=window.speechSynthesis?speechSynthesis.getVoices():[]};
+if('speechSynthesis'in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;
+  setTimeout(loadVoices,400);setTimeout(loadVoices,1200)}
+function pickVoice(langs){
+  if(!voices.length)return null;
+  for(const l of langs){const v=voices.find(x=>x.lang===l)||voices.find(x=>x.lang.startsWith(l.slice(0,2)));
+    if(v)return v}
+  return voices.find(v=>v.lang.startsWith('pt'))||voices[0];
+}
+function speak(text,opts={}){
+  if(!('speechSynthesis'in window)||!text)return;
+  speechSynthesis.cancel();
+  const a=ARCHS[currentArch]||ARCHS.KOBLLUX;
+  const u=new SpeechSynthesisUtterance(text);
+  u.pitch=a.pitch;u.rate=a.rate;
+  const v=pickVoice(a.langs);if(v){u.voice=v;u.lang=v.lang}
+  ttsLastText=text;ttsCharIndex=0;ttsPlaying=true;
+  u.onboundary=ev=>{if(typeof ev.charIndex==='number')ttsCharIndex=ev.charIndex};
+  u.onend=()=>{ttsPlaying=false;ttsCharIndex=0;opts.onend?.()};
+  u.onerror=()=>{ttsPlaying=false};
+  speechSynthesis.speak(u);
+}
+const stopSpeak=()=>{if('speechSynthesis'in window)speechSynthesis.cancel();ttsPlaying=false;ttsCharIndex=0};
+
+/* 3 · UTIL */
+const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtSize=b=>!b&&b!==0?'—':b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB';
+const fmtTime=ts=>{if(!ts)return'agora';const s=(Date.now()-ts)/1000;
+  return s<60?'agora':s<3600?`há ${Math.floor(s/60)}min`:s<86400?`há ${Math.floor(s/3600)}h`:new Date(ts).toLocaleDateString('pt-BR')};
+const fmtSources=arr=>(arr||[]).filter(Boolean).map(fmtTime).join(' ⇄ ');
+const tplWhen=d=>{
+  const link=(d.sources&&d.sources.length)?` title="Fontes: ${esc(fmtSources(d.sources))}"`:'';
+  return `<span class="when" data-when="${d.addedAt||''}"${link}>${fmtTime(d.addedAt)}${d.sources&&d.sources.length?' 🔗':''}</span>`;
+};
+function refreshTimes(){
+  $$('.when[data-when]').forEach(el=>{const ts=+el.dataset.when;if(!ts)return;
+    el.textContent=fmtTime(ts)+(el.title?' 🔗':'')});
+}
+setInterval(refreshTimes,30000);
+let toastT;
+function toast(msg){const el=$('#toast');el.textContent=msg;el.classList.add('on');
+  clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),2400)}
+function b64ToUint8(dataUrl){const b64=dataUrl.split(',')[1]||'';const bin=atob(b64);
+  const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);return arr}
+
+/* 4 · TIPOS */
+const TYPES={
+  md:{label:'MD',c:'#7c5cff',g:'#'},markdown:{label:'MD',c:'#7c5cff',g:'#'},
+  txt:{label:'TXT',c:'#19d3c5',g:'¶'},pdf:{label:'PDF',c:'#ff5c6c',g:'PDF'},
+  json:{label:'JSON',c:'#ffb020',g:'{ }'},csv:{label:'CSV',c:'#35d07f',g:'⊞'},
+  html:{label:'HTML',c:'#ff7a45',g:'</>'},htm:{label:'HTML',c:'#ff7a45',g:'</>'},
+  log:{label:'LOG',c:'#8b93a7',g:'≡'},js:{label:'JS',c:'#f7df1e',g:'JS'},
+  css:{label:'CSS',c:'#3b9dff',g:'{ }'},xml:{label:'XML',c:'#9aa2ba',g:'</>'}
+};
+const typeOf=e=>TYPES[(e||'').toLowerCase()]||{label:(e||'DOC').toUpperCase().slice(0,4),c:'#8b93a7',g:'◆'};
+
+/* 4b · MOTORES 369 */
+const escapeRegex=s=>String(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+const PATO_PRESETS={
+  pato:[{from:'de',to:'ðŸ¦†',wholeWord:true},{from:'do',to:'ðö¦†',wholeWord:true},
+    {from:'não',to:'NÃ£o†',wholeWord:true},{from:'mundo',to:'möndö¦†',wholeWord:true},
+    {from:'pato',to:'🦆 Pato',wholeWord:true}],
+  basico:[{from:'de',to:'ðŸ¦†',wholeWord:true},{from:'do',to:'ðö¦†',wholeWord:true},
+    {from:'da',to:'ðŸ¦†A',wholeWord:true}],
+  kblx:[{from:'de',to:'ðŸ¦†',wholeWord:true},{from:'do',to:'ðö¦†',wholeWord:true},
+    {from:'mundo',to:'MöNdö¦†',wholeWord:true}]
+};
+let patoPreset=localStorage.getItem('nebula.pato.preset')||'pato';
+function applyPato(text,presetKey){
+  const rules=PATO_PRESETS[presetKey||patoPreset]||[];
+  let out=String(text||'');
+  rules.forEach(r=>{
+    const escd=escapeRegex(r.from);let regex;
+    try{regex=r.wholeWord?new RegExp(`(?<![\\p{L}\\p{N}_])${escd}(?![\\p{L}\\p{N}_])`,'giu'):new RegExp(escd,'giu')}
+    catch{regex=new RegExp(escd,'gi')}
+    out=out.replace(regex,r.to);
+  });
+  return out;
+}
+function isHeadingLine(l){
+  if(/^(texto|cap[ií]tulo|parte|se[cç][aã]o|etapa|fase|bloco|fragmento)\s*[:·\-]?\s*[0-9ivxlcdm]/i.test(l))return 1;
+  if(/^[A-ZÀ-Ý0-9][A-ZÀ-Ý0-9\s]{3,}$/.test(l)&&l.length<=34)return 1;
+  if(l.length<=44&&!/[.!?…:;,\-]$/.test(l)&&l.length>3)return 2;
+  return 0;
+}
+function formatAIOR(raw){
+  if(!raw||!raw.trim())return raw||'';
+  let t=raw.replace(/\r\n?/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+  const out=[];
+  if(/\n/.test(t)){
+    t.split(/\n{2,}/).forEach(bloco=>{
+      bloco.split('\n').map(l=>l.trim()).filter(Boolean).forEach(l=>{
+        const h=isHeadingLine(l);
+        if(h)out.push(h===1?`◆ ${l.toUpperCase()}`:`◇ ${l}`);else out.push(l);
+      });
+      out.push('');
+    });
+  }else{
+    const sents=t.match(/[^.!?…]+[.!?…]+["'”)]*\s*/g)||[t];
+    let para=[];
+    sents.forEach(s=>{para.push(s.trim());if(para.length>=4){out.push(para.join(' '));out.push('');para=[]}});
+    if(para.length){out.push(para.join(' '));out.push('')}
+  }
+  return out.join('\n').replace(/\n{3,}/g,'\n\n').trim();
+}
+function merge369(a,b){
+  const s1=a.split(/[.!?]+/).filter(s=>s.trim());
+  const s2=b.split(/[.!?]+/).filter(s=>s.trim());
+  const max=Math.max(s1.length,s2.length);let res='';
+  for(let i=0;i<max;i++){const p=i%3;
+    if(p===0&&s1[i])res+=s1[i].trim()+'. ';
+    else if(p===1&&s2[i])res+=s2[i].trim()+'. ';
+    else if(p===2&&s1[i])res+=s1[i].trim()+'. ';
+    else if(s2[i])res+=s2[i].trim()+'. ';
+  }
+  return res.trim();
+}
+const G_META_RX=/\b(princ[íi]pio|padr[ãa]o|sempre|universal|estrutura|arquétipo|arqu[eé]tipo|metacamada|atemporal|transversal)\b/i;
+const G_NOISE_RX=/\b(hahah+|kkk+|aff+|nem vem|tipo assim|n[ée]\?|entendeu\?|tá ligado|tipo|saca|enfim)\b/i;
+const splitIntoSentences=t=>String(t||'').replace(/\s+/g,' ').split(/(?<=[.!?…])\s+/).map(s=>s.trim()).filter(Boolean);
+function classifyGerardo(s){
+  const low=s.toLowerCase();const wc=s.split(/\s+/).length;
+  if(G_NOISE_RX.test(low))return'noise';
+  if(G_META_RX.test(low))return'meta';
+  if(/\b(aconteceu|descobri|percebi|resultado|dados|estudo|mudou|novo|nova|hoje|agora|criou)\b/.test(low))return'fact';
+  if(/\b(significa|importante|essencial|ponto|n[úu]cleo|impacto|por isso|sentido)\b/.test(low))return'meaning';
+  if(wc<=5)return'noise';
+  if(/\d/.test(s))return'fact';
+  return'ctx';
+}
+function analyzeGerardo(text){
+  const sents=splitIntoSentences(text);
+  const all=sents.map((s,i)=>({i,s,type:classifyGerardo(s)}));
+  return{meta:all.filter(x=>x.type==='meta'),
+    noise:all.filter(x=>x.type==='noise'),
+    ctx:all.filter(x=>x.type==='ctx'||x.type==='fact'||x.type==='meaning'),all};
+}
+function gerardoHTML(a){
+  const block=(label,items,color)=>{
+    if(!items.length)return `<h3 style="color:${color}">${label} · 0</h3>`;
+    return `<h3 style="color:${color}">${label} · ${items.length}</h3>`+
+      items.map(it=>`<blockquote style="border-left-color:${color}">${esc(it.s)}</blockquote>`).join('');
+  };
+  return `<div class="md">`+
+    block('🦆 Metacamada',a.meta,'#a29bfe')+
+    block('🐆 Contexto',a.ctx,'#f7d774')+
+    block('🦭 Ruído',a.noise,'#ff6b6b')+`</div>`;
+}
+let ttsPlaying=false,ttsCharIndex=0,ttsLastText='',pendingSeedId=null;
+function pushDerivedDoc(name,content,extra){
+  const d={id:uid(),name,ext:'md',size:content.length,addedAt:Date.now(),content,...extra};
+  docs.unshift(d);persistDocs();rebuild();return d;
+}
+function updateSeedLabel(){
+  const d=pendingSeedId?docs.find(x=>x.id===pendingSeedId):null;
+  const txt=d?`Semente: ${d.name}`:'Semente: nenhuma marcada';
+  const el=document.getElementById('seedLabel');if(el)el.textContent=txt;
+  $$('.g-seed-label').forEach(g=>g.textContent=txt);
+}
+function markSeed(doc){
+  if(!doc)return;
+  if(pendingSeedId===doc.id){pendingSeedId=null;toast('Semente desmarcada');updateSeedLabel();return}
+  pendingSeedId=doc.id;toast('💊 "'+doc.name+'" marcado como Semente');
+  updateSeedLabel();
+}
+function fundirComSemente(doc){
+  if(!doc)return;
+  if(!pendingSeedId){markSeed(doc);return}
+  if(pendingSeedId===doc.id){toast('Escolhe um segundo documento diferente');return}
+  const seed=docs.find(d=>d.id===pendingSeedId);
+  if(!seed){pendingSeedId=null;updateSeedLabel();toast('Semente perdida');return}
+  let fused=merge369(seed.content||seed.name,doc.content||doc.name);
+  fused=formatAIOR(fused);fused=applyPato(fused);
+  pushDerivedDoc(`Fusão 369 · ${seed.name} + ${doc.name}`,fused,{fused:true,sources:[seed.addedAt,doc.addedAt]});
+  pendingSeedId=null;updateSeedLabel();toast('⊕ Fundido — nova pílula criada');
+}
+function injectIntoLiveTTS(pillDoc){
+  if(!ttsPlaying||!ttsLastText){toast('Ative o 🎙️ primeiro pra injetar ao vivo');return}
+  const idx=Math.min(ttsCharIndex,ttsLastText.length);
+  let cut=ttsLastText.lastIndexOf('.',idx);if(cut<0)cut=idx;
+  const before=ttsLastText.slice(0,cut+1);const after=ttsLastText.slice(cut+1);
+  const fused=`${before}\n\n${(pillDoc.content||pillDoc.name).trim()}\n\n${after}`.trim();
+  pushDerivedDoc(`Fusão ao vivo · ${pillDoc.name}`,fused,{fused:true,sources:[pillDoc.addedAt]});
+  toast('🎧+ Contexto injetado');
+  speak(`${(pillDoc.content||pillDoc.name).trim()} ${after}`.trim());
+}
+function runFormatAIOR(doc){
+  const d=doc||view[index];if(!d||!d.content)return toast('Nenhum doc ativo com texto');
+  pushDerivedDoc(`${d.name} · AIOR`,formatAIOR(d.content),{fromId:d.id,sources:[d.addedAt]});
+  toast('🪧 AIOR formatado');
+}
+const TPL={
+  pill(d){
+    const t=typeOf(d.ext);const isSeed=d.id===pendingSeedId;
+    return `<div class="doc-pill${isSeed?' is-seed':''}" data-id="${d.id}" style="--c:${t.c}">
+      <span class="dp-glyph">${esc(t.g)}</span>
+      <span class="dp-info"><span class="dp-name">${esc(d.name)}</span>${tplWhen(d)}</span>
+      <span class="dp-acts">
+        <button data-action="open" title="Abrir">📖</button>
+        <button data-action="speak" title="Ouvir">🎙️</button>
+        <button data-action="seed" title="Semente">🌱</button>
+        <button data-action="fuse" title="Fundir">🪞</button>
+        <button data-action="inject" title="Injetar">🎧+</button>
+        <button data-action="pato" title="Pato">🦆</button>
+        <button data-action="del" title="Remover">✕</button>
+      </span></div>`;
+  }
+};
+function renderDocPills(){
+  const box=$('#docPillsBar');if(!box)return;
+  box.innerHTML=docs.length
+    ? docs.map(TPL.pill).join('')
+    : '<span class="dp-empty">Nenhuma pílula ainda — importe ou crie uma fusão.</span>';
+}
+$('#docPillsBar').addEventListener('click',e=>{
+  const btn=e.target.closest('button[data-action]');if(!btn)return;
+  const wrap=e.target.closest('.doc-pill');if(!wrap)return;
+  const d=docs.find(x=>x.id===wrap.dataset.id);if(!d)return;
+  const act=btn.dataset.action;
+  if(act==='open')openReader(d);
+  else if(act==='speak')speak((d.content||d.name).slice(0,5000));
+  else if(act==='seed')markSeed(d);
+  else if(act==='fuse')fundirComSemente(d);
+  else if(act==='inject')injectIntoLiveTTS(d);
+  else if(act==='pato')pushDerivedDoc(`${d.name} · Pato`,applyPato(d.content||d.name),{fromId:d.id,sources:[d.addedAt]});
+  else if(act==='del'){docs=docs.filter(x=>x.id!==d.id);persistDocs();rebuild();toast('🗑️ Removido')}
+});
+$('#btnPills').addEventListener('click',()=>{
+  const b=$('#docPillsBar');
+  const showing=b.style.display!=='none';
+  b.style.display=showing?'none':'flex';
+  if(!showing)renderDocPills();
+});
+
+/* 5 · ESTADO */
+const DOC_KEY='nebula.docs.v1';
+let docs=[],view=[],cards=[],index=0,filter='all';
+let dragX=0,dragging=false,startX=0,moved=false;
+const pdfCache=new Map();
+function persistDocs(){
+  try{
+    const slim=docs.map(d=>{
+      if(d.dataUrl&&d.dataUrl.length>1_200_000){const{dataUrl,...r}=d;return{...r,offline:true}}
+      return d;
+    });
+    localStorage.setItem(DOC_KEY,JSON.stringify(slim));
+  }catch{toast('⚠️ Cache cheio')}
+}
+function restoreDocs(){
+  try{const r=localStorage.getItem(DOC_KEY);if(r)docs=JSON.parse(r).filter(d=>d&&d.name)}
+  catch{docs=[]}
+}
+
+/* 6 · MARKDOWN */
+function mdToHtml(src){
+  const lines=String(src).replace(/\r\n?/g,'\n').split('\n');
+  const out=[];let i=0;
+  const inline=t=>t
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/(^|[^*])\*([^*\n]+)\*/g,'$1<em>$2</em>')
+    .replace(/~~(.+?)~~/g,'<del>$1</del>')
+    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  while(i<lines.length){
+    const l=lines[i];
+    if(/^\s*$/.test(l)){i++;continue}
+    if(/^\s*```/.test(l)){
+      const lang=l.trim().slice(3).trim();i++;
+      const buf=[];
+      while(i<lines.length&&!/^\s*```/.test(lines[i])){buf.push(lines[i]);i++}
+      i++;out.push(`<pre data-lang="${esc(lang)}"><code>${esc(buf.join('\n'))}</code></pre>`);continue;
+    }
+    const h=l.match(/^(#{1,6})\s+(.*)$/);
+    if(h){const lv=h[1].length;out.push(`<h${lv}>${inline(h[2])}</h${lv}>`);i++;continue}
+    if(/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(l)){out.push('<hr>');i++;continue}
+    if(/^\s*>/.test(l)){
+      const buf=[];
+      while(i<lines.length&&/^\s*>/.test(lines[i])){buf.push(lines[i].replace(/^\s*>\s?/,''));i++}
+      out.push('<blockquote>'+mdToHtml(buf.join('\n'))+'</blockquote>');continue;
+    }
+    if(/^\s*\|/.test(l)&&i+1<lines.length&&/^\s*\|[\s:|-]+\|\s*$/.test(lines[i+1])){
+      const split=r=>r.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(s=>s.trim());
+      const head=split(l);i+=2;const rows=[];
+      while(i<lines.length&&/^\s*\|/.test(lines[i])){rows.push(split(lines[i]));i++}
+      out.push('<table><thead><tr>'+head.map(c=>`<th>${inline(c)}</th>`).join('')+'</tr></thead><tbody>'+
+        rows.map(r=>'<tr>'+r.map(c=>`<td>${inline(c)}</td>`).join('')+'</tr>').join('')+'</tbody></table>');
+      continue;
+    }
+    if(/^\s*([-*+]|\d+\.)\s+/.test(l)){
+      const ord=/^\s*\d+\./.test(l);const items=[];
+      while(i<lines.length&&/^\s*([-*+]|\d+\.)\s+/.test(lines[i])){
+        items.push(lines[i].replace(/^\s*([-*+]|\d+\.)\s+/,''));i++;
+      }
+      const tag=ord?'ol':'ul';
+      out.push(`<${tag}>`+items.map(t=>`<li>${inline(t)}</li>`).join('')+`</${tag}>`);continue;
+    }
+    const buf=[];
+    while(i<lines.length&&!/^\s*$/.test(lines[i])&&!/^(#{1,6}\s|>\s*|```|\s*([-*+]|\d+\.)\s)/.test(lines[i])){buf.push(lines[i]);i++}
+    if(!buf.length){buf.push(lines[i]);i++}
+    out.push('<p>'+inline(buf.join(' '))+'</p>');
+  }
+  return out.join('\n');
+}
+
+/* 7 · ARQUIVOS */
+function handleFiles(files){
+  const list=Array.from(files||[]);if(!list.length)return;
+  list.forEach(file=>{
+    const ext=(file.name.split('.').pop()||'').toLowerCase();
+    if(ext==='pdf'){
+      const r=new FileReader();
+      r.onload=()=>{
+        const d={id:uid(),name:file.name,ext:'pdf',size:file.size,addedAt:Date.now(),dataUrl:r.result};
+        docs.unshift(d);persistDocs();rebuild();makePdfThumb(d);toast('📄 '+file.name);
+      };
+      r.readAsDataURL(file);
+    }else{
+      const r=new FileReader();
+      r.onload=()=>{
+        let content=r.result;
+        if(ext==='json'){try{content=JSON.stringify(JSON.parse(content),null,2)}catch{}}
+        docs.unshift({id:uid(),name:file.name,ext:ext||'txt',size:file.size,addedAt:Date.now(),content});
+        persistDocs();rebuild();
+      };
+      r.readAsText(file);
+    }
+  });
+  if(list.length>1)toast('📚 '+list.length+' arquivos');
+}
+async function makePdfThumb(d){
+  if(!window.pdfjsLib||!d.dataUrl)return;
+  try{
+    const pdf=await pdfjsLib.getDocument({data:b64ToUint8(d.dataUrl)}).promise;
+    d.pages=pdf.numPages;
+    const page=await pdf.getPage(1);
+    const vp=page.getViewport({scale:.45});
+    const c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;
+    await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+    d.thumb=c.toDataURL('image/jpeg',.72);
+    const img=$('#stage').querySelector(`[data-id="${d.id}"] .thumb-img`);
+    if(img){img.style.backgroundImage=`url(${d.thumb})`;img.classList.add('on')}
+    const gl=$('#stage').querySelector(`[data-id="${d.id}"] .glyph`);
+    if(gl)gl.style.opacity=0;
+    persistDocs();
+  }catch{}
+}
+
+/* 8 · CARROSSEL */
+const stage=$('#stage');
+function rebuild(){
+  const q=($('#q').value||'').trim().toLowerCase();
+  view=docs.filter(d=>{
+    if(filter!=='all'){
+      if(filter==='fav'&&!d.fav)return false;
+      if(filter!=='fav'&&(d.ext||'').toLowerCase()!==filter)return false;
+    }
+    if(!q)return true;
+    return d.name.toLowerCase().includes(q)||(d.content&&d.content.toLowerCase().includes(q));
+  });
+  stage.innerHTML='';cards=[];
+  view.forEach((d,i)=>{
+    const t=typeOf(d.ext);
+    const card=document.createElement('article');
+    card.className='card';card.dataset.id=d.id;card.dataset.index=i;
+    card.style.setProperty('--c',t.c);
+    card.style.setProperty('--glow',hex2rgb(t.c,.30));
+    const snippet=d.content
+      ? d.content.replace(/[#*`>_~\-]/g,' ').replace(/\s+/g,' ').trim().slice(0,220)
+      : (d.ext==='pdf'?'PDF · '+(d.pages?d.pages+' página(s)':'toque para abrir'):'Documento');
+    card.innerHTML=
+      `<button class="del" title="Remover">✕</button>
+       <div class="thumb">
+         <div class="thumb-img"${d.thumb?` style="background-image:url(${d.thumb})"`:''}></div>
+         <div class="glyph"${d.thumb?' style="opacity:0"':''}>${esc(t.g)}</div>
+       </div>
+       <div class="card-body">
+         <span class="badge">${t.label}${d.fav?' ★':''}</span>
+         <h3>${esc(d.name)}</h3>
+         <p class="snippet">${esc(snippet)}</p>
+         <div class="card-foot"><span>${fmtSize(d.size)}</span>${tplWhen(d)}</div>
+       </div>`;
+    card.addEventListener('click',e=>{
+      if(e.target.closest('.del'))return;
+      if(moved)return;
+      if(card.classList.contains('is-active'))openReader(d);
+      else{index=i;layout()}
+    });
+    card.querySelector('.del').addEventListener('click',e=>{
+      e.stopPropagation();
+      docs=docs.filter(x=>x.id!==d.id);persistDocs();rebuild();toast('🗑️ Removido');
+    });
+    stage.appendChild(card);cards.push(card);
+  });
+  if(index>=view.length)index=Math.max(0,view.length-1);
+  if(index<0)index=0;
+  const dotsEl=$('#dots');dotsEl.innerHTML='';
+  view.forEach((_,i)=>{
+    const dot=document.createElement('span');dot.className='dot';
+    dot.addEventListener('click',()=>{index=i;layout()});
+    dotsEl.appendChild(dot);
+  });
+  const has=view.length>0;
+  $('#empty').classList.toggle('on',!has);
+  $('#navDock').style.display=has?'flex':'none';
+  $('#filterBar').style.display=has?'flex':'none';
+  layout();renderDocPills();
+}
+const spacing=()=>{const w=window.innerWidth;return w<520?Math.min(150,w*.42):w<860?170:205};
+function layout(){
+  if(!cards.length)return;
+  const SP=spacing();
+  cards.forEach((el,i)=>{
+    const off=i-index,abs=Math.abs(off);
+    if(abs>4){el.style.opacity=0;el.style.pointerEvents='none';
+      el.style.transform=`translate(-50%,-50%) translate3d(${off*SP}px,0,-1000px)`;
+      el.style.zIndex=0;return}
+    const x=off*SP+dragX,y=abs*14,z=-abs*210;
+    const ry=off*-30+(dragX*-.035),sc=1-Math.min(abs,4)*.055;
+    el.style.transform=`translate(-50%,-50%) translate3d(${x}px,${y}px,${z}px) rotateY(${ry}deg) scale(${sc})`;
+    el.style.opacity=1-Math.min(abs,4)*.20;
+    el.style.zIndex=100-abs;
+    el.style.pointerEvents='auto';
+    el.classList.toggle('is-active',off===0&&Math.abs(dragX)<55);
+  });
+  $$('.dot').forEach((d,i)=>d.classList.toggle('on',i===index));
+}
+function go(delta){
+  if(!view.length)return;
+  index=Math.max(0,Math.min(view.length-1,index+delta));
+  layout();
+}
+stage.addEventListener('pointerdown',e=>{
+  if(e.target.closest('.del'))return;
+  dragging=true;moved=false;startX=e.clientX;dragX=0;
+  stage.classList.add('dragging');
+  try{stage.setPointerCapture(e.pointerId)}catch{}
+});
+stage.addEventListener('pointermove',e=>{
+  if(!dragging)return;
+  dragX=e.clientX-startX;
+  if(Math.abs(dragX)>8)moved=true;
+  layout();
+});
+function endDrag(){
+  if(!dragging)return;
+  dragging=false;stage.classList.remove('dragging');
+  const dx=dragX;dragX=0;
+  if(dx<-55)go(1);else if(dx>55)go(-1);else layout();
+  setTimeout(()=>{moved=false},60);
+}
+stage.addEventListener('pointerup',endDrag);
+stage.addEventListener('pointercancel',endDrag);
+stage.addEventListener('wheel',e=>{
+  if(Math.abs(e.deltaX)>Math.abs(e.deltaY)){
+    e.preventDefault();
+    if(Math.abs(e.deltaX)>18)go(e.deltaX>0?1:-1);
+  }
+},{passive:false});
+document.addEventListener('keydown',e=>{
+  if($('#reader').classList.contains('on')){if(e.key==='Escape')closeReader();return}
+  if(e.key==='ArrowRight')go(1);
+  if(e.key==='ArrowLeft')go(-1);
+  if(e.key==='Enter'&&view[index])openReader(view[index]);
+});
+$('#prev').addEventListener('click',()=>go(-1));
+$('#next').addEventListener('click',()=>go(1));
+
+/* 9 · READER */
+let currentDoc=null;
+async function openReader(doc){
+  currentDoc=doc;
+  const t=typeOf(doc.ext);
+  $('#rIcon').textContent=t.label;
+  $('#rIcon').style.setProperty('--c',t.c);
+  $('#rTitle').textContent=doc.name;
+  $('#rMeta').innerHTML=`${t.label} · ${fmtSize(doc.size)} · ${tplWhen(doc)}`+(doc.pages?` · ${doc.pages} página(s)`:'');
+  $('#rFav').textContent=doc.fav?'★':'☆';
+  $('#readerBody').innerHTML='<div class="pdf-loading"><div class="spinner"></div><span>Carregando…</span></div>';
+  $('#reader').classList.add('on');
+  $('#readerBody').scrollTop=0;
+  const ext=(doc.ext||'').toLowerCase();
+  if(ext==='pdf')await renderPdf(doc);
+  else if(ext==='md'||ext==='markdown')$('#readerBody').innerHTML='<div class="md">'+mdToHtml(doc.content||'')+'</div>';
+  else $('#readerBody').innerHTML='<pre class="plain">'+esc(doc.content||'(vazio)')+'</pre>';
+}
+function closeReader(){
+  $('#reader').classList.remove('on');
+  $('#readerBody').innerHTML='';
+  currentDoc=null;
+  if('speechSynthesis'in window)speechSynthesis.cancel();
+}
+$('#rClose').addEventListener('click',closeReader);
+$('#reader').addEventListener('click',e=>{if(e.target===$('#reader'))closeReader()});
+$('#rFav').addEventListener('click',()=>{
+  if(!currentDoc)return;
+  currentDoc.fav=!currentDoc.fav;
+  $('#rFav').textContent=currentDoc.fav?'★':'☆';
+  persistDocs();rebuild();
+});
+$('#rGerardo').addEventListener('click',()=>{
+  if(!currentDoc||!currentDoc.content){toast('Sem texto pra analisar');return}
+  const a=analyzeGerardo(currentDoc.content);
+  $('#readerBody').innerHTML=gerardoHTML(a)+
+    '<p style="text-align:center;margin-top:20px"><button class="pill sm ghost" id="rGerardoBack">← Voltar ao documento</button></p>';
+  $('#rGerardoBack').addEventListener('click',()=>openReader(currentDoc));
+  toast(`Meta:${a.meta.length} · Ctx:${a.ctx.length} · Ruído:${a.noise.length}`);
+});
+$('#rPato').addEventListener('click',()=>{
+  if(!currentDoc||!currentDoc.content){toast('Sem texto pra transformar');return}
+  pushDerivedDoc(`${currentDoc.name} · Pato`,applyPato(currentDoc.content),{fromId:currentDoc.id});
+  toast('🦆 Pato aplicado');
+});
+$('#rFundir').addEventListener('click',()=>fundirComSemente(currentDoc));
+$('#rInject').addEventListener('click',()=>{
+  if(!pendingSeedId){toast('Marca uma Semente primeiro (⊕)');return}
+  const seed=docs.find(d=>d.id===pendingSeedId);
+  if(!seed){toast('Semente perdida');return}
+  injectIntoLiveTTS(seed);
+});
+$('#rSpeech').addEventListener('click',()=>{
+  if(!currentDoc)return;
+  const text=(currentDoc.content||currentDoc.name||'').slice(0,5000);
+  if(text){speak(text);toast('🎙️ Lendo com '+currentArch)}
+  else if(currentDoc.ext==='pdf'){speak('PDF '+currentDoc.name);toast('PDF sem texto extraído')}
+});
+$('#rWindow').addEventListener('click',()=>{
+  if(!currentDoc)return;
+  const d=currentDoc;const t=typeOf(d.ext);
+  let bodyHtml='';
+  if(d.content){
+    if((d.ext||'').toLowerCase().includes('md')||d.ext==='markdown')
+      bodyHtml='<div class="md">'+mdToHtml(d.content)+'</div>';
+    else bodyHtml='<pre class="plain">'+esc(d.content)+'</pre>';
+  }else if(d.dataUrl&&d.ext==='pdf'){
+    bodyHtml='<iframe src="'+d.dataUrl+'" style="width:100%;height:100%;border:0"></iframe>';
+  }
+  // === PONTE: usa o shell do Dual ===
+  if(typeof window.createSessionWindow==='function'){
+    window.createSessionWindow({title:t.label+' · '+d.name,contentHtml:bodyHtml});
+  }
+  closeReader();
+});
+$('#rDownload').addEventListener('click',()=>{
+  if(!currentDoc)return;
+  let url;
+  if(currentDoc.dataUrl)url=currentDoc.dataUrl;
+  else url=URL.createObjectURL(new Blob([currentDoc.content||''],{type:'text/plain;charset=utf-8'}));
+  const a=document.createElement('a');a.href=url;a.download=currentDoc.name;
+  document.body.appendChild(a);a.click();a.remove();
+});
+async function renderPdf(doc){
+  if(!doc.dataUrl){$('#readerBody').innerHTML='<div class="pdf-loading">📄 PDF grande — reimporte para visualizar.</div>';return}
+  if(!window.pdfjsLib){$('#readerBody').innerHTML='<div class="pdf-loading">⚠️ pdf.js ausente.</div>';return}
+  try{
+    let pdf=pdfCache.get(doc.id);
+    if(!pdf){pdf=await pdfjsLib.getDocument({data:b64ToUint8(doc.dataUrl)}).promise;pdfCache.set(doc.id,pdf)}
+    doc.pages=pdf.numPages;
+    $('#readerBody').innerHTML='';
+    const wrap=document.createElement('div');wrap.className='pdf-wrap';
+    $('#readerBody').appendChild(wrap);
+    const maxPages=Math.min(pdf.numPages,40);
+    for(let p=1;p<=maxPages;p++){
+      const page=await pdf.getPage(p);
+      const vp=page.getViewport({scale:1.6});
+      const box=document.createElement('div');box.className='pdf-page';
+      const c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;
+      box.appendChild(c);wrap.appendChild(box);
+      await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+      await new Promise(r=>setTimeout(r,0));
+    }
+    if(pdf.numPages>maxPages){
+      const note=document.createElement('div');note.className='pdf-loading';
+      note.textContent='Mostrando '+maxPages+' de '+pdf.numPages+' páginas.';
+      wrap.appendChild(note);
+    }
+  }catch(err){$('#readerBody').innerHTML='<div class="pdf-loading">❌ '+esc(err.message||'Erro')+'</div>'}
+}
+
+/* 10 · SESSIONS (delegado ao Dual) */
+function makeSession({title,src,contentHtml}){
+  // === PONTE ===
+  if(typeof window.createSessionWindow==='function'){
+    return window.createSessionWindow({title:title||'Sessão',src:src||'',contentHtml:contentHtml||''});
+  }
+  // fallback (não deve ocorrer)
+  console.warn('createSessionWindow indisponível');
+  return null;
+}
+
+/* 11 · SYMBOL BAR */
+const SB_ACTIONS=[
+  {icon:'📥',label:'Importar',act:()=>$('#fileInput').click()},
+  {icon:'✨',label:'Exemplos',act:()=>loadSamples()},
+  {icon:'▣',label:'Nova janela',act:()=>makeSession({title:'Nova sessão · '+currentArch})},
+  {icon:'🌐',label:'Splash Infodose',act:()=>makeSession({title:'Splash',src:'https://www.infodose.com.br/splash'})},
+  {icon:'🎙️',label:'Ler doc ativo',act:()=>{
+    if(!view[index])return toast('Nenhum doc ativo');
+    openReader(view[index]).then(()=>setTimeout(()=>$('#rSpeech').click(),500));
+  }},
+  {icon:'🎨',label:'Trocar arquétipo',act:()=>{
+    const keys=Object.keys(ARCHS);
+    const nx=keys[(keys.indexOf(currentArch)+1)%keys.length];
+    applyArch(nx);toast('◈ '+nx);
+  }},
+  {icon:'⚙',label:'Cockpit',act:()=>openCockpit()},
+  {icon:'🧠',label:'Analisar (Gerardo)',act:()=>{
+    if(!view[index])return toast('Nenhum doc ativo');
+    openReader(view[index]).then(()=>setTimeout(()=>$('#rGerardo').click(),400));
+  }},
+  {icon:'🦆',label:'Pato → nova pílula',act:()=>{
+    const d=view[index];if(!d||!d.content)return toast('Nenhum doc ativo com texto');
+    pushDerivedDoc(`${d.name} · Pato`,applyPato(d.content),{fromId:d.id});
+    toast('🦆 Pato aplicado');
+  }},
+  {icon:'⊕',label:'Marcar/Fundir Semente',act:()=>{
+    const d=view[index];if(!d)return toast('Nenhum doc ativo');
+    fundirComSemente(d);
+  }},
+  {icon:'🎧+',label:'Injetar Semente no TTS',act:()=>{
+    if(!pendingSeedId)return toast('Marca uma Semente primeiro (⊕)');
+    const seed=docs.find(x=>x.id===pendingSeedId);
+    if(!seed)return toast('Semente perdida');
+    injectIntoLiveTTS(seed);
+  }},
+  {icon:'💊',label:'Alternar Pílulas',act:()=>$('#btnPills').click()},
+  {icon:'🗂',label:'Reabrir grupos',act:()=>createDefaultGroups()},
+  {icon:'🪧',label:'Formatar AIOR',act:()=>runFormatAIOR()},
+  {icon:'🗑️',label:'Limpar tudo',act:()=>{
+    if(!confirm('Apagar todos os documentos?'))return;
+    docs=[];persistDocs();rebuild();toast('Limpo');
+  }}
+];
+function buildSymbolBar(){
+  const box=$('#sbItems');
+  box.innerHTML=SB_ACTIONS.map((a,i)=>`<button class="pill sm" data-i="${i}">${a.icon} ${a.label}</button>`).join('');
+  box.addEventListener('click',e=>{
+    const b=e.target.closest('button[data-i]');if(!b)return;
+    const a=SB_ACTIONS[+b.dataset.i];if(a&&a.act)a.act();
+    $('#symbolBar').classList.remove('open');
+  });
+}
+$('#sbToggle').addEventListener('click',()=>$('#symbolBar').classList.toggle('open'));
+
+/* 12 · COCKPIT */
+function openCockpit(){$('#cockpit').classList.add('on');$('#cockpitBackdrop').classList.add('on')}
+function closeCockpit(){$('#cockpit').classList.remove('on');$('#cockpitBackdrop').classList.remove('on')}
+$('#btnCockpit').addEventListener('click',openCockpit);
+$('#cockpitClose').addEventListener('click',closeCockpit);
+$('#cockpitBackdrop').addEventListener('click',closeCockpit);
+const SOLAR_MODES=['day','sunset','night'];
+let solarAuto=localStorage.getItem('nebula.solar.auto')==='1';
+function setSolar(mode,auto){
+  solarAuto=!!auto;
+  document.body.classList.remove('solar-day','solar-sunset','solar-night');
+  document.body.classList.add('solar-'+mode);
+  try{localStorage.setItem('nebula.solar',mode);localStorage.setItem('nebula.solar.auto',solarAuto?'1':'0')}catch{}
+  const l=$('#solarLabel');if(l)l.textContent=mode.toUpperCase()+(solarAuto?' · auto':'');
+}
+const solarByTime=()=>{const h=new Date().getHours();return(h>=6&&h<17)?'day':(h>=17&&h<19)?'sunset':'night'};
+$('#solarCycle').addEventListener('click',()=>{
+  const cur=SOLAR_MODES.find(m=>document.body.classList.contains('solar-'+m))||'night';
+  setSolar(SOLAR_MODES[(SOLAR_MODES.indexOf(cur)+1)%3],false);
+});
+$('#solarAuto').addEventListener('click',()=>{setSolar(solarByTime(),true);toast('Solar auto')});
+setInterval(()=>{if(solarAuto)setSolar(solarByTime(),true)},600000);
+const uName=$('#userName'),uModel=$('#userModel');
+try{const sU=localStorage.getItem('nebula.user'),sM=localStorage.getItem('nebula.model');
+  if(sU)uName.value=sU;if(sM)uModel.value=sM}catch{}
+uName.addEventListener('change',()=>{try{localStorage.setItem('nebula.user',uName.value)}catch{}});
+uModel.addEventListener('change',()=>{try{localStorage.setItem('nebula.model',uModel.value)}catch{}});
+const patoSel=$('#patoPresetSelect');
+if(patoSel){
+  patoSel.value=patoPreset;
+  patoSel.addEventListener('change',()=>{
+    patoPreset=patoSel.value;
+    try{localStorage.setItem('nebula.pato.preset',patoPreset)}catch{}
+    toast('Preset do Pato: '+patoPreset);
+  });
+}
+updateSeedLabel();
+// Background
+const bgEl=document.createElement('div');
+bgEl.style.cssText='position:fixed;inset:0;z-index:1;pointer-events:none;background-size:cover;background-position:center;transition:opacity .5s';
+document.body.appendChild(bgEl);
+let bgData='';try{bgData=localStorage.getItem('nebula.bg')||''}catch{}
+function applyBg(){
+  if(bgData){bgEl.style.backgroundImage=`url(${bgData})`;
+    const op=+$('#bgOpacity').value/100;bgEl.style.opacity=op;
+    $('#bgOpacityVal').textContent=Math.round(op*100)+'%';
+  }else{bgEl.style.backgroundImage='';bgEl.style.opacity='0'}
+}
+applyBg();
+$('#bgUpload').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{bgData=r.result;
+    try{localStorage.setItem('nebula.bg',bgData)}catch{toast('Imagem muito grande')}
+    applyBg()};
+  r.readAsDataURL(f);
+});
+$('#bgClear').addEventListener('click',()=>{bgData='';try{localStorage.removeItem('nebula.bg')}catch{};applyBg()});
+$('#bgOpacity').addEventListener('input',()=>{
+  const op=+$('#bgOpacity').value/100;bgEl.style.opacity=op;
+  $('#bgOpacityVal').textContent=Math.round(op*100)+'%';
+  try{localStorage.setItem('nebula.bg.op',String(op))}catch{}
+});
+try{const so=localStorage.getItem('nebula.bg.op');if(so)$('#bgOpacity').value=Math.round(+so*100)}catch{}
+applyBg();
+// Backup
+$('#exportState').addEventListener('click',()=>{
+  const payload={app:'NEBULA',v:1,ts:new Date().toISOString(),
+    docs:docs.filter(d=>!d.dataUrl||d.dataUrl.length<500000),
+    arch:currentArch,
+    solar:SOLAR_MODES.find(m=>document.body.classList.contains('solar-'+m))||'night',
+    user:uName.value,model:uModel.value};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='nebula-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();toast('Backup exportado');
+});
+$('#importState').addEventListener('click',()=>{
+  const inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  inp.addEventListener('change',async()=>{
+    const f=inp.files[0];if(!f)return;
+    try{
+      const d=JSON.parse(await f.text());
+      if(!d||d.app!=='NEBULA')throw new Error('formato');
+      if(!confirm('Importar backup? Substitui os docs atuais.'))return;
+      docs=d.docs||[];persistDocs();
+      if(d.arch&&ARCHS[d.arch])applyArch(d.arch);
+      if(d.solar)setSolar(d.solar,false);
+      if(d.user){uName.value=d.user;try{localStorage.setItem('nebula.user',d.user)}catch{}}
+      if(d.model){uModel.value=d.model;try{localStorage.setItem('nebula.model',d.model)}catch{}}
+      rebuild();toast('Backup importado');
+    }catch{toast('Backup inválido')}
+  });
+  inp.click();
+});
+$('#resetState').addEventListener('click',()=>{
+  if(!confirm('Resetar TUDO?'))return;
+  ['nebula.docs.v1','nebula.arch','nebula.solar','nebula.solar.auto',
+   'nebula.user','nebula.model','nebula.bg','nebula.bg.op','nebula.pato.preset'].forEach(k=>{
+    try{localStorage.removeItem(k)}catch{}
+  });
+  location.reload();
+});
+
+/* 13 · FILTROS */
+$('#q').addEventListener('input',()=>{index=0;rebuild()});
+$('#filterBar').addEventListener('click',e=>{
+  const b=e.target.closest('.tab-pill');if(!b)return;
+  filter=b.dataset.f;
+  $$('.tab-pill').forEach(x=>x.classList.toggle('on',x===b));
+  index=0;rebuild();
+});
+
+/* 14 · IMPORT / DRAG */
+$('#btnImport').addEventListener('click',()=>$('#fileInput').click());
+$('#btnImport2').addEventListener('click',()=>$('#fileInput').click());
+$('#fileInput').addEventListener('change',e=>{handleFiles(e.target.files);e.target.value=''});
+let dragDepth=0;
+window.addEventListener('dragenter',e=>{e.preventDefault();dragDepth++;$('#drop').classList.add('on')});
+window.addEventListener('dragover',e=>e.preventDefault());
+window.addEventListener('dragleave',e=>{e.preventDefault();dragDepth=Math.max(0,dragDepth-1);
+  if(!dragDepth)$('#drop').classList.remove('on')});
+window.addEventListener('drop',e=>{e.preventDefault();dragDepth=0;$('#drop').classList.remove('on');
+  if(e.dataTransfer&&e.dataTransfer.files.length)handleFiles(e.dataTransfer.files)});
+
+/* 15 · EXEMPLOS */
+const SAMPLES=[
+  {name:'README.md',ext:'md',size:2140,content:`# NEBULA · Dual Unificado
+
+Visualizador **local** com carrossel 3D, sessões flutuantes (Dual) e arquétipos vocais.
+
+## Formatos
+| Formato | Suporte |
+|---|---|
+| \`.md\` | Markdown completo |
+| \`.txt\` | Texto puro |
+| \`.pdf\` | Canvas página por página |
+| \`.json\` | Pretty-print |
+
+## Dicas
+- Clique no **card central** para abrir o leitor
+- Use **🎙️** para ouvir com o arquétipo atual
+- Use **▣** para abrir em **janela flutuante** (shell Dual)
+- **Symbol bar** (≡) → ações rápidas
+- **Cockpit** (⚙) → solar, background, backup
+- O **topbar** herda do Dual: URL bar, tema, smart hide`},
+  {name:'anotacoes.txt',ext:'txt',size:812,content:`ANOTAÇÕES
+=========
+
+- Revisar pílulas no mobile
+- Integrar TTS com arquétipos
+- Exportar sessões como HTML
+
+Ideias soltas
+-------------
+> Modo foco que escurece ao redor do card.
+> Atalhos customizáveis por arquétipo.
+
+Lembrete: cache do navegador aguenta ~5MB.`},
+  {name:'config.json',ext:'json',size:486,content:JSON.stringify({
+    app:'NEBULA',versao:'1.0.0',
+    arquetipos:['KOBLLUX','ATLAS','NOVA','KODUX','JESUS'],
+    sistemas:{docs:true,sessions:true,tts:true,cockpit:true}
+  },null,2)},
+  {name:'metricas.csv',ext:'csv',size:340,content:`data,visualizacoes,tempo_medio
+2024-05-01,1820,3m42s
+2024-05-02,2140,4m10s
+2024-05-03,1975,3m55s
+2024-05-04,2410,4m33s`}
+];
+function loadSamples(){
+  const base=Date.now();
+  SAMPLES.forEach((s,i)=>{
+    if(docs.some(d=>d.name===s.name))return;
+    docs.push({...s,id:uid(),addedAt:base-i*1000*60*17});
+  });
+  persistDocs();index=0;rebuild();toast('✨ Exemplos carregados');
+}
+$('#btnSample').addEventListener('click',loadSamples);
+
+/* 16 · GRUPOS (Semente & Motores) */
+function groupPanelHTML(kind){
+  if(kind==='seed'){
+    return `<div style="display:flex;flex-direction:column;gap:10px">
+      <p class="g-seed-label" style="font-size:11px;color:var(--muted)">Semente: nenhuma marcada</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="pill sm" data-g="markActive">🌱 Marcar doc ativo</button>
+        <button class="pill sm" data-g="fuseActive">🪞 Fundir com doc ativo</button>
+        <button class="pill sm" data-g="injectActive">🎧+ Injetar no TTS</button>
+        <button class="pill sm ghost" data-g="clearSeed">✕ Limpar Semente</button>
+      </div></div>`;
+  }
+  return `<div style="display:flex;flex-direction:column;gap:10px">
+    <p style="font-size:11px;color:var(--muted)">Motores sobre o documento ativo</p>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="pill sm" data-g="pato">🦆 Pato do Mundo</button>
+      <button class="pill sm" data-g="aior">🪧 Formatador AIOR</button>
+      <button class="pill sm" data-g="gerardo">🧠 Análise Gerardo 369</button>
+      <button class="pill sm" data-g="fuse369">⊕ Fusão 369 (usa Semente)</button>
+      <button class="pill sm ghost" data-g="render">📖 Render / Abrir</button>
+    </div></div>`;
+}
+function wireGroupPanel(el,kind){
+  const body=el.querySelector('.win-content')||el.querySelector('.session-body');
+  if(!body)return;
+  body.addEventListener('click',e=>{
+    const b=e.target.closest('button[data-g]');if(!b)return;
+    const d=view[index];const act=b.dataset.g;
+    if(kind==='seed'){
+      if(act==='markActive'){if(d)markSeed(d);else toast('Nenhum doc ativo')}
+      else if(act==='fuseActive'){if(d)fundirComSemente(d);else toast('Nenhum doc ativo')}
+      else if(act==='injectActive'){
+        if(!pendingSeedId)return toast('Marca uma Semente primeiro');
+        const s=docs.find(x=>x.id===pendingSeedId);
+        if(s)injectIntoLiveTTS(s);else toast('Semente perdida');
+      }else if(act==='clearSeed'){pendingSeedId=null;updateSeedLabel();toast('Semente limpa')}
+    }else{
+      if(act==='render'){if(d)openReader(d);else toast('Nenhum doc ativo');return}
+      if(!d||!d.content)return toast('Nenhum doc ativo com texto');
+      if(act==='pato')pushDerivedDoc(`${d.name} · Pato`,applyPato(d.content),{fromId:d.id,sources:[d.addedAt]});
+      else if(act==='aior')runFormatAIOR(d);
+      else if(act==='gerardo')openReader(d).then(()=>setTimeout(()=>$('#rGerardo').click(),300));
+      else if(act==='fuse369')fundirComSemente(d);
+    }
+  });
+}
+function createDefaultGroups(){
+  const seedEl=makeSession({title:'🌱⇄🪞 Semente & Espelho',contentHtml:groupPanelHTML('seed')});
+  if(seedEl){wireGroupPanel(seedEl,'seed');seedEl.classList.add('min')}
+  const motorEl=makeSession({title:'🦆 369 · Pato · Gerardo · AIOR',contentHtml:groupPanelHTML('motor')});
+  if(motorEl){wireGroupPanel(motorEl,'motor');motorEl.classList.add('min')}
+  updateSeedLabel();
+}
+
+/* 17 · INIT */
+window.addEventListener('resize',layout);
+buildArchBar();
+buildSymbolBar();
+try{applyArch(localStorage.getItem('nebula.arch')||'KOBLLUX')}catch{applyArch('KOBLLUX')}
+const savedSolar=localStorage.getItem('nebula.solar');
+if(savedSolar&&SOLAR_MODES.includes(savedSolar))setSolar(savedSolar,solarAuto);
+else setSolar(solarByTime(),solarAuto);
+restoreDocs();
+rebuild();
+createDefaultGroups();
+if(!docs.length){
+  setTimeout(()=>{loadSamples();toast('✨ Exemplos carregados — arraste arquivos para adicionar os seus')},700);
+}
+
+/* API global */
+window.Nebula={
+  version:'dual⊕nebula-1',
+  applyArch,speak,makeSession,openReader,openCockpit,
+  applyPato,formatAIOR,merge369,analyzeGerardo,markSeed,fundirComSemente,injectIntoLiveTTS,
+  runFormatAIOR,renderDocPills,createDefaultGroups,
+  get docs(){return docs},
+  get currentDoc(){return currentDoc},
+  get arch(){return currentArch},
+  get seedId(){return pendingSeedId}
+};
+</script>
+
+<!-- ============================================================
+     BRIDGE · sincroniza temas Dual ↔ Nebula
+     ============================================================ -->
+<script>
+(function(){
+  // Quando o tema do Dual muda, ajusta tokens do Nebula.
+  window.addEventListener('dual:theme-change',e=>{
+    const t=e.detail.theme;
+    // Se quiser inverter archetype no light, ajuste aqui.
+    // Por padrão mantemos.
+  });
+  // Botão 🌙 externo (se existir) delega pro canônico.
+  const canonical=document.getElementById('theme-dot2');
+  document.addEventListener('click',ev=>{
+    const trig=ev.target.closest('#themeToggle, .theme-dot:not(#theme-dot2)');
+    if(trig&&canonical&&trig!==canonical){canonical.click()}
+  });
+  console.log('DUAL ⊕ NEBULA · BRIDGE READY');
+})();
+</script> 
+
+  
+  
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SCRIPTS DO KXTSK-SHELL / STACKWRAP (fundido do iFSw-globalDUAL)
+     ═══════════════════════════════════════════════════════ -->
+<!-- <script src="https://kodux78k.github.io/a-Infodose/js/modules/iFSw-base.js"></script>
+
+ <script type="module" src="https://infodose.com.br/oiDual/KODUX/78K/APPS/78Dual/js/main.js"></script> -->
+
+</body></html>
