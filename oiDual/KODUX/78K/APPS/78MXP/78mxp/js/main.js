@@ -1,0 +1,11 @@
+import "./modules/cdnjs-cloudflare-com-ajax-libs-pdf-js-3-11-174-pdf-worker-min-js.js";
+import "./modules/kob-bus.js";
+import "./modules/atualiza-theme-color-meta-browser-ui.js";
+import "./modules/src-contenthtml.js";
+import "./modules/tts.js";
+import "./modules/fsw-inicial-ja-nasce-como-espaco-da-mente-sem-iframe-url.js";
+import "./modules/kob-user-cockpit-bind.js";
+import "./modules/fusion-orb-generator.js";
+import "./modules/fusion-card-core.js";
+import "./modules/kob-snap-top.js";
+import "./modules/sbf-full-js.js";
