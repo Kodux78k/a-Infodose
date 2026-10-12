@@ -1,0 +1,6 @@
+const ARCHETYPES = [
+  "atlas","nova","vitalis","pulse","kaos","kodux","lumine","aion",
+  "kobllux","artemis","serena","genus","solus","rhea","uno","dual",
+  "trinity","infodose","horus","bllue",
+  localStorage.getItem("di_userName")
+];
