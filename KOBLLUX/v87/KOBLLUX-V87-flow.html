@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-sistema="KOBLLUX-INFODOSE" data-arch="dual">
-  <head>
+<html lang="pt-BR" data-sistema="KOBLLUX-INFODOSE" data-arch="dual"><head>
 <meta name="kob-flow" content="1.0 · ciclo 3-6-9-12">
 <meta name="kob-build" content="V86-state-core-FULL · patch itens 1·2·3·4·5">
 <meta name="kob-source" content="KOBLLUX-compat-8704-monolith">
@@ -20711,9 +20710,6 @@ html.kob-perf-lite #main-orb .orb-core{ animation-duration:var(--orb-speed,7.8s)
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
 
-<style id="kob-cv">/* V87.2 · não renderiza sessões ainda não criadas (mesma geometria após ativar: testado em 8 janelas) */
-.session-window.state-created{content-visibility:hidden;contain-intrinsic-size:auto 420px 700px}
-</style>
 </head>
 <body class="mode-night field-closed ui-safe-vertical" data-theme="dark" data-arch="" data-user="" data-zpr="9" data-intensity="0.72" data-session-host="float">
 <link rel="stylesheet" id="kob-glass-0" href="https://infodose.com.br/css/kob-glass-0.css" onerror="this.onerror=null;var l=document.createElement('link');l.rel='stylesheet';l.href='https://kodux78k.github.io/oiDual--Y-/css/kob-glass-0.css';document.head.appendChild(l)">
@@ -22807,7 +22803,7 @@ window.addEventListener("load",()=>{setTimeout(()=>document.getElementById("load
 function updProgress(){const doc=document.documentElement;document.getElementById("progress").style.width=((window.scrollY/(doc.scrollHeight-window.innerHeight))*100)+"%";}
 let ticking=false;
 window.addEventListener("scroll",()=>{if(!ticking){requestAnimationFrame(()=>{updProgress();ticking=false});ticking=true}},{passive:true});
-requestAnimationFrame(updProgress);
+updProgress();
 const io=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");const idx=$$(".section").indexOf(e.target);if(idx>=0) $$(".nav-dot").forEach((d,i)=>d.classList.toggle("on",i===idx));}})},{threshold:0.15});
 $$(".reveal").forEach(el=>io.observe(el));
 
@@ -36378,7 +36374,14 @@ window.addEventListener('load', () => setTimeout(() => {
 <!-- ═══════════════════════════════════════════════════════════════════
      ARCHETYPES · GLOBAL
 ═══════════════════════════════════════════════════════════════════ -->
-<!-- JSI_6 (const ARCHETYPES duplicado, nunca executava: SyntaxError) removido na V87.1 -->
+<script data-k-id="JSI_6">
+const ARCHETYPES = [
+  "atlas","nova","vitalis","pulse","kaos","kodux","lumine","aion",
+  "kobllux","artemis","serena","genus","solus","rhea","uno","dual",
+  "trinity","infodose","horus","bllue",
+  localStorage.getItem("di_userName")
+];
+</script>
 <!-- ═══════════════════════════════════════════════════════════════════
      INFODOSE · DH0 MODULES
 ═══════════════════════════════════════════════════════════════════ -->
@@ -39640,12 +39643,7 @@ window.addEventListener('load',()=>setTimeout(boot,2500));
     var t = 0;
     function later() { clearTimeout(t); t = setTimeout(function () { try { updatePills(); } catch (_) {} }, 120); }
     try {
-      new MutationObserver(function (muts) {
-        for (var i = 0; i < muts.length; i++) {
-          var tg = muts[i].target;
-          if (tg.classList && (tg.classList.contains("session-window") || tg.classList.contains("mxp-window"))) { later(); return; }
-        }
-      }).observe(document.body, { attributes: true, subtree: true, attributeFilter: ["class"] });
+      new MutationObserver(later).observe(document.body, { attributes: true, subtree: true, attributeFilter: ["class"] });
     } catch (_) {}
     later();
   })();
@@ -42497,7 +42495,6 @@ window.KOBSuspend={sweep};
   try {
     const proto = Storage.prototype;
     if (!proto.__kobV86Wrapped) {
-      const REV_KEYS = Object.create(null); Object.keys(KEYS).forEach(k => { if (!(KEYS[k] in REV_KEYS)) REV_KEYS[KEYS[k]] = k; });
       const nativeSet = proto.setItem;
       const nativeRemove = proto.removeItem;
       const nativeClear = proto.clear;
@@ -42505,13 +42502,13 @@ window.KOBSuspend={sweep};
       proto.setItem = function(key, value) {
         nativeSet.call(this, key, value);
         if (this !== window.localStorage || internalWrite) return;
-        const name = REV_KEYS[String(key)];
+        const name = Object.keys(KEYS).find(k => KEYS[k] === String(key));
         if (name) set(name, String(value), { persist: false, reason: 'legacy-storage' });
       };
       proto.removeItem = function(key) {
         nativeRemove.call(this, key);
         if (this !== window.localStorage || internalWrite) return;
-        const name = REV_KEYS[String(key)];
+        const name = Object.keys(KEYS).find(k => KEYS[k] === String(key));
         if (name) set(name, defaults[name], { persist: false, reason: 'legacy-storage-remove' });
       };
       proto.clear = function() {
@@ -42844,17 +42841,12 @@ window.KOBSuspend={sweep};
       else if ((r.type === 4 || r.type === 12) && r.cssRules) walkRules(r.cssRules, (ctx ? ctx + '|' : '') + (r.type === 4 ? '@media ' + r.conditionText : '@supports ' + r.conditionText), fn);
     }
   }
-  var ruleCache = null;
-  function eachRule(fn) {   /* varre o CSS UMA vez; stage-sheet e degradê reutilizam a lista */
-    if (!ruleCache) {
-      ruleCache = [];
-      for (var s = 0; s < d.styleSheets.length; s++) {
-        var sh = d.styleSheets[s]; if (sh.ownerNode && /^kob-flow-/.test(sh.ownerNode.id || '')) continue;
-        var rules; try { rules = sh.cssRules; } catch (e) { continue; }
-        if (rules) walkRules(rules, '', function (r, ctx) { ruleCache.push([r, ctx]); });
-      }
+  function eachRule(fn) {
+    for (var s = 0; s < d.styleSheets.length; s++) {
+      var sh = d.styleSheets[s]; if (sh.ownerNode && sh.ownerNode.id === 'kob-flow-css') continue;
+      var rules; try { rules = sh.cssRules; } catch (e) { continue; }
+      if (rules) walkRules(rules, '', fn);
     }
-    for (var i = 0; i < ruleCache.length; i++) fn(ruleCache[i][0], ruleCache[i][1]);
   }
   function wrapCtx(ctx, body) {
     if (!ctx) return body;
@@ -43061,9 +43053,7 @@ window.KOBSuspend={sweep};
       setInterval(function () { if (!hidden) tick(); }, CFG.tickMs);
     } catch (e) { console.error('[KobFlow] boot', e); }
   }
-  function scheduleBoot() {   /* depois do load e só quando o navegador está ocioso (não disputa o boot do app) */
-    setTimeout(function () { if (w.requestIdleCallback) w.requestIdleCallback(boot, { timeout: 3000 }); else boot(); }, 900);
-  }
+  function scheduleBoot() { setTimeout(boot, 900); }
   if (d.readyState === 'complete') scheduleBoot(); else w.addEventListener('load', scheduleBoot);
 
   w.KobFlow = {
