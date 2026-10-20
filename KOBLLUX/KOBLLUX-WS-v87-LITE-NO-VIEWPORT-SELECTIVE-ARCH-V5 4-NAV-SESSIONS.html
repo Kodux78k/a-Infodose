@@ -41705,16 +41705,21 @@ document.addEventListener('click', function(e){
 })();
 </script>
 -->
-<!-- <script id="kob-profile-player-voice-v4">
-/* V5 patch: persisted profile-base palette, 30ms accent + 150ms blob transition; player/SymbolBar bridges preserved. */
+<script id="kob-profile-player-voice-v4">
+/* V5.1 · voice-override virou TOGGLE opt-in (default OFF).
+   - Mantém: paleta/layers, arch sync, v-pill, player, KOBProfile API.
+   - Override de voz-base (1 voz para todos) só roda se o usuário ligar
+     em Cockpit ⚙ → "Forçar voz-base única".
+   - OFF (padrão): respeita KBLX_VOICE.map + split por arquétipo do v81-js. */
 (function(){
   'use strict';
   if (window.__KOB_PROFILE_RUNTIME_V4__) return;
   window.__KOB_PROFILE_RUNTIME_V4__ = true;
   var root = document.documentElement;
   var body = document.body;
-  var STORE_BASE = 'kob:voice:base-arch';
+  var STORE_BASE    = 'kob:voice:base-arch';
   var STORE_PROFILE = 'kob:profile:base-arch';
+  var VOICE_OVERRIDE_KEY = 'kob:voice:override';       /* ← NOVO: '0' (default) | '1' */
   var boot = window.__KOB_PROFILE_BOOT__ || {};
   var lock = false, applyingProfile = false, baseColors = null;
   var protectedProps = {
@@ -41722,6 +41727,9 @@ document.addEventListener('click', function(e){
     '--active-color':1, '--active-secondary':1, '--active-glow':1,
     '--kob-voice-bg-soft':1, '--kob-voice-outline':1, '--primary':1, '--accent':1, '--arch-color':1
   };
+  function isVoiceOverrideOn(){
+    try { return localStorage.getItem(VOICE_OVERRIDE_KEY) === '1'; } catch(e){ return false; }
+  }
   function norm(v){ return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,''); }
   function allProfiles(){
     var out = [], seen = Object.create(null);
@@ -41761,12 +41769,7 @@ document.addEventListener('click', function(e){
     return {primary:validHex(primary,fallback[0]), secondary:validHex(secondary,fallback[1]), profile:p};
   }
 
-  /* ── CAMADAS DE ARQUÉTIPO (V5.2) ─────────────────────────────────────────
-     html[data-arch] = usuário (paleta-base U1/U2) · body[data-arch] = ativo (A1/A2)
-     primary   = U1 distribuída com U2            (identidade do usuário, estável)
-     secondary = A1 distribuída com A2            (só o arquétipo ativo mexe aqui)
-     fuseA     = U1 na secondary do arquétipo (A2) · fuseB = A1 na secondary do usuário (U2)
-     Aninhado: section/iframe com data-arch usa a camada resolvida do pai como "usuário". */
+  /* ── CAMADAS (inalterado) ─────────────────────────────── */
   var LAYER_W = 0.35;
   function hexMix(a,b,t){
     a=validHex(a,'#22D3EE'); b=validHex(b,a);
@@ -41804,7 +41807,6 @@ document.addEventListener('click', function(e){
     var act=colorsFor((body&&body.getAttribute('data-arch'))||'KOBLLUX');
     var L=layerFor(u.primary,u.secondary,act.primary,act.secondary), v=layerVars(L);
     Object.keys(v).forEach(function(k){ setRootVar(k,v[k]); });
-    /* só a secondary segue o arquétipo ativo; a primary permanece ancorada no usuário */
     setRootVar('--kob-voice-primary',L.primary); setRootVar('--kob-voice-primaryi',L.primary);
     setRootVar('--active-color',L.primary); setRootVar('--active-glow',alphaHex(L.primary,'66'));
     setRootVar('--kob-voice-secondary',L.secondary); setRootVar('--active-secondary',L.secondary);
@@ -41838,14 +41840,11 @@ document.addEventListener('click', function(e){
     setRootVar('--kob-blob-primary',c.primary);
     setRootVar('--kob-blob-secondary',c.secondary);
     root.classList.add('kob-profile-theme-lock');
-    /* html[data-arch] = arquétipo do usuário (camada de base) */
     try { root.setAttribute('data-arch',String(key||'KOBLLUX').toLowerCase()); } catch(e) {}
     applyBodyLayers();
   }
   function setActiveBlobTheme(key){
     var c=colorsFor(key);
-    /* A troca de arquétipo não reescreve a paleta-base do usuário.
-       Só muda as duas cores atmosféricas e os acentos explicitamente seletivos. */
     setRootVar('--kob-blob-primary',c.primary);
     setRootVar('--kob-blob-secondary',c.secondary);
     setRootVar('--kob-arch-accent',c.primary);
@@ -41861,6 +41860,8 @@ document.addEventListener('click', function(e){
     }
     return String(raw||'KOBLLUX').trim().toUpperCase() || 'KOBLLUX';
   }
+
+  /* ── arch sync: mantém v-pill e layers ──────────────── */
   function setActiveArch(raw, persist){
     var arch=canonicalArch(raw);
     if (!body) body=document.body;
@@ -41891,27 +41892,69 @@ document.addEventListener('click', function(e){
     };
     lock=true;
   }
+
+  /* ═══════════════════════════════════════════════════════
+     VOZ-BASE · tudo aqui é controlado pelo toggle
+     ═══════════════════════════════════════════════════════ */
+  var originalVoiceMap=null;
+
   function expandVoiceProfiles(){
     var voice=window.KBLX_VOICE, map=voice&&voice.map;
     if (!map) return;
+    /* Captura snapshot UMA vez, antes de qualquer modificação. Reset usa isso. */
+    if (!originalVoiceMap) {
+      originalVoiceMap={};
+      Object.keys(map).forEach(function(k){
+        originalVoiceMap[k]={nome:map[k].nome,lang:map[k].lang,rate:map[k].rate,pitch:map[k].pitch};
+      });
+    }
+    /* Expande com arquétipos que ainda não existiam (não sobrescreve os originais) */
     allProfiles().forEach(function(p){
       var key=String(p.id||p.name||'').toUpperCase();
       if (!key || map[key]) return;
-      map[key]={nome:p.voice || 'Luciana',lang:p.lang || 'pt-BR',rate:Number(p.rate)||1,pitch:Number(p.pitch)||1};
+      var entry={nome:p.voice||'Luciana',lang:p.lang||'pt-BR',rate:Number(p.rate)||1,pitch:Number(p.pitch)||1};
+      map[key]=entry;
+      if (!originalVoiceMap[key]) originalVoiceMap[key]=Object.assign({},entry);
     });
   }
-  var originalVoiceMap=null;
+
+  function resetVoicesToOriginal(){
+    var voice=window.KBLX_VOICE, map=voice&&voice.map;
+    if (!map || !originalVoiceMap) return;
+    Object.keys(originalVoiceMap).forEach(function(k){
+      if (map[k]) {
+        map[k].nome = originalVoiceMap[k].nome;
+        map[k].lang = originalVoiceMap[k].lang;
+        map[k].rate = originalVoiceMap[k].rate;
+        map[k].pitch= originalVoiceMap[k].pitch;
+      }
+    });
+    if (voice) voice._base = null;
+    var status=document.getElementById('kobVoiceBaseStatus');
+    if (status) status.textContent='Override desligado — vozes por arquétipo restauradas.';
+  }
+
   function applyVoiceBase(key, persist){
     var voice=window.KBLX_VOICE, map=voice&&voice.map;
     var profile=findProfile(key);
     if (!profile) profile=findProfile('KOBLLUX');
     if (!profile) return false;
-    if (map && !originalVoiceMap) { originalVoiceMap={}; Object.keys(map).forEach(function(k){originalVoiceMap[k]=Object.assign({},map[k]);}); }
+
+    if (persist) {
+      try { localStorage.setItem(STORE_BASE, String(profile.id||profile.name)); } catch(e){}
+    }
+
+    var select=document.getElementById('kobVoiceBaseSelect');
+    if (select) select.value=String(profile.id||profile.name);
+    var status=document.getElementById('kobVoiceBaseStatus');
+
+    /* Sem override: só registra a preferência, NÃO toca no KBLX_VOICE.map */
+    if (!isVoiceOverrideOn()) {
+      if (status) status.textContent='Base preferida: '+profile.name+' (override desligado — vozes por arquétipo em uso).';
+      return false;
+    }
+
     if (map) {
-      allProfiles().forEach(function(p){
-        var k=String(p.id||p.name||'').toUpperCase();
-        if (!map[k]) map[k]={nome:p.voice||'Luciana',lang:p.lang||'pt-BR',rate:Number(p.rate)||1,pitch:Number(p.pitch)||1};
-      });
       var baseName=profile.voice || (map[String(profile.id).toUpperCase()]||{}).nome || 'Luciana';
       var baseLang=profile.lang || (map[String(profile.id).toUpperCase()]||{}).lang || 'pt-BR';
       Object.keys(map).forEach(function(k){
@@ -41923,20 +41966,36 @@ document.addEventListener('click', function(e){
       });
       voice._base=String(profile.id||profile.name).toUpperCase();
     }
-    if (persist) { try { localStorage.setItem(STORE_BASE,String(profile.id||profile.name)); } catch(e) {} }
-    var select=document.getElementById('kobVoiceBaseSelect'); if(select) select.value=String(profile.id||profile.name);
-    var status=document.getElementById('kobVoiceBaseStatus');
-    if(status) status.textContent='Base: '+profile.name+' · '+(profile.voice||'voz padrão')+' · '+(profile.lang||'pt-BR')+'. Velocidade e pitch continuam variando pelo arquétipo ativo.';
+    if (status) status.textContent='Base: '+profile.name+' · '+(profile.voice||'voz padrão')+' · '+(profile.lang||'pt-BR')+' (aplicado a todos os arquétipos).';
     return true;
   }
+
+  function setVoiceOverride(on){
+    try { localStorage.setItem(VOICE_OVERRIDE_KEY, on ? '1' : '0'); } catch(e){}
+    if (on) {
+      expandVoiceProfiles();
+      var saved=''; try { saved=localStorage.getItem(STORE_BASE)||''; } catch(e){}
+      var select=document.getElementById('kobVoiceBaseSelect');
+      var target=(select && select.value) || saved || 'KOBLLUX';
+      applyVoiceBase(target, false);
+    } else {
+      resetVoicesToOriginal();
+    }
+    try { window.KBLX_TOAST && window.KBLX_TOAST(on ? '🔊 Override de voz-base ativado' : '🎤 Vozes por arquétipo restauradas'); } catch(e){}
+  }
+
   function installSpeechBaseWrapper(){
     var ss=window.speechSynthesis;
     if(!ss || typeof ss.speak!=='function' || ss.__kobVoiceBaseWrapped) return;
     var previous=ss.speak.bind(ss);
     ss.speak=function(utterance){
+      /* Toggle OFF → passa direto (v81-js segue fazendo split por arquétipo normalmente) */
+      if (!isVoiceOverrideOn()) return previous(utterance);
+
       var key=''; try{key=localStorage.getItem(STORE_BASE)||'';}catch(e){}
       var base=findProfile(key || (window.__KOB_PROFILE_BOOT__&&window.__KOB_PROFILE_BOOT__.arch) || 'KOBLLUX');
       if(!base) return previous(utterance);
+
       var name=base.voice || 'Luciana', lang=base.lang || 'pt-BR';
       var rawProfiles=[];
       allProfiles().forEach(function(p){
@@ -41947,6 +42006,7 @@ document.addEventListener('click', function(e){
       });
       try {
         if(utterance && typeof utterance==='object'){
+          utterance.__seg=1;                            /* ← impede o v81-js de re-dividir por arquétipo */
           utterance.lang=lang;
           var voiceObj=window.KBLX_VOICE&&window.KBLX_VOICE.find ? window.KBLX_VOICE.find({nome:name,lang:lang}) : null;
           if(voiceObj) utterance.voice=voiceObj;
@@ -41962,34 +42022,89 @@ document.addEventListener('click', function(e){
     ss.__kobVoiceBaseWrapped=true;
   }
 
+  /* ── UI do Cockpit: toggle + controles (controles escondidos quando OFF) ── */
   function mountVoiceControl(){
     var host=document.querySelector('#drawerProfile .drawer-body');
     if (!host || document.getElementById('kobVoiceBaseRow')) return;
+
     var row=document.createElement('div'); row.className='cockpit-item'; row.id='kobVoiceBaseRow';
+
+    /* Toggle sempre visível */
+    var toggleWrap=document.createElement('label');
+    toggleWrap.className='cockpit-label';
+    toggleWrap.style.cssText='display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;margin-bottom:8px';
+    var toggleInput=document.createElement('input');
+    toggleInput.type='checkbox'; toggleInput.id='kobVoiceOverrideToggle';
+    toggleInput.style.cssText='width:16px;height:16px;cursor:pointer;accent-color:#22d3ee';
+    var toggleText=document.createElement('span');
+    toggleText.textContent='Forçar voz-base única (override)';
+    toggleWrap.appendChild(toggleInput); toggleWrap.appendChild(toggleText);
+    row.appendChild(toggleWrap);
+
+    /* Controles (só visíveis quando override ON) */
+    var controls=document.createElement('div');
+    controls.id='kobVoiceBaseControls';
     var label=document.createElement('div'); label.className='cockpit-label'; label.textContent='Voz-base do usuário';
     var select=document.createElement('select'); select.id='kobVoiceBaseSelect'; select.setAttribute('aria-label','Escolher arquétipo da voz-base');
     var status=document.createElement('span'); status.id='kobVoiceBaseStatus';
     var test=document.createElement('button'); test.type='button'; test.id='kobVoiceBaseTest'; test.textContent='Testar voz-base';
-    row.appendChild(label); row.appendChild(select); row.appendChild(status); row.appendChild(test); host.appendChild(row);
+    controls.appendChild(label); controls.appendChild(select); controls.appendChild(status); controls.appendChild(test);
+    row.appendChild(controls);
+    host.appendChild(row);
+
     function refresh(){
-      var keep=select.value || ''; var list=allProfiles();
+      var keep=select.value || '';
+      var list=allProfiles();
       select.textContent='';
-      list.forEach(function(p){var opt=document.createElement('option');opt.value=p.id;opt.textContent=p.name+' — '+(p.voice||'voz-base')+' ('+(p.lang||'pt-BR')+')';select.appendChild(opt);});
+      list.forEach(function(p){
+        var opt=document.createElement('option');
+        opt.value=p.id;
+        opt.textContent=p.name+' — '+(p.voice||'voz-base')+' ('+(p.lang||'pt-BR')+')';
+        select.appendChild(opt);
+      });
       var saved=''; try{saved=localStorage.getItem(STORE_BASE)||'';}catch(e){}
       var chosen=saved || keep || (window.__KOB_PROFILE_BOOT__&&window.__KOB_PROFILE_BOOT__.arch) || (body&&body.dataset.arch) || 'KOBLLUX';
       var found=list.find(function(p){return norm(p.id)===norm(chosen)||norm(p.name)===norm(chosen);});
       if(found) select.value=found.id;
       if(!select.value && select.options.length) select.value=select.options[0].value;
     }
+
     select.addEventListener('change',function(){applyVoiceBase(select.value,true);});
     test.addEventListener('click',function(){
       var p=findProfile(select.value)||findProfile('KOBLLUX');
       var msg='Esta é a voz-base '+(p?p.name:'KOBLLUX')+'. A modulação do arquétipo ativo continua habilitada.';
-      try { if(window.KOBBus&&typeof window.KOBBus.say==='function') window.KOBBus.say(msg,{rate:1}); else if(window.speechSynthesis){var u=new SpeechSynthesisUtterance(msg); var c=p||{};u.lang=c.lang||'pt-BR';u.rate=Number(c.rate)||1;u.pitch=Number(c.pitch)||1;var cfg={nome:c.voice||'',lang:c.lang||'pt-BR'};var v=window.KBLX_VOICE&&window.KBLX_VOICE.find?window.KBLX_VOICE.find(cfg):null;if(v)u.voice=v;speechSynthesis.speak(u);} } catch(e) {}
+      try {
+        if(window.KOBBus&&typeof window.KOBBus.say==='function') window.KOBBus.say(msg,{rate:1});
+        else if(window.speechSynthesis){
+          var u=new SpeechSynthesisUtterance(msg); var c=p||{};
+          u.lang=c.lang||'pt-BR'; u.rate=Number(c.rate)||1; u.pitch=Number(c.pitch)||1;
+          var cfg={nome:c.voice||'',lang:c.lang||'pt-BR'};
+          var v=window.KBLX_VOICE&&window.KBLX_VOICE.find?window.KBLX_VOICE.find(cfg):null;
+          if(v)u.voice=v; speechSynthesis.speak(u);
+        }
+      } catch(e) {}
     });
+
     refresh();
-    applyVoiceBase(select.value || 'KOBLLUX', false);
+
+    /* Estado inicial do toggle */
+    toggleInput.checked=isVoiceOverrideOn();
+    controls.style.display=toggleInput.checked?'':'none';
+
+    toggleInput.addEventListener('change',function(){
+      setVoiceOverride(toggleInput.checked);
+      controls.style.display=toggleInput.checked?'':'none';
+    });
+
+    /* Se override estiver ON, aplica a voz-base agora */
+    if (toggleInput.checked) applyVoiceBase(select.value || 'KOBLLUX', false);
+    else {
+      var s=document.getElementById('kobVoiceBaseStatus');
+      if (s) s.textContent='Override desligado — vozes por arquétipo em uso. Ative acima para forçar uma voz única.';
+    }
   }
+
+  /* ── Player (inalterado) ────────────────────────────── */
   function bindPlayer(){
     var p=document.getElementById('sbxPlayerBtn');
     if(p && !p.dataset.kobPlayerBridge){
@@ -42024,21 +42139,27 @@ document.addEventListener('click', function(e){
     if (!window.Player || typeof window.Player.play!=='function') miniPlayer();
     bindPlayer();
   }
+
+  /* ── Boot ──────────────────────────────────────────── */
   function installArchSync(){
     var initial=canonicalArch((boot.arch || '').trim() || 'KOBLLUX');
     try { if(window.applyArch && (window.ARCH_MAP||{})[initial]) window.applyArch(initial); } catch(e) {}
     setActiveArch(initial,false);
+
     var profileBase='';
     try { profileBase=localStorage.getItem(STORE_PROFILE)||''; } catch(e) {}
     profileBase=canonicalArch(profileBase || (boot.arch||'').trim() || (body&&body.getAttribute('data-arch')) || root.getAttribute('data-arch') || 'KOBLLUX');
     setProfileTheme(profileBase);
     try { if(!localStorage.getItem(STORE_PROFILE)) localStorage.setItem(STORE_PROFILE,profileBase); } catch(e) {}
     installRootColorLock();
+
+    /* v-pill: wrapper de applyArch mantém os labels/badges em sincronia */
     var original=window.applyArch;
     if(typeof original==='function' && !original.__kobProfileWrapped){
       var wrapped=function(name,origin){var result=original.apply(this,arguments);setActiveArch(name,true);return result;};
       wrapped.__kobProfileWrapped=true; wrapped.__original=original; window.applyArch=wrapped;
     }
+
     var lastVoice='';
     var observer=new MutationObserver(function(records){
       records.forEach(function(r){
@@ -42053,31 +42174,50 @@ document.addEventListener('click', function(e){
       });
     });
     observer.observe(body,{attributes:true,attributeFilter:['data-voice-arch','data-arch','data-art']});
+
     var nestedObs=new MutationObserver(function(rs){ rs.forEach(function(r){ var t=r.target; if(t!==body&&t!==root&&t.matches&&t.matches(NESTED_SEL)) paintNested(t); }); });
     nestedObs.observe(document.documentElement,{attributes:true,attributeFilter:['data-arch'],subtree:true});
     document.addEventListener('load',function(e){ var t=e.target; if(t&&t.tagName==='IFRAME'&&t.matches(NESTED_SEL)) paintNested(t); },true);
     paintAllNested();
+
     window.addEventListener('kob:arch',function(e){var a=e&&e.detail&&e.detail.arch;if(a)setActiveArch(a,true);});
+
     paintIdentity(boot.user || (function(){try{return localStorage.getItem('di_userName')||'';}catch(e){return '';}})());
     var input=document.getElementById('inputUserId');
     if(input){ if(!input.value && boot.user) input.value=boot.user; input.addEventListener('input',function(){var v=input.value.trim();paintIdentity(v);try{localStorage.setItem('di_userName',v);}catch(e){}}); }
-    var savedVoice=''; try{savedVoice=localStorage.getItem(STORE_BASE)||'';}catch(e){}
+
+    /* VOZ-BASE: só expande (para permitir override depois) e aplica se toggle ON */
     expandVoiceProfiles();
     mountVoiceControl();
-    if(savedVoice) applyVoiceBase(savedVoice,false); else applyVoiceBase(initial,true);
     installSpeechBaseWrapper();
-    window.KOBProfile={setArch:function(name){return typeof window.applyArch==='function'?window.applyArch(name):setActiveArch(name,true);},setTheme:setProfileTheme,setProfileBase:function(name,persist){var key=canonicalArch(name);setProfileTheme(key);if(persist!==false){try{localStorage.setItem(STORE_PROFILE,key);}catch(e){}}return key;},setVoiceBase:applyVoiceBase,paintIdentity:paintIdentity,get arch(){return body&&body.dataset.arch;},get profileBase(){try{return localStorage.getItem(STORE_PROFILE)||'';}catch(e){return ''; }},get voiceBase(){try{return localStorage.getItem(STORE_BASE)||'';}catch(e){return '';}}};
+    if (isVoiceOverrideOn()) {
+      var savedVoice=''; try{savedVoice=localStorage.getItem(STORE_BASE)||'';}catch(e){}
+      if(savedVoice) applyVoiceBase(savedVoice,false);
+      else applyVoiceBase(initial,true);
+    }
+
+    window.KOBProfile={
+      setArch:function(name){return typeof window.applyArch==='function'?window.applyArch(name):setActiveArch(name,true);},
+      setTheme:setProfileTheme,
+      setProfileBase:function(name,persist){var key=canonicalArch(name);setProfileTheme(key);if(persist!==false){try{localStorage.setItem(STORE_PROFILE,key);}catch(e){}}return key;},
+      setVoiceBase:applyVoiceBase,
+      setVoiceOverride:setVoiceOverride,          /* ← NOVO */
+      isVoiceOverrideOn:isVoiceOverrideOn,        /* ← NOVO */
+      paintIdentity:paintIdentity,
+      get arch(){return body&&body.dataset.arch;},
+      get profileBase(){try{return localStorage.getItem(STORE_PROFILE)||'';}catch(e){return ''; }},
+      get voiceBase(){try{return localStorage.getItem(STORE_BASE)||'';}catch(e){return '';}}
+    };
   }
+
   installPlayer();
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){installPlayer();mountVoiceControl();},{once:true});
   window.addEventListener('load',function(){
-    /* deixa os inicializadores legados terminarem antes de fixar o tema-base do perfil */
     setTimeout(function(){installArchSync();mountVoiceControl();installPlayer();},80);
   },{once:true});
   if(document.readyState==='complete') setTimeout(function(){installArchSync();mountVoiceControl();installPlayer();},80);
 })();
 </script>
--->
 
 <script id="kob-nav-session-migrate-v1">
 /* [V5.4] Migra o que estava salvo na antiga janela-base (#session-iframe) para uma session window do MXP,
