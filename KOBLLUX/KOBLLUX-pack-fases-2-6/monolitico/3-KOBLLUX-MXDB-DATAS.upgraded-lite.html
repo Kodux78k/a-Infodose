@@ -944,7 +944,7 @@ body.has-maximized #kxtsk-shell {
   }
 }
 </style>
-<style>
+<!--<style>
 .text-gray-100 {
   color: #f7fafc;
 }
@@ -2501,8 +2501,255 @@ body.speaking #orb-sphere {
   border-radius: 10px;
   border-left: 2px solid var(--active-color);
 }
+</style>-->
+<style id="kob-fix-v87-unified">
+/* ═══════════════════════════════════════════════════════════════
+   KOBLLUX · FIX UNIFICADO V87
+   Escopo: SymbolBar · Pílula do Arquétipo · Universal/Mental/Frame Player
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── 1 · SYMBOL BAR ─────────────────────────────────────────── */
+
+/* (A) Typo transitionn → transition: recupera a física de snap/colapso */
+#symbolBar {
+  transition:
+    opacity .4s,
+    top .35s var(--ease-back-out),
+    left .35s var(--ease-back-out),
+    right .35s var(--ease-back-out),
+    bottom .35s var(--ease-back-out),
+    border-radius .25s;
+}
+
+/* (B) :fit-content inválido → width: fit-content.
+   Sem isto, a barra colapsada pode estourar o viewport. */
+.symbol-bar.collapsed {
+  gap: 6px;
+  padding: 12px;
+  width: fit-content;
+  max-width: calc(100vw - 8px);
+}
+
+/* (C) .sb-btn standalone (fora de #symbolBar) — corrige rgba(var(),…) */
+.sb-btn {
+  padding: 10px 24px;
+  background: color-mix(in srgb, var(--active-color) 15%, transparent);
+  border: 1px solid var(--active-color);
+  border-radius: 99px;
+  color: var(--active-color);
+  font-size: 11px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: .2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@supports not (color: color-mix(in srgb, red, blue)) {
+  .sb-btn { background: rgba(56, 189, 248, 0.15); }
+}
+
+/* (D) HUD e info da SymbolBar — cores derivadas do arquétipo
+   (substitui o valor hardcoded "0x00 · JESUS / 777Hz" até o applyArch rodar) */
+#symbolBar .sb-title,
+#symbolBar .sb-hud {
+  color: var(--kob-voice-primary, #78e3ff);
+}
+#symbolBar .sb-sub {
+  color: var(--kob-voice-secondary, #b978ff);
+}
+
+/* (E) Carousel: botão .sb-btn (dentro da barra) — só aperta o visual */
+#symbolBar .sb-btn {
+  background: color-mix(in srgb, var(--BG) 40%, transparent);
+  border-color: var(--CARD-BRD);
+  color: var(--btn-c, var(--kob-voice-primary));
+}
+#symbolBar .sb-btn.on {
+  background: color-mix(in srgb, var(--btn-c, var(--kob-voice-primary)) 22%, transparent);
+  outline: 1px solid var(--btn-c, var(--kob-voice-primary));
+}
+
+
+/* ─── 2 · PÍLULA DO ARQUÉTIPO ────────────────────────────────────
+   Consolida o fallback de cores e garante que pill/HUD/badge
+   sempre têm valor, mesmo antes do applyArch rodar.
+   ────────────────────────────────────────────────────────────────── */
+
+body[data-voice-arch] {
+  --kob-voice-primary:   var(--kob-profile-primary,   #22D3EE);
+  --kob-voice-secondary: var(--kob-profile-secondary, #0E7C9E);
+  --kob-voice-bg-soft:   color-mix(in srgb, var(--kob-voice-primary) 12%, transparent);
+  --kob-voice-glow:      0 0 18px color-mix(in srgb, var(--kob-voice-primary) 60%, transparent);
+  --active-color:        var(--kob-voice-primary);
+  --active-secondary:    var(--kob-voice-secondary);
+  --active-glow:         color-mix(in srgb, var(--kob-voice-primary) 60%, transparent);
+}
+
+/* bllue é exceção explícita — azul claro tradicional, não o "#00e5ff" do --KBLX_I */
+body[data-voice-arch=bllue] {
+  --kob-voice-primary:   #3AB6FF;
+  --kob-voice-secondary: #1E40AF;
+}
+
+/* Pill + Hz + badge + status — sempre coloridos pelo arquétipo resolvido */
+.pill.arch,
+#pillArch {
+  border-color: color-mix(in srgb, var(--kob-voice-primary) 50%, transparent);
+  color:        var(--kob-voice-primary);
+  background:   color-mix(in srgb, var(--kob-voice-primary) 12%, transparent);
+  transition: color .18s ease, border-color .18s ease, background .18s ease;
+}
+
+#displayArchetypeBadge,
+#sbStatus,
+#sbSub {
+  transition: color .18s ease;
+}
+#sbStatus { color: var(--kob-voice-primary); }
+#sbSub    { color: var(--kob-voice-secondary); }
+#displayArchetypeBadge { color: var(--kob-voice-primary); }
+
+/* (Fallback de browser antigo) */
+@supports not (color: color-mix(in srgb, red, blue)) {
+  .pill.arch, #pillArch {
+    border-color: rgba(56, 189, 248, .5);
+    color: var(--kob-voice-primary, #22D3EE);
+    background: rgba(56, 189, 248, .12);
+  }
+}
+
+
+/* ─── 3 · PLAYER (universal · mental/orb · frame) ─────────────────
+   Estado do #global-player + conteúdo do #player-frame-wrap
+   ────────────────────────────────────────────────────────────────── */
+
+/* Container universal — invisível por default, visível com .active.
+   Estado minimizado = pílula 60px. */
+#global-player {
+  /* já tem base no CSS original; reforçamos os extremos */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s var(--ease-spring, ease),
+              transform .25s var(--ease-spring, ease),
+              height .25s ease,
+              width .25s ease;
+}
+#global-player.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+#global-player.minimized {
+  height: 60px;
+  width: 260px;
+  border-radius: 99px;
+  bottom: 100px;
+}
+#global-player.player-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  border-radius: 0 !important;
+  transform: none !important;
+  z-index: 999 !important;
+}
+
+/* Frame interno — iframe/video/audio sempre esticam pro container */
+#player-frame-wrap {
+  width: 100%;
+  height: 100%;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+#player-frame-wrap > iframe,
+#player-frame-wrap > video,
+#player-frame-wrap > audio {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: #000;
+}
+#global-player.minimized #player-frame-wrap > iframe,
+#global-player.minimized #player-frame-wrap > video {
+  border-radius: 99px;
+}
+#player-frame-wrap > audio {
+  height: 42px;
+  width: calc(100% - 24px);
+  background: transparent;
+}
+
+/* HUD de estado do player no canto — opcional mas útil */
+#global-player::before {
+  content: attr(data-player-title);
+  position: absolute;
+  top: 6px; left: 12px;
+  font: 600 9px/1 var(--mono, monospace);
+  letter-spacing: .16em;
+  color: var(--kob-voice-primary, #7bf3ff);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease;
+  z-index: 5;
+}
+#global-player.active[data-player-title]::before { opacity: .8; }
+
+
+/* ─── 4 · ORB MENTAL (o que ESTÁ no DOM) ──────────────────────────
+   O CSS original definia .kob-orb-core, #orb-sphere, #orb-sync-ring
+   — nenhum existe no HTML. O orb real é #sbOrb::before e #main-orb .orb-core.
+   ────────────────────────────────────────────────────────────────── */
+
+/* Orb da SymbolBar — unificado com as cores do arquétipo */
+#sbOrb::before {
+  background:
+    radial-gradient(circle at 35% 30%, var(--kob-voice-primary, #78e3ff) 0%, transparent 55%),
+    radial-gradient(circle at 70% 72%, var(--kob-voice-secondary, #b978ff) 0%, var(--kob-voice-primary, #78e3ff) 100%);
+}
+#sbOrb.speaking::before {
+  animation: kobllux_orbSpin 1.4s linear infinite,
+             kobOrbPulse .4s ease-in-out infinite alternate;
+}
+
+/* Orb do botão de arquétipo (#btn-arch > .ora > #main-orb > .orb-core) */
+#main-orb .orb-core {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,.85) 0%, rgba(255,255,255,.04) 10%, transparent 55%),
+    radial-gradient(circle at 70% 70%, var(--kob-voice-primary, #78e3ff) 0%, var(--kob-voice-secondary, #b978ff) 100%);
+  box-shadow:
+    0 0 18px color-mix(in srgb, var(--kob-voice-primary, #78e3ff) 55%, transparent),
+    0 0 36px color-mix(in srgb, var(--kob-voice-secondary, #b978ff) 30%, transparent),
+    inset 0 0 20px rgba(255,255,255,.06);
+  animation: orbSpin var(--orb-speed, 7.8s) linear infinite;
+  transition: box-shadow .18s ease, background .18s ease;
+}
+
+body.speaking #main-orb .orb-core,
+#btn-arch.speaking #main-orb .orb-core {
+  animation: orbSpin 1.8s linear infinite,
+             orbPulse .4s ease-in-out infinite alternate;
+}
+
+/* Kill-switch de CSS morto: não há DOM correspondente neste arquivo */
+#orb-sphere,
+#orb-sync-ring,
+.kob-orb-core {
+  /* seletores vivos no CSS original, sem DOM correspondente.
+     Comentado para referência — pode apagar do <style> original sem quebrar. */
+  /* display: none !important; */
+}
 </style>
-<style>
 </style>
 
 <style>
