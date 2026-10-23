@@ -18204,7 +18204,8 @@ button:hover,
   color: #fff !important;
   box-shadow: 0 0 18px var(--kob-voice-primary), inset 0 0 10px color-mix(in srgb, var(--kob-voice-secondary) 35%, transparent) !important;
 }
-</style><script>window.__fcStack=()=>parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--fc-top-stack"))||0;</script>
+</style>
+<script>window.__fcStack=()=>parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--fc-top-stack"))||0;</script>
 <style id="fusion-card-css">
 #fusionLayer {
   --neon-cyan:#00f2ff;
@@ -20393,7 +20394,203 @@ html[data-glass="off"] .session-window,html[data-glass="off"] .mxp-window{-webki
 </head>
 
 <body>
-  
+  <style id="kob-color-override">
+/* ═══════════════════════════════════════════════════════════════
+   KOBLLUX · Color Override Patch (minimal)
+   Respeita data-user / arquétipo ativo via KOBLayers.
+   Uso: injetar este CSS em qualquer versão (v4+) depois de todo
+   o estilo original. NÃO mexe na estrutura HTML — só override.
+   ── Variáveis resolvidas ──
+   --kob-L-primary   = primária do usuário (estável, identidade)
+   --kob-L-secondary = secundária do arquétipo ativo (segue troca)
+   --kob-L-u1/u2     = cores brutas do usuário
+   --kob-L-a1/a2     = cores brutas do arquétipo ativo
+   ═══════════════════════════════════════════════════════════════ */
+
+:root{
+  --kob-v5-user:var(--kob-L-primary,var(--kob-voice-primary,#22D3EE));
+  --kob-v5-user-2:var(--kob-L-u2,var(--kob-L-secondary,#0E7C9E));
+  --kob-v5-arch:var(--kob-L-secondary,var(--kob-voice-secondary,#b68cff));
+  --kob-v5-arch-2:var(--kob-L-a2,var(--kob-v5-arch));
+}
+
+/* ── Botão DT / nav-cta → TRAVADO na primária do usuário ── */
+.nav-cta,
+#navDualTube,
+#navMente,
+#navStep{
+  --kob-v5-c:var(--kob-v5-user);
+  color:var(--kob-v5-c) !important;
+  border-color:color-mix(in srgb, var(--kob-v5-c) 55%, transparent) !important;
+  background:color-mix(in srgb, var(--kob-v5-c) 14%, transparent) !important;
+  transition:background .18s, border-color .18s, transform .14s;
+}
+.nav-cta:hover{
+  background:color-mix(in srgb, var(--kob-v5-c) 26%, transparent) !important;
+  border-color:color-mix(in srgb, var(--kob-v5-c) 80%, transparent) !important;
+}
+.nav-cta:active{ transform:scale(.94); }
+
+/* nav-dot ativa trava no user-primary */
+.nav-dot.on{ background:var(--kob-v5-user) !important; }
+
+/* ── Slot footer = carrossel lateral (scroll-snap, igual topo) ──
+   (CSS apenas, não remove elemento nenhum) */
+.mxp-footer-slot,
+.genus_footer-slot{
+  flex:1 1 auto !important;
+  flex-wrap:nowrap !important;
+  overflow-x:auto !important;
+  overflow-y:hidden !important;
+  scroll-snap-type:x mandatory !important;
+  scrollbar-width:none !important;
+  -webkit-overflow-scrolling:touch !important;
+  padding:2px 2px 4px !important;
+  min-width:0 !important;
+  mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%);
+}
+.mxp-footer-slot::-webkit-scrollbar,
+.genus_footer-slot::-webkit-scrollbar{ display:none !important; }
+.mxp-footer-slot .mxp-slot,
+.genus_footer-slot .mxp-slot{
+  display:flex !important;
+  flex-direction:row !important;
+  flex-wrap:nowrap !important;
+  gap:6px !important;
+  align-items:center !important;
+}
+.mxp-btn.slot-footer,
+.genus_btn.genus_footer-slot{
+  flex:0 0 auto !important;
+  scroll-snap-align:start !important;
+  white-space:nowrap !important;
+  /* SEGUE arquétipo ativo (secundária) — contrasta com DT travado no user */
+  --kob-v5-c:var(--kob-v5-arch);
+  border-color:color-mix(in srgb, var(--kob-v5-c) 45%, transparent) !important;
+  background:color-mix(in srgb, var(--kob-v5-c) 10%, transparent) !important;
+  color:color-mix(in srgb, var(--kob-v5-c) 85%, #fff) !important;
+  transition:border-color .18s, background .18s, box-shadow .18s;
+}
+.mxp-btn.slot-footer .mxp-icon,
+.genus_btn.genus_footer-slot .genus_icon{
+  color:var(--kob-v5-user) !important;  /* ícone trava no user-primary */
+}
+.mxp-btn.slot-footer:hover,
+.genus_btn.genus_footer-slot:hover{
+  border-color:color-mix(in srgb, var(--kob-v5-c) 75%, transparent) !important;
+  background:color-mix(in srgb, var(--kob-v5-c) 20%, transparent) !important;
+}
+.mxp-btn.slot-footer.is-firing,
+.genus_btn.genus_footer-slot.is-firing{
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--kob-v5-c) 55%, transparent),
+             0 0 24px color-mix(in srgb, var(--kob-v5-c) 45%, transparent) !important;
+}
+
+/* ── Bordas globais: tudo que tem borda recebe tom do arquétipo ── */
+:root{
+  --CARD-BRD:color-mix(in srgb, var(--kob-v5-arch) 28%, rgba(255,255,255,.08)) !important;
+  --dv-CARD-BRD:color-mix(in srgb, var(--kob-v5-arch) 28%, rgba(255,255,255,.08)) !important;
+}
+.pill, .action, .sb-act, .win-slot-bar .mxp-btn.slot-session{
+  border-color:color-mix(in srgb, var(--kob-v5-arch) 40%, transparent) !important;
+  transition:border-color .18s, background .18s;
+}
+.card, details.section, .win, .monolith, .mono-header{
+  border-color:color-mix(in srgb, var(--kob-v5-arch) 22%, rgba(255,255,255,.07)) !important;
+}
+input, textarea, select{
+  border-color:color-mix(in srgb, var(--kob-v5-user) 35%, transparent) !important;
+  transition:border-color .18s, box-shadow .18s;
+}
+input:focus, textarea:focus, select:focus{
+  border-color:var(--kob-v5-user) !important;
+  outline:none;
+  box-shadow:0 0 0 2px color-mix(in srgb, var(--kob-v5-user) 30%, transparent);
+}
+
+/* ── Botões header/aside → travados no user-primary ── */
+.mxp-btn.slot-header, .mxp-btn.slot-aside,
+#symbolBar .sb-extras .mxp-btn,
+#symbolBar .sb-act{
+  --kob-v5-c:var(--kob-v5-user);
+  border-color:color-mix(in srgb, var(--kob-v5-c) 40%, transparent) !important;
+  color:color-mix(in srgb, var(--kob-v5-c) 80%, #fff) !important;
+}
+.mxp-btn.slot-header .mxp-icon, .mxp-btn.slot-aside .mxp-icon{
+  color:var(--kob-v5-c) !important;
+}
+
+/* ── Botões secundários (pill sm, action genérico) → seguem arquétipo ── */
+.pill.sm, .action:not(.slicer):not(.audio){
+  --kob-v5-c:var(--kob-v5-arch);
+  border-color:color-mix(in srgb, var(--kob-v5-c) 45%, transparent) !important;
+  color:color-mix(in srgb, var(--kob-v5-c) 85%, #fff) !important;
+}
+
+/* ── Pulse bar do footer segue user-primary ── */
+.mono-footer #pulseBar,
+#pulseBar{
+  background:linear-gradient(90deg,transparent,var(--kob-v5-user),transparent) !important;
+}
+
+.mxp-footer-slot{ scroll-padding-left:4px; }
+
+</style>
+<script id="kob-color-override-js">
+/* ═══════════════════════════════════════════════════════════════
+   KOBLLUX · Color Override Patch — JS mínimo
+   Uso: injetar DEPOIS do kob-profile-player-voice (KOBLayers).
+   Não mexe em estrutura — só garante que as vars --kob-v5-*
+   sejam re-resolvidas ao trocar arquétipo e dá fallback de
+   toque no carrossel do footer.
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  "use strict";
+
+  /* Feedback tátil nos nav-cta (DT / Mente / Step) */
+  document.querySelectorAll('.nav-cta').forEach(function(btn){
+    if(btn.dataset.kobV5Bound) return;
+    btn.dataset.kobV5Bound='1';
+    btn.addEventListener('click',function(){
+      try{ btn.style.transform='scale(.94)'; setTimeout(function(){btn.style.transform='';},140); }catch(_){}
+    });
+  });
+
+  /* Fallback de scroll touch no slot footer (carrossel) */
+  var slot=document.querySelector('.mxp-footer-slot');
+  if(slot){
+    var downX=null,scrollLeft=0;
+    slot.addEventListener('touchstart',function(e){ downX=e.touches[0].clientX; scrollLeft=slot.scrollLeft; },{passive:true});
+    slot.addEventListener('touchmove',function(e){
+      if(downX===null)return;
+      slot.scrollLeft=scrollLeft-(e.touches[0].clientX-downX);
+    },{passive:true});
+    slot.addEventListener('touchend',function(){ downX=null; },{passive:true});
+  }
+
+  /* Ao trocar arquétipo, KOBLayers.refresh reescreve --kob-L-*.
+     Como nossas vars --kob-v5-* apontam pra elas via var(), o CSS
+     já resolve sozinho. Este wrapper só força um repaint leve
+     para navegadores que não propagam var() aninhada na hora. */
+  try{
+    if(window.KOBLayers && typeof window.KOBLayers.refresh==='function'){
+      var orig=window.KOBLayers.refresh;
+      window.KOBLayers.refresh=function(){
+        var r=orig.apply(this,arguments);
+        try{
+          var el=document.documentElement;
+          el.style.setProperty('--kob-v5-reflow','1');
+          setTimeout(function(){ try{ el.style.removeProperty('--kob-v5-reflow'); }catch(_){} },30);
+        }catch(_){}
+        return r;
+      };
+    }
+  }catch(_){}
+})();
+
+</script>
+
 </body>
 
 </html>
