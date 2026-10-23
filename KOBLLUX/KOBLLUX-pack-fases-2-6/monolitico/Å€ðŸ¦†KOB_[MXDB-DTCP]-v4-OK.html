@@ -5491,13 +5491,16 @@ body {
   transition:background 0.18s ease, outline 0.18s ease;
 }
 #kob-tts-outline {
-  position: absolute;
+  /* FIX v3cp: overlay fixo de viewport (anexado ao body). */
+  position: fixed;
   display: none;
   pointer-events: none;
-  z-index: 9998;
-  border: 2px dashed #00e28b;
-  border-radius: 10px;
+  z-index: 2147483000;
+  border: 1px dashed #00e28b;
+  border-radius: 39px;
+  will-change: top, left, width, height;
 }
+
 .kob-tts-dock {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
@@ -32748,13 +32751,13 @@ function say(text, opts){
   const outline = $('#kob-tts-outline') || (() => {
     const el = document.createElement('div');
     el.id = 'kob-tts-outline';
-    el.style.position = 'absolute';
+    el.style.position = 'fixed';
     el.style.pointerEvents = 'none';
     el.style.display = 'none';
     
-    /* document.body.appendChild(el); */
+     document.body.appendChild(el); 
     
-    document.querySelector('.content').appendChild(el);
+    /*document.querySelector('.content').appendChild(el);*/
 
     return el;
   })();
@@ -43805,5 +43808,47 @@ input:focus, textarea:focus, select:focus{
 })();
 
 </script>
-
+<!-- ═══ PATCH: outline TTS suave + fade-on-scroll · cole ANTES do </body> real ═══ -->
+<style id="kob-outline-soft-patch">
+#kob-tts-outline{
+  border-width:1.5px !important;
+  border-style:dashed !important;
+  border-color:color-mix(in srgb, var(--kob-voice-primary,#00e28b) 50%, transparent) !important;
+  background:color-mix(in srgb, var(--kob-voice-primary,#00e28b) 5%, transparent) !important;
+  box-shadow:0 0 0 1px color-mix(in srgb, var(--kob-voice-primary,#00e28b) 16%, transparent),
+             0 4px 18px color-mix(in srgb, var(--kob-voice-primary,#00e28b) 12%, transparent) !important;
+  opacity:0.81;
+  transition:opacity .22s ease, left .16s linear, top .16s linear,
+             width .16s linear, height .16s linear, border-color .3s ease !important;
+}
+</style>
+<script id="kob-outline-fade-patch">
+/* Enquanto rola: contorno murcha (opacidade 0.12). Ao parar, volta se o alvo
+   estiver perto do viewport; se estiver fora, fica em 0.30. Novo bloco lido → 100%. */
+(function(){
+  "use strict";
+  var timer=null, lastDisplay='';
+  function el(){ return document.getElementById('kob-tts-outline'); }
+  function setOpacity(v){ var o=el(); if(o){ if(!o.style.transition) o.style.transition='opacity .22s ease'; o.style.opacity=v; } }
+  function onScroll(){
+    var o=el(); if(!o || o.style.display==='none') return;
+    setOpacity('0.12');
+    clearTimeout(timer);
+    timer=setTimeout(function(){
+      var x=el(); if(!x || x.style.display==='none') return;
+      var r=x.getBoundingClientRect();
+      var inView = r.bottom > -80 && r.top < (window.innerHeight+80);
+      setOpacity(inView ? '1' : '0.3');
+    }, 170);
+  }
+  window.addEventListener('scroll', onScroll, {passive:true, capture:true});
+  window.addEventListener('resize', onScroll, {passive:true});
+  /* Quando o contorno é reexibido (novo bloco / início da fala), volta opacidade cheia */
+  setInterval(function(){
+    var o=el(); if(!o) return;
+    var d=o.style.display;
+    if(d!==lastDisplay){ lastDisplay=d; if(d!=='none'){ clearTimeout(timer); setOpacity('1'); } }
+  }, 120);
+})();
+</script>
 </body></html>
