@@ -191,7 +191,7 @@
   } else {
     boot();
   }
-  /* fallback: tenta novamente após load (elementos injetados tardiamente) */
+  /* fallback: tenta novamente após load (elementos injetados tardiamente) *
   window.addEventListener('load', function(){ setTimeout(boot, 300); setTimeout(boot, 1500); });
   /* KOB-PERF v2: Tone.js permanece realmente sob demanda.
      startSonoroPlayback() já chama KOBLoadTone() quando o usuário solicita áudio.
