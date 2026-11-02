@@ -46372,5 +46372,212 @@ hr.hr{height:1px;border:0;margin:20px 0;background:linear-gradient(90deg,transpa
 
 <!-- META LUX OPERATOR ∆³ — RAW PART A (AST) + PART B (6 semantic analyzers); analysis-only, no dispatch -->
 
+<style id="kob-gpu-patch-v1">
+
+/* ───────────────────────────────────────────────────────────────
+   1. BLOBS / ORBS DECORATIVOS — troca filter:blur(100px) por
+      radial-gradient nativo (mesma aparência, 0ms de GPU de blur).
+      .blob-1, .blob-2, .nova_blob, .orb-bg, .ambient-light > div
+      existem em vários pontos do CSS; a gente cobre todos.
+   ─────────────────────────────────────────────────────────────── */
+.blob,
+.nova_blob,
+.ambient-light .blob,
+.sn-scope .blob,
+.sn-scope .blob1,
+.sn-scope .blob2,
+.sn-scope .blob3 {
+  /* anula o filter: blur(100px) que estava sendo aplicado */
+  filter: none !important;
+  /* recria o "halo" com radial-gradient (mesmo efeito, custo 0 na GPU) */
+  background: radial-gradient(circle closest-side,
+    color-mix(in srgb, var(--kob-voice-primary, #22d3ee) 28%, transparent) 0%,
+    color-mix(in srgb, var(--kob-voice-primary, #22d3ee) 10%, transparent) 40%,
+    transparent 100%) !important;
+  /* impede que a GPU aloque camada de composição por causa do will-change */
+  will-change: auto !important;
+  /* mantém a animação existente (transform, que é barato) */
+}
+
+/* blob secundário usa a cor secundária */
+.ambient-light .blob-2,
+.nova_blob.orb-b,
+.sn-scope .blob2 {
+  background: radial-gradient(circle closest-side,
+    color-mix(in srgb, var(--kob-voice-secondary, #b978ff) 28%, transparent) 0%,
+    color-mix(in srgb, var(--kob-voice-secondary, #b978ff) 10%, transparent) 40%,
+    transparent 100%) !important;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   2. SESSION WINDOW / MXP WINDOW — remove will-change caro.
+      O CSS original tem will-change: transform, opacity,
+      box-shadow, filter no .session-window. Filter e box-shadow
+      nesse will-change forçam a GPU a manter um buffer de blur
+      POR JANELA ABERTA — 3 janelas = 3 buffers = memória esgotada.
+      A gente remove só o filter/box-shadow do will-change e
+      mantém o transform/opacity (que são necessários pro drag).
+   ─────────────────────────────────────────────────────────────── */
+.session-window,
+.mxp-window {
+  will-change: transform, opacity !important;
+  /* IMPORTANTE: NÃO estamos tocando em backdrop-filter aqui.
+     O blur continua sendo controlado por --kob-glass-blur
+     e por data-glass="off". */
+}
+
+/* Durante o drag/resize, desliga o backdrop-filter TEMPORARIAMENTE.
+   Isso evita que a GPU recalcule o blur a cada frame de movimento.
+   Quando o drag termina, a classe .dragging/.resizing sai e o blur volta. */
+.session-window.dragging,
+.session-window.resizing,
+.mxp-window.dragging,
+.mxp-window.resizing {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  /* compensa a perda do blur com fundo sólido pra não ficar transparente */
+  background: rgba(10, 14, 26, 0.94) !important;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   3. SYMBOL BAR — durante o drag, blur off (o handler existente
+      já coloca .is-dragging; a gente só aproveita).
+   ─────────────────────────────────────────────────────────────── */
+#symbolBar.is-dragging,
+.symbol-bar.is-dragging {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: rgba(10, 14, 26, 0.92) !important;
+  /* reduz o custo de compositing durante o movimento */
+  will-change: auto !important;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   4. PERFORMANCE DO BLUR GENÉRICO — quando o blur ESTÁ ligado
+      (--kob-glass-blur > 0), aplica `contain: paint` para isolar
+      o repaint. O CSS original aplica em .glass mas não em
+      .session-window nem .mxp-window.
+   ─────────────────────────────────────────────────────────────── */
+html:not([data-glass="off"]) .session-window,
+html:not([data-glass="off"]) .mxp-window {
+  contain: layout style;
+  /* contain: paint NÃO é seguro aqui porque o resize-handle
+     e o drag-handle podem vazar pra fora. Só layout+style. */
+}
+
+/* ───────────────────────────────────────────────────────────────
+   5. CAMADAS DECORATIVAS DE ARQUÉTIPO — todas as camadas de
+      gradiente que reagem a --kob-voice-primary/secondary estão
+      com transition: background 0.18s. Isso força repaint em
+      cascata toda vez que troca arquétipo. Troca pra opacity
+      (mais barato) + mantém o background estático.
+   ─────────────────────────────────────────────────────────────── */
+#arch-bg,
+.theme-grad,
+body::before {
+  transition: opacity 0.18s ease !important;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   6. TEXT-SHADOW / BOX-SHADOW EM MASSA — text-shadow e
+      box-shadow em elementos que mudam de cor (botões, chips,
+      tokens) forçam repaint da caixa inteira. Desliga nos
+      elementos onde o efeito é puramente decorativo.
+   ─────────────────────────────────────────────────────────────── */
+.msg-mini,
+.token,
+.arch-chip,
+.sb-dot,
+.nav-dot,
+.nav-cta,
+.doc-pill,
+.group-tab {
+  text-shadow: none !important;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   7. ANIMAÇÕES INFINITAS EM TEXTO — quando o usuário pediu
+      redução de movimento ou o modo lite está ativo, para TUDO.
+      O kob-perf-css já faz isso via animation-duration: 0s,
+      mas aqui reforçamos pra animações que têm !important.
+   ─────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .blob,
+  .nova_blob,
+  .layer-orb,
+  .kob-orb-core,
+  .orb-core,
+  #sbOrb::before,
+  .loader-orb,
+  .typing-indicator {
+    animation: none !important;
+  }
+}
+
+html.kob-perf-lite .blob,
+html.kob-perf-lite .nova_blob,
+html.kob-perf-lite .layer-orb,
+html.kob-perf-lite .orb-core {
+  animation: none !important;
+  filter: none !important;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   8. BACKGROUND-IMAGE COM ALTA OPACIDADE EM FIXED — `#bg-fake-custom`
+      está com `position: fixed` + `background-size: cover`. Em
+      mobile, isso força uma camada de composição separada.
+      `contain: paint` isola.
+   ─────────────────────────────────────────────────────────────── */
+#bg-fake-custom,
+#serena_bg {
+  contain: strict;
+  /* ou seja: nada dentro vaza, nada fora afeta. Custo 0. */
+}
+
+/* ───────────────────────────────────────────────────────────────
+   9. FIX DE `content-visibility` QUE FALTAVA — o kob-perf-css
+      aplica em `.app > section.session-window`, mas NÃO nas
+      sections que não são session-window. Adiciona.
+      `contain-intrinsic-size` evita scroll jump.
+   ─────────────────────────────────────────────────────────────── */
+.app > section:not(.session-window):not([open]) {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 400px;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   10. SCROLLBAR E TEXT-RENDERING — micro-otimizações que
+       somam alguns ms por frame.
+   ─────────────────────────────────────────────────────────────── */
+html {
+  text-rendering: optimizeSpeed;
+  /* acelera o layout de texto em troca de kerning mais "solto" */
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   11. RESPEITO AO `data-glass="off"` — quando o blur está
+       desligado (que é o seu caso default), aplica contain: paint
+       nas janelas também, já que não há blur pra isolar.
+   ─────────────────────────────────────────────────────────────── */
+html[data-glass="off"] .session-window,
+html[data-glass="off"] .mxp-window {
+  contain: layout style paint;
+  /* AGORA sim paint, porque não há blur pra vazar */
+}
+
+/* ───────────────────────────────────────────────────────────────
+   12. DRAG-HANDLE / RESIZE-CORNER — ficam com box-shadow
+       animado no hover. É caro de repaint. Troca por outline
+       (mesma aparência, custo 0).
+   ─────────────────────────────────────────────────────────────── */
+.resize-corner::before,
+.resize-handle::before {
+  box-shadow: none !important;
+  outline: 1px solid color-mix(in srgb, var(--kob-voice-primary, #22d3ee) 30%, transparent);
+  outline-offset: -1px;
+}
+
+</style>
 
 </body></html>
