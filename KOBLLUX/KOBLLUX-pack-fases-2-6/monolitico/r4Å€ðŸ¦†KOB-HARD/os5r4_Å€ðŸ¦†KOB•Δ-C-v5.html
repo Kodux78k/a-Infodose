@@ -41347,22 +41347,75 @@ window.KOBSuspend={sweep};
 /* [V5.12] intensidade do backdrop das session windows (Cockpit ▸ Avançado · preferências). 0 = sem blur. */
 (function(){
   'use strict';
-  var KEY='kob:glass:blur', root=document.documentElement;
-  function get(){ try{ var v=parseInt(localStorage.getItem(KEY),10); return isNaN(v)?14:Math.max(0,Math.min(32,v)); }catch(e){ return 14; } }
-  function paint(n){
-    root.style.setProperty('--kob-glass-blur',n+'px');
-    if(n===0) root.setAttribute('data-glass','off'); else root.removeAttribute('data-glass');
-    var sl=document.getElementById('glassBlur'), lb=document.getElementById('val-glass');
-    if(sl&&String(sl.value)!==String(n)) sl.value=n;
-    if(lb) lb.textContent=n===0?'off':n+'px';
+
+  var KEY = 'kob:glass:blur';
+  var root = document.documentElement;
+  var MIN = 0;   // "sem zerado": nunca deixa 0 (0 = off)
+  var MAX = 32;
+  var DEFAULT = 0;
+
+  // cache de elementos para não consultar DOM a cada input
+  var slEl = null, lbEl = null, bound = false;
+
+  function clamp(n){
+    n = parseInt(n, 10);
+    if (isNaN(n)) n = DEFAULT;
+    return Math.max(MIN, Math.min(MAX, n)); // garante >= 1
   }
-  function set(n,persist){ n=Math.max(0,Math.min(32,parseInt(n,10)||0)); paint(n); if(persist!==false){ try{ localStorage.setItem(KEY,String(n)); }catch(e){} } return n; }
-  var sl=document.getElementById('glassBlur');
-  if(sl&&!sl.dataset.kobBound){ sl.dataset.kobBound='1'; sl.addEventListener('input',function(){ set(sl.value); }); }
-  paint(get());
-  window.KOBGlass={get:get,set:set};
-})();
-</script>
+
+  function get(){
+    try {
+      var v = parseInt(localStorage.getItem(KEY), 10);
+      return isNaN(v) ? DEFAULT : clamp(v);
+    } catch(e){ return DEFAULT; }
+  }
+
+  function paint(n){
+    // 1) só reescreve a variável se mudou (evita repaint desnecessário)
+    var cur = root.style.getPropertyValue('--kob-glass-blur');
+    var val = n + 'px';
+    if (cur !== val) root.style.setProperty('--kob-glass-blur', val);
+
+    // 2) nunca ativa "off" — mantém o atributo removido sempre
+    if (root.hasAttribute('data-glass')) root.removeAttribute('data-glass');
+
+    // 3) sincroniza UI com cache
+    if (slEl && String(slEl.value) !== String(n)) slEl.value = n;
+    if (lbEl) lbEl.textContent = n + 'px';
+  }
+
+  function set(n, persist){
+    n = clamp(n);
+    paint(n);
+    if (persist !== false){
+      try { localStorage.setItem(KEY, String(n)); } catch(e){}
+    }
+    return n;
+  }
+
+  // inicialização
+  function init(){
+    slEl = document.getElementById('glassBlur');
+    lbEl = document.getElementById('val-glass');
+
+    if (slEl && !bound){
+      bound = true;
+      slEl.min = MIN;               // impede arrastar para 0
+      slEl.max = MAX;
+      slEl.addEventListener('input', function(){ set(slEl.value); }, { passive: true });
+    }
+
+    paint(get());
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
+
+  window.KOBGlass = { get: get, set: set };
+})();</script>
 <script id="kob-fase2">
 /* ═══════════════════════════════════════════════════════════════════════════
    KOB · FASE 2 · Motor de override (hooks)           ~2.5 KB min · vanilla
