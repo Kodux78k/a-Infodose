@@ -30988,7 +30988,7 @@ function say(text, opts){
       'color:#f0c060');
     
   })();
-</script>
+</script>  
 <script data-kodux-source="https://www.infodose.com.br/js/kob.js" type="module">
 /* SOURCE: https://www.infodose.com.br/js/kob.js */
 
@@ -32428,6 +32428,52 @@ ARCHETYPES?.length||0
 
 })();
 
+</script>
+<script id="kob-tts-click-toggle">
+  /* FIX · 2º clique no mesmo bloco = parar (não reiniciar) */
+  (function() {
+    'use strict';
+    if (window.__KOB_TTS_CLICK_TOGGLE__) return;
+    window.__KOB_TTS_CLICK_TOGGLE__ = true;
+    
+    var SELECTOR = 'h1,h2,h3,p,li,blockquote,pre,td,th';
+    var IGNORE = '#symbolBar, .kob-tts-dock, .btn, button, a, input, textarea, select, .kob-session-window, .mxp-window';
+    
+    function findBlockIndex(target) {
+      var K = window.KOBLLUX;
+      if (!K || !K.state || !K.state.blocks) return -1;
+      var blocks = K.state.blocks;
+      for (var i = 0; i < blocks.length; i++) {
+        if (blocks[i] === target) return i;
+        if (blocks[i].isEqualNode && target && blocks[i].isEqualNode(target)) return i;
+      }
+      var t = (target.innerText || '').trim();
+      if (!t) return -1;
+      for (var j = 0; j < blocks.length; j++) {
+        if ((blocks[j].innerText || '').trim() === t) return j;
+      }
+      return -1;
+    }
+    
+    document.addEventListener('click', function(ev) {
+      var target = ev.target.closest && ev.target.closest(SELECTOR);
+      if (!target) return;
+      if (ev.target.closest && ev.target.closest(IGNORE)) return;
+      
+      var K = window.KOBLLUX;
+      if (!K || !K.state) return;
+      if (!K.state.isSpeaking) return;
+      
+      var idx = findBlockIndex(target);
+      if (idx === K.state.currentBlockIdx) {
+        ev.stopImmediatePropagation();
+        ev.preventDefault();
+        try { K.stopSpeech(); } catch (e) {}
+      }
+    }, true); /* CAPTURE: roda antes do handler original */
+    
+    console.log('[KOB-TTS-CLICK-TOGGLE] ✓ 2º clique no mesmo bloco = parar');
+  })();
 </script>
 <script data-kodux-source="https://www.infodose.com.br/js/modules/motor-4-369.js" type="module">
 /* SOURCE: https://www.infodose.com.br/js/modules/motor-4-369.js */
