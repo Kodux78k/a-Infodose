@@ -1,0 +1,1 @@
+window.__fcStack=()=>parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--fc-top-stack"))||0;
