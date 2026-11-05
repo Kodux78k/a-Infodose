@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+
+<title>KODUX Link Forge</title>
+
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  color-scheme:dark;
+  --bg:#08090b;
+  --card:#111318;
+  --card2:#171a20;
+  --line:#292e38;
+  --txt:#f4f6f8;
+  --muted:#8c94a3;
+  --accent:#23ac51;
+  --accent2:#f97316;
+  --danger:#ff5577;
+}
+html,body{
+  margin:0;min-height:100%;
+  background:radial-gradient(circle at 50% -10%,#17221b 0,transparent 42%),var(--bg);
+  color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;
+}
+body{
+  padding:max(14px,env(safe-area-inset-top)) 14px max(24px,env(safe-area-inset-bottom));
+}
+.app{width:min(760px,100%);margin:auto;}
+
+header{padding:14px 4px 18px;}
+.logo{font-size:22px;font-weight:800;letter-spacing:-.6px;}
+.logo span{color:var(--accent);}
+.sub{margin-top:5px;color:var(--muted);font-size:12px;}
+
+.card{
+  background:rgba(17,19,24,.88);
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:14px;
+  margin-bottom:12px;
+  box-shadow:0 15px 45px #0008;
+}
+
+label{
+  display:block;color:var(--muted);
+  font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.8px;
+  margin:0 0 8px 4px;
+}
+
+input,select{
+  width:100%;border:1px solid var(--line);outline:none;
+  background:#090b0f;color:var(--txt);
+  border-radius:15px;padding:14px;font-size:14px;
+}
+input:focus{border-color:var(--accent);}
+
+button{
+  border:0;border-radius:15px;padding:13px 15px;
+  background:var(--card2);color:var(--txt);
+  font-weight:700;cursor:pointer;
+  transition:.15s;
+}
+button:active{transform:scale(.97);}
+button:disabled{opacity:.4;cursor:not-allowed;}
+
+.primary{background:var(--accent);color:#031108;}
+.orange{background:var(--accent2);color:#160b03;}
+
+/* Path list */
+#path-list{display:flex;flex-direction:column;gap:6px;}
+.path-row{display:flex;gap:6px;align-items:stretch;}
+.path-row input{flex:1;min-width:0;}
+.path-actions{display:flex;gap:4px;}
+.path-actions button{padding:8px 10px;font-size:11px;min-width:38px;}
+.auto-btn{
+  background:#1a1d24;color:var(--muted);
+  border:1px solid var(--line);
+  font-size:10px;letter-spacing:.4px;
+}
+.auto-btn.active{
+  background:rgba(35,172,81,.15);
+  color:var(--accent);border-color:var(--accent);
+}
+.star-btn.active{color:#fbbf24;}
+
+.add-btn{
+  width:100%;margin-top:8px;
+  background:transparent;border:1px dashed var(--line);
+  color:var(--muted);font-size:12px;
+}
+.add-btn:hover{color:var(--txt);border-color:var(--accent);}
+
+.output{position:relative;margin-top:10px;}
+.output-title{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:8px;gap:8px;
+}
+.badge{
+  font-size:10px;padding:5px 8px;border-radius:99px;
+  background:#20252d;color:var(--muted);
+}
+pre{
+  margin:0;white-space:pre-wrap;word-break:break-all;
+  overflow:auto;background:#080a0d;
+  border:1px solid var(--line);border-radius:14px;
+  padding:13px;color:#dce3ea;
+  font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+.actions{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:8px;margin-top:8px;
+}
+.actions button{font-size:12px;}
+
+/* Favorites */
+.fav{display:flex;gap:10px;align-items:center;margin-top:6px;}
+.fav-info{flex:1;min-width:0;}
+.fav-path{
+  font:11px ui-monospace,monospace;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.fav-meta{margin-top:4px;color:var(--muted);font-size:10px;}
+.fav-actions{display:flex;gap:5px;}
+.small{padding:8px 10px;font-size:11px;}
+.empty{text-align:center;color:var(--muted);font-size:12px;padding:14px 5px;}
+
+/* Presets */
+.preset-item{
+  border:1px solid var(--line);border-radius:14px;
+  padding:10px;margin-bottom:8px;background:#0b0e13;
+}
+.preset-header{
+  display:flex;justify-content:space-between;align-items:center;gap:8px;
+}
+.preset-name{font-weight:700;font-size:13px;}
+.preset-meta{color:var(--muted);font-size:10px;margin-top:3px;}
+.preset-paths{
+  margin-top:6px;font:10px ui-monospace,monospace;
+  color:var(--muted);word-break:break-all;
+  max-height:52px;overflow:auto;
+}
+.preset-actions{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;}
+.preset-actions button{padding:6px 9px;font-size:10px;}
+
+/* Mode switch */
+.switch{display:flex;gap:7px;margin-top:9px;}
+.switch button{flex:1;font-size:11px;}
+.active{outline:1px solid var(--accent);color:var(--accent);}
+
+/* Empty combined */
+#combined-code:empty::before{
+  content:"// Adicione caminhos acima para gerar o combinado";
+  color:var(--muted);font-style:italic;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<header>
+  <div class="logo">🔗 KODUX <span>Link Forge</span></div>
+  <div class="sub">Múltiplos caminhos · Presets · Favoritos · Download HTML</div>
+</header>
+
+<!-- ============================================
+     PATHS
+============================================ -->
+<div class="card">
+
+  <label>Caminhos</label>
+
+  <div id="path-list"></div>
+
+  <button class="add-btn" onclick="addPath()">+ Adicionar caminho</button>
+
+  <div class="switch">
+    <button id="httpsBtn" class="active" onclick="setMode('https')">HTTPS</button>
+    <button id="pathBtn" onclick="setMode('path')">CAMINHO</button>
+  </div>
+
+</div>
+
+<!-- ============================================
+     GENERATED OUTPUTS
+============================================ -->
+<div id="outputs"></div>
+
+<!-- ============================================
+     COMBINED
+============================================ -->
+<div class="card">
+
+  <div class="output-title">
+    <strong>⚡ Combinado</strong>
+    <span class="badge" id="combined-badge">0</span>
+  </div>
+
+  <pre id="combined-code"></pre>
+
+  <div class="actions">
+    <button class="primary" onclick="copyCombined()">📋 Copiar</button>
+    <button class="orange" onclick="downloadHTML()">⬇ Baixar HTML</button>
+  </div>
+
+  <div class="actions">
+    <button onclick="savePreset()">💾 Salvar preset</button>
+    <button onclick="copyShareURL()">🔗 Compartilhar</button>
+  </div>
+
+</div>
+
+<!-- ============================================
+     PRESETS
+============================================ -->
+<div class="card">
+
+  <div class="output-title">
+    <strong>📦 Presets</strong>
+    <span class="badge" id="presets-badge">0</span>
+  </div>
+
+  <div id="presets"></div>
+
+</div>
+
+<!-- ============================================
+     FAVORITES
+============================================ -->
+<div class="card">
+
+  <div class="output-title">
+    <strong>⭐ Favoritos</strong>
+    <button class="small" onclick="clearFavorites()">Limpar</button>
+  </div>
+
+  <div id="favorites"></div>
+
+</div>
+
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // =================================================
+  // CONSTANTS
+  // =================================================
+
+  const HOST = "https://infodose.com.br";
+
+  const KEYS = {
+    mode:      'kodux-link-mode',
+    favorites: 'kodux-link-favorites',
+    paths:     'kodux-link-paths',
+    autoFirst: 'kodux-link-autofirst',
+    presets:   'kodux-link-presets'
+  };
+
+  // =================================================
+  // STATE
+  // =================================================
+
+  const state = {
+    paths: [''],       // array de strings
+    autoFirst: false,  // toggle do primeiro link
+    mode: 'https',
+    presets: []        // [{id, name, paths, mode, autoFirst, created}]
+  };
+
+  // =================================================
+  // PERSISTENCE
+  // =================================================
+
+  function loadState() {
+    try {
+      const paths = JSON.parse(localStorage.getItem(KEYS.paths) || 'null');
+      if (Array.isArray(paths) && paths.length) state.paths = paths;
+    } catch (_) {}
+    state.autoFirst = localStorage.getItem(KEYS.autoFirst) === '1';
+    state.mode      = localStorage.getItem(KEYS.mode) || 'https';
+    try {
+      state.presets = JSON.parse(localStorage.getItem(KEYS.presets) || '[]');
+    } catch (_) { state.presets = []; }
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(KEYS.paths, JSON.stringify(state.paths));
+      localStorage.setItem(KEYS.autoFirst, state.autoFirst ? '1' : '0');
+      localStorage.setItem(KEYS.mode, state.mode);
+      localStorage.setItem(KEYS.presets, JSON.stringify(state.presets));
+    } catch (_) {}
+  }
+
+  // =================================================
+  // HELPERS
+  // =================================================
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function normalizePath(value) {
+    if (!value) return '';
+    value = String(value).trim();
+    if (!value) return '';
+    try {
+      if (/^https?:\/\//i.test(value)) value = new URL(value).pathname;
+    } catch (_) {}
+    if (!value.startsWith('/')) value = '/' + value;
+    return value;
+  }
+
+  function detectType(path) {
+    const clean = path.split('?')[0].toLowerCase();
+    if (clean.endsWith('.js') || clean.endsWith('.mjs')) return 'js';
+    if (clean.endsWith('.css')) return 'css';
+    return 'unknown';
+  }
+
+  function fullURL(path) {
+    return state.mode === 'https' ? HOST + path : path;
+  }
+
+  function build(path) {
+    const type = detectType(path);
+    const url  = fullURL(path);
+
+    if (type === 'js') {
+      return [{ title: 'SCRIPT SRC', code: `<script src="${url}"><\/script>` }];
+    }
+    if (type === 'css') {
+      return [
+        { title: 'STYLESHEET', code: `<link rel="stylesheet" href="${url}">` },
+        { title: '@IMPORT',    code: `@import url("${url}");` }
+      ];
+    }
+    return [{ title: 'URL', code: url }];
+  }
+
+  function buildPrimary(path) {
+    const type = detectType(path);
+    const url  = fullURL(path);
+    if (type === 'js')  return `<script src="${url}"><\/script>`;
+    if (type === 'css') return `<link rel="stylesheet" href="${url}">`;
+    return url;
+  }
+
+  function validPaths() {
+    return state.paths
+      .map(normalizePath)
+      .filter(Boolean);
+  }
+
+  // =================================================
+  // RENDER — PATHS
+  // =================================================
+
+  function renderPaths() {
+    const list = document.getElementById('path-list');
+
+    list.innerHTML = state.paths.map((raw, i) => {
+      const path = normalizePath(raw);
+      const isFirst = i === 0;
+      const isFav = isFavorited(path);
+
+      return `
+        <div class="path-row">
+          <input
+            type="text"
+            value="${esc(raw)}"
+            placeholder="/path/to/file.js ou .css"
+            spellcheck="false"
+            autocomplete="off"
+            oninput="onPathInput(${i}, this.value)"
+          >
+          <div class="path-actions">
+            ${isFirst ? `
+              <button
+                class="auto-btn ${state.autoFirst ? 'active' : ''}"
+                title="Primeiro link vem já analisado nas próximas"
+                onclick="toggleAuto()">
+                ${state.autoFirst ? '✓ AUTO' : '○ AUTO'}
+              </button>
+            ` : ''}
+            <button
+              class="small star-btn ${isFav ? 'active' : ''}"
+              title="Favoritar"
+              onclick="favoritePath(${i})">
+              ${isFav ? '★' : '☆'}
+            </button>
+            <button
+              class="small"
+              title="Remover"
+              onclick="removePath(${i})">
+              ×
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // =================================================
+  // RENDER — OUTPUTS
+  // =================================================
+
+  function renderOutputs() {
+    const container = document.getElementById('outputs');
+    const paths = validPaths();
+
+    if (!paths.length) {
+      container.innerHTML = '';
+      return;
+    }
+
+    let html = '';
+
+    paths.forEach((path) => {
+      const items = build(path);
+      const type  = detectType(path).toUpperCase();
+
+      items.forEach((item, idx) => {
+        const globalIdx = `${path.replace(/[^a-z0-9]/gi, '_')}_${idx}`;
+
+        html += `
+          <div class="card output">
+            <div class="output-title">
+              <strong>${esc(item.title)}</strong>
+              <span class="badge">${esc(type)}</span>
+            </div>
+            <pre id="code-${globalIdx}">${esc(item.code)}</pre>
+            <div class="actions">
+              <button class="primary" onclick="copyTextById('code-${globalIdx}')">
+                📋 COPIAR
+              </button>
+              <button onclick="favoriteCurrentPath('${esc(path)}')">
+                ⭐ FAVORITAR
+              </button>
+            </div>
+          </div>
+        `;
+      });
+    });
+
+    container.innerHTML = html;
+  }
+
+  // =================================================
+  // RENDER — COMBINED
+  // =================================================
+
+  function renderCombined() {
+    const paths = validPaths();
+    const pre   = document.getElementById('combined-code');
+    const badge = document.getElementById('combined-badge');
+
+    if (!paths.length) {
+      pre.textContent = '';
+      badge.textContent = '0';
+      return;
+    }
+
+    const code = paths.map(buildPrimary).join('\n');
+    pre.textContent = code;
+    badge.textContent = paths.length + ' item(s)';
+  }
+
+  // =================================================
+  // RENDER — PRESETS
+  // =================================================
+
+  function renderPresets() {
+    const container = document.getElementById('presets');
+    const badge     = document.getElementById('presets-badge');
+
+    badge.textContent = state.presets.length;
+
+    if (!state.presets.length) {
+      container.innerHTML = `<div class="empty">Nenhum preset salvo ainda.</div>`;
+      return;
+    }
+
+    container.innerHTML = state.presets.map((preset) => {
+      const date = new Date(preset.created).toLocaleDateString('pt-BR');
+      const paths = preset.paths.map(normalizePath).filter(Boolean);
+
+      return `
+        <div class="preset-item">
+          <div class="preset-header">
+            <div>
+              <div class="preset-name">${esc(preset.name)}</div>
+              <div class="preset-meta">
+                ${paths.length} caminho(s) · ${preset.mode.toUpperCase()} · ${date}
+                ${preset.autoFirst ? ' · <span style="color:var(--accent)">AUTO</span>' : ''}
+              </div>
+            </div>
+          </div>
+          <div class="preset-paths">${paths.map(esc).join('<br>')}</div>
+          <div class="preset-actions">
+            <button class="primary" onclick="loadPreset('${esc(preset.id)}')">USAR</button>
+            <button class="orange" onclick="downloadPreset('${esc(preset.id)}')">⬇ HTML</button>
+            <button onclick="renamePreset('${esc(preset.id)}')">✎</button>
+            <button onclick="removePreset('${esc(preset.id)}')">×</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // =================================================
+  // RENDER — FAVORITES
+  // =================================================
+
+  function getFavorites() {
+    try {
+      return JSON.parse(localStorage.getItem(KEYS.favorites) || '[]');
+    } catch (_) { return []; }
+  }
+
+  function saveFavorites(list) {
+    localStorage.setItem(KEYS.favorites, JSON.stringify(list));
+  }
+
+  function isFavorited(path) {
+    if (!path) return false;
+    const norm = normalizePath(path);
+    return getFavorites().some(x => x.path === norm);
+  }
+
+  function renderFavorites() {
+    const container = document.getElementById('favorites');
+    const list      = getFavorites();
+
+    if (!list.length) {
+      container.innerHTML = `<div class="empty">Nenhum link salvo ainda.</div>`;
+      return;
+    }
+
+    container.innerHTML = list.map(item => `
+      <div class="fav">
+        <div class="fav-info">
+          <div class="fav-path">${esc(item.path)}</div>
+          <div class="fav-meta">${esc(item.type.toUpperCase())} · Infodose</div>
+        </div>
+        <div class="fav-actions">
+          <button class="small primary" onclick="useFavorite('${esc(item.path)}')">USAR</button>
+          <button class="small" onclick="removeFavorite('${esc(item.path)}')">×</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // =================================================
+  // RENDER — MODE
+  // =================================================
+
+  function renderMode() {
+    document.getElementById('httpsBtn')
+      .classList.toggle('active', state.mode === 'https');
+    document.getElementById('pathBtn')
+      .classList.toggle('active', state.mode === 'path');
+  }
+
+  // =================================================
+  // RENDER — ALL
+  // =================================================
+
+  function renderAll() {
+    renderPaths();
+    renderOutputs();
+    renderCombined();
+    renderPresets();
+    renderFavorites();
+    renderMode();
+  }
+
+  // =================================================
+  // ACTIONS — PATHS
+  // =================================================
+
+  window.onPathInput = function(index, value) {
+    state.paths[index] = value;
+    saveState();
+    // não re-renderiza paths (foco)
+    renderOutputs();
+    renderCombined();
+  };
+
+  window.addPath = function() {
+    state.paths.push('');
+    saveState();
+    renderPaths();
+    // foca o novo input
+    const inputs = document.querySelectorAll('#path-list input');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  };
+
+  window.removePath = function(index) {
+    state.paths.splice(index, 1);
+    if (!state.paths.length) state.paths = [''];
+    saveState();
+    renderPaths();
+    renderOutputs();
+    renderCombined();
+  };
+
+  window.toggleAuto = function() {
+    state.autoFirst = !state.autoFirst;
+    saveState();
+    const btn = document.querySelector('.auto-btn');
+    if (btn) {
+      btn.classList.toggle('active', state.autoFirst);
+      btn.textContent = state.autoFirst ? '✓ AUTO' : '○ AUTO';
+    }
+    renderCombined();
+  };
+
+  window.setMode = function(newMode) {
+    state.mode = newMode;
+    saveState();
+    renderMode();
+    renderOutputs();
+    renderCombined();
+  };
+
+  // =================================================
+  // ACTIONS — COPY
+  // =================================================
+
+  async function copyText(text, btn) {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (_) {
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
+      try { document.execCommand('copy'); } catch (_) {}
+      area.remove();
+    }
+    if (btn) {
+      const old = btn.textContent;
+      btn.textContent = '✓ COPIADO';
+      setTimeout(() => { btn.textContent = old; }, 1200);
+    }
+  }
+
+  window.copyTextById = function(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    copyText(el.textContent, event && event.target);
+  };
+
+  window.copyCombined = function() {
+    copyText(
+      document.getElementById('combined-code').textContent,
+      event && event.target
+    );
+  };
+
+  // =================================================
+  // ACTIONS — FAVORITES
+  // =================================================
+
+  window.favoritePath = function(index) {
+    const norm = normalizePath(state.paths[index]);
+    if (!norm) return;
+    const list = getFavorites();
+    const existing = list.findIndex(x => x.path === norm);
+    if (existing >= 0) {
+      list.splice(existing, 1);
+    } else {
+      list.unshift({ path: norm, type: detectType(norm), created: Date.now() });
+    }
+    saveFavorites(list);
+    renderPaths();
+    renderFavorites();
+  };
+
+  window.favoriteCurrentPath = function(path) {
+    const norm = normalizePath(path);
+    if (!norm) return;
+    const list = getFavorites();
+    if (!list.some(x => x.path === norm)) {
+      list.unshift({ path: norm, type: detectType(norm), created: Date.now() });
+      saveFavorites(list);
+      renderPaths();
+      renderFavorites();
+    }
+  };
+
+  window.removeFavorite = function(path) {
+    const list = getFavorites().filter(x => x.path !== path);
+    saveFavorites(list);
+    renderPaths();
+    renderFavorites();
+  };
+
+  window.useFavorite = function(path) {
+    const norm = normalizePath(path);
+    const exists = state.paths.some(p => normalizePath(p) === norm);
+    if (!exists) {
+      if (state.paths.length === 1 && !state.paths[0].trim()) {
+        state.paths[0] = norm;
+      } else {
+        state.paths.push(norm);
+      }
+      saveState();
+      renderPaths();
+      renderOutputs();
+      renderCombined();
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  window.clearFavorites = function() {
+    if (!confirm('Apagar todos os favoritos?')) return;
+    localStorage.removeItem(KEYS.favorites);
+    renderPaths();
+    renderFavorites();
+  };
+
+  // =================================================
+  // ACTIONS — PRESETS
+  // =================================================
+
+  window.savePreset = function() {
+    const paths = validPaths();
+    if (!paths.length) {
+      alert('Adicione ao menos um caminho válido.');
+      return;
+    }
+    const name = prompt('Nome do preset:', 'Combo ' + new Date().toLocaleDateString('pt-BR'));
+    if (!name) return;
+
+    state.presets.unshift({
+      id: Date.now().toString(36),
+      name: name.trim(),
+      paths: [...state.paths],
+      mode: state.mode,
+      autoFirst: state.autoFirst,
+      created: Date.now()
+    });
+    saveState();
+    renderPresets();
+  };
+
+  window.loadPreset = function(id) {
+    const preset = state.presets.find(p => p.id === id);
+    if (!preset) return;
+
+    state.paths     = preset.paths.length ? [...preset.paths] : [''];
+    state.autoFirst = !!preset.autoFirst;
+    state.mode      = preset.mode || 'https';
+
+    saveState();
+    renderAll();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  window.removePreset = function(id) {
+    if (!confirm('Remover este preset?')) return;
+    state.presets = state.presets.filter(p => p.id !== id);
+    saveState();
+    renderPresets();
+  };
+
+  window.renamePreset = function(id) {
+    const preset = state.presets.find(p => p.id === id);
+    if (!preset) return;
+    const name = prompt('Novo nome:', preset.name);
+    if (!name) return;
+    preset.name = name.trim();
+    saveState();
+    renderPresets();
+  };
+
+  // =================================================
+  // ACTIONS — DOWNLOAD HTML
+  // =================================================
+
+  function buildHTMLDocument(paths, mode, autoFirst, title) {
+    const valid = paths.map(normalizePath).filter(Boolean);
+    const cssTags = [];
+    const jsTags  = [];
+
+    valid.forEach((p, i) => {
+      const type = detectType(p);
+      const url  = mode === 'https' ? HOST + p : p;
+      const isAuto = autoFirst && i === 0;
+      const attr = isAuto ? ' data-auto-analyze="true"' : '';
+
+      if (type === 'css') {
+        cssTags.push(`<link rel="stylesheet" href="${url}"${attr}>`);
+      } else if (type === 'js') {
+        jsTags.push(`<script src="${url}"${attr}><\/script>`);
+      }
+    });
+
+    const pathComments = valid
+      .map((p, i) => `  ${i + 1}. ${p}${autoFirst && i === 0 ? ' [AUTO]' : ''}`)
+      .join('\n');
+
+    return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(title || 'KODUX Combo')}</title>
+<!-- Gerado por KODUX Link Forge · ${new Date().toISOString()} -->
+<!--
+Caminhos:
+${pathComments || '  (nenhum)'}
+-->
+${cssTags.join('\n')}
+</head>
+<body>
+
+${jsTags.join('\n')}
+
+</body>
+</html>`;
+  }
+
+  function triggerDownload(filename, content) {
+    const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  window.downloadHTML = function() {
+    const paths = validPaths();
+    if (!paths.length) {
+      alert('Adicione ao menos um caminho válido.');
+      return;
+    }
+    const filename =
+      'kodux-combo-' +
+      new Date().toISOString().slice(0, 10) +
+      '-' + paths.length + '.html';
+
+    triggerDownload(
+      filename,
+      buildHTMLDocument(state.paths, state.mode, state.autoFirst, 'KODUX Combo')
+    );
+  };
+
+  window.downloadPreset = function(id) {
+    const preset = state.presets.find(p => p.id === id);
+    if (!preset) return;
+
+    const safeName = preset.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'preset';
+
+    triggerDownload(
+      `kodux-${safeName}.html`,
+      buildHTMLDocument(
+        preset.paths,
+        preset.mode,
+        preset.autoFirst,
+        preset.name
+      )
+    );
+  };
+
+  // =================================================
+  // ACTIONS — SHARE URL
+  // =================================================
+
+  window.copyShareURL = function() {
+    const payload = {
+      p: validPaths(),
+      a: state.autoFirst ? 1 : 0,
+      m: state.mode
+    };
+    try {
+      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+      const url =
+        location.origin + location.pathname + '#s=' + encoded;
+      copyText(url, event && event.target);
+    } catch (_) {
+      alert('Falha ao gerar URL.');
+    }
+  };
+
+  function loadFromHash() {
+    if (!location.hash.startsWith('#s=')) return;
+    try {
+      const json = decodeURIComponent(escape(atob(location.hash.slice(3))));
+      const payload = JSON.parse(json);
+      if (Array.isArray(payload.p) && payload.p.length) {
+        state.paths = payload.p;
+      }
+      if (payload.a !== undefined) state.autoFirst = !!payload.a;
+      if (payload.m) state.mode = payload.m;
+      saveState();
+    } catch (_) {}
+  }
+
+  // =================================================
+  // BOOT
+  // =================================================
+
+  loadState();
+  loadFromHash();
+  renderAll();
+
+  // migração: modo antigo
+  const oldMode = localStorage.getItem('kodux-link-mode');
+  if (oldMode && !localStorage.getItem(KEYS.mode)) {
+    state.mode = oldMode;
+    saveState();
+    renderMode();
+  }
+
+})();
+</script>
+
+</body>
+</html>
