@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>KODUX Forge + Injector</title>
+
+<style>
+:root{
+  --bg:#07090d;
+  --panel:#10141b;
+  --panel2:#151b24;
+  --line:rgba(255,255,255,.10);
+  --text:#eaf2ff;
+  --muted:#7f8da3;
+  --cyan:#00f2ff;
+  --green:#39ffb6;
+  --orange:#ff9d42;
+  --red:#ff5577;
+  --radius:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{
+  width:100%;min-height:100%;
+  background:var(--bg);color:var(--text);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+body{padding:14px 14px 32px}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+
+.app{width:min(880px,100%);margin:auto}
+
+/* ============ HEADER ============ */
+.header{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:15px;margin-bottom:18px;
+}
+.brand{display:flex;align-items:center;gap:12px}
+.orb{
+  width:42px;height:42px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff,var(--cyan) 15%,rgba(0,242,255,.2) 45%,transparent 70%);
+  box-shadow:0 0 20px rgba(0,242,255,.5);
+}
+.title{font-size:18px;font-weight:800}
+.title .f{color:var(--green)}
+.title .i{color:var(--cyan)}
+.subtitle{color:var(--muted);font-size:12px;margin-top:3px}
+.status{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.status.ok .status-dot{background:var(--green);box-shadow:0 0 12px var(--green)}
+.status.error .status-dot{background:var(--red)}
+.status.busy .status-dot{background:var(--orange);box-shadow:0 0 12px var(--orange)}
+
+/* ============ TABS ============ */
+.tabs{
+  display:flex;gap:6px;margin-bottom:14px;
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:14px;padding:5px;
+}
+.tab{
+  flex:1;border:0;background:transparent;color:var(--muted);
+  padding:10px 14px;border-radius:10px;font-weight:700;font-size:13px;
+  transition:.15s;
+}
+.tab.active{background:var(--panel2);color:var(--text)}
+
+/* ============ ACCORDION ============ */
+details.section{
+  background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.015)),var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:0 20px 60px rgba(0,0,0,.25);
+  margin-bottom:14px;
+  overflow:hidden;
+  transition:border-color .2s;
+}
+details.section[open]{border-color:rgba(0,242,255,.18)}
+summary{
+  list-style:none;
+  padding:16px 18px;
+  display:flex;align-items:center;gap:10px;
+  font-size:11px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);
+  cursor:pointer;user-select:none;
+  transition:background .15s,color .15s;
+  min-height:44px;
+}
+summary::-webkit-details-marker{display:none}
+summary:hover{color:var(--text);background:rgba(255,255,255,.02)}
+summary::before{
+  content:'▸';
+  font-size:10px;color:var(--cyan);
+  transition:transform .2s;
+  display:inline-block;
+}
+details[open]>summary::before{transform:rotate(90deg)}
+details[open]>summary{border-bottom:1px solid var(--line)}
+summary .badge{margin-left:auto}
+
+.details-body{padding:16px 18px}
+
+/* nested panels */
+.panel-inner{
+  background:#0b0f15;border:1px solid var(--line);
+  border-radius:14px;padding:14px;
+}
+
+/* ============ BUTTONS ============ */
+button{
+  border:1px solid var(--line);border-radius:13px;
+  min-height:44px;padding:0 16px;
+  background:var(--panel2);color:var(--text);
+  font-weight:600;transition:.15s;
+}
+button:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.22)}
+button:active{transform:scale(.98)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{
+  background:linear-gradient(135deg,rgba(0,242,255,.18),rgba(57,255,182,.12));
+  border-color:rgba(0,242,255,.35);
+}
+.btn-inject{
+  background:linear-gradient(135deg,rgba(57,255,182,.20),rgba(0,242,255,.10));
+  border-color:rgba(57,255,182,.4);
+}
+.btn-orange{
+  background:linear-gradient(135deg,rgba(255,157,66,.20),rgba(255,85,119,.10));
+  border-color:rgba(255,157,66,.4);
+}
+.btn-danger{border-color:rgba(255,85,119,.3);color:#ff8ba4}
+.small{padding:7px 10px;font-size:11px;min-height:34px}
+
+/* ============ INPUTS ============ */
+input[type=text],textarea{
+  background:transparent;color:var(--text);
+  border:1px solid var(--line);border-radius:13px;
+  padding:0 14px;outline:none;
+}
+input[type=text]{height:46px;width:100%}
+input[type=text]:focus,textarea:focus{
+  border-color:rgba(0,242,255,.55);
+  box-shadow:0 0 0 3px rgba(0,242,255,.08);
+}
+textarea{
+  width:100%;min-height:200px;padding:14px;resize:vertical;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:12px;line-height:1.6;
+  background:#080b10;color:#cde8ff;
+}
+
+/* ============ FILE BUTTON ============ */
+.btn-file{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:44px;padding:0 16px;
+  border:1px solid var(--line);border-radius:13px;
+  background:var(--panel2);color:var(--text);
+  font-weight:600;cursor:pointer;user-select:none;transition:.15s;
+}
+.btn-file:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.22)}
+.btn-file input[type="file"]{display:none}
+
+/* ============ LAYOUT HELPERS ============ */
+.hidden{display:none!important}
+.url-row{display:flex;gap:9px}
+.url-row input{flex:1;min-width:0}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.actions-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:8px;margin-top:12px;
+}
+
+/* ============ MODE ============ */
+.mode{display:flex;gap:7px;margin-bottom:14px}
+.mode button{flex:1}
+.mode button.active,.mode-switch button.active{
+  border-color:var(--cyan);color:var(--cyan);
+  background:rgba(0,242,255,.07);
+}
+.mode-switch{display:flex;gap:7px;margin-top:10px}
+.mode-switch button{flex:1}
+
+/* ============ PATH LIST ============ */
+#path-list{display:flex;flex-direction:column;gap:6px}
+.path-row{display:flex;gap:6px;align-items:stretch}
+.path-row input{flex:1;min-width:0}
+.path-actions{display:flex;gap:4px}
+.path-actions button{padding:8px 9px;font-size:11px;min-width:38px;min-height:46px}
+.auto-btn{
+  background:#1a1d24;color:var(--muted);
+  border:1px solid var(--line);
+  font-size:10px;letter-spacing:.4px;font-weight:700;
+}
+.auto-btn.active{
+  background:rgba(57,255,182,.15);color:var(--green);
+  border-color:rgba(57,255,182,.5);
+}
+.star-btn.active{color:#fbbf24;border-color:rgba(251,191,36,.4)}
+.add-btn{
+  width:100%;margin-top:8px;background:transparent;
+  border:1px dashed var(--line);color:var(--muted);font-size:12px;
+}
+.add-btn:hover{color:var(--text);border-color:var(--cyan)}
+
+/* ============ OUTPUTS / PRESETS / FAVORITES ============ */
+.output{margin-top:10px}
+.output:first-child{margin-top:0}
+.output-title{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:8px;gap:8px;
+}
+.badge{
+  font-size:10px;padding:4px 8px;border-radius:99px;
+  background:#20252d;color:var(--muted);white-space:nowrap;
+}
+pre{
+  margin:0;white-space:pre-wrap;word-break:break-all;
+  overflow:auto;background:#080a0d;border:1px solid var(--line);
+  border-radius:14px;padding:13px;color:#dce3ea;
+  font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+  min-height:34px;
+}
+#combined-code:empty::before{
+  content:"// Adicione caminhos acima para gerar o combinado";
+  color:var(--muted);font-style:italic;
+}
+
+.preset-item{
+  border:1px solid var(--line);border-radius:14px;
+  padding:11px;margin-bottom:8px;background:#0b0e13;
+}
+.preset-item:last-child{margin-bottom:0}
+.preset-header{display:flex;justify-content:space-between;gap:8px}
+.preset-name{font-weight:700;font-size:13px}
+.preset-meta{color:var(--muted);font-size:10px;margin-top:3px}
+.preset-paths{
+  margin-top:6px;font:10px ui-monospace,monospace;
+  color:var(--muted);max-height:56px;overflow:auto;word-break:break-all;
+}
+.preset-actions{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.preset-actions button{padding:6px 9px;font-size:10px;min-height:30px}
+
+.fav{
+  display:flex;gap:10px;align-items:center;
+  padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);
+}
+.fav:last-child{border-bottom:0}
+.fav-info{flex:1;min-width:0}
+.fav-path{
+  font:11px ui-monospace,monospace;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;
+}
+.fav-meta{color:var(--muted);font-size:10px;margin-top:2px}
+.fav-actions{display:flex;gap:5px}
+.empty{text-align:center;color:var(--muted);font-size:12px;padding:14px 5px}
+
+/* ============ ANALYSIS GRID ============ */
+.grid{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+}
+.card{
+  background:#0b0f15;border:1px solid var(--line);
+  border-radius:14px;padding:14px;
+}
+.card-number{font-size:24px;font-weight:800}
+.card-label{margin-top:3px;color:var(--muted);font-size:11px}
+.cyan{color:var(--cyan)}.green{color:var(--green)}
+.orange{color:var(--orange)}.red{color:var(--red)}
+
+/* ============ LOG ============ */
+.log{
+  max-height:260px;overflow:auto;background:#05070a;
+  border:1px solid var(--line);border-radius:13px;padding:12px;
+  font-family:ui-monospace,monospace;font-size:11px;line-height:1.7;
+}
+.log-line{border-bottom:1px solid rgba(255,255,255,.04);padding:3px 0}
+.log-line:last-child{border-bottom:0}
+
+/* ============ DESTINATION ============ */
+.preview{
+  position:relative;min-height:120px;
+  background:repeating-linear-gradient(45deg,#0b0f15,#0b0f15 10px,#0d1219 10px,#0d1219 20px);
+  border:1px solid var(--line);border-radius:14px;
+  overflow:auto;max-height:420px;padding:32px 12px 12px;
+}
+.preview-label{
+  position:absolute;top:8px;left:10px;
+  color:var(--muted);font-size:10px;pointer-events:none;
+}
+#inject-target{min-height:60px}
+
+footer{text-align:center;color:var(--muted);font-size:10px;padding:15px}
+
+@media(max-width:700px){
+  body{padding:12px 10px 24px}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .url-row{flex-direction:column}
+  .url-row input{width:100%}
+  .actions-grid{grid-template-columns:1fr 1fr}
+  .details-body{padding:14px}
+  summary{padding:14px 16px}
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <!-- ============ HEADER ============ -->
+  <header class="header">
+    <div class="brand">
+      <div class="orb"></div>
+      <div>
+        <div class="title">KODUX <span class="f">Forge</span> + <span class="i">Injector</span></div>
+        <div class="subtitle">Forja → Analisa → Injeta → Preserva</div>
+      </div>
+    </div>
+    <div id="status" class="status">
+      <span class="status-dot"></span>
+      <span id="status-text">aguardando</span>
+    </div>
+  </header>
+
+  <!-- ============ TABS ============ -->
+  <div class="tabs">
+    <button id="tab-forge"  class="tab active" onclick="switchTab('forge')">🔨 FORJA</button>
+    <button id="tab-inject" class="tab"        onclick="switchTab('inject')">💉 INJECTOR</button>
+  </div>
+
+  <!-- =================================================
+       FORGE VIEW
+  ================================================= -->
+  <div id="view-forge" class="view">
+
+    <!-- CAMINHOS -->
+    <details class="section" open data-key="forge-paths">
+      <summary>🧭 Caminhos</summary>
+      <div class="details-body">
+        <div id="path-list"></div>
+        <button class="add-btn" onclick="addPath()">+ Adicionar caminho</button>
+        <div class="mode-switch">
+          <button id="httpsBtn" class="active" onclick="setMode('https')">HTTPS</button>
+          <button id="pathBtn"            onclick="setMode('path')">CAMINHO</button>
+        </div>
+      </div>
+    </details>
+
+    <!-- OUTPUTS -->
+    <details class="section" open data-key="forge-outputs">
+      <summary>📦 Recursos gerados</summary>
+      <div class="details-body">
+        <div id="outputs"></div>
+      </div>
+    </details>
+
+    <!-- COMBINADO -->
+    <details class="section" open data-key="forge-combined">
+      <summary>
+        <span>⚡ Combinado</span>
+        <span class="badge" id="combined-badge">0</span>
+      </summary>
+      <div class="details-body">
+        <pre id="combined-code"></pre>
+        <div class="actions-grid">
+          <button class="btn-primary" onclick="copyCombined(this)">📋 Copiar</button>
+          <button class="btn-inject"  onclick="injectCombo(this)">⚡ Injetar combo</button>
+          <button                     onclick="sendForgeToInline()">→ Inline</button>
+          <button class="btn-orange"  onclick="downloadHTML()">⬇ Baixar HTML</button>
+          <button                     onclick="savePreset()">💾 Salvar preset</button>
+          <button                     onclick="copyShareURL(this)">🔗 Compartilhar</button>
+        </div>
+      </div>
+    </details>
+
+    <!-- PRESETS -->
+    <details class="section" data-key="forge-presets">
+      <summary>
+        <span>📦 Presets</span>
+        <span class="badge" id="presets-badge">0</span>
+      </summary>
+      <div class="details-body">
+        <div id="presets"></div>
+      </div>
+    </details>
+
+    <!-- FAVORITOS -->
+    <details class="section" data-key="forge-favorites">
+      <summary>
+        <span>⭐ Favoritos</span>
+        <button class="small" onclick="event.stopPropagation();clearFavorites()">Limpar</button>
+      </summary>
+      <div class="details-body">
+        <div id="favorites"></div>
+      </div>
+    </details>
+
+  </div>
+
+  <!-- =================================================
+       INJECTOR VIEW
+  ================================================= -->
+  <div id="view-inject" class="view hidden">
+
+    <!-- FONTE -->
+    <details class="section" open data-key="inj-source">
+      <summary>🌐 Fonte</summary>
+      <div class="details-body">
+        <div class="mode">
+          <button id="mode-url"    class="active" onclick="setInjectMode('url')">🌐 URL</button>
+          <button id="mode-inline"                onclick="setInjectMode('inline')">◈ INLINE</button>
+        </div>
+
+        <!-- URL mode -->
+        <div id="url-mode">
+          <div class="url-row">
+            <input id="url" type="text" spellcheck="false" autocomplete="off"
+                   value="https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78GLOBAL/a%CC%82%E2%82%AC%C2%9D%C3%B0Y%CC%88%C2%A6%E2%80%A0-+%E2%97%8E-%5BiFSw%5D-Nephesh-FULL.html">
+            <button class="btn-primary" onclick="loadRemote(this)">CARREGAR</button>
+            <button class="small" title="Resetar para URL padrão" onclick="resetURL()">↺</button>
+          </div>
+        </div>
+
+        <!-- Inline mode -->
+        <div id="inline-mode" class="hidden">
+          <textarea id="inline-html" placeholder="<style>...</style>
+
+<div>...</div>
+
+<script type=module>import x from './lib.js';</script>"></textarea>
+          <div class="actions">
+            <button class="btn-primary" onclick="loadInline()">ANALISAR HTML</button>
+            <label class="btn-file">
+              ⬆ IMPORTAR ARQUIVO
+              <input type="file" accept=".html,.htm,.txt,text/html,text/plain"
+                     onchange="importInlineFile(event)">
+            </label>
+            <button class="btn-danger" onclick="clearInline()">LIMPAR</button>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <!-- ANÁLISE -->
+    <details class="section" data-key="inj-analysis">
+      <summary>🔬 Estrutura encontrada</summary>
+      <div class="details-body">
+        <div class="grid">
+          <div class="card"><div id="count-html" class="card-number cyan">0</div><div class="card-label">NODES HTML</div></div>
+          <div class="card"><div id="count-css"  class="card-number green">0</div><div class="card-label">CSS (style+link)</div></div>
+          <div class="card"><div id="count-js"   class="card-number orange">0</div><div class="card-label">JS INLINE</div></div>
+          <div class="card"><div id="count-src"  class="card-number red">0</div><div class="card-label">JS SRC</div></div>
+        </div>
+      </div>
+    </details>
+
+    <!-- AÇÕES DE INJEÇÃO -->
+    <details class="section" open data-key="inj-actions">
+      <summary>⚡ Ações de injeção</summary>
+      <div class="details-body">
+        <div class="actions-grid">
+          <button class="btn-inject" onclick="injectAll()">⚡ INJETAR TUDO</button>
+          <button                    onclick="injectHTMLOnly()">HTML</button>
+          <button                    onclick="injectCSSOnly()">CSS</button>
+          <button                    onclick="injectJSOnly()">JS</button>
+          <button class="btn-danger" onclick="clearInjected()">LIMPAR TUDO</button>
+        </div>
+      </div>
+    </details>
+
+    <!-- BRIDGE -->
+    <details class="section" open data-key="inj-bridge">
+      <summary>🔗 Bridge Forge ↔ Injector</summary>
+      <div class="details-body">
+        <div class="actions-grid">
+          <button class="btn-orange" onclick="extractToForge()">→ Extrair recursos pra forja</button>
+        </div>
+      </div>
+    </details>
+
+  </div>
+
+  <!-- =================================================
+       RUNTIME (sempre visível)
+  ================================================= -->
+  <details class="section" open data-key="runtime">
+    <summary>📜 Runtime</summary>
+    <div class="details-body">
+      <div id="log" class="log">
+        <div class="log-line">› Forge + Injector pronto.</div>
+      </div>
+    </div>
+  </details>
+
+  <!-- =================================================
+       DESTINO (sempre visível)
+  ================================================= -->
+<!--  <details class="section" open data-key="destination">
+    <summary>🎯 DOM de destino · #inject-target</summary>
+    <div class="details-body">
+      <div class="preview">
+        <div class="preview-label">#inject-target</div>
+        <div id="inject-target"></div>
+      </div>
+    </div>
+  </details>-->
+      <div id="inject-target"></div>
+
+  <footer>KODUX Forge + Injector · Forja · Analisa · Injeta · Preserva</footer>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+// =================================================
+// CONSTANTS
+// =================================================
+const HOST = 'https://infodose.com.br';
+
+// URL base do arquivo original do usuário
+const DEFAULT_URL = 'https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78GLOBAL/a%CC%82%E2%82%AC%C2%9D%C3%B0Y%CC%88%C2%A6%E2%80%A0-+%E2%97%8E-%5BiFSw%5D-Nephesh-FULL.html';
+
+const KEYS = {
+  mode:       'kodux-link-mode',
+  favorites:  'kodux-link-favorites',
+  paths:      'kodux-link-paths',
+  autoFirst:  'kodux-link-autofirst',
+  presets:    'kodux-link-presets',
+  injectUrl:  'kodux-inject-url',
+  injectMode: 'kodux-inject-mode',
+  activeTab:  'kodux-active-tab',
+  details:    'kodux-details-'  // prefixo
+};
+
+const JS_TYPES = new Set([
+  'module','text/javascript','application/javascript',
+  'text/ecmascript','application/ecmascript'
+]);
+
+// =================================================
+// STATE
+// =================================================
+const state = {
+  // Forge
+  paths: [''],
+  autoFirst: true,
+  mode: 'https',
+  presets: [],
+  // Inject
+  sourceDocument: null,
+  sourceURL: null,
+  injectMode: 'url',
+  // UI
+  activeTab: 'forge',
+  // Internal
+  injectedBlobURLs: []
+};
+
+// =================================================
+// HELPERS
+// =================================================
+const $ = id => document.getElementById(id);
+
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function isInfodose(hostname){
+  return hostname === 'infodose.com.br'
+      || hostname === 'www.infodose.com.br'
+      || hostname.endsWith('.infodose.com.br');
+}
+
+function normalizePath(v){
+  if(!v) return '';
+  v = String(v).trim();
+  if(!v) return '';
+  try{
+    if(/^https?:\/\//i.test(v)){
+      const u = new URL(v);
+      if(isInfodose(u.hostname)) return u.pathname + u.search;
+      return u.href;
+    }
+  }catch(_){}
+  if(!v.startsWith('/')) v = '/' + v;
+  return v;
+}
+
+function detectType(p){
+  const c = p.split('?')[0].toLowerCase();
+  if(c.endsWith('.js') || c.endsWith('.mjs')) return 'js';
+  if(c.endsWith('.css')) return 'css';
+  return 'unknown';
+}
+
+function fullURL(p){
+  return state.mode === 'https' ? HOST + p : p;
+}
+
+function baseURL(){
+  return state.sourceURL || new URL(location.href);
+}
+
+function absoluteURL(p, base){
+  try{ return new URL(p, base).href; }
+  catch(_){ return p; }
+}
+
+function validPaths(){
+  return state.paths.map(normalizePath).filter(Boolean);
+}
+
+// =================================================
+// LOG + STATUS
+// =================================================
+function log(msg, type){
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.textContent = '› ' + msg;
+  if(type === 'error') line.style.color = '#ff8ba4';
+  if(type === 'ok')    line.style.color = '#39ffb6';
+  if(type === 'warn')  line.style.color = '#ff9d42';
+  $('log').appendChild(line);
+  $('log').scrollTop = $('log').scrollHeight;
+}
+
+function status(txt, type){
+  const box = $('status');
+  box.className = 'status ' + (type || '');
+  $('status-text').textContent = txt;
+}
+
+// =================================================
+// PERSISTENCE
+// =================================================
+function loadState(){
+  try{
+    const p = JSON.parse(localStorage.getItem(KEYS.paths) || 'null');
+    if(Array.isArray(p) && p.length) state.paths = p;
+  }catch(_){}
+
+  state.autoFirst  = localStorage.getItem(KEYS.autoFirst) !== '0';
+  state.mode       = localStorage.getItem(KEYS.mode) || 'https';
+  state.injectMode = localStorage.getItem(KEYS.injectMode) || 'url';
+  state.activeTab  = localStorage.getItem(KEYS.activeTab) || 'forge';
+
+  try{
+    state.presets = JSON.parse(localStorage.getItem(KEYS.presets) || '[]');
+    if(!Array.isArray(state.presets)) state.presets = [];
+  }catch(_){ state.presets = []; }
+
+  // URL: usa salvo, senão DEFAULT_URL
+  const savedUrl = localStorage.getItem(KEYS.injectUrl);
+  $('url').value = savedUrl || DEFAULT_URL;
+}
+
+function saveState(){
+  try{
+    localStorage.setItem(KEYS.paths, JSON.stringify(state.paths));
+    localStorage.setItem(KEYS.autoFirst, state.autoFirst ? '1' : '0');
+    localStorage.setItem(KEYS.mode, state.mode);
+    localStorage.setItem(KEYS.injectMode, state.injectMode);
+    localStorage.setItem(KEYS.activeTab, state.activeTab);
+    localStorage.setItem(KEYS.presets, JSON.stringify(state.presets));
+    localStorage.setItem(KEYS.injectUrl, $('url').value || '');
+  }catch(_){}
+}
+
+// =================================================
+// DETAILS (ACCORDION) PERSISTENCE
+// =================================================
+function bindDetailsPersistence(){
+  document.querySelectorAll('details[data-key]').forEach(d => {
+    const key = KEYS.details + d.dataset.key;
+    const saved = localStorage.getItem(key);
+    if(saved === 'open') d.open = true;
+    else if(saved === 'closed') d.open = false;
+    d.addEventListener('toggle', () => {
+      localStorage.setItem(key, d.open ? 'open' : 'closed');
+    });
+  });
+}
+
+// =================================================
+// TABS
+// =================================================
+window.switchTab = function(tab){
+  state.activeTab = tab;
+  $('view-forge').classList.toggle('hidden', tab !== 'forge');
+  $('view-inject').classList.toggle('hidden', tab !== 'inject');
+  $('tab-forge').classList.toggle('active', tab === 'forge');
+  $('tab-inject').classList.toggle('active', tab === 'inject');
+  saveState();
+};
+
+// =================================================
+// RENDER — PATHS
+// =================================================
+function isFavorited(path){
+  if(!path) return false;
+  return getFavorites().some(x => x.path === path);
+}
+
+function renderPaths(){
+  const list = $('path-list');
+  list.innerHTML = state.paths.map((raw, i) => {
+    const isFirst = i === 0;
+    const isFav = isFavorited(normalizePath(raw));
+    return `
+      <div class="path-row">
+        <input type="text" value="${esc(raw)}" placeholder="/path/to/file.js ou .css"
+               data-index="${i}" spellcheck="false" autocomplete="off">
+        <div class="path-actions">
+          ${isFirst ? `<button class="auto-btn ${state.autoFirst?'active':''}"
+                     data-action="auto" title="Primeiro link analisado automaticamente">${state.autoFirst?'✓ AUTO':'○ AUTO'}</button>` : ''}
+          <button class="small star-btn ${isFav?'active':''}" data-action="fav"
+                  data-index="${i}" title="Favoritar">${isFav?'★':'☆'}</button>
+          <button class="small" data-action="remove" data-index="${i}" title="Remover">×</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// =================================================
+// RENDER — OUTPUTS
+// =================================================
+function build(path){
+  const type = detectType(path);
+  const url  = fullURL(path);
+  if(type === 'js')  return [{title:'SCRIPT SRC', code:`<script src="${url}"><\/script>`}];
+  if(type === 'css') return [
+    {title:'STYLESHEET', code:`<link rel="stylesheet" href="${url}">`},
+    {title:'@IMPORT',    code:`@import url("${url}");`}
+  ];
+  return [{title:'URL', code:url}];
+}
+
+function renderOutputs(){
+  const container = $('outputs');
+  const paths = validPaths();
+  if(!paths.length){ container.innerHTML = `<div class="empty">Nenhum caminho ainda.</div>`; return; }
+
+  let html = '';
+  paths.forEach((path, pIdx) => {
+    const items = build(path);
+    const type  = detectType(path).toUpperCase();
+    const isFav = isFavorited(path);
+    items.forEach((item, iIdx) => {
+      const id = `out-${pIdx}-${iIdx}`;
+      html += `
+        <div class="card output">
+          <div class="output-title">
+            <strong>${esc(item.title)}</strong>
+            <span class="badge">${esc(type)}</span>
+          </div>
+          <pre id="${id}">${esc(item.code)}</pre>
+          <div class="actions-grid">
+            <button class="btn-primary" data-action="copy" data-target="${id}">📋 Copiar</button>
+            <button class="btn-inject"  data-action="inject" data-path="${esc(path)}">⚡ Injetar</button>
+            <button data-action="fav" data-path="${esc(path)}">${isFav?'★':'☆'} Fav</button>
+          </div>
+        </div>`;
+    });
+  });
+  container.innerHTML = html;
+}
+
+// =================================================
+// RENDER — COMBINED
+// =================================================
+function buildPrimary(path){
+  const type = detectType(path);
+  const url  = fullURL(path);
+  if(type === 'js')  return `<script src="${url}"><\/script>`;
+  if(type === 'css') return `<link rel="stylesheet" href="${url}">`;
+  return url;
+}
+
+function renderCombined(){
+  const paths = validPaths();
+  const pre   = $('combined-code');
+  const badge = $('combined-badge');
+  if(!paths.length){
+    pre.textContent = '';
+    badge.textContent = '0';
+    return;
+  }
+  pre.textContent = paths.map(buildPrimary).join('\n');
+  badge.textContent = paths.length + ' item(s)';
+}
+
+// =================================================
+// RENDER — PRESETS
+// =================================================
+function renderPresets(){
+  const container = $('presets');
+  $('presets-badge').textContent = state.presets.length;
+  if(!state.presets.length){
+    container.innerHTML = `<div class="empty">Nenhum preset salvo ainda.</div>`;
+    return;
+  }
+  container.innerHTML = state.presets.map(p => {
+    const date = new Date(p.created).toLocaleDateString('pt-BR');
+    const pp = p.paths.map(normalizePath).filter(Boolean);
+    return `
+      <div class="preset-item">
+        <div class="preset-header">
+          <div>
+            <div class="preset-name">${esc(p.name)}</div>
+            <div class="preset-meta">
+              ${pp.length} caminho(s) · ${esc(p.mode.toUpperCase())} · ${date}
+              ${p.autoFirst ? ' · <span style="color:var(--green)">AUTO</span>' : ''}
+            </div>
+          </div>
+        </div>
+        <div class="preset-paths">${pp.map(esc).join('<br>')}</div>
+        <div class="preset-actions">
+          <button class="btn-primary" data-action="load"     data-id="${esc(p.id)}">USAR</button>
+          <button class="btn-orange"  data-action="download" data-id="${esc(p.id)}">⬇ HTML</button>
+          <button                     data-action="rename"   data-id="${esc(p.id)}">✎</button>
+          <button                     data-action="remove"   data-id="${esc(p.id)}">×</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// =================================================
+// RENDER — FAVORITES
+// =================================================
+function getFavorites(){
+  try{ return JSON.parse(localStorage.getItem(KEYS.favorites) || '[]'); }
+  catch(_){ return []; }
+}
+function saveFavorites(list){
+  localStorage.setItem(KEYS.favorites, JSON.stringify(list));
+}
+
+function renderFavorites(){
+  const container = $('favorites');
+  const list = getFavorites();
+  if(!list.length){
+    container.innerHTML = `<div class="empty">Nenhum link salvo ainda.</div>`;
+    return;
+  }
+  container.innerHTML = list.map(item => `
+    <div class="fav">
+      <div class="fav-info">
+        <div class="fav-path">${esc(item.path)}</div>
+        <div class="fav-meta">${esc((item.type||'unknown').toUpperCase())} · Infodose</div>
+      </div>
+      <div class="fav-actions">
+        <button class="small btn-primary" data-action="use"    data-path="${esc(item.path)}">USAR</button>
+        <button class="small"              data-action="remove" data-path="${esc(item.path)}">×</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// =================================================
+// RENDER — MODE
+// =================================================
+function renderMode(){
+  $('httpsBtn').classList.toggle('active', state.mode === 'https');
+  $('pathBtn').classList.toggle('active',  state.mode === 'path');
+}
+
+function renderInjectMode(){
+  const isUrl = state.injectMode === 'url';
+  $('mode-url').classList.toggle('active', isUrl);
+  $('mode-inline').classList.toggle('active', !isUrl);
+  $('url-mode').classList.toggle('hidden', !isUrl);
+  $('inline-mode').classList.toggle('hidden', isUrl);
+}
+
+// =================================================
+// RENDER — ALL
+// =================================================
+function renderAll(){
+  renderPaths();
+  renderOutputs();
+  renderCombined();
+  renderPresets();
+  renderFavorites();
+  renderMode();
+  renderInjectMode();
+}
+
+// =================================================
+// FORGE ACTIONS
+// =================================================
+window.addPath = function(){
+  state.paths.push('');
+  saveState();
+  renderPaths();
+  const inputs = document.querySelectorAll('#path-list input');
+  if(inputs.length) inputs[inputs.length - 1].focus();
+};
+
+window.removePath = function(index){
+  state.paths.splice(index, 1);
+  if(!state.paths.length) state.paths = [''];
+  saveState();
+  renderPaths();
+  renderOutputs();
+  renderCombined();
+};
+
+function onPathInput(index, value){
+  state.paths[index] = value;
+  saveState();
+  renderOutputs();
+  renderCombined();
+}
+
+window.toggleAuto = function(){
+  state.autoFirst = !state.autoFirst;
+  saveState();
+  const btn = document.querySelector('button[data-action="auto"]');
+  if(btn){
+    btn.classList.toggle('active', state.autoFirst);
+    btn.textContent = state.autoFirst ? '✓ AUTO' : '○ AUTO';
+  }
+  renderCombined();
+};
+
+window.setMode = function(m){
+  state.mode = m;
+  saveState();
+  renderMode();
+  renderOutputs();
+  renderCombined();
+};
+
+// =================================================
+// FAVORITES ACTIONS
+// =================================================
+window.favoritePath = function(index){
+  const norm = normalizePath(state.paths[index]);
+  if(!norm) return;
+  const list = getFavorites();
+  const i = list.findIndex(x => x.path === norm);
+  if(i >= 0) list.splice(i, 1);
+  else list.unshift({ path: norm, type: detectType(norm), created: Date.now() });
+  saveFavorites(list);
+  renderPaths();
+  renderOutputs();
+  renderFavorites();
+};
+
+window.favoriteCurrentPath = function(path){
+  const norm = normalizePath(path);
+  if(!norm) return;
+  const list = getFavorites();
+  if(!list.some(x => x.path === norm)){
+    list.unshift({ path: norm, type: detectType(norm), created: Date.now() });
+    saveFavorites(list);
+    renderPaths();
+    renderOutputs();
+    renderFavorites();
+  }
+};
+
+window.removeFavorite = function(path){
+  saveFavorites(getFavorites().filter(x => x.path !== path));
+  renderPaths();
+  renderOutputs();
+  renderFavorites();
+};
+
+window.useFavorite = function(path){
+  const norm = normalizePath(path);
+  if(!state.paths.some(p => normalizePath(p) === norm)){
+    if(state.paths.length === 1 && !state.paths[0].trim()) state.paths[0] = norm;
+    else state.paths.push(norm);
+    saveState();
+    renderPaths();
+    renderOutputs();
+    renderCombined();
+  }
+  window.scrollTo({ top:0, behavior:'smooth' });
+};
+
+window.clearFavorites = function(){
+  if(!confirm('Apagar todos os favoritos?')) return;
+  localStorage.removeItem(KEYS.favorites);
+  renderPaths();
+  renderOutputs();
+  renderFavorites();
+};
+
+// =================================================
+// PRESETS ACTIONS
+// =================================================
+window.savePreset = function(){
+  const paths = validPaths();
+  if(!paths.length){ alert('Adicione ao menos um caminho válido.'); return; }
+  const name = prompt('Nome do preset:', 'Combo ' + new Date().toLocaleDateString('pt-BR'));
+  if(!name) return;
+  state.presets.unshift({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    name: name.trim(),
+    paths: [...state.paths],
+    mode: state.mode,
+    autoFirst: state.autoFirst,
+    created: Date.now()
+  });
+  saveState();
+  renderPresets();
+};
+
+window.loadPreset = function(id){
+  const p = state.presets.find(x => x.id === id);
+  if(!p) return;
+  state.paths = p.paths.length ? [...p.paths] : [''];
+  state.autoFirst = !!p.autoFirst;
+  state.mode = p.mode || 'https';
+  saveState();
+  renderAll();
+  status('preset carregado', 'ok');
+  log(`Preset "${p.name}" carregado.`, 'ok');
+  window.scrollTo({ top:0, behavior:'smooth' });
+};
+
+window.removePreset = function(id){
+  if(!confirm('Remover este preset?')) return;
+  state.presets = state.presets.filter(x => x.id !== id);
+  saveState();
+  renderPresets();
+};
+
+window.renamePreset = function(id){
+  const p = state.presets.find(x => x.id === id);
+  if(!p) return;
+  const name = prompt('Novo nome:', p.name);
+  if(!name) return;
+  p.name = name.trim();
+  saveState();
+  renderPresets();
+};
+
+// =================================================
+// COPY
+// =================================================
+async function copyText(text, btn){
+  if(!text) return;
+  try{ await navigator.clipboard.writeText(text); }
+  catch(_){
+    const a = document.createElement('textarea');
+    a.value = text; a.style.position = 'fixed'; a.style.opacity = '0';
+    document.body.appendChild(a); a.select();
+    try{ document.execCommand('copy'); }catch(_){}
+    a.remove();
+  }
+  if(btn){
+    const old = btn.textContent;
+    btn.textContent = '✓ Copiado';
+    setTimeout(() => { btn.textContent = old; }, 1200);
+  }
+}
+
+window.copyCombined = function(btn){
+  copyText($('combined-code').textContent, btn);
+};
+
+// =================================================
+// DOWNLOAD HTML
+// =================================================
+function buildHTMLDocument(paths, mode, autoFirst, title){
+  const valid = paths.map(normalizePath).filter(Boolean);
+  const cssTags = [], jsTags = [];
+  valid.forEach((p, i) => {
+    const type = detectType(p);
+    const url  = mode === 'https' ? HOST + p : p;
+    const attr = (autoFirst && i === 0) ? ' data-auto-analyze="true"' : '';
+    if(type === 'css') cssTags.push(`<link rel="stylesheet" href="${url}"${attr}>`);
+    else if(type === 'js') jsTags.push(`<script src="${url}"${attr}><\/script>`);
+  });
+  const comments = valid
+    .map((p,i) => `  ${i+1}. ${p}${autoFirst && i===0 ? ' [AUTO]' : ''}`)
+    .join('\n');
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(title || 'KODUX Combo')}</title>
+<!-- KODUX Forge · ${new Date().toISOString()} -->
+<!--
+Caminhos:
+${comments || '  (nenhum)'}
+-->
+${cssTags.join('\n')}
+</head>
+<body>
+
+${jsTags.join('\n')}
+
+</body>
+</html>`;
+}
+
+function triggerDownload(filename, content){
+  const blob = new Blob([content], { type:'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+window.downloadHTML = function(){
+  const paths = validPaths();
+  if(!paths.length){ alert('Adicione ao menos um caminho válido.'); return; }
+  const fname = 'kodux-combo-' + new Date().toISOString().slice(0,10) + '-' + paths.length + '.html';
+  triggerDownload(fname, buildHTMLDocument(state.paths, state.mode, state.autoFirst, 'KODUX Combo'));
+  log(`⬇ HTML baixado: ${fname}`, 'ok');
+};
+
+window.downloadPreset = function(id){
+  const p = state.presets.find(x => x.id === id);
+  if(!p) return;
+  const safe = p.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'preset';
+  triggerDownload('kodux-' + safe + '.html',
+    buildHTMLDocument(p.paths, p.mode, p.autoFirst, p.name));
+  log(`⬇ Preset baixado: ${safe}.html`, 'ok');
+};
+
+// =================================================
+// SHARE URL
+// =================================================
+window.copyShareURL = function(btn){
+  const payload = {
+    p: validPaths(),
+    a: state.autoFirst ? 1 : 0,
+    m: state.mode
+  };
+  try{
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    const url = location.origin + location.pathname + '#s=' + encoded;
+    copyText(url, btn);
+  }catch(_){
+    alert('Falha ao gerar URL.');
+  }
+};
+
+function loadFromHash(){
+  if(!location.hash.startsWith('#s=')) return;
+  try{
+    const json = decodeURIComponent(escape(atob(location.hash.slice(3))));
+    const p = JSON.parse(json);
+    if(Array.isArray(p.p) && p.p.length) state.paths = p.p;
+    if(p.a !== undefined) state.autoFirst = !!p.a;
+    if(p.m) state.mode = p.m;
+    saveState();
+    log('Estado restaurado da URL.', 'ok');
+  }catch(_){}
+}
+
+// =================================================
+// INJECTOR — MODE
+// =================================================
+window.setInjectMode = function(m){
+  state.injectMode = m;
+  saveState();
+  renderInjectMode();
+};
+
+window.resetURL = function(){
+  $('url').value = DEFAULT_URL;
+  localStorage.removeItem(KEYS.injectUrl);
+  log('URL resetada para o padrão.', 'ok');
+};
+
+// =================================================
+// INJECTOR — PARSE / ANALYZE
+// =================================================
+function parseHTML(html){
+  state.sourceDocument = new DOMParser().parseFromString(html, 'text/html');
+  updateAnalysis();
+  return state.sourceDocument;
+}
+
+function looksLikeModule(code){
+  return /(?:^|[\n;{}])\s*(?:import|export)\b[\s{('"*]/.test(code);
+}
+
+function updateAnalysis(){
+  if(!state.sourceDocument){
+    ['count-html','count-css','count-js','count-src']
+      .forEach(id => { if($(id)) $(id).textContent = '0'; });
+    return;
+  }
+  const styles  = state.sourceDocument.querySelectorAll('style');
+  const links   = state.sourceDocument.querySelectorAll('link[rel="stylesheet"]');
+  const inline  = state.sourceDocument.querySelectorAll('script:not([src])');
+  const external= state.sourceDocument.querySelectorAll('script[src]');
+
+  const nodes = Array.from(state.sourceDocument.body.childNodes)
+    .filter(n => n.nodeType === 1 && n.nodeName !== 'SCRIPT');
+
+  $('count-html').textContent = nodes.length;
+  $('count-css').textContent  = styles.length + links.length;
+  $('count-js').textContent   = inline.length;
+  $('count-src').textContent  = external.length;
+
+  log(`HTML: ${nodes.length} nodes`);
+  log(`CSS: ${styles.length} <style> + ${links.length} <link>`);
+  log(`JS: ${inline.length} inline + ${external.length} externos`);
+
+  const modules = Array.from(inline).filter(s => {
+    const t = (s.getAttribute('type')||'').toLowerCase();
+    return t === 'module' || looksLikeModule(s.textContent || '');
+  });
+  if(modules.length) log(`JS módulo (import/export): ${modules.length}`, 'ok');
+}
+
+// =================================================
+// INJECTOR — LOAD REMOTE
+// =================================================
+window.loadRemote = async function(btn){
+  const url = $('url').value.trim();
+  if(!url){ log('Digite uma URL.', 'error'); return; }
+
+  if(btn){ btn.disabled = true; btn.textContent = '...'; }
+  status('baixando...', 'busy');
+  log(`FETCH ${url}`);
+
+  try{
+    const res = await fetch(url, { cache: 'no-cache' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const html = await res.text();
+    state.sourceURL = new URL(url, location.href);
+    parseHTML(html);
+    status('HTML carregado', 'ok');
+    log('Documento remoto recebido.', 'ok');
+    saveState();
+  }catch(e){
+    status('erro', 'error');
+    log(`FETCH ERROR: ${e.message}`, 'error');
+    log('Verifique CORS, URL e HTTPS.', 'error');
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = 'CARREGAR'; }
+  }
+};
+
+// =================================================
+// INJECTOR — LOAD INLINE
+// =================================================
+window.loadInline = function(){
+  const html = $('inline-html').value;
+  if(!html.trim()){ log('HTML inline vazio.', 'error'); return; }
+  state.sourceURL = new URL(location.href);
+  parseHTML(html);
+  status('HTML analisado', 'ok');
+  log('HTML inline analisado.', 'ok');
+};
+
+// =================================================
+// INJECTOR — IMPORT FILE
+// =================================================
+window.importInlineFile = function(ev){
+  const input = ev && ev.target;
+  const file = input && input.files && input.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const text = String(reader.result || '');
+    $('inline-html').value = text;
+    state.injectMode = 'inline';
+    state.sourceURL = new URL(location.href);
+    parseHTML(text);
+    renderInjectMode();
+    saveState();
+    status('arquivo importado', 'ok');
+    log(`Arquivo: ${file.name} (${(file.size/1024).toFixed(1)} KB)`, 'ok');
+  };
+  reader.onerror = () => log(`Falha ao ler ${file.name}`, 'error');
+  reader.readAsText(file, 'utf-8');
+  input.value = '';
+};
+
+window.clearInline = function(){
+  $('inline-html').value = '';
+  state.sourceDocument = null;
+  state.sourceURL = null;
+  updateAnalysis();
+  status('inline limpo');
+  log('Editor inline limpo.');
+};
+
+// =================================================
+// INJECTOR — CSS
+// =================================================
+function injectCSS(){
+  if(!state.sourceDocument) return;
+
+  state.sourceDocument.querySelectorAll('style').forEach(s => {
+    const n = document.createElement('style');
+    n.dataset.remoteInjector = 'style';
+    n.textContent = s.textContent;
+    document.head.appendChild(n);
+  });
+
+  state.sourceDocument.querySelectorAll('link[rel="stylesheet"][href]').forEach(l => {
+    const n = document.createElement('link');
+    n.rel = 'stylesheet';
+    n.href = absoluteURL(l.getAttribute('href'), baseURL());
+    n.dataset.remoteInjector = 'style';
+    document.head.appendChild(n);
+  });
+
+  log('CSS injetado.', 'ok');
+}
+
+// =================================================
+// INJECTOR — HTML
+// =================================================
+function injectHTML(){
+  if(!state.sourceDocument) return;
+  const target = $('inject-target');
+  const frag = document.createDocumentFragment();
+  Array.from(state.sourceDocument.body.childNodes).forEach(node => {
+    if(node.nodeName !== 'SCRIPT'){
+      frag.appendChild(document.importNode(node, true));
+    }
+  });
+  target.appendChild(frag);
+  log('HTML injetado.', 'ok');
+}
+
+// =================================================
+// INJECTOR — JS (com import support)
+// =================================================
+function resolveSpecifier(spec, base){
+  if(/^[a-zA-Z][a-zA-Z0-9+.\-]*:/.test(spec)) return spec;
+  if(spec.startsWith('//')) return absoluteURL(spec, base);
+  if(spec.startsWith('./') || spec.startsWith('../') || spec.startsWith('/')){
+    return absoluteURL(spec, base);
+  }
+  return spec;
+}
+
+function rewriteModuleSpecifiers(code, base){
+  let rewrites = 0;
+  const fix = s => {
+    const r = resolveSpecifier(s, base);
+    if(r !== s) rewrites++;
+    return r;
+  };
+  const out = code
+    .replace(/(\bfrom\s*)(['"])([^'"\n]+)\2/g, (m,a,q,s)=> a+q+fix(s)+q)
+    .replace(/(\bimport\s*)(['"])([^'"\n]+)\2/g, (m,a,q,s)=> a+q+fix(s)+q)
+    .replace(/(\bimport\s*\(\s*)(['"])([^'"\n]+)\2(\s*\))/g, (m,a,q,s,b)=> a+q+fix(s)+q+b);
+  return { code: out, rewrites };
+}
+
+function copyAttributes(from, to){
+  Array.from(from.attributes).forEach(a => {
+    if(a.name.toLowerCase() === 'src') return;
+    to.setAttribute(a.name, a.value);
+  });
+}
+
+function injectJS(){
+  if(!state.sourceDocument) return;
+  const base = baseURL();
+  let classics = 0, modules = 0;
+
+  state.sourceDocument.querySelectorAll('script').forEach(script => {
+    const type = (script.getAttribute('type') || '').trim().toLowerCase();
+    if(type && !JS_TYPES.has(type)){
+      log(`JS ignorado (type="${type}")`);
+      return;
+    }
+
+    const src  = script.getAttribute('src');
+    const code = script.textContent || '';
+
+    // EXTERNO
+    if(src){
+      const n = document.createElement('script');
+      copyAttributes(script, n);
+      n.src = absoluteURL(src, base);
+      n.dataset.remoteInjector = 'script';
+      document.body.appendChild(n);
+      if((n.getAttribute('type')||'').toLowerCase() === 'module'){
+        modules++; log(`JS módulo externo → ${n.src}`);
+      } else {
+        classics++; log(`JS externo → ${n.src}`);
+      }
+      return;
+    }
+
+    // INLINE MÓDULO
+    if(type === 'module' || looksLikeModule(code)){
+      modules++;
+      const r = rewriteModuleSpecifiers(code, base);
+      const blob = URL.createObjectURL(new Blob([r.code], { type:'text/javascript' }));
+      state.injectedBlobURLs.push(blob);
+      const n = document.createElement('script');
+      n.type = 'module';
+      n.src = blob;
+      n.dataset.remoteInjector = 'script';
+      document.body.appendChild(n);
+      log(`JS inline module → blob (${r.rewrites} import(s) resolvido(s))`, 'ok');
+      if(/\bimport\s+[^(]*\bfrom\s*['"][^./]/.test(code)){
+        log('Bare specifiers (ex: "lodash") precisam de import map.', 'warn');
+      }
+      return;
+    }
+
+    // INLINE CLÁSSICO
+    classics++;
+    const n = document.createElement('script');
+    copyAttributes(script, n);
+    n.textContent = code;
+    n.dataset.remoteInjector = 'script';
+    document.body.appendChild(n);
+    log('JS inline → executando...', 'ok');
+  });
+
+  log(`JS processado: ${classics} clássico(s), ${modules} módulo(s)`, 'ok');
+}
+
+// =================================================
+// INJECTOR — PUBLIC
+// =================================================
+window.injectHTMLOnly = injectHTML;
+window.injectCSSOnly  = injectCSS;
+window.injectJSOnly   = injectJS;
+
+window.injectAll = function(){
+  if(!state.sourceDocument){
+    log('Nenhum HTML carregado.', 'error');
+    return;
+  }
+  injectCSS();
+  injectHTML();
+  injectJS();
+  status('INJETADO', 'ok');
+  log('◆ Runtime completo executado.', 'ok');
+};
+
+window.clearInjected = function(){
+  $('inject-target').innerHTML = '';
+
+  document.querySelectorAll('style[data-remote-injector="style"], link[data-remote-injector="style"]')
+    .forEach(n => n.remove());
+  document.querySelectorAll('script[data-remote-injector="script"]')
+    .forEach(n => n.remove());
+
+  state.injectedBlobURLs.forEach(u => { try{ URL.revokeObjectURL(u); }catch(_){}});
+  state.injectedBlobURLs.length = 0;
+
+  status('limpo');
+  log('DOM, CSS, módulos e blob URLs removidos.');
+};
+
+// =================================================
+// BRIDGE — EXTRACT
+// =================================================
+window.extractToForge = function(){
+  if(!state.sourceDocument){
+    log('Nada carregado para extrair.', 'error');
+    return;
+  }
+
+  const resources = [];
+  state.sourceDocument.querySelectorAll('script[src]').forEach(s => {
+    resources.push(s.getAttribute('src'));
+  });
+  state.sourceDocument.querySelectorAll('link[rel="stylesheet"][href]').forEach(l => {
+    resources.push(l.getAttribute('href'));
+  });
+
+  if(!resources.length){
+    log('Nenhum recurso externo encontrado.', 'error');
+    return;
+  }
+
+  const base = baseURL();
+  const norm = resources.map(r => {
+    try{
+      const abs = new URL(r, base);
+      if(isInfodose(abs.hostname)) return abs.pathname + abs.search;
+      return abs.href;
+    }catch(_){ return r; }
+  });
+
+  let added = 0;
+  norm.forEach(r => {
+    const n = normalizePath(r);
+    if(!state.paths.some(p => normalizePath(p) === n)){
+      if(state.paths.length === 1 && !state.paths[0].trim()) state.paths[0] = n;
+      else state.paths.push(n);
+      added++;
+    }
+  });
+
+  saveState();
+  renderPaths();
+  renderOutputs();
+  renderCombined();
+  status('recursos extraídos', 'ok');
+  log(`→ ${added} recurso(s) adicionados à forja.`, 'ok');
+  switchTab('forge');
+};
+
+// =================================================
+// BRIDGE — INJECT COMBO
+// =================================================
+async function injectResources(paths){
+  let count = 0;
+  for(const p of paths){
+    const type = detectType(p);
+    const url  = fullURL(p);
+
+    if(type === 'css'){
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = url;
+      link.dataset.remoteInjector = 'style';
+      document.head.appendChild(link);
+      log(`→ CSS ${url}`, 'ok');
+      count++;
+    } else if(type === 'js'){
+      const s = document.createElement('script');
+      s.src = url;
+      s.dataset.remoteInjector = 'script';
+      document.body.appendChild(s);
+      log(`→ JS ${url}`, 'ok');
+      count++;
+    } else {
+      log(`→ ignorado (tipo desconhecido): ${p}`, 'warn');
+    }
+  }
+  return count;
+}
+
+async function analyzeResource(path){
+  const url = fullURL(path);
+  log(`AUTO: analisando ${url}...`);
+  try{
+    const res = await fetch(url, { cache:'no-cache' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const type = detectType(path);
+    const base = new URL(url, location.href);
+
+    let deps = [];
+
+    if(type === 'css'){
+      const matches = text.matchAll(/@import\s+(?:url\(\s*)?['"]?([^'")\s;]+)/g);
+      for(const m of matches) deps.push(m[1]);
+      log(`AUTO: CSS ${text.length} bytes, ${deps.length} @import(s)`, 'ok');
+    } else if(type === 'js'){
+      const matches = text.matchAll(/(?:^|[^\w$])(?:import|from)\s*\(?\s*['"]([^'"]+)['"]/g);
+      for(const m of matches) deps.push(m[1]);
+      log(`AUTO: JS ${text.length} bytes, ${deps.length} import(s)`, 'ok');
+    }
+
+    let added = 0;
+    deps.forEach(dep => {
+      if(!dep || dep.startsWith('#') || /^[a-zA-Z][\w+.-]*:/.test(dep)) return;
+      try{
+        const abs = new URL(dep, base);
+        const dp = isInfodose(abs.hostname)
+          ? abs.pathname + abs.search
+          : abs.href;
+        if(!state.paths.some(p => normalizePath(p) === dp)){
+          state.paths.push(dp);
+          added++;
+        }
+      }catch(_){}
+    });
+
+    if(added){
+      saveState();
+      renderPaths();
+      renderOutputs();
+      renderCombined();
+      log(`AUTO: +${added} dependência(s) descoberta(s).`, 'ok');
+    }
+  }catch(e){
+    log(`AUTO: falha (${e.message}) — CORS?`, 'error');
+  }
+}
+
+window.injectCombo = async function(btn){
+  const paths = validPaths();
+  if(!paths.length){ log('Nenhum caminho válido na forja.', 'error'); return; }
+
+  if(btn){ btn.disabled = true; btn.textContent = '⚡ Injetando...'; }
+  log(`⚡ Injetando combo (${paths.length} recurso(s))...`, 'ok');
+
+  try{
+    if(state.autoFirst && paths[0]){
+      await analyzeResource(paths[0]);
+    }
+    const n = await injectResources(paths);
+    log(`✓ ${n} recurso(s) injetado(s).`, 'ok');
+    status('combo injetado', 'ok');
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = '⚡ Injetar combo'; }
+  }
+};
+
+window.injectSinglePath = async function(path){
+  log(`⚡ Injetando: ${path}`, 'ok');
+  const n = await injectResources([path]);
+  if(n) status('1 recurso injetado', 'ok');
+};
+
+// =================================================
+// BRIDGE — SEND TO INLINE
+// =================================================
+window.sendForgeToInline = function(){
+  const paths = validPaths();
+  if(!paths.length){ log('Nenhum caminho para enviar.', 'error'); return; }
+
+  const tags = paths.map((p, i) => {
+    const type = detectType(p);
+    const url  = fullURL(p);
+    const attr = (state.autoFirst && i === 0) ? ' data-auto-analyze="true"' : '';
+    if(type === 'css') return `<link rel="stylesheet" href="${url}"${attr}>`;
+    if(type === 'js')  return `<script src="${url}"${attr}><\/script>`;
+    return '';
+  }).filter(Boolean).join('\n');
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+${tags}
+</head>
+<body>
+</body>
+</html>`;
+
+  $('inline-html').value = html;
+  state.injectMode = 'inline';
+  state.sourceURL = new URL(location.href);
+  parseHTML(html);
+  renderInjectMode();
+  switchTab('inject');
+  status('enviado ao inline', 'ok');
+  log('Combo enviado ao editor inline.', 'ok');
+};
+
+// =================================================
+// DELEGATION
+// =================================================
+function setupDelegation(){
+  // Paths
+  $('path-list').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-action]');
+    if(!btn) return;
+    const a = btn.dataset.action;
+    const i = parseInt(btn.dataset.index || '-1', 10);
+    if(a === 'remove' && i >= 0) removePath(i);
+    else if(a === 'fav' && i >= 0) favoritePath(i);
+    else if(a === 'auto') toggleAuto();
+  });
+  $('path-list').addEventListener('input', e => {
+    const inp = e.target;
+    if(inp.matches('input[data-index]')){
+      onPathInput(parseInt(inp.dataset.index, 10), inp.value);
+    }
+  });
+
+  // Outputs
+  $('outputs').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-action]');
+    if(!btn) return;
+    const a = btn.dataset.action;
+    if(a === 'copy'){
+      const el = document.getElementById(btn.dataset.target);
+      if(el) copyText(el.textContent, btn);
+    } else if(a === 'inject'){
+      injectSinglePath(btn.dataset.path);
+    } else if(a === 'fav'){
+      favoriteCurrentPath(btn.dataset.path);
+    }
+  });
+
+  // Presets
+  $('presets').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-action]');
+    if(!btn) return;
+    const a = btn.dataset.action;
+    const id = btn.dataset.id;
+    if(a === 'load') loadPreset(id);
+    else if(a === 'download') downloadPreset(id);
+    else if(a === 'rename') renamePreset(id);
+    else if(a === 'remove') removePreset(id);
+  });
+
+  // Favorites
+  $('favorites').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-action]');
+    if(!btn) return;
+    const a = btn.dataset.action;
+    const p = btn.dataset.path;
+    if(a === 'use') useFavorite(p);
+    else if(a === 'remove') removeFavorite(p);
+  });
+}
+
+// =================================================
+// BOOT
+// =================================================
+loadState();
+loadFromHash();
+setupDelegation();
+bindDetailsPersistence();
+renderAll();
+switchTab(state.activeTab);
+
+// Enter na URL
+$('url').addEventListener('keydown', e => {
+  if(e.key === 'Enter') loadRemote(e.target);
+});
+
+})();
+</script>
+</body>
+</html>
