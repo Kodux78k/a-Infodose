@@ -2749,8 +2749,22 @@ button:hover,
     let tabs = null;
     try {
       const raw = localStorage.getItem(LS_TABS_PFX + win.id);
-      if (raw) tabs = JSON.parse(raw);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.tabs) && parsed.tabs.length) tabs = parsed;
+      }
     } catch (_) {}
+    if (!tabs) {
+      const fallbackUrl = url || 'https://www.infodose.com.br/splash';
+      const fallbackTab = {
+        id: 'tab-restored-' + win.id,
+        url: fallbackUrl,
+        title: fallbackUrl.replace(/^https?:\/\//, '').split('/')[0] || 'Nova Aba',
+        fav: false
+      };
+      tabs = { tabs: [fallbackTab], activeId: fallbackTab.id };
+      try { localStorage.setItem(LS_TABS_PFX + win.id, JSON.stringify(tabs)); } catch (_) {}
+    }
     const cls = [...win.classList].filter(c =>
       ['peeked','collapsed','maximized','minimized','suspended','audio-minimized'].includes(c)
     );
@@ -2853,12 +2867,10 @@ button:hover,
       created++;
     });
 
-    if (created > 0) {
-      // "adota" as novas sessions no core: como o core já rodou, ele não
-      // vai wireSession automático. O jeito mais seguro é chamar wireSession
-      // via createSessionWindow? Não — usamos SessionLifecycle.touch + wire manual.
-      adoptSessions();
-    }
+    // Também adota a janela inicial e as reconstruídas. O bridge chama
+    // wireSession original, que hidrata o WeakMap por ID de janela.
+    adoptSessions();
+    scheduleSave();
   }
 
   /* wire mínimo em sessions restauradas (mesmo contrato do core) */
@@ -2883,8 +2895,8 @@ button:hover,
       else if (a === 'minimize' && global.minimizeWindow) global.minimizeWindow(win.id);
       else if (a === 'close' && global.closeWindow) global.closeWindow(win.id);
       else if (a === 'tab-switcher') {
-        // abre o switcher do core se existir
-        document.querySelector('#tabCounterInit')?.click?.();
+        // Abre o switcher ligado exatamente a esta janela.
+        if (global.IFSWTabs?.openSwitcher) global.IFSWTabs.openSwitcher(win);
       }
     });
     // urlbar + go
@@ -2938,9 +2950,17 @@ button:hover,
 
   function hookLastActiveSession() {
     document.addEventListener('pointerdown', function (e) {
-      const win = e.target.closest && e.target.closest('.session-window');
+      const win = e.target.closest && e.target.closest('.session-window:not(.tab-switcher-overlay)');
       if (win) global.__lastActiveSessionId = win.id;
     }, { passive: true, capture: true });
+
+    // O core grava dual_tabs_<sessionId> diretamente no localStorage.
+    // Snapshot logo após qualquer ação do switcher evita depender do unload.
+    document.addEventListener('click', function (e) {
+      if (e.target.closest('#newTabBtn, #closeTabSwitcher, .tab-card, .tab-card button')) {
+        setTimeout(scheduleSave, 80);
+      }
+    }, true);
   }
 
   /* ═══════════════════════════════════════════════════════════
@@ -2952,6 +2972,7 @@ button:hover,
     setTimeout(() => {
       restoreSessions();
       adoptSessions();
+      setTimeout(saveSessions, 120);
     }, 60);
 
     // 2) instala guard de áudio (depois do core — pra monkey-patch pegar as refs certas)
@@ -2997,4 +3018,5 @@ button:hover,
   };
 })(window);
 </script>
+
 </body></html>

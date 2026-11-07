@@ -1,0 +1,1866 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>KODUX Forge + Injector + Boot</title>
+<style>
+:root{
+  --bg:#07090d;--panel:#10141b;--panel2:#151b24;
+  --line:rgba(255,255,255,.10);--text:#eaf2ff;--muted:#7f8da3;
+  --cyan:#00f2ff;--green:#39ffb6;--orange:#ff9d42;--red:#ff5577;
+  --u-base:clamp(3px,calc(100vw/44),20px);--radius:calc(var(--u-base)*2);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;min-height:100%;background:var(--bg);color:var(--text);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+body{padding:calc(var(--u-base)*1.6) calc(var(--u-base)*1.6) calc(var(--u-base)*3.6)}
+button,input,textarea{font:inherit}button{cursor:pointer}
+.kd-app{width:min(calc(var(--u-base)*44),100%);margin:auto}
+
+/* HEADER */
+.kd-header{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:18px}
+.kd-brand{display:flex;align-items:center;gap:12px}
+.kd-orb{cursor:pointer;width:clamp(34px,calc(var(--u-base)*4.8),52px);height:clamp(34px,calc(var(--u-base)*4.8),52px);border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff,var(--cyan) 15%,rgba(0,242,255,.2) 45%,transparent 70%);
+  box-shadow:0 0 20px rgba(0,242,255,.5);}
+.kd-title{font-size:clamp(15px,calc(var(--u-base)*2),20px);font-weight:800}
+.kd-title .kd-f{color:var(--green)}.kd-title .kd-i{color:var(--cyan)}
+.kd-subtitle{color:var(--muted);font-size:12px;margin-top:3px}
+.kd-status{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}
+.kd-status-dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.kd-status.ok .kd-status-dot{background:var(--green);box-shadow:0 0 12px var(--green)}
+.kd-status.error .kd-status-dot{background:var(--red)}
+.kd-status.busy .kd-status-dot{background:var(--orange);box-shadow:0 0 12px var(--orange)}
+
+/* TABS */
+.kd-tabs{display:flex;gap:6px;margin-bottom:14px;background:var(--panel);
+  border:1px solid var(--line);border-radius:14px;padding:5px;}
+.kd-tab{flex:1;border:0;background:transparent;color:var(--muted);
+  padding:10px 14px;border-radius:10px;font-weight:700;font-size:13px;transition:.15s;}
+.kd-tab.kd-active{background:var(--panel2);color:var(--text)}
+
+/* ACCORDION */
+details.kd-section{background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.015)),var(--panel);
+  border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:0 20px 60px rgba(0,0,0,.25);margin-bottom:14px;overflow:hidden;transition:border-color .2s;}
+details.kd-section[open]{border-color:rgba(0,242,255,.18)}
+summary{list-style:none;padding:16px 18px;display:flex;align-items:center;gap:10px;
+  font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);cursor:pointer;user-select:none;transition:.15s;min-height:44px;}
+summary::-webkit-details-marker{display:none}
+summary:hover{color:var(--text);background:rgba(255,255,255,.02)}
+summary::before{content:'▸';font-size:10px;color:var(--cyan);transition:transform .2s;display:inline-block;}
+details[open]>summary::before{transform:rotate(90deg)}
+details[open]>summary{border-bottom:1px solid var(--line)}
+summary .kd-badge{margin-left:auto}
+.kd-details-body{padding:16px 18px}
+
+/* BUTTONS */
+button{border:1px solid var(--line);border-radius:calc(var(--u-base)*1.4);min-height:max(40px,calc(var(--u-base)*5));padding:0 calc(var(--u-base)*1.8);
+  background:var(--panel2);color:var(--text);font-weight:600;transition:.15s;}
+button:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.22)}
+button:active{transform:scale(.98)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.kd-btn-primary{background:linear-gradient(135deg,rgba(0,242,255,.18),rgba(57,255,182,.12));border-color:rgba(0,242,255,.35);}
+.kd-btn-inject{background:linear-gradient(135deg,rgba(57,255,182,.20),rgba(0,242,255,.10));border-color:rgba(57,255,182,.4);}
+.kd-btn-orange{background:linear-gradient(135deg,rgba(255,157,66,.20),rgba(255,85,119,.10));border-color:rgba(255,157,66,.4);}
+.kd-btn-danger{border-color:rgba(255,85,119,.3);color:#ff8ba4}
+.kd-small{padding:7px 10px;font-size:11px;min-height:34px}
+
+/* INPUTS */
+input[type=text],textarea{background:transparent;color:var(--text);border:1px solid var(--line);
+  border-radius:13px;padding:0 14px;outline:none;}
+input[type=text]{height:46px;width:100%}
+input[type=text]:focus,textarea:focus{border-color:rgba(0,242,255,.55);box-shadow:0 0 0 3px rgba(0,242,255,.08);}
+textarea{width:100%;min-height:200px;padding:14px;resize:vertical;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.6;
+  background:#080b10;color:#cde8ff;}
+
+/* FILE BTN */
+.kd-btn-file{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;
+  border:1px solid var(--line);border-radius:13px;background:var(--panel2);color:var(--text);
+  font-weight:600;cursor:pointer;user-select:none;transition:.15s;}
+.kd-btn-file:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.22)}
+.kd-btn-file input[type="file"]{display:none}
+
+/* LAYOUT */
+.kd-hidden{display:none!important}
+.kd-url-row{display:flex;gap:9px}.kd-url-row input{flex:1;min-width:0}
+.kd-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.kd-actions-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:12px;}
+
+/* MODE */
+.kd-mode{display:flex;gap:7px;margin-bottom:14px}.kd-mode button{flex:1}
+.kd-mode button.kd-active,.kd-mode-switch button.kd-active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,242,255,.07);}
+.kd-mode-switch{display:flex;gap:7px;margin-top:10px}.kd-mode-switch button{flex:1}
+
+/* PATH LIST */
+#kd-path-list{display:flex;flex-direction:column;gap:6px}
+.kd-path-row{display:flex;gap:6px;align-items:stretch}
+.kd-path-row input{flex:1;min-width:0}
+.kd-path-actions{display:flex;gap:4px}
+.kd-path-actions button{padding:8px 9px;font-size:11px;min-width:38px;min-height:46px}
+.kd-auto-btn{background:#1a1d24;color:var(--muted);border:1px solid var(--line);font-size:10px;letter-spacing:.4px;font-weight:700;}
+.kd-auto-btn.kd-active{background:rgba(57,255,182,.15);color:var(--green);border-color:rgba(57,255,182,.5);}
+.kd-star-btn.kd-active{color:#fbbf24;border-color:rgba(251,191,36,.4)}
+.kd-add-btn{width:100%;margin-top:8px;background:transparent;border:1px dashed var(--line);color:var(--muted);font-size:12px;}
+.kd-add-btn:hover{color:var(--text);border-color:var(--cyan)}
+
+/* OUTPUTS */
+.kd-output{margin-top:10px}
+.kd-output:first-child{margin-top:0}
+.kd-output-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;}
+.kd-badge{font-size:10px;padding:4px 8px;border-radius:99px;background:#20252d;color:var(--muted);white-space:nowrap;}
+pre{margin:0;white-space:pre-wrap;word-break:break-all;overflow:auto;
+  background:#080a0d;border:1px solid var(--line);border-radius:14px;padding:13px;color:#dce3ea;
+  font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;min-height:34px;}
+#kd-combined-code:empty::before{content:"// Adicione caminhos acima para gerar o combinado";color:var(--muted);font-style:italic;}
+
+/* GROUP HEADERS */
+.kd-group-title{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;padding:14px 0 8px;
+  border-bottom:1px solid var(--line);margin-bottom:10px;}
+.kd-group-title:first-child{padding-top:0}
+.kd-group-title.kd-group-js{color:var(--orange)}
+.kd-group-title.kd-group-css{color:var(--green)}
+.kd-group-title.kd-group-other{color:var(--cyan)}
+.kd-group-count{background:var(--panel2);padding:2px 8px;border-radius:99px;font-size:10px;color:var(--text);margin-left:auto;}
+
+/* PRESETS */
+.kd-preset-item{border:1px solid var(--line);border-radius:14px;padding:11px;margin-bottom:8px;background:#0b0e13;}
+.kd-preset-item:last-child{margin-bottom:0}
+.kd-preset-item.kd-is-default{border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.03)}
+.kd-preset-header{display:flex;justify-content:space-between;gap:8px}
+.kd-preset-name{font-weight:700;font-size:13px}
+.kd-preset-meta{color:var(--muted);font-size:10px;margin-top:3px}
+.kd-preset-paths{margin-top:6px;font:10px ui-monospace,monospace;color:var(--muted);max-height:56px;overflow:auto;word-break:break-all;}
+.kd-preset-actions{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.kd-preset-actions button{padding:6px 9px;font-size:10px;min-height:30px}
+
+/* PRESET SAVE ROW */
+.kd-preset-save-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.kd-preset-save-row input{flex:1;min-width:140px;height:44px}
+.kd-preset-save-row button{min-height:44px}
+
+/* AUTO-LOAD TOGGLE */
+.kd-autoload-toggle{display:flex;align-items:center;gap:10px;padding:10px 12px;
+  background:#0b0f15;border:1px solid var(--line);border-radius:12px;margin-bottom:12px;
+  cursor:pointer;user-select:none;transition:.15s;}
+.kd-autoload-toggle:hover{border-color:rgba(255,255,255,.22)}
+.kd-autoload-toggle.kd-on{border-color:rgba(57,255,182,.45);background:rgba(57,255,182,.04)}
+.kd-autoload-toggle input{width:18px;height:18px;accent-color:var(--green);cursor:pointer;flex-shrink:0;}
+.kd-autoload-toggle .kd-label{flex:1;font-size:12px;font-weight:600}
+.kd-autoload-toggle .kd-state{font-size:10px;padding:3px 8px;border-radius:99px;background:#20252d;color:var(--muted);font-weight:700;}
+.kd-autoload-toggle.kd-on .kd-state{background:rgba(57,255,182,.15);color:var(--green)}
+
+/* FAVORITES */
+.kd-fav{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.kd-fav:last-child{border-bottom:0}
+.kd-fav-info{flex:1;min-width:0}
+.kd-fav-path{font:11px ui-monospace,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.kd-fav-meta{color:var(--muted);font-size:10px;margin-top:2px}
+.kd-fav-actions{display:flex;gap:5px}
+.kd-empty{text-align:center;color:var(--muted);font-size:12px;padding:14px 5px}
+
+/* ANALYSIS GRID */
+.kd-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
+.kd-card{background:#0b0f15;border:1px solid var(--line);border-radius:14px;padding:14px;}
+.kd-card-number{font-size:24px;font-weight:800}
+.kd-card-label{margin-top:3px;color:var(--muted);font-size:11px}
+.kd-cyan{color:var(--cyan)}.kd-green{color:var(--green)}.kd-orange{color:var(--orange)}.kd-red{color:var(--red)}
+
+/* LOG */
+.kd-log{max-height:260px;overflow:auto;background:#05070a;border:1px solid var(--line);
+  border-radius:13px;padding:12px;font-family:ui-monospace,monospace;font-size:11px;line-height:1.7;}
+.kd-log-line{border-bottom:1px solid rgba(255,255,255,.04);padding:3px 0}
+.kd-log-line:last-child{border-bottom:0}
+
+/* DESTINATION */
+.kd-preview{position:relative;min-height:120px;
+  background:repeating-linear-gradient(45deg,#0b0f15,#0b0f15 10px,#0d1219 10px,#0d1219 20px);
+  border:1px solid var(--line);border-radius:14px;overflow:auto;max-height:420px;padding:32px 12px 12px;}
+.kd-preview-label{position:absolute;top:8px;left:10px;color:var(--muted);font-size:10px;pointer-events:none;}
+#kd-inject-target{min-height:60px}
+footer{text-align:center;color:var(--muted);font-size:10px;padding:15px}
+
+/* BOOT (kodux-boot namespace) */
+.kodux-boot{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:calc(var(--u-base)*1.8);padding:calc(var(--u-base)*2);text-align:center;
+  background:radial-gradient(circle at 50% 35%,#0e1c27,var(--bg) 70%);transition:opacity .35s,visibility .35s;}
+.kodux-boot.is-out{opacity:0;visibility:hidden;pointer-events:none}
+.kodux-boot-orb{width:clamp(120px,calc(var(--u-base)*16),220px);height:clamp(120px,calc(var(--u-base)*16),220px);
+  border-radius:50%;border:0;padding:0;min-height:0;
+  background:radial-gradient(circle at 35% 30%,#fff,var(--cyan) 15%,rgba(0,242,255,.2) 45%,transparent 70%);
+  box-shadow:0 0 60px rgba(0,242,255,.55);animation:koduxOrbPulse 2.8s ease-in-out infinite;}
+.kodux-boot-orb.busy{animation-duration:.7s}
+@keyframes koduxOrbPulse{50%{transform:scale(1.07);box-shadow:0 0 90px rgba(0,242,255,.8)}}
+.kodux-boot-sub{color:var(--muted);font-size:clamp(11px,calc(var(--u-base)*1.3),14px);max-width:calc(var(--u-base)*30);line-height:1.6}
+.kodux-boot-sub b{color:var(--text)}
+.kodux-boot-actions{display:flex;gap:calc(var(--u-base)*1);flex-wrap:wrap;justify-content:center}
+.kodux-boot-url{width:min(calc(var(--u-base)*34),100%)}
+
+/* QUICK ACTIONS */
+summary{flex-wrap:wrap}
+summary .kd-qa{display:flex;gap:4px;margin-left:auto;flex-shrink:0}
+summary .kd-badge + .kd-qa{margin-left:8px}
+details[open]>summary .kd-qa{display:none}
+.kd-qa-btn{min-height:32px;padding:0 calc(var(--u-base)*1);font-size:clamp(10px,calc(var(--u-base)*1.2),13px);text-transform:none;letter-spacing:0}
+#kd-qa-menu{position:fixed;z-index:100000;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:6px;
+  display:flex;flex-direction:column;gap:4px;min-width:210px;max-height:70vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+#kd-qa-menu button{text-align:left;min-height:38px;font-size:12px}
+
+@media(max-width:700px){
+  .kd-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kd-url-row{flex-direction:column}.kd-url-row input{width:100%}
+  .kd-actions-grid{grid-template-columns:1fr 1fr}
+  .kd-details-body{padding:14px}
+  summary{padding:14px 16px}
+}
+</style>
+</head>
+<body>
+
+<div id="kodux-boot" class="kodux-boot">
+  <button class="kodux-boot-orb" id="kodux-boot-orb" data-kd-act="boot-preset" aria-label="Carregar com o último preset"></button>
+  <div class="kd-title">KODUX <span class="kd-f">Forge</span> + <span class="kd-i">Injector</span></div>
+  <div class="kodux-boot-sub" id="kodux-boot-sub"></div>
+  <div class="kd-url-row kodux-boot-url">
+    <input id="kd-cmd-url" type="text" placeholder="https://… (página HTML, .js ou .css)" spellcheck="false" autocomplete="off">
+    <button class="kd-btn-inject" data-kd-act="boot-go">⚡ CARREGAR + INJETAR</button>
+  </div>
+  <div class="kodux-boot-actions">
+    <button class="kd-btn-inject" data-kd-act="boot-preset">◉ ORB · carregar preset</button>
+    <button data-kd-act="boot-enter">▶ ENTRAR · sem carregar</button>
+  </div>
+</div>
+
+<div style="overflow-y:auto" class="kd-app">
+
+  <header class="kd-header">
+    <div class="kd-brand">
+      <div class="kd-orb" title="Abrir boot" data-kd-act="boot-show"></div>
+      <div>
+        <div class="kd-title">KODUX <span class="kd-f">Forge</span> + <span class="kd-i">Injector</span></div>
+        <div class="kd-subtitle">Forja → Analisa → Injeta → Preserva</div>
+      </div>
+    </div>
+    <div id="kd-status" class="kd-status">
+      <span class="kd-status-dot"></span>
+      <span id="kd-status-text">aguardando</span>
+    </div>
+  </header>
+
+  <div class="kd-tabs">
+    <button id="kd-tab-forge"  class="kd-tab kd-active" data-kd-act="tab-forge">🔨 FORJA</button>
+    <button id="kd-tab-inject" class="kd-tab"           data-kd-act="tab-inject">💉 INJECTOR</button>
+  </div>
+
+  <!-- FORGE -->
+  <div id="kd-view-forge" class="kd-view">
+
+    <details class="kd-section" open data-key="forge-paths" data-qa="injectAll,addPath" data-all="injectAll,addPath,monolith,savePreset,workspace">
+      <summary>🧭 Caminhos</summary>
+      <div class="kd-details-body">
+        <div id="kd-path-list"></div>
+        <button class="kd-add-btn" data-kd-act="add-path">+ Adicionar caminho</button>
+        <div class="kd-mode-switch">
+          <button id="kd-httpsBtn" class="kd-active" data-kd-act="mode-https">HTTPS</button>
+          <button id="kd-pathBtn"                    data-kd-act="mode-path">CAMINHO</button>
+        </div>
+        <div class="kd-actions-grid">
+          <button class="kd-btn-inject" data-kd-act="inject-combo">⚡ Carregar &amp; injetar tudo</button>
+          <button class="kd-btn-orange" data-kd-act="export-monolith">📦 Exportar monólito</button>
+        </div>
+      </div>
+    </details>
+
+    <details class="kd-section" open data-key="forge-outputs" data-qa="injectAll,copy" data-all="injectAll,copy,monolith,download">
+      <summary>
+        <span>📦 Recursos gerados</span>
+        <span class="kd-badge" id="kd-outputs-badge">0</span>
+      </summary>
+      <div class="kd-details-body">
+        <div id="kd-outputs"></div>
+      </div>
+    </details>
+
+    <details class="kd-section" open data-key="forge-combined" data-qa="injectAll,monolith" data-all="injectAll,monolith,copy,toInline,download,share">
+      <summary>
+        <span>⚡ Combinado</span>
+        <span class="kd-badge" id="kd-combined-badge">0</span>
+      </summary>
+      <div class="kd-details-body">
+        <pre id="kd-combined-code"></pre>
+        <div class="kd-actions-grid">
+          <button class="kd-btn-primary" data-kd-act="copy-combined">📋 Copiar</button>
+          <button class="kd-btn-inject"  data-kd-act="inject-combo">⚡ Injetar combo</button>
+          <button                        data-kd-act="to-inline">→ Inline</button>
+          <button class="kd-btn-orange"  data-kd-act="download-html">⬇ Baixar HTML</button>
+          <button class="kd-btn-orange"  data-kd-act="export-monolith">📦 Exportar monólito</button>
+          <button                        data-kd-act="share">🔗 Compartilhar</button>
+        </div>
+      </div>
+    </details>
+
+    <details class="kd-section" open data-key="forge-presets" data-qa="savePreset,runDefault" data-all="savePreset,runDefault,autoLoad,monolith">
+      <summary>
+        <span>📦 Presets</span>
+        <span class="kd-badge" id="kd-presets-badge">0</span>
+      </summary>
+      <div class="kd-details-body">
+
+        <div class="kd-autoload-toggle" id="kd-autoload-toggle" data-kd-act="toggle-autoload">
+          <input type="checkbox" id="kd-autoload-checkbox">
+          <div class="kd-label">Auto-carregar preset padrão ao iniciar</div>
+          <div class="kd-state" id="kd-autoload-state">OFF</div>
+        </div>
+
+        <div class="kd-preset-save-row">
+          <input id="kd-new-preset-name" type="text" placeholder="Nome do novo preset" autocomplete="off">
+          <label class="kd-autoload-toggle" style="margin:0"><input type="checkbox" id="kd-preset-runsrc"><span class="kd-label">incluir fonte</span></label>
+          <button class="kd-btn-primary" data-kd-act="save-preset">💾 Salvar atual</button>
+        </div>
+
+        <div id="kd-presets"></div>
+      </div>
+    </details>
+
+    <details class="kd-section" data-key="forge-favorites">
+      <summary>
+        <span>⭐ Favoritos</span>
+        <button class="kd-small" data-kd-act="clear-favs">Limpar</button>
+      </summary>
+      <div class="kd-details-body">
+        <div id="kd-favorites"></div>
+      </div>
+    </details>
+
+  </div>
+
+  <!-- INJECTOR -->
+  <div id="kd-view-inject" class="kd-view kd-hidden">
+
+    <details class="kd-section" open data-key="inj-source" data-qa="srcInject,srcLoad" data-all="srcInject,srcLoad,srcPath,inlineInject,resetUrl,resetInline,srcMonolith">
+      <summary>🌐 Fonte</summary>
+      <div class="kd-details-body">
+        <div class="kd-mode">
+          <button id="kd-mode-url"    class="kd-active" data-kd-act="inject-mode-url">🌐 URL</button>
+          <button id="kd-mode-inline"                    data-kd-act="inject-mode-inline">◈ INLINE</button>
+        </div>
+        <div id="kd-url-mode">
+          <div class="kd-url-row">
+            <input id="kd-url" type="text" spellcheck="false" autocomplete="off" value="">
+            <button class="kd-btn-primary" data-kd-act="load-remote">CARREGAR</button>
+            <button class="kd-btn-inject"  data-kd-act="load-remote-inject">⚡ CARREGAR + INJETAR</button>
+            <button class="kd-small" title="Resetar para URL padrão" data-kd-act="reset-url">↺</button>
+          </div>
+        </div>
+        <div id="kd-inline-mode" class="kd-hidden">
+          <textarea id="kd-inline-html" placeholder="<style>...</style>&#10;&#10;<div>...</div>&#10;&#10;<script type=module>import x from './lib.js';<\/script>"></textarea>
+          <div class="kd-actions">
+            <button class="kd-btn-primary" data-kd-act="load-inline">ANALISAR HTML</button>
+            <button class="kd-btn-inject"  data-kd-act="load-inline-inject">⚡ ANALISAR + INJETAR</button>
+            <button                        data-kd-act="reset-inline">↺ RUNTIME</button>
+            <label class="kd-btn-file">
+              ⬆ IMPORTAR ARQUIVO
+              <input id="kd-inline-file" type="file" accept=".html,.htm,.txt,text/html,text/plain">
+            </label>
+            <button class="kd-btn-danger"  data-kd-act="clear-inline">LIMPAR</button>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <details class="kd-section" data-key="inj-analysis" data-qa="domInject,srcMonolith" data-all="domInject,srcMonolith,extract">
+      <summary>🔬 Estrutura encontrada</summary>
+      <div class="kd-details-body">
+        <div class="kd-grid">
+          <div class="kd-card"><div id="kd-count-html" class="kd-card-number kd-cyan">0</div><div class="kd-card-label">NODES HTML</div></div>
+          <div class="kd-card"><div id="kd-count-css"  class="kd-card-number kd-green">0</div><div class="kd-card-label">CSS (style+link)</div></div>
+          <div class="kd-card"><div id="kd-count-js"   class="kd-card-number kd-orange">0</div><div class="kd-card-label">JS INLINE</div></div>
+          <div class="kd-card"><div id="kd-count-src"  class="kd-card-number kd-red">0</div><div class="kd-card-label">JS SRC</div></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="kd-section" open data-key="inj-actions" data-qa="domInject,clear" data-all="domInject,injHTML,injCSS,injJS,clear,workspace,srcMonolith">
+      <summary>⚡ Ações de injeção</summary>
+      <div class="kd-details-body">
+        <div class="kd-actions-grid">
+          <button class="kd-btn-inject" data-kd-act="inject-all">⚡ INJETAR TUDO</button>
+          <button                       data-kd-act="inject-html">HTML</button>
+          <button                       data-kd-act="inject-css">CSS</button>
+          <button                       data-kd-act="inject-js">JS</button>
+          <button class="kd-btn-danger" data-kd-act="clear-injected">LIMPAR TUDO</button>
+          <button class="kd-btn-danger" data-kd-act="workspace">◇ WORKSPACE (limpar ambiente)</button>
+        </div>
+      </div>
+    </details>
+
+    <details class="kd-section" open data-key="inj-bridge" data-qa="extract,domInject" data-all="extract,domInject,toInline">
+      <summary>🔗 Bridge Forge ↔ Injector</summary>
+      <div class="kd-details-body">
+        <div class="kd-actions-grid">
+          <button class="kd-btn-orange" data-kd-act="extract">→ Extrair recursos pra forja</button>
+        </div>
+      </div>
+    </details>
+
+  </div>
+
+  <details class="kd-section" open data-key="runtime" data-qa="clearLog,workspace" data-all="clearLog,workspace,koduxBoot">
+    <summary>📜 Runtime</summary>
+    <div class="kd-details-body">
+      <div id="kd-log" class="kd-log">
+        <div class="kd-log-line">› Forge + Injector pronto.</div>
+      </div>
+    </div>
+  </details>
+
+  <footer>KODUX Forge + Injector · Forja · Analisa · Injeta · Preserva</footer>
+</div>
+<div id="kd-inject-target"></div>
+
+<script>
+(() => {
+'use strict';
+
+// =================================================
+// CONSTANTS
+// =================================================
+const HOST = 'https://infodose.com.br';
+const DEFAULT_URL = 'https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78GLOBAL/a%CC%82%E2%82%AC%C2%9D%C3%B0Y%CC%88%C2%A6%E2%80%A0-+%E2%97%8E-%5BiFSw%5D-Nephesh-FULL.html';
+
+const KEYS = {
+  mode:'kd-mode', favorites:'kd-favorites', paths:'kd-paths',
+  autoFirst:'kd-autofirst', presets:'kd-presets',
+  defaultPresetId:'kd-default-preset-id', autoLoadPreset:'kd-autoload-preset', lastPresetId:'kd-last-preset-id',
+  injectUrl:'kd-inject-url', injectMode:'kd-inject-mode',
+  activeTab:'kd-active-tab', details:'kd-details-'
+};
+
+const BASE_PATH = '/KOBLLUX/A-Y-KOBll0X-bundle/inject.js';
+const RUNTIME_INLINE = `<!DOCTYPE html>
+<html>
+<head>
+ <title>New Project</title>
+</head>
+<body>
+<!-- <h1>Olá do ΔUAL 3.0</h1> -->
+ <script>
+ console.log("Sistema Pronto.");
+ <\/script>
+
+<script src="https://infodose.com.br/KOBLLUX/A-Y-KOBll0X-bundle/inject.js"><\/script>
+
+
+</body>
+</html>`;
+
+const JS_TYPES = new Set(['module','text/javascript','application/javascript','text/ecmascript','application/ecmascript']);
+
+// =================================================
+// STATE
+// =================================================
+const state = {
+  paths:[BASE_PATH], autoFirst:true, mode:'https',
+  presets:[], defaultPresetId:null, autoLoadPreset:false,
+  sourceDocument:null, sourceURL:null, injectMode:'url',
+  activeTab:'forge', injectedBlobURLs:[]
+};
+
+// =================================================
+// STORAGE
+// =================================================
+const memStore = {};
+const store = {
+  get(k){ try{ return localStorage.getItem(k); } catch(_){ return k in memStore ? memStore[k] : null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); } catch(_){ memStore[k] = v; } },
+  remove(k){ try{ localStorage.removeItem(k); } catch(_){ delete memStore[k]; } }
+};
+
+// =================================================
+// HELPERS
+// =================================================
+const $ = id => document.getElementById(id);
+function esc(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function genId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+function isInfodose(hostname){
+  return hostname==='infodose.com.br' || hostname==='www.infodose.com.br' || hostname.endsWith('.infodose.com.br');
+}
+function normalizePath(v){
+  if(!v) return '';
+  v = String(v).trim(); if(!v) return '';
+  try{
+    if(/^https?:\/\//i.test(v)){
+      const u = new URL(v);
+      if(isInfodose(u.hostname)) return u.pathname + u.search;
+      return u.href;
+    }
+  }catch(_){}
+  if(!v.startsWith('/')) v = '/' + v;
+  return v;
+}
+function detectType(p){
+  const c = p.split('?')[0].toLowerCase();
+  if(c.endsWith('.js')||c.endsWith('.mjs')) return 'js';
+  if(c.endsWith('.css')) return 'css';
+  if(/\.(html?|php)$/.test(c) || /\/[^\/.]*$/.test(c)) return 'html';
+  return 'unknown';
+}
+function urlFor(p, mode){ return /^https?:\/\//i.test(p) ? p : (mode==='https' ? HOST + p : p); }
+function fullURL(p){ return urlFor(p, state.mode); }
+function baseURL(){ return state.sourceURL || new URL(location.href); }
+function absoluteURL(p, base){ try{ return new URL(p, base).href; }catch(_){ return p; } }
+function validPaths(){ return state.paths.map(normalizePath).filter(Boolean); }
+
+// =================================================
+// LOG + STATUS
+// =================================================
+function log(msg, type){
+  const box = $('kd-log'); if(!box) return;
+  const line = document.createElement('div');
+  line.className = 'kd-log-line';
+  line.textContent = '› ' + msg;
+  if(type==='error') line.style.color = '#ff8ba4';
+  if(type==='ok')    line.style.color = '#39ffb6';
+  if(type==='warn')  line.style.color = '#ff9d42';
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+function status(txt, type){
+  const box = $('kd-status'); if(!box) return;
+  box.className = 'kd-status ' + (type || '');
+  $('kd-status-text').textContent = txt;
+}
+
+// =================================================
+// PERSISTENCE
+// =================================================
+function loadState(){
+  try{
+    const p = JSON.parse(store.get(KEYS.paths) || 'null');
+    if(Array.isArray(p) && p.length) state.paths = p;
+  }catch(_){}
+  state.autoFirst  = store.get(KEYS.autoFirst) !== '0';
+  state.mode       = store.get(KEYS.mode) || 'https';
+  state.injectMode = store.get(KEYS.injectMode) || 'url';
+  state.activeTab  = store.get(KEYS.activeTab) || 'forge';
+
+  try{
+    state.presets = JSON.parse(store.get(KEYS.presets) || '[]');
+    if(!Array.isArray(state.presets)) state.presets = [];
+  }catch(_){ state.presets = []; }
+
+  state.defaultPresetId = store.get(KEYS.defaultPresetId) || null;
+  state.autoLoadPreset  = store.get(KEYS.autoLoadPreset) === '1';
+
+  const savedUrl = store.get(KEYS.injectUrl);
+  const urlInput = $('kd-url'); if(urlInput) urlInput.value = savedUrl || DEFAULT_URL;
+
+  if(store.get('kd-seeded-v3') !== '1'){
+    const seeds = [
+      { id:'seed-nephesh', name:'Nephesh FULL (fonte)', paths:[''], mode:'https', autoFirst:false, created:Date.now(), src:DEFAULT_URL, im:'url', inline:'', runSrc:true },
+      { id:'seed-runtime', name:'Runtime KOBLLUX (base)', paths:[BASE_PATH], mode:'https', autoFirst:true, created:Date.now(), src:'', im:'url', inline:RUNTIME_INLINE, runSrc:false }
+    ];
+    seeds.forEach(sd => { if(!state.presets.some(x => x.id === sd.id)) state.presets.push(sd); });
+    if(!state.defaultPresetId) state.defaultPresetId = 'seed-nephesh';
+    store.set('kd-seeded-v3', '1');
+    saveState();
+  }
+}
+function saveState(){
+  store.set(KEYS.paths, JSON.stringify(state.paths));
+  store.set(KEYS.autoFirst, state.autoFirst ? '1' : '0');
+  store.set(KEYS.mode, state.mode);
+  store.set(KEYS.injectMode, state.injectMode);
+  store.set(KEYS.activeTab, state.activeTab);
+  store.set(KEYS.presets, JSON.stringify(state.presets));
+  const u = $('kd-url'); if(u) store.set(KEYS.injectUrl, u.value || '');
+  if(state.defaultPresetId) store.set(KEYS.defaultPresetId, state.defaultPresetId);
+  else store.remove(KEYS.defaultPresetId);
+  store.set(KEYS.autoLoadPreset, state.autoLoadPreset ? '1' : '0');
+}
+
+function bindDetailsPersistence(){
+  document.querySelectorAll('details[data-key]').forEach(d => {
+    const key = KEYS.details + d.dataset.key;
+    const saved = store.get(key);
+    if(saved === 'open') d.open = true;
+    else if(saved === 'closed') d.open = false;
+    d.addEventListener('toggle', () => store.set(key, d.open ? 'open' : 'closed'));
+  });
+}
+
+// =================================================
+// TABS
+// =================================================
+function switchTab(tab){
+  state.activeTab = tab;
+  $('kd-view-forge').classList.toggle('kd-hidden', tab !== 'forge');
+  $('kd-view-inject').classList.toggle('kd-hidden', tab !== 'inject');
+  $('kd-tab-forge').classList.toggle('kd-active', tab === 'forge');
+  $('kd-tab-inject').classList.toggle('kd-active', tab === 'inject');
+  saveState();
+}
+
+// =================================================
+// RENDER — PATHS
+// =================================================
+function getFavorites(){
+  try{ return JSON.parse(store.get(KEYS.favorites) || '[]'); }
+  catch(_){ return []; }
+}
+function saveFavorites(list){ store.set(KEYS.favorites, JSON.stringify(list)); }
+function isFavorited(path){
+  if(!path) return false;
+  return getFavorites().some(x => x.path === path);
+}
+function renderPaths(){
+  const list = $('kd-path-list'); if(!list) return;
+  list.innerHTML = state.paths.map((raw, i) => {
+    const isFirst = i === 0;
+    const isFav = isFavorited(normalizePath(raw));
+    return `
+      <div class="kd-path-row">
+        <input type="text" value="${esc(raw)}" placeholder="/path/to/file.js ou .css"
+               data-index="${i}" spellcheck="false" autocomplete="off">
+        <div class="kd-path-actions">
+          ${isFirst ? `<button class="kd-auto-btn ${state.autoFirst?'kd-active':''}"
+                     data-action="auto" title="Primeiro link analisado automaticamente">${state.autoFirst?'✓ AUTO':'○ AUTO'}</button>` : ''}
+          <button class="kd-small kd-btn-inject" data-action="inject" data-index="${i}" title="Carregar e injetar este">⚡</button>
+          <button class="kd-small kd-star-btn ${isFav?'kd-active':''}" data-action="fav"
+                  data-index="${i}" title="Favoritar">${isFav?'★':'☆'}</button>
+          <button class="kd-small" data-action="remove" data-index="${i}" title="Remover">×</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// =================================================
+// RENDER — OUTPUTS
+// =================================================
+function build(path){
+  const type = detectType(path);
+  const url  = fullURL(path);
+  if(type === 'js')  return [{title:'SCRIPT SRC', code:`<script src="${url}"><\/script>`}];
+  if(type === 'css') return [
+    {title:'STYLESHEET', code:`<link rel="stylesheet" href="${url}">`},
+    {title:'@IMPORT',    code:`@import url("${url}");`}
+  ];
+  if(type === 'html') return [{title:'PÁGINA HTML · fetch + injeta', code:url}];
+  return [{title:'URL', code:url}];
+}
+function renderOutputs(){
+  const container = $('kd-outputs'); if(!container) return;
+  const badge = $('kd-outputs-badge');
+  const paths = validPaths();
+  if(badge) badge.textContent = paths.length;
+  if(!paths.length){ container.innerHTML = `<div class="kd-empty">Nenhum caminho ainda.</div>`; return; }
+
+  const groups = {js:[], css:[], html:[], other:[]};
+  paths.forEach(p => {
+    const t = detectType(p);
+    if(t==='js') groups.js.push(p);
+    else if(t==='css') groups.css.push(p);
+    else if(t==='html') groups.html.push(p);
+    else groups.other.push(p);
+  });
+
+  let html = ''; let counter = 0;
+  const renderGroup = (label, items, cls) => {
+    if(!items.length) return;
+    html += `<div class="kd-group-title ${cls}">${label} <span class="kd-group-count">${items.length}</span></div>`;
+    items.forEach(path => {
+      const isFav = isFavorited(path);
+      build(path).forEach(item => {
+        const id = `kd-out-${counter++}`;
+        html += `
+          <div class="kd-card kd-output">
+            <div class="kd-output-title">
+              <strong>${esc(item.title)}</strong>
+              <span class="kd-badge">${esc(detectType(path).toUpperCase())}</span>
+            </div>
+            <pre id="${id}">${esc(item.code)}</pre>
+            <div class="kd-actions-grid">
+              <button class="kd-btn-primary" data-action="copy" data-target="${id}">📋 Copiar</button>
+              <button class="kd-btn-inject"  data-action="inject" data-path="${esc(path)}">⚡ Injetar</button>
+              <button data-action="fav" data-path="${esc(path)}">${isFav?'★':'☆'} Fav</button>
+            </div>
+          </div>`;
+      });
+    });
+  };
+  renderGroup('📜 JavaScript', groups.js, 'kd-group-js');
+  renderGroup('🎨 CSS', groups.css, 'kd-group-css');
+  renderGroup('🌐 Páginas HTML (fetch + injeta)', groups.html, 'kd-group-other');
+  renderGroup('🔗 Links diretos', groups.other, 'kd-group-other');
+  container.innerHTML = html;
+}
+
+// =================================================
+// RENDER — COMBINED
+// =================================================
+function buildPrimary(path){
+  const type = detectType(path);
+  const url  = fullURL(path);
+  if(type === 'js')  return `<script src="${url}"><\/script>`;
+  if(type === 'css') return `<link rel="stylesheet" href="${url}">`;
+  return url;
+}
+function renderCombined(){
+  const paths = validPaths();
+  const pre = $('kd-combined-code');
+  const badge = $('kd-combined-badge');
+  if(!pre || !badge) return;
+  if(!paths.length){ pre.textContent = ''; badge.textContent = '0'; return; }
+  pre.textContent = paths.map(buildPrimary).join('\n');
+  badge.textContent = paths.length + ' item(s)';
+}
+
+// =================================================
+// RENDER — PRESETS
+// =================================================
+function renderPresets(){
+  const container = $('kd-presets'); if(!container) return;
+  const badge = $('kd-presets-badge'); if(badge) badge.textContent = state.presets.length;
+
+  const toggle = $('kd-autoload-checkbox');
+  const st = $('kd-autoload-state');
+  const wrap = $('kd-autoload-toggle');
+  if(toggle) toggle.checked = state.autoLoadPreset;
+  if(st) st.textContent = state.autoLoadPreset ? 'ON' : 'OFF';
+  if(wrap) wrap.classList.toggle('kd-on', state.autoLoadPreset);
+
+  if(!state.presets.length){
+    container.innerHTML = `<div class="kd-empty">Nenhum preset salvo ainda.</div>`;
+    return;
+  }
+  container.innerHTML = state.presets.map(p => {
+    const date = new Date(p.created).toLocaleDateString('pt-BR');
+    const pp = p.paths.map(normalizePath).filter(Boolean);
+    const isDefault = p.id === state.defaultPresetId;
+    return `
+      <div class="kd-preset-item ${isDefault?'kd-is-default':''}">
+        <div class="kd-preset-header">
+          <div>
+            <div class="kd-preset-name">${isDefault?'★ ':''}${esc(p.name)}</div>
+            <div class="kd-preset-meta">
+              ${pp.length} caminho(s) · ${esc(p.mode.toUpperCase())} · ${date}
+              ${p.autoFirst?' · <span style="color:var(--green)">AUTO</span>':''}${p.runSrc?' · <span style="color:var(--cyan)">FONTE</span>':''}
+            </div>
+          </div>
+        </div>
+        <div class="kd-preset-paths">${pp.map(esc).join('<br>')}</div>
+        <div class="kd-preset-actions">
+          <button class="kd-btn-primary" data-action="load" data-id="${esc(p.id)}">USAR</button>
+          <button class="kd-btn-inject" data-action="inject" data-id="${esc(p.id)}" title="Aplicar e injetar direto">⚡ Injetar</button>
+          <button class="kd-btn-orange" data-action="monolith" data-id="${esc(p.id)}" title="Exportar monólito (recursos inlinados)">📦 Monólito</button>
+          <button class="kd-star-btn ${isDefault?'kd-active':''}" data-action="setDefault" data-id="${esc(p.id)}"
+                  title="Marcar como padrão (auto-load)">${isDefault?'★':'☆'}</button>
+          <button class="kd-btn-orange" data-action="update" data-id="${esc(p.id)}" title="Sobrescrever com o estado atual">↻ Atualizar</button>
+          <button data-action="download" data-id="${esc(p.id)}">⬇ HTML</button>
+          <button data-action="rename" data-id="${esc(p.id)}">✎</button>
+          <button data-action="remove" data-id="${esc(p.id)}">×</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// =================================================
+// RENDER — FAVORITES
+// =================================================
+function renderFavorites(){
+  const container = $('kd-favorites'); if(!container) return;
+  const list = getFavorites();
+  if(!list.length){ container.innerHTML = `<div class="kd-empty">Nenhum link salvo ainda.</div>`; return; }
+  container.innerHTML = list.map(item => `
+    <div class="kd-fav">
+      <div class="kd-fav-info">
+        <div class="kd-fav-path">${esc(item.path)}</div>
+        <div class="kd-fav-meta">${esc((item.type||'unknown').toUpperCase())} · Infodose</div>
+      </div>
+      <div class="kd-fav-actions">
+        <button class="kd-small kd-btn-primary" data-action="use"    data-path="${esc(item.path)}">USAR</button>
+        <button class="kd-small"                data-action="remove" data-path="${esc(item.path)}">×</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// =================================================
+// RENDER — MODE
+// =================================================
+function renderMode(){
+  const a = $('kd-httpsBtn'), b = $('kd-pathBtn');
+  if(a) a.classList.toggle('kd-active', state.mode === 'https');
+  if(b) b.classList.toggle('kd-active', state.mode === 'path');
+}
+function renderInjectMode(){
+  const isUrl = state.injectMode === 'url';
+  const mu = $('kd-mode-url'), mi = $('kd-mode-inline');
+  if(mu) mu.classList.toggle('kd-active', isUrl);
+  if(mi) mi.classList.toggle('kd-active', !isUrl);
+  const um = $('kd-url-mode'), im = $('kd-inline-mode');
+  if(um) um.classList.toggle('kd-hidden', !isUrl);
+  if(im) im.classList.toggle('kd-hidden', isUrl);
+}
+function renderAll(){
+  renderPaths(); renderOutputs(); renderCombined();
+  renderPresets(); renderFavorites(); renderMode(); renderInjectMode();
+}
+
+// =================================================
+// FORGE ACTIONS
+// =================================================
+function addPath(){
+  state.paths.push(''); saveState(); renderPaths();
+  const inputs = document.querySelectorAll('#kd-path-list input');
+  if(inputs.length) inputs[inputs.length-1].focus();
+}
+function removePath(index){
+  state.paths.splice(index,1);
+  if(!state.paths.length) state.paths = [''];
+  saveState(); renderPaths(); renderOutputs(); renderCombined();
+}
+function onPathInput(index, value){
+  state.paths[index] = value;
+  saveState(); renderOutputs(); renderCombined();
+}
+function toggleAuto(){
+  state.autoFirst = !state.autoFirst; saveState();
+  const btn = document.querySelector('button[data-action="auto"]');
+  if(btn){
+    btn.classList.toggle('kd-active', state.autoFirst);
+    btn.textContent = state.autoFirst ? '✓ AUTO' : '○ AUTO';
+  }
+  renderCombined();
+}
+function setMode(m){
+  state.mode = m; saveState(); renderMode(); renderOutputs(); renderCombined();
+}
+
+// =================================================
+// FAVORITES ACTIONS
+// =================================================
+function favoritePath(index){
+  const norm = normalizePath(state.paths[index]);
+  if(!norm) return;
+  const list = getFavorites();
+  const i = list.findIndex(x => x.path === norm);
+  if(i >= 0) list.splice(i,1);
+  else list.unshift({ path:norm, type:detectType(norm), created:Date.now() });
+  saveFavorites(list); renderPaths(); renderOutputs(); renderFavorites();
+}
+function favoriteCurrentPath(path){
+  const norm = normalizePath(path);
+  if(!norm) return;
+  const list = getFavorites();
+  if(!list.some(x => x.path === norm)){
+    list.unshift({ path:norm, type:detectType(norm), created:Date.now() });
+    saveFavorites(list); renderPaths(); renderOutputs(); renderFavorites();
+  }
+}
+function removeFavorite(path){
+  saveFavorites(getFavorites().filter(x => x.path !== path));
+  renderPaths(); renderOutputs(); renderFavorites();
+}
+function useFavorite(path){
+  const norm = normalizePath(path);
+  if(!state.paths.some(p => normalizePath(p) === norm)){
+    if(state.paths.length === 1 && !state.paths[0].trim()) state.paths[0] = norm;
+    else state.paths.push(norm);
+    saveState(); renderPaths(); renderOutputs(); renderCombined();
+  }
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function clearFavorites(){
+  if(!confirm('Apagar todos os favoritos?')) return;
+  store.remove(KEYS.favorites);
+  renderPaths(); renderOutputs(); renderFavorites();
+}
+
+// =================================================
+// PRESETS
+// =================================================
+function savePresetInline(){
+  const paths = validPaths();
+  if(!paths.length){
+    log('Adicione ao menos um caminho válido antes de salvar.', 'error');
+    status('caminho vazio', 'error');
+    return;
+  }
+  const nameInput = $('kd-new-preset-name');
+  const rawName = (nameInput && nameInput.value || '').trim();
+  const name = rawName || ('Preset ' + new Date().toLocaleString('pt-BR'));
+
+  const preset = {
+    id: genId(), name,
+    paths: [...state.paths], mode: state.mode, autoFirst: state.autoFirst,
+    created: Date.now(), ...extras()
+  };
+  state.presets.unshift(preset);
+  if(!state.defaultPresetId) state.defaultPresetId = preset.id;
+  store.set(KEYS.lastPresetId, preset.id);
+  saveState();
+  if(nameInput) nameInput.value = '';
+  renderPresets();
+  status('preset salvo', 'ok');
+  log(`Preset "${name}" salvo (${preset.paths.length} caminho(s)).`, 'ok');
+}
+
+function loadPreset(id, opts){
+  const p = state.presets.find(x => x.id === id);
+  if(!p) return;
+  state.paths = p.paths.length ? [...p.paths] : [''];
+  state.autoFirst = !!p.autoFirst;
+  state.mode = p.mode || 'https';
+  store.set(KEYS.lastPresetId, id);
+  const u = $('kd-url'); if(u && p.src !== undefined) u.value = p.src;
+  if(p.im) state.injectMode = p.im;
+  const ih = $('kd-inline-html'); if(ih && p.inline) ih.value = p.inline;
+  const rs = $('kd-preset-runsrc'); if(rs) rs.checked = !!p.runSrc;
+  saveState(); renderAll(); renderKoduxBoot();
+  status('preset carregado', 'ok');
+  log(`Preset "${p.name}" carregado.`, 'ok');
+  if(!(opts && opts.quiet)) window.scrollTo({top:0, behavior:'smooth'});
+}
+function removePreset(id){
+  if(!confirm('Remover este preset?')) return;
+  state.presets = state.presets.filter(x => x.id !== id);
+  if(state.defaultPresetId === id) state.defaultPresetId = null;
+  saveState(); renderPresets();
+}
+function renamePreset(id){
+  const p = state.presets.find(x => x.id === id);
+  if(!p) return;
+  const name = prompt('Novo nome:', p.name);
+  if(name === null) return;
+  p.name = name.trim() || p.name;
+  saveState(); renderPresets();
+}
+function updatePreset(id){
+  const p = state.presets.find(x => x.id === id);
+  if(!p) return;
+  const paths = validPaths();
+  if(!paths.length){ log('Adicione ao menos um caminho válido antes de atualizar.', 'error'); return; }
+  p.paths = [...state.paths];
+  p.mode = state.mode;
+  p.autoFirst = state.autoFirst;
+  Object.assign(p, extras());
+  saveState(); renderPresets();
+  log(`Preset "${p.name}" atualizado.`, 'ok');
+  status('preset atualizado', 'ok');
+}
+function setDefaultPreset(id){
+  state.defaultPresetId = state.defaultPresetId === id ? null : id;
+  saveState(); renderPresets();
+  const p = state.presets.find(x => x.id === state.defaultPresetId);
+  if(p) log(`Preset padrão definido: "${p.name}".`, 'ok');
+  else  log('Preset padrão removido.');
+}
+function toggleAutoLoadPreset(){
+  state.autoLoadPreset = !state.autoLoadPreset;
+  saveState(); renderPresets();
+  log(`Auto-load: ${state.autoLoadPreset ? 'ON' : 'OFF'}` + (state.defaultPresetId ? '' : ' (sem preset padrão)'), state.autoLoadPreset ? 'ok' : '');
+}
+function tryAutoLoadPreset(){
+  if(!state.autoLoadPreset) return null;
+  if(!state.defaultPresetId) return null;
+  const p = state.presets.find(x => x.id === state.defaultPresetId);
+  if(!p) return null;
+  state.paths = p.paths.length ? [...p.paths] : [''];
+  state.autoFirst = !!p.autoFirst;
+  state.mode = p.mode || 'https';
+  return p;
+}
+
+// =================================================
+// COPY
+// =================================================
+async function copyText(text, btn){
+  if(!text) return;
+  try{ await navigator.clipboard.writeText(text); }
+  catch(_){
+    const a = document.createElement('textarea');
+    a.value = text; a.style.position='fixed'; a.style.opacity='0';
+    document.body.appendChild(a); a.select();
+    try{ document.execCommand('copy'); }catch(_){}
+    a.remove();
+  }
+  if(btn){
+    const old = btn.textContent;
+    btn.textContent = '✓ Copiado';
+    setTimeout(() => { btn.textContent = old; }, 1200);
+  }
+}
+function copyCombined(btn){ copyText($('kd-combined-code').textContent, btn); }
+
+// =================================================
+// DOWNLOAD / SHARE
+// =================================================
+function buildHTMLDocument(paths, mode, autoFirst, title){
+  const valid = paths.map(normalizePath).filter(Boolean);
+  const cssTags = [], jsTags = [];
+  valid.forEach((p,i) => {
+    const type = detectType(p);
+    const url = urlFor(p, mode);
+    const attr = (autoFirst && i === 0) ? ' data-auto-analyze="true"' : '';
+    if(type==='css') cssTags.push(`<link rel="stylesheet" href="${url}"${attr}>`);
+    else if(type==='js') jsTags.push(`<script src="${url}"${attr}><\/script>`);
+  });
+  const comments = valid.map((p,i) => `  ${i+1}. ${p}${autoFirst && i===0 ? ' [AUTO]' : ''}`).join('\n');
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(title||'KODUX Combo')}</title>
+<!-- KODUX Forge · ${new Date().toISOString()} -->
+<!--
+Caminhos:
+${comments || '  (nenhum)'}
+-->
+${cssTags.join('\n')}
+</head>
+<body>
+${jsTags.join('\n')}
+</body>
+</html>`;
+}
+function triggerDownload(filename, content){
+  const blob = new Blob([content], {type:'text/html;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+function downloadHTML(){
+  const paths = validPaths();
+  if(!paths.length){ alert('Adicione ao menos um caminho válido.'); return; }
+  const fname = 'kodux-combo-' + new Date().toISOString().slice(0,10) + '-' + paths.length + '.html';
+  triggerDownload(fname, buildHTMLDocument(state.paths, state.mode, state.autoFirst, 'KODUX Combo'));
+  log(`⬇ HTML baixado: ${fname}`, 'ok');
+}
+function downloadPreset(id){
+  const p = state.presets.find(x => x.id === id);
+  if(!p) return;
+  const safe = p.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'preset';
+  triggerDownload('kodux-' + safe + '.html', buildHTMLDocument(p.paths, p.mode, p.autoFirst, p.name));
+  log(`⬇ Preset baixado: ${safe}.html`, 'ok');
+}
+function copyShareURL(btn){
+  const payload = { p: validPaths(), a: state.autoFirst ? 1 : 0, m: state.mode };
+  try{
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    copyText(location.origin + location.pathname + '#s=' + encoded, btn);
+  }catch(_){ alert('Falha ao gerar URL.'); }
+}
+function loadFromHash(){
+  if(!location.hash.startsWith('#s=')) return;
+  try{
+    const json = decodeURIComponent(escape(atob(location.hash.slice(3))));
+    const p = JSON.parse(json);
+    if(Array.isArray(p.p) && p.p.length) state.paths = p.p;
+    if(p.a !== undefined) state.autoFirst = !!p.a;
+    if(p.m) state.mode = p.m;
+    saveState();
+    log('Estado restaurado da URL.', 'ok');
+  }catch(_){}
+}
+
+// =================================================
+// INJECTOR — MODE / RESET
+// =================================================
+function setInjectMode(m){ state.injectMode = m; saveState(); renderInjectMode(); }
+function resetURL(){
+  const u = $('kd-url'); if(u) u.value = DEFAULT_URL;
+  store.remove(KEYS.injectUrl);
+  log('URL resetada para o padrão.', 'ok');
+}
+
+// =================================================
+// INJECTOR — PARSE / ANALYSIS
+// =================================================
+function parseHTML(html){
+  state.sourceDocument = new DOMParser().parseFromString(html, 'text/html');
+  updateAnalysis();
+  return state.sourceDocument;
+}
+function looksLikeModule(code){
+  return /(?:^|[\n;{}])\s*(?:import|export)\b[\s{('"*]/.test(code);
+}
+function updateAnalysis(){
+  if(!state.sourceDocument){
+    ['kd-count-html','kd-count-css','kd-count-js','kd-count-src'].forEach(id => { const el = $(id); if(el) el.textContent = '0'; });
+    return;
+  }
+  const styles   = state.sourceDocument.querySelectorAll('style');
+  const links    = state.sourceDocument.querySelectorAll('link[rel="stylesheet"]');
+  const inline   = state.sourceDocument.querySelectorAll('script:not([src])');
+  const external = state.sourceDocument.querySelectorAll('script[src]');
+  const nodes    = Array.from(state.sourceDocument.body.childNodes).filter(n => n.nodeType===1 && n.nodeName!=='SCRIPT');
+
+  const a = $('kd-count-html'); if(a) a.textContent = nodes.length;
+  const b = $('kd-count-css');  if(b) b.textContent = styles.length + links.length;
+  const c = $('kd-count-js');   if(c) c.textContent = inline.length;
+  const d = $('kd-count-src');  if(d) d.textContent = external.length;
+
+  log(`HTML: ${nodes.length} nodes`);
+  log(`CSS: ${styles.length} <style> + ${links.length} <link>`);
+  log(`JS: ${inline.length} inline + ${external.length} externos`);
+  const modules = Array.from(inline).filter(s => {
+    const t = (s.getAttribute('type')||'').toLowerCase();
+    return t === 'module' || looksLikeModule(s.textContent || '');
+  });
+  if(modules.length) log(`JS módulo (import/export): ${modules.length}`, 'ok');
+}
+
+// =================================================
+// INJECTOR — LOAD
+// =================================================
+async function loadRemote(btn, andInject){
+  const u = $('kd-url'); if(!u) return false;
+  const url = u.value.trim();
+  if(!url){ log('Digite uma URL.', 'error'); return false; }
+  const ut = detectType(normalizePath(url));
+  if(ut === 'js' || ut === 'css'){ addPathIfNew(url); if(andInject) await injectSinglePath(normalizePath(url)); return true; }
+  if(btn){ btn.dataset.l = btn.textContent; btn.disabled = true; btn.textContent = '...'; }
+  status('baixando...', 'busy');
+  log(`FETCH ${url}`);
+  try{
+    const res = await fetch(url, { cache:'no-cache' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const html = await res.text();
+    state.sourceURL = new URL(url, location.href);
+    parseHTML(html);
+    status('HTML carregado', 'ok');
+    log('Documento remoto recebido.', 'ok');
+    saveState();
+    if(andInject) injectAll();
+    return true;
+  }catch(e){
+    status('erro', 'error');
+    log(`FETCH ERROR: ${e.message}`, 'error');
+    log('Verifique CORS, URL e HTTPS.', 'error');
+    return false;
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = btn.dataset.l || 'CARREGAR'; }
+  }
+}
+function loadInline(andInject){
+  const ta = $('kd-inline-html'); if(!ta) return;
+  const html = ta.value;
+  if(!html.trim()){ log('HTML inline vazio.', 'error'); return; }
+  state.sourceURL = new URL(location.href);
+  parseHTML(html);
+  status('HTML analisado', 'ok');
+  log('HTML inline analisado.', 'ok');
+  if(andInject === true) injectAll();
+}
+function resetInline(){
+  const ta = $('kd-inline-html'); if(ta) ta.value = RUNTIME_INLINE;
+  log('Inline restaurado para o runtime padrão.', 'ok');
+}
+function importInlineFile(ev){
+  const input = ev && ev.target;
+  const file = input && input.files && input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const text = String(reader.result || '');
+    const ta = $('kd-inline-html'); if(ta) ta.value = text;
+    state.injectMode = 'inline';
+    state.sourceURL = new URL(location.href);
+    parseHTML(text);
+    renderInjectMode();
+    saveState();
+    status('arquivo importado', 'ok');
+    log(`Arquivo: ${file.name} (${(file.size/1024).toFixed(1)} KB)`, 'ok');
+  };
+  reader.onerror = () => log(`Falha ao ler ${file.name}`, 'error');
+  reader.readAsText(file, 'utf-8');
+  input.value = '';
+}
+function clearInline(){
+  const ta = $('kd-inline-html'); if(ta) ta.value = '';
+  state.sourceDocument = null;
+  state.sourceURL = null;
+  updateAnalysis();
+  status('inline limpo');
+  log('Editor inline limpo.');
+}
+
+// =================================================
+// INJECTOR — CSS / HTML / JS
+// =================================================
+function injectCSS(){
+  if(!state.sourceDocument) return;
+  state.sourceDocument.querySelectorAll('style').forEach(s => {
+    const n = document.createElement('style');
+    n.dataset.remoteInjector = 'style';
+    n.textContent = s.textContent;
+    document.head.appendChild(n);
+  });
+  state.sourceDocument.querySelectorAll('link[rel="stylesheet"][href]').forEach(l => {
+    const n = document.createElement('link');
+    n.rel = 'stylesheet';
+    n.href = absoluteURL(l.getAttribute('href'), baseURL());
+    n.dataset.remoteInjector = 'style';
+    document.head.appendChild(n);
+  });
+  log('CSS injetado.', 'ok');
+}
+function injectHTML(){
+  if(!state.sourceDocument) return;
+  const target = $('kd-inject-target'); if(!target) return;
+  const frag = document.createDocumentFragment();
+  Array.from(state.sourceDocument.body.childNodes).forEach(node => {
+    if(node.nodeName !== 'SCRIPT') frag.appendChild(document.importNode(node, true));
+  });
+  target.appendChild(frag);
+  log('HTML injetado.', 'ok');
+}
+function resolveSpecifier(spec, base){
+  if(/^[a-zA-Z][a-zA-Z0-9+.\-]*:/.test(spec)) return spec;
+  if(spec.startsWith('//')) return absoluteURL(spec, base);
+  if(spec.startsWith('./')||spec.startsWith('../')||spec.startsWith('/')) return absoluteURL(spec, base);
+  return spec;
+}
+function rewriteModuleSpecifiers(code, base){
+  let rewrites = 0;
+  const fix = s => { const r = resolveSpecifier(s, base); if(r !== s) rewrites++; return r; };
+  const out = code
+    .replace(/(\bfrom\s*)(['"])([^'"\n]+)\2/g, (m,a,q,s)=> a+q+fix(s)+q)
+    .replace(/(\bimport\s*)(['"])([^'"\n]+)\2/g, (m,a,q,s)=> a+q+fix(s)+q)
+    .replace(/(\bimport\s*\(\s*)(['"])([^'"\n]+)\2(\s*\))/g, (m,a,q,s,b)=> a+q+fix(s)+q+b);
+  return { code: out, rewrites };
+}
+function copyAttributes(from, to){
+  Array.from(from.attributes).forEach(a => { if(a.name.toLowerCase()==='src') return; to.setAttribute(a.name, a.value); });
+}
+function injectJS(){
+  if(!state.sourceDocument) return;
+  const base = baseURL();
+  let classics = 0, modules = 0;
+  state.sourceDocument.querySelectorAll('script').forEach(script => {
+    const type = (script.getAttribute('type')||'').trim().toLowerCase();
+    if(type && !JS_TYPES.has(type)){ log(`JS ignorado (type="${type}")`); return; }
+    const src = script.getAttribute('src');
+    const code = script.textContent || '';
+    if(src){
+      const n = document.createElement('script');
+      copyAttributes(script, n);
+      n.src = absoluteURL(src, base);
+      n.dataset.remoteInjector = 'script';
+      document.body.appendChild(n);
+      if((n.getAttribute('type')||'').toLowerCase()==='module'){ modules++; log(`JS módulo externo → ${n.src}`); }
+      else { classics++; log(`JS externo → ${n.src}`); }
+      return;
+    }
+    if(type === 'module' || looksLikeModule(code)){
+      modules++;
+      const r = rewriteModuleSpecifiers(code, base);
+      const blob = URL.createObjectURL(new Blob([r.code], { type:'text/javascript' }));
+      state.injectedBlobURLs.push(blob);
+      const n = document.createElement('script');
+      n.type = 'module'; n.src = blob; n.dataset.remoteInjector = 'script';
+      document.body.appendChild(n);
+      log(`JS inline module → blob (${r.rewrites} import(s) resolvido(s))`, 'ok');
+      if(/\bimport\s+[^(]*\bfrom\s*['"][^./]/.test(code)) log('Bare specifiers (ex: "lodash") precisam de import map.', 'warn');
+      return;
+    }
+    classics++;
+    const n = document.createElement('script');
+    copyAttributes(script, n);
+    n.textContent = code; n.dataset.remoteInjector = 'script';
+    document.body.appendChild(n);
+    log('JS inline → executando...', 'ok');
+  });
+  log(`JS processado: ${classics} clássico(s), ${modules} módulo(s)`, 'ok');
+}
+async function injectRemoteHTML(url){
+  const res = await fetch(url, { cache:'no-cache' });
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  state.sourceURL = new URL(url, location.href);
+  parseHTML(await res.text());
+  injectCSS(); injectHTML(); injectJS();
+  log(`→ HTML ${url}`, 'ok');
+}
+function injectAll(){
+  if(!state.sourceDocument){ log('Nenhum HTML carregado.', 'error'); return; }
+  injectCSS(); injectHTML(); injectJS();
+  status('INJETADO', 'ok');
+  log('◆ Runtime completo executado.', 'ok');
+}
+function clearInjected(){
+  const t = $('kd-inject-target'); if(t) t.innerHTML = '';
+  document.querySelectorAll('style[data-remote-injector="style"], link[data-remote-injector="style"]').forEach(n => n.remove());
+  document.querySelectorAll('script[data-remote-injector="script"]').forEach(n => n.remove());
+  state.injectedBlobURLs.forEach(u => { try{ URL.revokeObjectURL(u); }catch(_){} });
+  state.injectedBlobURLs.length = 0;
+  status('limpo');
+  log('DOM, CSS, módulos e blob URLs removidos.');
+}
+
+// =================================================
+// BRIDGE
+// =================================================
+function extractToForge(){
+  if(!state.sourceDocument){ log('Nada carregado para extrair.', 'error'); return; }
+  const resources = [];
+  state.sourceDocument.querySelectorAll('script[src]').forEach(s => resources.push(s.getAttribute('src')));
+  state.sourceDocument.querySelectorAll('link[rel="stylesheet"][href]').forEach(l => resources.push(l.getAttribute('href')));
+  if(!resources.length){ log('Nenhum recurso externo encontrado.', 'error'); return; }
+  const base = baseURL();
+  const norm = resources.map(r => {
+    try{
+      const abs = new URL(r, base);
+      if(isInfodose(abs.hostname)) return abs.pathname + abs.search;
+      return abs.href;
+    }catch(_){ return r; }
+  });
+  let added = 0;
+  norm.forEach(r => {
+    const n = normalizePath(r);
+    if(!state.paths.some(p => normalizePath(p) === n)){
+      if(state.paths.length === 1 && !state.paths[0].trim()) state.paths[0] = n;
+      else state.paths.push(n);
+      added++;
+    }
+  });
+  saveState(); renderPaths(); renderOutputs(); renderCombined();
+  status('recursos extraídos', 'ok');
+  log(`→ ${added} recurso(s) adicionados à forja.`, 'ok');
+  switchTab('forge');
+}
+async function injectResources(paths){
+  let count = 0;
+  for(const p of paths){
+    const type = detectType(p);
+    const url = fullURL(p);
+    if(type === 'css'){
+      const link = document.createElement('link');
+      link.rel = 'stylesheet'; link.href = url; link.dataset.remoteInjector = 'style';
+      document.head.appendChild(link);
+      log(`→ CSS ${url}`, 'ok'); count++;
+    } else if(type === 'js'){
+      const s = document.createElement('script');
+      s.src = url; s.dataset.remoteInjector = 'script';
+      document.body.appendChild(s);
+      log(`→ JS ${url}`, 'ok'); count++;
+    } else if(type === 'html'){
+      try{ await injectRemoteHTML(url); count++; }
+      catch(e){ log(`→ HTML falhou ${url}: ${e.message} (CORS?)`, 'error'); }
+    } else {
+      log(`→ ignorado (tipo desconhecido): ${p}`, 'warn');
+    }
+  }
+  return count;
+}
+async function analyzeResource(path){
+  if(detectType(path) !== 'js' && detectType(path) !== 'css') return;
+  const url = fullURL(path);
+  log(`AUTO: analisando ${url}...`);
+  try{
+    const res = await fetch(url, { cache:'no-cache' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const type = detectType(path);
+    const base = new URL(url, location.href);
+    let deps = [];
+    if(type === 'css'){
+      const matches = text.matchAll(/@import\s+(?:url\(\s*)?['"]?([^'")\s;]+)/g);
+      for(const m of matches) deps.push(m[1]);
+      log(`AUTO: CSS ${text.length} bytes, ${deps.length} @import(s)`, 'ok');
+    } else if(type === 'js'){
+      const matches = text.matchAll(/(?:^|[^\w$])(?:import|from)\s*\(?\s*['"]([^'"]+)['"]/g);
+      for(const m of matches) deps.push(m[1]);
+      log(`AUTO: JS ${text.length} bytes, ${deps.length} import(s)`, 'ok');
+    }
+    let added = 0;
+    deps.forEach(dep => {
+      if(!dep || dep.startsWith('#') || /^[a-zA-Z][\w+.-]*:/.test(dep)) return;
+      try{
+        const abs = new URL(dep, base);
+        const dp = isInfodose(abs.hostname) ? abs.pathname + abs.search : abs.href;
+        if(!state.paths.some(p => normalizePath(p) === dp)){ state.paths.push(dp); added++; }
+      }catch(_){}
+    });
+    if(added){
+      saveState(); renderPaths(); renderOutputs(); renderCombined();
+      log(`AUTO: +${added} dependência(s) descoberta(s).`, 'ok');
+    }
+  }catch(e){
+    log(`AUTO: falha (${e.message}) — CORS?`, 'error');
+  }
+}
+async function injectCombo(btn){
+  const paths = validPaths();
+  if(!paths.length){ log('Nenhum caminho válido na forja.', 'error'); return; }
+  if(btn){ btn.disabled = true; btn.textContent = '⚡ Injetando...'; }
+  log(`⚡ Injetando combo (${paths.length} recurso(s))...`, 'ok');
+  try{
+    if(state.autoFirst && paths[0]) await analyzeResource(paths[0]);
+    const n = await injectResources(paths);
+    log(`✓ ${n} recurso(s) injetado(s).`, 'ok');
+    status('combo injetado', 'ok');
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = '⚡ Injetar combo'; }
+  }
+}
+async function injectSinglePath(path){
+  log(`⚡ Injetando: ${path}`, 'ok');
+  const n = await injectResources([path]);
+  if(n) status('1 recurso injetado', 'ok');
+}
+function sendForgeToInline(){
+  const paths = validPaths();
+  if(!paths.length){ log('Nenhum caminho para enviar.', 'error'); return; }
+  const tags = paths.map((p,i) => {
+    const type = detectType(p);
+    const url = fullURL(p);
+    const attr = (state.autoFirst && i===0) ? ' data-auto-analyze="true"' : '';
+    if(type==='css') return `<link rel="stylesheet" href="${url}"${attr}>`;
+    if(type==='js')  return `<script src="${url}"${attr}><\/script>`;
+    return '';
+  }).filter(Boolean).join('\n');
+  const html = `<!DOCTYPE html>\n<html>\n<head>\n${tags}\n</head>\n<body>\n</body>\n</html>`;
+  const ta = $('kd-inline-html'); if(ta) ta.value = html;
+  state.injectMode = 'inline';
+  state.sourceURL = new URL(location.href);
+  parseHTML(html);
+  renderInjectMode();
+  switchTab('inject');
+  status('enviado ao inline', 'ok');
+  log('Combo enviado ao editor inline.', 'ok');
+}
+
+// =================================================
+// MONÓLITO
+// =================================================
+async function buildMonolith(paths, mode, title){
+  const css = [], links = [], body = [], scripts = [], miss = [];
+  let base = null;
+  const get = async u => { const r = await fetch(u, { cache:'no-cache' }); if(!r.ok) throw new Error('HTTP ' + r.status); return r.text(); };
+  const safe = c => c.replace(/<\/script/gi, '<\\/script');
+  for(const p of paths.map(normalizePath).filter(Boolean)){
+    const url = urlFor(p, mode), t = detectType(p);
+    try{
+      if(t === 'css') css.push('/* ' + url + ' */\n' + await get(url));
+      else if(t === 'js') scripts.push('<script>/* ' + url + ' */\n' + safe(await get(url)) + '<\/script>');
+      else if(t === 'html'){
+        const b = new URL(url, location.href); base = base || b.href;
+        const d = new DOMParser().parseFromString(await get(url), 'text/html');
+        d.querySelectorAll('style').forEach(s => css.push(s.textContent));
+        for(const l of d.querySelectorAll('link[rel="stylesheet"][href]')){
+          const h = absoluteURL(l.getAttribute('href'), b);
+          try{ css.push('/* ' + h + ' */\n' + await get(h)); }
+          catch(_){ links.push('<link rel="stylesheet" href="' + h + '">'); miss.push(h); }
+        }
+        Array.from(d.body.childNodes).forEach(n => {
+          if(n.nodeName !== 'SCRIPT') body.push(n.nodeType === 1 ? n.outerHTML : (n.textContent || ''));
+        });
+        for(const s of d.querySelectorAll('script')){
+          const ty = (s.getAttribute('type') || '').trim(), tyA = ty ? ' type="' + ty + '"' : '', src = s.getAttribute('src');
+          if(ty && !JS_TYPES.has(ty.toLowerCase())){ scripts.push(s.outerHTML); continue; }
+          if(src){
+            const h = absoluteURL(src, b);
+            try{ scripts.push('<script' + tyA + '>/* ' + h + ' */\n' + safe(await get(h)) + '<\/script>'); }
+            catch(_){ scripts.push('<script' + tyA + ' src="' + h + '"><\/script>'); miss.push(h); }
+          } else scripts.push('<script' + tyA + '>' + safe(s.textContent) + '<\/script>');
+        }
+      }
+    }catch(e){
+      miss.push(url);
+      if(t === 'css') links.push('<link rel="stylesheet" href="' + url + '">');
+      else if(t === 'js') scripts.push('<script src="' + url + '"><\/script>');
+    }
+  }
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>${esc(title || 'KODUX Monólito')}</title>
+<!-- KODUX Monólito · ${new Date().toISOString()} · ${paths.length} fonte(s)${miss.length ? ' · ' + miss.length + ' mantida(s) por link' : ''} -->
+${base ? '<base href="' + esc(base) + '">' : ''}
+${css.length ? '<style>\n' + css.join('\n\n') + '\n</style>' : ''}
+${links.join('\n')}
+</head>
+<body>
+${body.join('\n')}
+${scripts.join('\n')}
+</body>
+</html>`;
+  return { html, miss };
+}
+async function exportMonolith(btn, id){
+  const p = id ? state.presets.find(x => x.id === id) : null;
+  const paths = p ? p.paths : state.paths, mode = p ? p.mode : state.mode, name = p ? p.name : 'KODUX Monólito';
+  if(!paths.map(normalizePath).filter(Boolean).length){ log('Nenhum caminho para exportar.', 'error'); return; }
+  const old = btn && btn.textContent;
+  if(btn){ btn.disabled = true; btn.textContent = '📦 Montando...'; }
+  status('montando monólito...', 'busy');
+  try{
+    const r = await buildMonolith(paths, mode, name);
+    const safe = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'monolito';
+    triggerDownload('kodux-monolito-' + safe + '.html', r.html);
+    log(`📦 Monólito exportado (${(r.html.length/1024).toFixed(1)} KB).`, 'ok');
+    if(r.miss.length) log(`${r.miss.length} recurso(s) mantido(s) por link (CORS/erro): ${r.miss.join(', ')}`, 'warn');
+    status('monólito pronto', 'ok');
+  }catch(e){
+    log('Monólito falhou: ' + e.message, 'error'); status('erro', 'error');
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = old; }
+  }
+}
+async function runPreset(id){
+  const p = state.presets.find(x => x.id === id); if(!p) return false;
+  loadPreset(id, { quiet:true });
+  if(validPaths().length) await injectCombo();
+  if(p.runSrc){
+    const dup = validPaths().includes(normalizePath(p.src || ''));
+    const ta = $('kd-inline-html');
+    if(state.injectMode === 'inline'){ if(ta && ta.value.trim()) loadInline(true); }
+    else if(p.src && !dup) await loadRemote(null, true);
+  }
+  return true;
+}
+function extras(){
+  return {
+    src: ($('kd-url') || {}).value || '',
+    im: state.injectMode,
+    inline: ($('kd-inline-html') || {}).value || '',
+    runSrc: !!($('kd-preset-runsrc') || {}).checked
+  };
+}
+function addPathIfNew(u){
+  const n = normalizePath(u); if(!n) return;
+  if(state.paths.some(x => normalizePath(x) === n)) return;
+  if(state.paths.length === 1 && !state.paths[0].trim()) state.paths[0] = n; else state.paths.push(n);
+  saveState(); renderPaths(); renderOutputs(); renderCombined();
+}
+async function cmdGo(btn){
+  const cu = $('kd-cmd-url'); if(!cu) return;
+  const u = cu.value.trim();
+  if(!u){ log('Digite uma URL.', 'error'); return; }
+  const urlIn = $('kd-url'); if(urlIn) urlIn.value = u;
+  const old = btn.textContent; btn.disabled = true; btn.textContent = '...';
+  const ok = await loadRemote(null, true);
+  btn.disabled = false; btn.textContent = old;
+  if(ok) $('kodux-boot').classList.add('is-out');
+}
+
+// ◇ WORKSPACE
+function openWorkspace(){
+  if(!confirm('Limpar o workspace?\nRemove injetados, fonte, inline e blobs. Presets e caminhos continuam salvos.')) return;
+  clearInjected();
+  state.sourceDocument = null; state.sourceURL = null;
+  const ta = $('kd-inline-html'); if(ta) ta.value = '';
+  const c = $('kd-cmd-url'); if(c) c.value = '';
+  updateAnalysis();
+  status('workspace limpo');
+  log('◇ Workspace limpo.', 'ok');
+}
+
+// 📦 MONÓLITO da fonte carregada
+async function exportSourceMonolith(btn){
+  if(!state.sourceDocument){ log('Nada carregado. Carregue uma fonte ou use o monólito de um preset.', 'error'); return; }
+  const old = btn && btn.textContent; if(btn){ btn.disabled = true; btn.textContent = '📦 Montando...'; }
+  status('montando monólito...', 'busy');
+  const doc = state.sourceDocument.cloneNode(true), base = baseURL(), miss = [];
+  const get = async u => { const r = await fetch(u, { cache:'no-cache' }); if(!r.ok) throw new Error('HTTP ' + r.status); return r.text(); };
+  try{
+    for(const l of Array.from(doc.querySelectorAll('link[rel="stylesheet"][href]'))){
+      const h = absoluteURL(l.getAttribute('href'), base);
+      try{ const st = doc.createElement('style'); st.textContent = await get(h); l.replaceWith(st); }
+      catch(_){ l.setAttribute('href', h); miss.push(h); }
+    }
+    for(const sc of Array.from(doc.querySelectorAll('script[src]'))){
+      const h = absoluteURL(sc.getAttribute('src'), base);
+      try{ const code = await get(h); sc.removeAttribute('src'); sc.textContent = code.replace(/<\/script/gi, '<\\/script'); }
+      catch(_){ sc.setAttribute('src', h); miss.push(h); }
+    }
+    const html = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+    triggerDownload('monolith-' + new Date().toISOString().slice(0,10) + '.html', html);
+    log(`📦 Monólito da fonte (${(html.length/1024).toFixed(1)} KB).`, 'ok');
+    if(miss.length) log(`${miss.length} externo(s) mantido(s) (CORS/erro).`, 'warn');
+    status('monólito pronto', 'ok');
+  }catch(e){ log('Monólito falhou: ' + e.message, 'error'); status('erro', 'error'); }
+  finally{ if(btn){ btn.disabled = false; btn.textContent = old; } }
+}
+
+// =================================================
+// QUICK ACTIONS
+// =================================================
+const ACT = {
+  injectAll:['⚡ Injetar tudo', b => injectCombo(b)],
+  addPath:['+ Caminho', () => addPath()],
+  monolith:['📦 Monólito', b => exportMonolith(b)],
+  srcMonolith:['📦 Monólito da fonte', b => exportSourceMonolith(b)],
+  copy:['📋 Copiar combinado', b => copyCombined(b)],
+  toInline:['→ Enviar ao inline', () => sendForgeToInline()],
+  download:['⬇ Baixar HTML', () => downloadHTML()],
+  share:['🔗 Compartilhar', b => copyShareURL(b)],
+  savePreset:['💾 Salvar preset', () => savePresetInline()],
+  runDefault:['⚡ Rodar preset ativo', () => { const p = pickBootPreset(); return p ? runPreset(p.id) : log('Sem preset.', 'error'); }],
+  autoLoad:['⟳ Auto-load on/off', () => toggleAutoLoadPreset()],
+  srcInject:['⚡ Carregar + injetar', b => loadRemote(b, true)],
+  srcLoad:['⬇ Carregar', b => loadRemote(b)],
+  srcPath:['→ Fonte como caminho', () => addPathIfNew(($('kd-url') || {}).value)],
+  inlineInject:['⚡ Inline + injetar', () => loadInline(true)],
+  resetUrl:['↺ URL padrão', () => resetURL()],
+  resetInline:['↺ Runtime inline', () => resetInline()],
+  domInject:['⚡ Injetar fonte', () => injectAll()],
+  injHTML:['HTML', () => injectHTML()],
+  injCSS:['CSS', () => injectCSS()],
+  injJS:['JS', () => injectJS()],
+  clear:['🧹 Limpar injetados', () => clearInjected()],
+  workspace:['◇ Workspace (limpar)', () => openWorkspace()],
+  extract:['→ Extrair p/ forja', () => extractToForge()],
+  clearLog:['🗑 Limpar log', () => { const l = $('kd-log'); if(l) l.innerHTML = ''; }],
+  koduxBoot:['◉ Boot', () => showKoduxBoot()]
+};
+function runAct(k, b){
+  const entry = ACT[k]; if(!entry) return;
+  try{
+    const r = entry[1](b);
+    if(r && r.catch) r.catch(e => log(e.message, 'error'));
+  }catch(e){ log(e.message, 'error'); }
+}
+function closeMenu(){ const m = $('kd-qa-menu'); if(m) m.remove(); }
+function openMenu(b){
+  closeMenu();
+  const m = document.createElement('div'); m.id = 'kd-qa-menu';
+  (b.dataset.menu || '').split(',').forEach(k => {
+    if(!ACT[k]) return;
+    const i = document.createElement('button'); i.type = 'button'; i.dataset.act = k; i.textContent = ACT[k][0]; m.appendChild(i);
+  });
+  document.body.appendChild(m);
+  const r = b.getBoundingClientRect();
+  m.style.top = Math.min(r.bottom + 4, innerHeight - m.offsetHeight - 8) + 'px';
+  m.style.left = Math.max(8, Math.min(r.left, innerWidth - m.offsetWidth - 8)) + 'px';
+}
+function buildQuick(){
+  document.querySelectorAll('details[data-qa]').forEach(d => {
+    const sm = d.querySelector(':scope>summary'); if(!sm) return;
+    const wrap = document.createElement('span'); wrap.className = 'kd-qa';
+    d.dataset.qa.split(',').forEach(k => {
+      if(!ACT[k]) return;
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'kd-small kd-qa-btn';
+      b.dataset.act = k; b.textContent = ACT[k][0]; wrap.appendChild(b);
+    });
+    const m = document.createElement('button'); m.type = 'button'; m.className = 'kd-small kd-qa-btn';
+    m.dataset.menu = d.dataset.all || d.dataset.qa; m.textContent = '⋯'; m.title = 'Todas as ações'; wrap.appendChild(m);
+    sm.appendChild(wrap);
+  });
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.kd-qa-btn'), mi = e.target.closest('#kd-qa-menu button');
+    if(b){ e.preventDefault(); e.stopPropagation(); if(b.dataset.act){ closeMenu(); runAct(b.dataset.act, b); } else openMenu(b); }
+    else if(mi){ const k = mi.dataset.act; closeMenu(); runAct(k, mi); }
+    else closeMenu();
+  }, true);
+}
+
+// =================================================
+// BOOT (kodux namespace)
+// =================================================
+function pickBootPreset(){
+  const last = store.get(KEYS.lastPresetId);
+  return state.presets.find(x => x.id === last)
+      || state.presets.find(x => x.id === state.defaultPresetId)
+      || state.presets[0] || null;
+}
+function renderKoduxBoot(){
+  const el = $('kodux-boot-sub'); if(!el) return;
+  const p = pickBootPreset();
+  const n = p ? p.paths.map(normalizePath).filter(Boolean).length : validPaths().length;
+  el.innerHTML = (p ? `ORB → carrega <b>${esc(p.name)}</b> (${n} recurso${n===1?'':'s'}) e abre` : `ORB → injeta os <b>${n}</b> caminho(s) atuais e abre`)
+               + `<br>URL → carrega e injeta o link · ENTRAR → abre sem carregar nada`;
+  const cu = $('kd-cmd-url'), u = $('kd-url');
+  if(cu && !cu.value && u) cu.value = u.value;
+}
+function showKoduxBoot(){ renderKoduxBoot(); $('kodux-boot').classList.remove('is-out'); }
+function enterApp(){ $('kodux-boot').classList.add('is-out'); status('pronto', 'ok'); }
+async function enterWithPreset(){
+  const orb = $('kodux-boot-orb'); orb.classList.add('busy');
+  const p = pickBootPreset();
+  try{ if(p) await runPreset(p.id); else await injectCombo(); } finally { orb.classList.remove('busy'); }
+  $('kodux-boot').classList.add('is-out');
+}
+
+// =================================================
+// DELEGATION
+// =================================================
+const KD_HANDLERS = {
+  'boot-preset': () => enterWithPreset(),
+  'boot-enter':  () => enterApp(),
+  'boot-go':     (el) => cmdGo(el),
+  'boot-show':   () => showKoduxBoot(),
+  'tab-forge':   () => switchTab('forge'),
+  'tab-inject':  () => switchTab('inject'),
+  'add-path':    () => addPath(),
+  'mode-https':  () => setMode('https'),
+  'mode-path':   () => setMode('path'),
+  'inject-combo':  (el) => injectCombo(el),
+  'export-monolith': (el) => exportMonolith(el),
+  'copy-combined': (el) => copyCombined(el),
+  'to-inline':   () => sendForgeToInline(),
+  'download-html': () => downloadHTML(),
+  'share':       (el) => copyShareURL(el),
+  'toggle-autoload': () => toggleAutoLoadPreset(),
+  'save-preset': () => savePresetInline(),
+  'clear-favs':  () => clearFavorites(),
+  'inject-mode-url':    () => setInjectMode('url'),
+  'inject-mode-inline': () => setInjectMode('inline'),
+  'load-remote':         (el) => loadRemote(el),
+  'load-remote-inject':  (el) => loadRemote(el, true),
+  'reset-url':   () => resetURL(),
+  'load-inline':         () => loadInline(),
+  'load-inline-inject':  () => loadInline(true),
+  'reset-inline': () => resetInline(),
+  'clear-inline': () => clearInline(),
+  'inject-all':  () => injectAll(),
+  'inject-html': () => injectHTML(),
+  'inject-css':  () => injectCSS(),
+  'inject-js':   () => injectJS(),
+  'clear-injected': () => clearInjected(),
+  'workspace':   () => openWorkspace(),
+  'extract':     () => extractToForge()
+};
+
+function setupDelegation(){
+  // 1) Global data-kd-act (botões estáticos)
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-kd-act]');
+    if(!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const act = btn.dataset.kdAct;
+    const h = KD_HANDLERS[act];
+    if(!h) return;
+    try{
+      const r = h(btn);
+      if(r && r.catch) r.catch(err => log(err.message, 'error'));
+    }catch(err){ log(err.message, 'error'); }
+  }, true);
+
+  // 2) File input (import inline)
+  const fileInput = $('kd-inline-file');
+  if(fileInput) fileInput.addEventListener('change', importInlineFile);
+
+  // 3) Path list — ações + input ao vivo
+  const pathList = $('kd-path-list');
+  if(pathList){
+    pathList.addEventListener('click', e => {
+      const btn = e.target.closest('button[data-action]');
+      if(!btn) return;
+      const a = btn.dataset.action;
+      const i = parseInt(btn.dataset.index || '-1', 10);
+      if(a === 'remove' && i >= 0) removePath(i);
+      else if(a === 'fav' && i >= 0) favoritePath(i);
+      else if(a === 'auto') toggleAuto();
+      else if(a === 'inject' && i >= 0) injectSinglePath(normalizePath(state.paths[i]));
+    });
+    pathList.addEventListener('input', e => {
+      const inp = e.target;
+      if(inp.matches('input[data-index]')) onPathInput(parseInt(inp.dataset.index,10), inp.value);
+    });
+  }
+
+  // 4) Outputs
+  const outputs = $('kd-outputs');
+  if(outputs){
+    outputs.addEventListener('click', e => {
+      const btn = e.target.closest('button[data-action]');
+      if(!btn) return;
+      const a = btn.dataset.action;
+      if(a === 'copy'){
+        const el = document.getElementById(btn.dataset.target);
+        if(el) copyText(el.textContent, btn);
+      } else if(a === 'inject'){
+        injectSinglePath(btn.dataset.path);
+      } else if(a === 'fav'){
+        favoriteCurrentPath(btn.dataset.path);
+      }
+    });
+  }
+
+  // 5) Presets
+  const presets = $('kd-presets');
+  if(presets){
+    presets.addEventListener('click', e => {
+      const btn = e.target.closest('button[data-action]');
+      if(!btn) return;
+      const a = btn.dataset.action;
+      const id = btn.dataset.id;
+      if(a === 'load') loadPreset(id);
+      else if(a === 'download') downloadPreset(id);
+      else if(a === 'rename') renamePreset(id);
+      else if(a === 'remove') removePreset(id);
+      else if(a === 'update') updatePreset(id);
+      else if(a === 'setDefault') setDefaultPreset(id);
+      else if(a === 'inject') runPreset(id);
+      else if(a === 'monolith') exportMonolith(btn, id);
+    });
+  }
+
+  // 6) Favorites
+  const favs = $('kd-favorites');
+  if(favs){
+    favs.addEventListener('click', e => {
+      const btn = e.target.closest('button[data-action]');
+      if(!btn) return;
+      const a = btn.dataset.action;
+      const p = btn.dataset.path;
+      if(a === 'use') useFavorite(p);
+      else if(a === 'remove') removeFavorite(p);
+    });
+  }
+}
+
+// =================================================
+// BOOT SEQUENCE
+// =================================================
+loadState();
+loadFromHash();
+setupDelegation();
+bindDetailsPersistence();
+
+const autoLoaded = tryAutoLoadPreset();
+if(autoLoaded){
+  saveState();
+  renderAll();
+  log(`Auto-carregado preset "${autoLoaded.name}".`, 'ok');
+  status('preset auto-carregado', 'ok');
+} else {
+  renderAll();
+}
+
+switchTab(state.activeTab);
+const ta = $('kd-inline-html'); if(ta && !ta.value) ta.value = RUNTIME_INLINE;
+renderKoduxBoot();
+if(/enter/.test(location.hash)) enterApp();
+
+const cu = $('kd-cmd-url');
+if(cu) cu.addEventListener('keydown', e => {
+  if(e.key === 'Enter'){
+    const btn = document.querySelector('.kodux-boot-url button');
+    if(btn) cmdGo(btn);
+  }
+});
+const u = $('kd-url');
+if(u) u.addEventListener('keydown', e => { if(e.key === 'Enter') loadRemote(e.target); });
+
+buildQuick();
+
+})();
+</script>
+</body>
+</html>
