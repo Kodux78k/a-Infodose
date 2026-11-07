@@ -848,6 +848,151 @@ details[open]>summary .kd-qa{display:none}
   overflow-y: auto !important;
 }
 </style>
+<!-- ═══════════════════════════════════════════════════════════════
+     PATCH · KD INJECT-BG OVERRIDE
+     Cola ANTES do </body> (depois de todos os scripts do KD)
+     ═══════════════════════════════════════════════════════════════ -->
+<style id="kd-patch-inject-bg">
+/* ─── 1. Modo inject: stage vira só um resquício com blend ─── */
+body.kd-inject-active #kd-stage {
+  z-index: -1 !important;
+  mix-blend-mode: multiply;      /* era esse "mix blend com item" */
+  opacity: 0.25;                 /* deixa o BG do app dominar */
+  transition: opacity .35s ease, mix-blend-mode .35s;
+}
+
+/* ─── 2. Blobs e veil: fora. Sem animação, sem custo ─── */
+body.kd-inject-active #kd-stage .kd-blob,
+body.kd-inject-active #kd-stage .kodux-boot-veil {
+  display: none !important;
+  animation: none !important;
+  opacity: 0 !important;
+}
+
+/* ─── 3. Splash opcional: só aparece se quiser (comente p/ manter) ─── */
+body.kd-inject-active #kd-stage .kodux-boot-bg {
+  opacity: 0 !important;
+}
+
+/* ─── 4. Libera o body do app injetado pintar o próprio BG ─── */
+body.kd-inject-active,
+html.kd-inject-active {
+  background: transparent !important;
+}
+
+/* ─── 5. Theme propagation: body[data-theme] → html[data-theme] ─── */
+html[data-theme="light"] { background: #f4f6fa !important; }
+html[data-theme="dark"]  { background: #07090d !important; }
+html[data-theme="auto"]  { background: #07090d !important; }
+
+/* ─── 6. (Opcional) mantém o fundo do app "respirando" com o stage ─── */
+/* Se quiser o app com blend em vez de sumir tudo, descomente: */
+/*
+body.kd-inject-active #kd-inject-target {
+  mix-blend-mode: normal;
+}
+*/
+
+/* ─── 7. Transição suave ao sair do modo inject ─── */
+body:not(.kd-inject-active) #kd-stage {
+  transition: opacity .35s ease, mix-blend-mode .35s;
+}
+</style>
+
+<script id="kd-patch-inject-bg-js">
+(function () {
+  'use strict';
+  if (window.__KD_INJECT_BG_PATCH__) return;
+  window.__KD_INJECT_BG_PATCH__ = true;
+
+  const CLS = 'kd-inject-active';
+  const ROOT = document.documentElement;
+
+  // Ações que ATIVAM o modo inject
+  const TRIGGERS = new Set([
+    'tab-inject',
+    'inject-all', 'inject-html', 'inject-css', 'inject-js',
+    'inject-combo',
+    'load-remote', 'load-remote-inject',
+    'load-inline', 'load-inline-inject',
+    'extract'
+  ]);
+  // Ações que DESATIVAM (voltam ao visual normal)
+  const RESET = new Set([
+    'tab-forge',
+    'clear-injected', 'workspace'
+  ]);
+
+  function set(on) {
+    const was = document.body.classList.contains(CLS);
+    document.body.classList.toggle(CLS, on);
+    ROOT.classList.toggle(CLS, on);
+    if (was !== on) {
+      console.log('[KODUX] inject-bg-mode:', on ? 'ON (blobs off, blend on)' : 'OFF (blobs on)');
+      window.dispatchEvent(new CustomEvent('kodux:inject-bg', { detail: { on } }));
+    }
+  }
+
+  /* ── Hook 1: cliques nos data-kd-act ── */
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-kd-act]');
+    if (!btn) return;
+    const act = btn.dataset.kdAct;
+    if (TRIGGERS.has(act)) set(true);
+    else if (RESET.has(act)) set(false);
+  }, true);
+
+  /* ── Hook 2: quando #kd-inject-target ganha filhos, ativa ── */
+  function watchTarget() {
+    const t = document.getElementById('kd-inject-target');
+    if (!t) return setTimeout(watchTarget, 200);
+    if (t.children.length > 0) set(true);
+    new MutationObserver(() => {
+      if (t.children.length > 0) set(true);
+    }).observe(t, { childList: true });
+  }
+  watchTarget();
+
+  /* ── Hook 3: quando aparecem elementos com data-remote-injector ── */
+  new MutationObserver(() => {
+    if (document.querySelector('[data-remote-injector]')) set(true);
+  }).observe(document.documentElement, { childList: true, subtree: true });
+
+  /* ── Hook 4: theme propagation body.dataset.theme → html.dataset.theme ── */
+  function syncTheme() {
+    const t = document.body.dataset.theme;
+    if (t) ROOT.dataset.theme = t;
+    else delete ROOT.dataset.theme;
+  }
+  new MutationObserver(syncTheme).observe(document.body, {
+    attributes: true,
+    attributeFilter: ['data-theme']
+  });
+  syncTheme();
+
+  /* ── Hook 5: se já abriu na tab INJECT no carregamento ── */
+  function autoDetectOnLoad() {
+    const v = document.getElementById('kd-view-inject');
+    if (v && !v.classList.contains('kd-hidden')) set(true);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(autoDetectOnLoad, 80));
+  } else {
+    setTimeout(autoDetectOnLoad, 80);
+  }
+
+  /* ── API pública ── */
+  window.KODUX_INJECT_BG = {
+    on:     () => set(true),
+    off:    () => set(false),
+    toggle: () => set(!document.body.classList.contains(CLS)),
+    isOn:   () => document.body.classList.contains(CLS)
+  };
+
+  console.log('[KODUX] inject-bg patch carregado. API: KODUX_INJECT_BG');
+})();
+</script>
+<!-- ═══════════════════════════════════════════════════════════════ -->
 </head>
 <body>
   <style data-kodux-source="https://kodux78k.github.io/oiDual--Y-/css/kob-glass-0.css">
