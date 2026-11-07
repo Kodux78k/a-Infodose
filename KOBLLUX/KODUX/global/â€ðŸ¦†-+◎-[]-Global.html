@@ -2277,6 +2277,7 @@ button:hover,
   };
 })();
 </script>
+
 <script>
 /* ═══════════════════════════════════════════════════════════════════
    iFSw — PERSIST + AUDIO-GUARD  (override de fechamento)
@@ -2480,7 +2481,37 @@ button:hover,
      3) PERSISTÊNCIA DE SESSÕES
      ═══════════════════════════════════════════════════════════ */
 
-  function serialize(win) {
+  function // ===== SINCRONIZA ABAS RESTAURADAS COM O tabDataMap DO CORE =====
+if (data.tabs && Array.isArray(data.tabs)) {
+  // Monta o objeto de abas no formato exato que o core espera
+  const tabPayload = {
+    tabs: data.tabs,
+    activeId: data.activeTabId || data.tabs[0]?.id
+  };
+  // Sobrescreve os dados antigos do tabDataMap para essa janela
+  tabDataMap.set(win, tabPayload);
+  // Atualiza o localStorage do core para coincidir
+  localStorage.setItem('dual_tabs_' + win.id, JSON.stringify(tabPayload));
+  // Atualiza o contador visual da aba na janela
+  renderTabCounter(win);
+  // Sincroniza a barra de navegação global
+  syncGlobalHeader();
+}
+// Se o seu persist NÃO salva a lista completa de abas (só a URL ativa):
+else if (data.url) {
+  const existing = tabDataMap.get(win);
+  if (existing && existing.tabs?.length) {
+    const active = existing.tabs.find(t => t.id === existing.activeId);
+    if (active) {
+      active.url = data.url;
+      active.title = data.url.replace(/^https?:\/\//, '').split('/')[0] || 'Nova Aba';
+      tabDataMap.set(win, existing);
+      localStorage.setItem('dual_tabs_' + win.id, JSON.stringify(existing));
+      renderTabCounter(win);
+      syncGlobalHeader();
+    }
+  }
+}(win) {
     if (!win || win.id === 'tabSwitcherOverlay') return null;
     const frame = win.querySelector('.win-frame');
     let url = null, srcdoc = null;
