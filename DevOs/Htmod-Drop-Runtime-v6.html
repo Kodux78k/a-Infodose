@@ -1,0 +1,2013 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>DROP → RUNTIME · Module Builder</title>
+<style>
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+:root{
+  --bg:#050607; --panel:#0b0e12; --panel2:#11161c; --line:#252c34;
+  --text:#eef3f7; --muted:#89939d;
+  --cyan:#00f5d4; --purple:#9b6cff; --orange:#ff9f43; --pink:#ff4d9d; --green:#5dff8a;
+}
+body{
+  margin:0; min-height:100vh;
+  background:
+    radial-gradient(circle at 10% 0%,rgba(0,245,212,.08),transparent 35%),
+    radial-gradient(circle at 100% 100%,rgba(155,108,255,.1),transparent 40%),
+    var(--bg);
+  color:var(--text);
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+.app{ width:min(1200px,100%); margin:auto; padding:18px; }
+header{ padding:8px 4px 20px; }
+.logo{ display:flex; align-items:center; gap:10px; font-weight:900; letter-spacing:-1px; font-size:clamp(24px,6vw,42px); }
+.logo span{ color:var(--cyan); }
+.subtitle{ color:var(--muted); margin-top:6px; font-size:13px; }
+.dropzone{
+  border:1px dashed #3b4650; border-radius:18px; padding:22px;
+  text-align:center; background:rgba(255,255,255,.025);
+  margin-bottom:14px; transition:.2s;
+}
+.dropzone.drag{ border-color:var(--cyan); background:rgba(0,245,212,.06); }
+.drop-title{ font-weight:800; }
+.drop-sub{ color:var(--muted); font-size:11px; margin:5px 0 14px; }
+.grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.full{ grid-column:1/-1; }
+@media(max-width:800px){ .grid{ grid-template-columns:1fr; } }
+.card{
+  background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.012));
+  border:1px solid var(--line); border-radius:18px; overflow:hidden;
+}
+.card-head{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:8px; padding:12px 14px; border-bottom:1px solid var(--line); flex-wrap:wrap;
+}
+.card-title{ font-size:12px; font-weight:900; letter-spacing:.7px; }
+.head-tools{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.badge{
+  font-size:9px; font-weight:800; padding:4px 8px; border-radius:99px;
+  background:rgba(0,245,212,.08); border:1px solid rgba(0,245,212,.2);
+  color:var(--cyan); white-space:nowrap;
+}
+.badge.purple{ background:rgba(155,108,255,.1); border-color:rgba(155,108,255,.3); color:#c9b6ff; }
+textarea{
+  display:block; width:100%; min-height:360px; resize:vertical;
+  border:0; outline:0; padding:15px; background:#07090c; color:#dbe5eb;
+  font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  font-size:12px; line-height:1.6;
+}
+#output{ color:#bafff4; }
+#modOutput{ color:#d7e9ff; }
+.toolbar{ display:flex; flex-wrap:wrap; gap:7px; padding:10px; border-top:1px solid var(--line); }
+button, .file-btn, select{
+  border:1px solid var(--line); background:var(--panel2); color:var(--text);
+  border-radius:9px; padding:9px 11px; font-size:11px; font-weight:800; cursor:pointer;
+}
+button:hover, .file-btn:hover{ border-color:var(--cyan); }
+button:disabled{ opacity:.4; cursor:not-allowed; }
+.primary{ background:var(--cyan); color:#00120e; border-color:var(--cyan); }
+.purple{ border-color:rgba(155,108,255,.5); color:#c9b6ff; }
+.orange{ border-color:rgba(255,159,67,.5); color:#ffc27c; }
+.pink{ border-color:rgba(255,77,157,.5); color:#ff8fc2; }
+.green{ border-color:rgba(93,255,138,.5); color:#8affaa; }
+input[type=file]{ display:none; }
+.bundle-name-input{
+  background:rgba(255,255,255,.03); border:1px solid var(--line); color:var(--cyan);
+  border-radius:6px; padding:5px 9px; font-size:10px; font-weight:800;
+  width:160px; font-family:ui-monospace,SFMono-Regular,Consolas,monospace; outline:0;
+}
+.bundle-name-input:focus{ border-color:var(--cyan); }
+.modes-label{ padding:12px 14px 0; font-size:9px; font-weight:900; letter-spacing:1.3px; color:var(--muted); }
+.modes{ display:grid; grid-template-columns:repeat(auto-fit,minmax(148px,1fr)); gap:7px; padding:8px 10px 10px; }
+@media(max-width:600px){ .modes{ grid-template-columns:repeat(2,1fr); } }
+.mode{ min-height:70px; text-align:left; padding:10px; }
+.mode strong{ display:block; font-size:11px; }
+.mode small{ display:block; margin-top:4px; color:var(--muted); font-size:9px; }
+.mode.active{ border-color:var(--cyan); box-shadow:0 0 0 1px rgba(0,245,212,.2) inset; background:rgba(0,245,212,.06); }
+.mode[data-mode$="-only"].active{
+  border-color:var(--purple); box-shadow:0 0 0 1px rgba(155,108,255,.25) inset; background:rgba(155,108,255,.08);
+}
+.mode-actions{ display:flex; gap:7px; padding:0 10px 12px; flex-wrap:wrap; }
+.mode-actions button{ flex:1; min-width:150px; padding:11px; }
+.status{ padding:9px 13px; border-top:1px solid var(--line); color:var(--muted); font-size:10px; }
+.status.ok{ color:var(--cyan); }
+.status.warn{ color:var(--orange); }
+.parts{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; padding:12px; }
+@media(max-width:800px){ .parts{ grid-template-columns:1fr; } }
+.part{
+  border:1px solid var(--line); border-radius:14px; overflow:hidden;
+  background:#07090c; display:flex; flex-direction:column;
+}
+.part-head{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:6px; padding:9px 11px; border-bottom:1px solid var(--line);
+  font-size:10px; font-weight:900; letter-spacing:.8px;
+}
+.part-head .part-title.css{ color:var(--cyan); }
+.part-head .part-title.html{ color:var(--orange); }
+.part-head .part-title.js{ color:var(--green); }
+.part-meta{ display:flex; align-items:center; gap:6px; font-size:9px; color:var(--muted); font-weight:700; }
+.part-count{
+  display:inline-block; padding:2px 6px; border-radius:99px;
+  background:rgba(255,255,255,.06); border:1px solid var(--line); font-size:9px;
+}
+.part-count.multi{ background:rgba(155,108,255,.1); border-color:rgba(155,108,255,.3); color:#c9b6ff; }
+.part textarea{ min-height:190px; height:190px; font-size:11px; padding:11px; resize:vertical; }
+.part-tools{ display:flex; gap:6px; padding:8px; border-top:1px solid var(--line); flex-wrap:wrap; }
+.part-tools button{ flex:1; min-width:88px; padding:7px 8px; font-size:10px; }
+.hint{ padding:0 14px 12px; color:var(--muted); font-size:10px; line-height:1.5; }
+
+.externals{
+  display:none; margin:0 12px 12px; padding:12px;
+  border-radius:12px; background:rgba(255,159,67,.06);
+  border:1px solid rgba(255,159,67,.3);
+  font-size:10.5px; color:#ffc27c; line-height:1.6;
+}
+.externals.show{ display:block; }
+.externals b{ color:#ffb266; }
+.ext-header{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:10px; flex-wrap:wrap; margin-bottom:10px;
+  padding-bottom:10px; border-bottom:1px solid rgba(255,159,67,.25);
+}
+.ext-header-info{ font-size:10.5px; }
+.ext-header-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+.ext-header-actions button{
+  padding:6px 10px; font-size:10px;
+  background:rgba(255,159,67,.1); border-color:rgba(255,159,67,.4); color:#ffc27c;
+}
+.ext-header-actions button:hover{ border-color:#ffc27c; }
+.ext-header-actions button.toggler{
+  background:rgba(0,245,212,.08); border-color:rgba(0,245,212,.35); color:var(--cyan);
+}
+.ext-header-actions button.toggler:hover{ border-color:var(--cyan); }
+.ext-list{ margin:0; padding:0; list-style:none; }
+.ext-list li{
+  display:flex; flex-wrap:wrap; align-items:flex-start;
+  gap:8px; padding:10px 0;
+  border-bottom:1px solid rgba(255,159,67,.12);
+  font-size:10.5px;
+}
+.ext-list li:last-child{ border-bottom:0; }
+.ext-check{
+  accent-color:var(--cyan); width:14px; height:14px;
+  cursor:pointer; margin:6px 0 0; flex-shrink:0;
+}
+.ext-tag{
+  display:inline-block; padding:3px 7px; border-radius:6px;
+  background:rgba(255,159,67,.12); border:1px solid rgba(255,159,67,.35);
+  font-size:9px; font-weight:800; white-space:nowrap; flex-shrink:0;
+  margin-top:2px;
+}
+.ext-url-block{
+  flex:1; min-width:200px;
+  display:flex; flex-direction:column; gap:3px;
+}
+.ext-url-name{
+  display:flex; gap:8px; align-items:baseline; flex-wrap:wrap;
+  font-size:10px; font-weight:900;
+  overflow:hidden;
+}
+.ext-url-name .name-text{
+  color:var(--cyan);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  max-width:100%;
+}
+.ext-url-name .name-from{
+  color:var(--muted); font-size:9px; font-weight:700; opacity:.75;
+}
+.ext-url-input{
+  width:100%;
+  background:rgba(255,255,255,.02);
+  border:1px solid rgba(255,159,67,.18);
+  color:#ffc27c;
+  padding:4px 7px;
+  font-size:9.5px;
+  font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  border-radius:5px;
+  outline:0;
+  transition:.15s;
+}
+.ext-url-input:hover{ border-color:rgba(255,159,67,.45); }
+.ext-url-input:focus{
+  border-color:#ffc27c;
+  background:rgba(255,159,67,.06);
+  color:#ffd7a0;
+}
+.ext-actions{
+  display:flex; align-items:center; gap:4px; flex-wrap:wrap;
+  margin-top:2px;
+}
+.ext-actions button{
+  padding:4px 8px; font-size:9px; border-radius:6px;
+  background:rgba(255,255,255,.03); border-color:rgba(255,159,67,.3); color:#ffc27c;
+}
+.ext-actions button:hover{ border-color:#ffc27c; }
+.ext-actions button[data-ext-action="remove"]{
+  border-color:rgba(255,77,157,.4); color:#ff8fc2; padding:4px 7px;
+}
+.ext-actions button[data-ext-action="download"]{
+  border-color:rgba(93,255,138,.4); color:var(--green);
+}
+.ext-actions button[data-ext-action="file"]{
+  border-color:rgba(155,108,255,.4); color:#c9b6ff;
+}
+.ext-status{
+  font-size:9px; padding:3px 7px; border-radius:6px; font-weight:800;
+  white-space:nowrap; flex-shrink:0;
+}
+.ext-status.pending{ background:rgba(255,255,255,.06); color:var(--muted); border:1px solid var(--line); }
+.ext-status.loading{ background:rgba(155,108,255,.12); color:#c9b6ff; border:1px solid rgba(155,108,255,.3); }
+.ext-status.ok{ background:rgba(93,255,138,.12); color:var(--green); border:1px solid rgba(93,255,138,.35); }
+.ext-status.fail{ background:rgba(255,77,157,.12); color:#ff8fc2; border:1px solid rgba(255,77,157,.35); }
+
+.modal-overlay{
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.8); z-index:9999;
+  align-items:center; justify-content:center; padding:20px;
+}
+.modal-overlay.show{ display:flex; }
+.modal{
+  background:var(--panel); border:1px solid var(--line); border-radius:18px;
+  width:100%; max-width:720px; max-height:90vh;
+  display:flex; flex-direction:column; overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.6);
+}
+.modal-head{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:10px; padding:14px 16px; border-bottom:1px solid var(--line);
+}
+.modal-title{ font-size:12px; font-weight:900; letter-spacing:.5px; }
+.modal-url{
+  display:block; color:var(--cyan);
+  font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  font-size:10.5px; word-break:break-all; margin-top:4px; font-weight:500;
+}
+.modal-close{ padding:6px 10px; background:transparent; border-color:var(--line); }
+.modal textarea{ flex:1; min-height:280px; border:0; border-radius:0; background:#07090c; font-size:11.5px; }
+.modal-actions{ display:flex; gap:8px; padding:12px; border-top:1px solid var(--line); justify-content:flex-end; }
+.modal-actions .file-import-btn{ border-color:rgba(155,108,255,.5); color:#c9b6ff; }
+
+.mod-tabs{ display:flex; gap:0; padding:0 12px; border-bottom:1px solid var(--line); overflow-x:auto; }
+.mod-tab{
+  background:transparent; border:0; border-bottom:2px solid transparent;
+  border-radius:0; padding:12px 14px;
+  font-size:11px; font-weight:900; color:var(--muted);
+  letter-spacing:.4px; white-space:nowrap;
+}
+.mod-tab:hover{ color:var(--text); border-color:transparent; }
+.mod-tab.active{ color:var(--cyan); border-bottom-color:var(--cyan); background:rgba(0,245,212,.04); }
+.mod-info{
+  padding:10px 14px; color:var(--muted); font-size:10px;
+  background:rgba(255,255,255,.02); border-bottom:1px solid var(--line);
+}
+.mod-info b{ color:#c9b6ff; }
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="logo">DROP <span>→</span> RUNTIME</div>
+  <div class="subtitle">
+    Universal Module Builder · split extractor · 5 versões · monolith fiel ao source · inline externos
+  </div>
+</header>
+
+<div class="dropzone" id="dropzone">
+  <div class="drop-title">Solte um arquivo aqui</div>
+  <div class="drop-sub">HTML · CSS · JS · TXT · qualquer arquivo de texto</div>
+  <label class="file-btn">
+    📂 Escolher arquivo
+    <input type="file" id="fileInput" accept="*/*">
+  </label>
+</div>
+
+<div class="grid">
+
+<section class="card full">
+  <div class="card-head">
+    <div class="card-title">RUNTIME MODE</div>
+    <span class="badge" id="modeBadge">HTML DIRECT</span>
+  </div>
+
+  <div class="modes-label">RUNTIME DIRETO (usa o texto colado como está)</div>
+  <div class="modes">
+    <button class="mode active" data-mode="html"><strong>HTML DIRECT</strong><small>HTML → JS Injector</small></button>
+    <button class="mode" data-mode="css"><strong>CSS INJECT</strong><small>CSS → Style Runtime</small></button>
+    <button class="mode" data-mode="js"><strong>JS INJECT</strong><small>JavaScript Module</small></button>
+    <button class="mode" data-mode="bundle"><strong>FULL BUNDLE</strong><small>HTML + CSS + JS</small></button>
+  </div>
+
+  <div class="modes-label">EXTRAIR DO BUNDLE HTML (cada style / script preservado)</div>
+  <div class="modes">
+    <button class="mode" data-mode="css-only"><strong>CSS ONLY</strong><small>só os styles → injeta CSS</small></button>
+    <button class="mode" data-mode="html-only"><strong>HTML ONLY</strong><small>só as divs → injeta HTML</small></button>
+    <button class="mode" data-mode="js-only"><strong>JS ONLY</strong><small>só os scripts → injeta JS</small></button>
+  </div>
+
+  <div class="mode-actions">
+    <button class="green" id="zipPartsBtn">📦 ZIP · tudo (5 versões + partes + externos)</button>
+    <button class="orange" id="bundlePackBtn">⚡ Bundle Pack (index + bundle.css + bundle.js)</button>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <div class="card-title">SOURCE INPUT</div>
+    <div class="head-tools">
+      <input id="bundleName" class="bundle-name-input" type="text" placeholder="nome-do-bundle" value="bundle">
+      <span class="badge" id="fileType">TEXT</span>
+    </div>
+  </div>
+  <textarea id="source" placeholder="Cole ou carregue seu conteúdo aqui..."></textarea>
+  <div class="toolbar">
+    <button class="primary" id="pasteBtn">📋 Paste</button>
+    <button id="convertBtn">⚡ Converter</button>
+    <button id="clearBtn">Limpar</button>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <div class="card-title">GENERATED MODULE</div>
+    <span class="badge">.JS</span>
+  </div>
+  <textarea id="output" readonly placeholder="Resultado JS..."></textarea>
+  <div class="toolbar">
+    <button data-copy="output">⧉ Copiar</button>
+    <button data-dl="output">↓ Download JS</button>
+  </div>
+</section>
+
+<section class="card full">
+  <div class="card-head">
+    <div class="card-title">PARTES EXTRAÍDAS DO BUNDLE</div>
+    <div class="head-tools">
+      <span class="badge purple" id="partsBadge">0 / 3</span>
+      <button class="green" id="zipBtn">📦 ZIP (tudo)</button>
+    </div>
+  </div>
+
+  <div class="parts">
+    <div class="part">
+      <div class="part-head">
+        <span class="part-title css">CSS</span>
+        <div class="part-meta">
+          <span class="part-count" id="count-css">0</span>
+          <span class="part-size" id="size-css">0 B</span>
+        </div>
+      </div>
+      <textarea id="partCss" readonly placeholder="Nenhum style encontrado..."></textarea>
+      <div class="part-tools">
+        <button data-copy="css">⧉ Copiar</button>
+        <button data-dl="css">↓ styles.css</button>
+        <button data-dl-json="css" class="purple">↓ .json</button>
+      </div>
+    </div>
+
+    <div class="part">
+      <div class="part-head">
+        <span class="part-title html">HTML</span>
+        <div class="part-meta">
+          <span class="part-count" id="count-html">0</span>
+          <span class="part-size" id="size-html">0 B</span>
+        </div>
+      </div>
+      <textarea id="partHtml" readonly placeholder="Nenhuma marcação encontrada..."></textarea>
+      <div class="part-tools">
+        <button data-copy="html">⧉ Copiar</button>
+        <button data-dl="html">↓ markup.html</button>
+      </div>
+    </div>
+
+    <div class="part">
+      <div class="part-head">
+        <span class="part-title js">JAVASCRIPT</span>
+        <div class="part-meta">
+          <span class="part-count" id="count-js">0</span>
+          <span class="part-size" id="size-js">0 B</span>
+        </div>
+      </div>
+      <textarea id="partJs" readonly placeholder="Nenhum script encontrado..."></textarea>
+      <div class="part-tools">
+        <button data-copy="js">⧉ Copiar</button>
+        <button data-dl="js">↓ module.js</button>
+        <button data-dl-json="js" class="purple">↓ .json</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="externals" id="externals"></div>
+
+  <div class="hint">
+    Cada style e cada script do bundle é mantido separado.
+    Recursos externos podem ser <b>importados</b> (fetch), <b>colados</b>, ou
+    <b>carregados de arquivo local</b>. A URL é editável e o nome do arquivo aparece em destaque.
+    Ao importar, o conteúdo é inlined <b>no mesmo ponto</b> onde o link/script estava.
+  </div>
+</section>
+
+<section class="card full">
+  <div class="card-head">
+    <div class="card-title">MODULAR OUTPUT · 5 VERSÕES</div>
+    <div class="head-tools">
+      <span class="badge purple" id="modVerBadge">index.html</span>
+      <button class="green" id="zipBtn2">📦 ZIP (tudo)</button>
+    </div>
+  </div>
+
+  <div class="mod-tabs">
+    <button class="mod-tab active" data-ver="modular">📄 index.html · modular individual</button>
+    <button class="mod-tab" data-ver="bundle">📦 index-bundle.html · bundle.css + bundle.js</button>
+    <button class="mod-tab" data-ver="inject">⚡ index-inject.html · auto-contido</button>
+    <button class="mod-tab" data-ver="injectjs">🔧 inject.js · fonte pura</button>
+    <button class="mod-tab" data-ver="monolith">🔥 monolith.html · tudo inline</button>
+  </div>
+
+  <div class="mod-info" id="modInfo"></div>
+
+  <textarea id="modOutput" readonly placeholder="Cole algo no SOURCE INPUT para gerar as versões modulares..."></textarea>
+
+  <div class="toolbar">
+    <button data-copy="modOutput">⧉ Copiar</button>
+    <button id="modDownloadBtn">↓ Download atual</button>
+    <button class="pink" id="monolithBtn">🔥 ↓ Monolith HTML</button>
+    <button class="orange" id="bundleOnlyBtn">📦 ↓ Bundle Pack</button>
+  </div>
+</section>
+
+<section class="card full">
+  <div class="status" id="status">Runtime aguardando...</div>
+</section>
+
+</div>
+</div>
+
+<input type="file" id="localExtFile" accept="*/*">
+
+<div class="modal-overlay" id="pasteModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">📋 COLAR CONTEÚDO EXTERNO</div>
+        <span class="modal-url" id="pasteUrl">—</span>
+      </div>
+      <button class="modal-close" id="pasteClose">✕</button>
+    </div>
+    <textarea id="pasteText" placeholder="Cole aqui o conteúdo do arquivo externo..."></textarea>
+    <div class="modal-actions">
+      <button class="file-import-btn" id="pasteFileBtn">📁 Importar do computador</button>
+      <button id="pasteCancel">Cancelar</button>
+      <button class="primary" id="pasteConfirm">↳ Inlining</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================================================
+   ESTADO
+   ===================================================== */
+let mode = "html";
+let currentModVer = "modular";
+let bundleName = "bundle";
+let bundleNameUserSet = false;
+let pendingFileExtId = null;
+
+const source      = document.getElementById("source");
+const output      = document.getElementById("output");
+const modOutput   = document.getElementById("modOutput");
+const target      = { value: "#inject-here" };
+const statusEl    = document.getElementById("status");
+const partsBadge  = document.getElementById("partsBadge");
+const externalsEl = document.getElementById("externals");
+const modVerBadge = document.getElementById("modVerBadge");
+const modInfo     = document.getElementById("modInfo");
+const bundleNameInput = document.getElementById("bundleName");
+const localFileInput  = document.getElementById("localExtFile");
+
+const PARTS = {
+  css : { el: document.getElementById("partCss"),  name: "styles.css",  mime: "text/css"        },
+  html: { el: document.getElementById("partHtml"), name: "markup.html", mime: "text/html"       },
+  js  : { el: document.getElementById("partJs"),   name: "module.js",   mime: "text/javascript" }
+};
+
+const MODE_LABEL = {
+  "html":"HTML DIRECT","css":"CSS INJECT","js":"JS INJECT","bundle":"FULL BUNDLE",
+  "css-only":"CSS ONLY","html-only":"HTML ONLY","js-only":"JS ONLY"
+};
+
+const MOD_VER_LABEL = {
+  modular:"index.html", bundle:"index-bundle.html", inject:"index-inject.html",
+  injectjs:"inject.js", monolith:"monolith.html"
+};
+
+const MOD_VER_INFO = {
+  modular:
+    'Cada <b>&lt;style&gt;</b> virou <b>&lt;link rel=stylesheet&gt;</b> NO MESMO LUGAR; cada ' +
+    '<b>&lt;script&gt;</b> inline virou <b>&lt;script src&gt;</b> NO MESMO LUGAR. ' +
+    'Todo o HTML original (html attrs, body class, estrutura) é preservado integralmente. ' +
+    'Externos não inlined continuam com a URL original.',
+  bundle:
+    'Todos os <b>&lt;style&gt;</b> concatenados em <b>css/bundle.css</b>, scripts inline em ' +
+    '<b>js/bundle.js</b>. Estrutura do body/html do source preservada. Externos JS não inlined ' +
+    'ficam como <b>&lt;script src&gt;</b> adicionais.',
+  inject:
+    'Página auto-contida com <b>#inject-here</b>. Injeta CSS, markup e JS dinamicamente.',
+  injectjs:
+    'Fonte JS pura. Carregue com <b>&lt;script src=inject.js&gt;</b> em qualquer página.',
+  monolith:
+    'Fonte HTML <b>original preservada integralmente</b> (body attrs, classes, estrutura). ' +
+    'Externos importados são inlined <b>NO MESMO PONTO</b> onde estavam, ' +
+    'seja no head, no body ou no meio de outro markup.'
+};
+
+let baseParts     = { css: [], html: "", js: [], external: [] };
+let resolvedParts = { css: [], html: "", js: [], external: [] };
+
+/* =====================================================
+   HELPERS
+   ===================================================== */
+function setStatus(msg, kind){
+  statusEl.textContent = msg;
+  statusEl.className = "status" + (kind ? " " + kind : " ok");
+}
+function fmtSize(str){
+  const bytes = new Blob([str || ""]).size;
+  if(bytes < 1024) return bytes + " B";
+  if(bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / 1048576).toFixed(2) + " MB";
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+function escapeAttr(s){
+  return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;");
+}
+function escapeRegex(str){
+  return String(str).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+function jsString(str){
+  return JSON.stringify(String(str))
+    .replace(/<\//g, "<\\/")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+function jsJSON(obj){
+  return JSON.stringify(obj)
+    .replace(/<\//g, "<\\/")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+function sanitizeBundleName(name){
+  if(!name) return "bundle";
+  let s = String(name).trim();
+  s = s.replace(/\.[a-zA-Z0-9]+$/, "");
+  s = s.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
+  s = s.replace(/-+/g, "-");
+  return s || "bundle";
+}
+function setBundleName(name, fromUser){
+  if(fromUser) bundleNameUserSet = true;
+  bundleName = sanitizeBundleName(name);
+  if(bundleNameInput.value !== bundleName) bundleNameInput.value = bundleName;
+}
+function filenameFromUrl(url, fallbackExt){
+  if(!url) return "external" + (fallbackExt ? "." + fallbackExt : "");
+  try{
+    // Try to parse as URL if absolute
+    let pathname = url;
+    if(/^[a-z]+:\/\//i.test(url)){
+      const u = new URL(url);
+      pathname = u.pathname;
+    }else if(url.startsWith("//")){
+      pathname = url.split("?")[0].split("#")[0].split("/").filter(Boolean).slice(1).join("/");
+    }else{
+      // relative — just take basename part
+      pathname = url.split("?")[0].split("#")[0];
+    }
+    const parts = pathname.split("/").filter(Boolean);
+    let last = parts[parts.length - 1] || "";
+    last = last.replace(/[^a-zA-Z0-9._-]/g, "_");
+    if(!last){
+      return "external" + (fallbackExt ? "." + fallbackExt : "");
+    }
+    if(!/\.[a-z0-9]+$/i.test(last) && fallbackExt) last += "." + fallbackExt;
+    return last;
+  }catch(e){
+    return "external" + (fallbackExt ? "." + fallbackExt : "");
+  }
+}
+function getContent(key){
+  if(key === "output")    return output.value;
+  if(key === "modOutput") return modOutput.value;
+  if(key === "source")    return source.value;
+  if(!PARTS[key]) return "";
+  return PARTS[key].el.value;
+}
+function fileNameFor(key){
+  if(key === "output")    return "runtime-" + mode + ".js";
+  if(key === "modOutput") return MOD_VER_LABEL[currentModVer];
+  return PARTS[key] ? PARTS[key].name : "arquivo.txt";
+}
+async function copyText(text, okMsg){
+  if(!text || !text.trim()){ setStatus("⚠ Nada para copiar.", "warn"); return; }
+  try{
+    await navigator.clipboard.writeText(text);
+    setStatus("✓ " + okMsg);
+  }catch(e){
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); setStatus("✓ " + okMsg); }
+    catch(err){ setStatus("⚠ Clipboard bloqueado pelo navegador.", "warn"); }
+    ta.remove();
+  }
+}
+function download(name, content, mime){
+  const blob = (content instanceof Blob)
+    ? content
+    : new Blob([content], { type: (mime || "text/plain") + ";charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+/* =====================================================
+   EXTRACTOR
+   ===================================================== */
+function extractParts(text){
+  const empty = { css: [], html: "", js: [], external: [] };
+  if(!text || !text.trim()) return empty;
+
+  let doc;
+  try{ doc = new DOMParser().parseFromString(text, "text/html"); }
+  catch(e){ return empty; }
+
+  const css = Array.from(doc.querySelectorAll("style"))
+    .map(s => s.textContent.replace(/^\s+|\s+$/g, ""))
+    .filter(Boolean);
+
+  const js = [];
+  Array.from(doc.querySelectorAll("script")).forEach(s => {
+    const src = s.getAttribute("src");
+    if(src){ js.push({ src, content: "" }); return; }
+    const t = s.textContent.trim();
+    if(t) js.push({ src: null, content: t });
+  });
+
+  let html = "";
+  if(doc.body){
+    const clone = doc.body.cloneNode(true);
+    clone.querySelectorAll("script,style").forEach(n => n.remove());
+    html = clone.innerHTML.trim();
+  }
+
+  const external = [];
+
+  Array.from(doc.querySelectorAll('link[rel="stylesheet"]')).forEach(l => {
+    const href = l.getAttribute("href");
+    if(href) external.push({ type: "css-link", url: href, sourceUrl: href });
+  });
+
+  css.forEach((c, i) => {
+    const re = /@import\s+(?:url\(\s*)?['"]?([^'")\s;]+)['"]?\s*\)?[^;]*;/gi;
+    let m;
+    while((m = re.exec(c)) !== null){
+      external.push({
+        type: "css-import",
+        url: m[1],
+        sourceUrl: m[1],
+        from: "style #" + (i+1),
+        styleIndex: i,
+        matchedText: m[0]
+      });
+    }
+  });
+
+  js.forEach((s, i) => {
+    if(s.src){
+      external.push({
+        type: "js-src",
+        url: s.src,
+        sourceUrl: s.src,
+        from: "script #" + (i+1),
+        jsIndex: i
+      });
+    }
+  });
+
+  external.forEach(e => {
+    e.id = e.type + "::" + e.sourceUrl;
+    e.status = "pending";
+    e.selected = true;
+    e.content = "";
+  });
+
+  return { css, html, js, external };
+}
+
+function extractAndMerge(text){
+  const fresh = extractParts(text);
+  const prevMap = {};
+  baseParts.external.forEach(p => { prevMap[p.id] = p; });
+  fresh.external.forEach(f => {
+    const p = prevMap[f.id];
+    if(p){
+      f.content  = p.content || "";
+      f.status   = p.status === "loading" ? "pending" : (p.status || "pending");
+      f.selected = p.selected !== false;
+      // Preserve edited URL if user changed it
+      if(p.url && p.url !== p.sourceUrl) f.url = p.url;
+    }
+  });
+  return fresh;
+}
+
+/* =====================================================
+   APPLY INLINES — para o PAINEL DE PARTES (arrays)
+   ===================================================== */
+function applyExternals(base){
+  const css = base.css.slice();
+  const js  = base.js.map(s => ({ ...s }));
+
+  base.external.forEach(ext => {
+    if(!ext.content) return;
+    if(ext.type === "css-import" && ext.styleIndex != null){
+      const idx = ext.styleIndex;
+      if(css[idx] && ext.matchedText && css[idx].indexOf(ext.matchedText) !== -1){
+        css[idx] = css[idx].replace(ext.matchedText, ext.content);
+      }
+    }
+  });
+
+  const linkContents = base.external
+    .filter(e => e.content && e.type === "css-link")
+    .map(e => e.content);
+  if(linkContents.length) css.unshift(...linkContents);
+
+  base.external.forEach(ext => {
+    if(!ext.content) return;
+    if(ext.type === "js-src" && ext.jsIndex != null){
+      if(js[ext.jsIndex] && js[ext.jsIndex].src === ext.sourceUrl){
+        js[ext.jsIndex] = { src: null, content: ext.content };
+      }
+    }
+  });
+
+  return { css, html: base.html, js, external: base.external };
+}
+
+/* =====================================================
+   DOM-BASED INLINE APPLICATION
+   Aplica os conteúdos importados DIRETO no DOM, no mesmo
+   ponto onde o link/script/@import estava.
+   ===================================================== */
+function parseHtml(text){
+  const parser = new DOMParser();
+  return parser.parseFromString(text, "text/html");
+}
+
+function applyInlinesToDoc(doc, externals){
+  // 1) @import dentro de <style>
+  externals.forEach(ext => {
+    if(!ext.content || ext.type !== "css-import") return;
+    const styles = doc.querySelectorAll("style");
+    const style = styles[ext.styleIndex];
+    if(!style) return;
+    const re = new RegExp(
+      "@import\\s+(?:url\\(\\s*)?['\"]?" + escapeRegex(ext.sourceUrl) + "['\"]?\\s*\\)?[^;]*;",
+      "gi"
+    );
+    style.textContent = style.textContent.replace(re, ext.content);
+  });
+
+  // 2) <link rel=stylesheet> — replace in place
+  externals.forEach(ext => {
+    if(!ext.content || ext.type !== "css-link") return;
+    Array.from(doc.querySelectorAll('link[rel="stylesheet"]')).forEach(l => {
+      if(l.getAttribute("href") === ext.sourceUrl){
+        const style = doc.createElement("style");
+        style.setAttribute("data-inlined-from", ext.sourceUrl);
+        style.textContent = ext.content.replace(/<\/style/gi, "<\\/style");
+        l.replaceWith(style);
+      }
+    });
+  });
+
+  // 3) <script src> — replace in place (mesmo lugar)
+  externals.forEach(ext => {
+    if(!ext.content || ext.type !== "js-src") return;
+    Array.from(doc.querySelectorAll("script[src]")).forEach(s => {
+      if(s.getAttribute("src") === ext.sourceUrl){
+        const newScript = doc.createElement("script");
+        Array.from(s.attributes).forEach(attr => {
+          if(attr.name !== "src") newScript.setAttribute(attr.name, attr.value);
+        });
+        newScript.textContent = ext.content.replace(/<\/script/gi, "<\\/script");
+        s.replaceWith(newScript);
+      }
+    });
+  });
+}
+
+function setDocTitle(doc, name){
+  let t = doc.querySelector("title");
+  if(!t){
+    t = doc.createElement("title");
+    (doc.head || doc.documentElement).appendChild(t);
+  }
+  t.textContent = name;
+}
+
+function serializeDoc(doc){
+  return "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+}
+
+/* =====================================================
+   BUILD VERSIONS — DOM-based
+   ===================================================== */
+function buildMonolithHtml(externals, name){
+  const doc = parseHtml(source.value);
+  applyInlinesToDoc(doc, externals);
+  setDocTitle(doc, name);
+  return serializeDoc(doc);
+}
+
+function buildModularHtml(externals, name){
+  const doc = parseHtml(source.value);
+  applyInlinesToDoc(doc, externals);
+  setDocTitle(doc, name);
+
+  // Coletar <style> e substituir por <link> in place
+  const styleEls = Array.from(doc.querySelectorAll("style"));
+  const cssFiles = [];
+  const cssPaths = styleEls.length === 0 ? []
+                 : styleEls.length === 1 ? ["css/style.css"]
+                 : styleEls.map((_, i) => "css/style-" + (i+1) + ".css");
+
+  styleEls.forEach((style, i) => {
+    cssFiles.push(style.textContent);
+    const link = doc.createElement("link");
+    link.setAttribute("rel", "stylesheet");
+    link.setAttribute("href", cssPaths[i]);
+    style.replaceWith(link);
+  });
+
+  // Coletar <script> inline e substituir por <script src> in place
+  const scriptEls = Array.from(doc.querySelectorAll("script:not([src])"));
+  const jsFiles = [];
+  const jsPaths = scriptEls.length === 0 ? []
+                : scriptEls.length === 1 ? ["js/script.js"]
+                : scriptEls.map((_, i) => "js/script-" + (i+1) + ".js");
+
+  scriptEls.forEach((script, i) => {
+    jsFiles.push(script.textContent);
+    const newScript = doc.createElement("script");
+    newScript.setAttribute("src", jsPaths[i]);
+    Array.from(script.attributes).forEach(attr => {
+      if(attr.name !== "src") newScript.setAttribute(attr.name, attr.value);
+    });
+    script.replaceWith(newScript);
+  });
+
+  return {
+    html: serializeDoc(doc),
+    cssFiles,
+    cssPaths,
+    jsFiles,
+    jsPaths
+  };
+}
+
+function buildBundleHtml(externals, name){
+  const doc = parseHtml(source.value);
+  applyInlinesToDoc(doc, externals);
+  setDocTitle(doc, name);
+
+  // Concatenar todos os <style>
+  const styleEls = Array.from(doc.querySelectorAll("style"));
+  const cssParts = styleEls.map(s => s.textContent);
+  const bundleCss = cssParts.length <= 1
+    ? (cssParts[0] || "")
+    : cssParts.map((c, i) =>
+        "/* ===== STYLE " + (i+1) + " / " + cssParts.length + " ===== */\n" + c
+      ).join("\n\n");
+
+  styleEls.forEach((style, i) => {
+    if(i === 0){
+      const link = doc.createElement("link");
+      link.setAttribute("rel", "stylesheet");
+      link.setAttribute("href", "css/bundle.css");
+      style.replaceWith(link);
+    }else{
+      style.remove();
+    }
+  });
+
+  // Concatenar scripts inline
+  const scriptEls = Array.from(doc.querySelectorAll("script:not([src])"));
+  const jsParts = scriptEls.map(s => s.textContent);
+  const bundleJs = jsParts.length <= 1
+    ? (jsParts[0] || "")
+    : jsParts.map((c, i) =>
+        "// ===== SCRIPT " + (i+1) + " / " + jsParts.length + " =====\n" + c
+      ).join("\n\n");
+
+  scriptEls.forEach((script, i) => {
+    if(i === 0){
+      const newScript = doc.createElement("script");
+      newScript.setAttribute("src", "js/bundle.js");
+      Array.from(script.attributes).forEach(attr => {
+        if(attr.name !== "src") newScript.setAttribute(attr.name, attr.value);
+      });
+      script.replaceWith(newScript);
+    }else{
+      script.remove();
+    }
+  });
+
+  return {
+    html: serializeDoc(doc),
+    bundleCss,
+    bundleJs
+  };
+}
+
+/* =====================================================
+   BUNDLE CSS/JS a partir das parts (para inject e parts panel)
+   ===================================================== */
+function buildBundleCssFromParts(parts){
+  const importLines = (parts.external || [])
+    .filter(e => e.type === "css-link" && !e.content)
+    .map(e => "@import url('" + e.url.replace(/'/g, "\\'") + "');");
+  const inlineBlocks = parts.css.map((c, i) =>
+    parts.css.length > 1
+      ? "/* ===== STYLE " + (i+1) + " / " + parts.css.length + " ===== */\n" + c
+      : c
+  );
+  const arr = [...importLines, ...inlineBlocks].filter(Boolean);
+  return arr.join("\n\n");
+}
+function buildBundleJsFromParts(parts){
+  const inline = parts.js.filter(s => !s.src);
+  if(!inline.length) return "";
+  if(inline.length === 1) return inline[0].content;
+  return inline.map((s, i) =>
+    "// ===== SCRIPT " + (i+1) + " / " + inline.length + " =====\n" + s.content
+  ).join("\n\n");
+}
+
+/* =====================================================
+   JOIN (painel de partes)
+   ===================================================== */
+function joinCss(arr){
+  if(!arr || !arr.length) return "";
+  if(arr.length === 1) return arr[0];
+  return arr.map((c, i) =>
+    "/* ===== STYLE " + (i+1) + " / " + arr.length + " ===== */\n" + c
+  ).join("\n\n");
+}
+function joinJs(arr){
+  if(!arr || !arr.length) return "";
+  return arr.map((s, i) => {
+    if(s.src) return "// ===== SCRIPT " + (i+1) + " / " + arr.length + " (externo) =====\n// src: " + s.src;
+    return "// ===== SCRIPT " + (i+1) + " / " + arr.length + " =====\n" + s.content;
+  }).join("\n\n");
+}
+
+/* =====================================================
+   INJETORES (para output + inject.js/html)
+   ===================================================== */
+function cssInjector(cssArray){
+  const arr = Array.isArray(cssArray) ? cssArray : [cssArray];
+  const safe = jsJSON(arr);
+  const n = arr.length;
+  return "/* RUNTIME · CSS INJECT (" + n + " style" + (n !== 1 ? "s" : "") + ") */\n" +
+    "(function(styles){\n" +
+    "  styles.forEach(function(css, i){\n" +
+    "    const style = document.createElement('style');\n" +
+    "    style.setAttribute('data-runtime-module', 'css');\n" +
+    "    style.setAttribute('data-runtime-index', i);\n" +
+    "    style.textContent = css;\n" +
+    "    document.head.appendChild(style);\n" +
+    "  });\n" +
+    "})(" + safe + ");";
+}
+function jsInjector(jsArray){
+  const arr = Array.isArray(jsArray) ? jsArray : [{ src: null, content: jsArray }];
+  const normalized = arr.map(s =>
+    s && s.src ? { src: s.src } : { content: (s && s.content) || "" }
+  );
+  const safe = jsJSON(normalized);
+  const n = arr.length;
+  return "/* RUNTIME · JS INJECT (" + n + " script" + (n !== 1 ? "s" : "") + ") */\n" +
+    "(function(scripts){\n" +
+    "  scripts.forEach(function(s){\n" +
+    "    const script = document.createElement('script');\n" +
+    "    script.setAttribute('data-runtime-module', 'js');\n" +
+    "    if(s.src){ script.src = s.src; script.async = false; }\n" +
+    "    else{ script.textContent = s.content; }\n" +
+    "    document.body.appendChild(script);\n" +
+    "  });\n" +
+    "})(" + safe + ");";
+}
+function htmlInjector(html, selector){
+  const safe = jsString(html);
+  return "/* RUNTIME · HTML DIRECT → " + selector + " */\n" +
+    "(function(h, s){\n" +
+    "  const p = new DOMParser();\n" +
+    "  const c = p.parseFromString(h, 'text/html');\n" +
+    "  const f = document.createDocumentFragment();\n" +
+    "  const t = document.querySelector(s) || document.body;\n" +
+    "  Array.from(c.body.childNodes).forEach(function(n){\n" +
+    "    f.appendChild(document.importNode(n, true));\n" +
+    "  });\n" +
+    "  t.appendChild(f);\n" +
+    "  Array.from(c.querySelectorAll('script')).forEach(function(x){\n" +
+    "    const n = document.createElement('script');\n" +
+    "    for(let i = 0; i < x.attributes.length; i++){\n" +
+    "      n.setAttribute(x.attributes[i].name, x.attributes[i].value);\n" +
+    "    }\n" +
+    "    n.textContent = x.textContent;\n" +
+    "    document.body.appendChild(n);\n" +
+    "  });\n" +
+    "})(" + safe + ", " + JSON.stringify(selector) + ");";
+}
+function fullBundle(html, selector){
+  const safe = jsString(html);
+  return "/* RUNTIME · FULL BUNDLE → " + selector + " */\n" +
+    "(function(bundle, s){\n" +
+    "  const p = new DOMParser();\n" +
+    "  const c = p.parseFromString(bundle, 'text/html');\n" +
+    "  const t = document.querySelector(s) || document.body;\n" +
+    "  Array.from(c.querySelectorAll('style')).forEach(function(style, i){\n" +
+    "    const n = document.createElement('style');\n" +
+    "    n.setAttribute('data-runtime-module', 'css');\n" +
+    "    n.setAttribute('data-runtime-index', i);\n" +
+    "    n.textContent = style.textContent;\n" +
+    "    document.head.appendChild(n);\n" +
+    "  });\n" +
+    "  const f = document.createDocumentFragment();\n" +
+    "  Array.from(c.body.childNodes).forEach(function(node){\n" +
+    "    if(node.nodeName !== 'SCRIPT' && node.nodeName !== 'STYLE'){\n" +
+    "      f.appendChild(document.importNode(node, true));\n" +
+    "    }\n" +
+    "  });\n" +
+    "  t.appendChild(f);\n" +
+    "  Array.from(c.querySelectorAll('script')).forEach(function(x){\n" +
+    "    const n = document.createElement('script');\n" +
+    "    for(let i = 0; i < x.attributes.length; i++){\n" +
+    "      n.setAttribute(x.attributes[i].name, x.attributes[i].value);\n" +
+    "    }\n" +
+    "    n.textContent = x.textContent;\n" +
+    "    document.body.appendChild(n);\n" +
+    "  });\n" +
+    "})(" + safe + ", " + JSON.stringify(selector) + ");";
+}
+function fullBundleFromParts(parts, selector){
+  const cssArr   = jsJSON(parts.css || []);
+  const htmlStr  = jsString(parts.html || "");
+  const jsArr    = jsJSON((parts.js || []).map(s =>
+    s.src ? { src: s.src } : { content: s.content || "" }
+  ));
+  const nCss = (parts.css || []).length;
+  const nJs  = (parts.js  || []).length;
+  return "/* RUNTIME · FULL BUNDLE (from extracted parts) → " + selector + "\n" +
+    " * Estilos: " + nCss + " · Scripts: " + nJs + "\n" +
+    " */\n" +
+    "(function(cssArr, htmlStr, jsArr, s){\n" +
+    "  const t = document.querySelector(s) || document.body;\n" +
+    "  cssArr.forEach(function(css, i){\n" +
+    "    const n = document.createElement('style');\n" +
+    "    n.setAttribute('data-runtime-module', 'css');\n" +
+    "    n.setAttribute('data-runtime-index', i);\n" +
+    "    n.textContent = css;\n" +
+    "    document.head.appendChild(n);\n" +
+    "  });\n" +
+    "  if(htmlStr){\n" +
+    "    const p = new DOMParser();\n" +
+    "    const c = p.parseFromString(htmlStr, 'text/html');\n" +
+    "    const f = document.createDocumentFragment();\n" +
+    "    Array.from(c.body.childNodes).forEach(function(node){\n" +
+    "      f.appendChild(document.importNode(node, true));\n" +
+    "    });\n" +
+    "    t.appendChild(f);\n" +
+    "  }\n" +
+    "  jsArr.forEach(function(obj, i){\n" +
+    "    const n = document.createElement('script');\n" +
+    "    n.setAttribute('data-runtime-module', 'js');\n" +
+    "    n.setAttribute('data-runtime-index', i);\n" +
+    "    if(obj.src){ n.src = obj.src; n.async = false; }\n" +
+    "    else{ n.textContent = obj.content; }\n" +
+    "    document.body.appendChild(n);\n" +
+    "  });\n" +
+    "})(" + cssArr + ", " + htmlStr + ", " + jsArr + ", " + JSON.stringify(selector) + ");";
+}
+
+/* =====================================================
+   INJECT HTML / JS
+   ===================================================== */
+function buildInjectHtmlFile(parts, name){
+  const injector = fullBundleFromParts(parts, "#inject-here");
+  return "<!DOCTYPE html>\n" +
+    '<html lang="pt-BR">\n' +
+    "<head>\n" +
+    '<meta charset="UTF-8">\n' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
+    "<title>" + escapeHtml(name || bundleName) + " · inject</title>\n" +
+    "<style>\n" +
+    "  body{ margin:0; padding:20px; font-family:system-ui; background:#101216; color:#eee; }\n" +
+    "  #inject-here{ min-height:40px; }\n" +
+    "</style>\n</head>\n<body>\n" +
+    '<div id="inject-here"></div>\n' +
+    "<script>\n" + injector + "\n<\/script>\n" +
+    "</body>\n</html>";
+}
+function buildInjectJsFile(parts, selector){
+  return fullBundleFromParts(parts, selector || "#inject-here");
+}
+
+/* =====================================================
+   RENDER MODULAR
+   ===================================================== */
+function renderModOutput(){
+  if(!source.value.trim()){
+    modOutput.value = "";
+    return;
+  }
+  const externals = baseParts.external;
+  const name = bundleName;
+  let content = "";
+
+  if(currentModVer === "modular"){
+    content = buildModularHtml(externals, name).html;
+  }else if(currentModVer === "bundle"){
+    content = buildBundleHtml(externals, name).html;
+  }else if(currentModVer === "inject"){
+    content = buildInjectHtmlFile(resolvedParts, name);
+  }else if(currentModVer === "injectjs"){
+    content = buildInjectJsFile(resolvedParts, target.value);
+  }else if(currentModVer === "monolith"){
+    content = buildMonolithHtml(externals, name);
+  }
+
+  modOutput.value = content;
+  modVerBadge.textContent = MOD_VER_LABEL[currentModVer];
+  modInfo.innerHTML = MOD_VER_INFO[currentModVer];
+}
+
+/* =====================================================
+   PARTS DISPLAY
+   ===================================================== */
+function renderPartsDisplay(parts){
+  let found = 0;
+  const cssText  = joinCss(parts.css);
+  const htmlText = parts.html || "";
+  const jsText   = joinJs(parts.js);
+
+  PARTS.css.el.value  = cssText;
+  PARTS.html.el.value = htmlText;
+  PARTS.js.el.value   = jsText;
+
+  document.getElementById("size-css").textContent  = fmtSize(cssText);
+  document.getElementById("size-html").textContent = fmtSize(htmlText);
+  document.getElementById("size-js").textContent   = fmtSize(jsText);
+
+  updateCountBadge("count-css", parts.css.length);
+  updateCountBadge("count-html", htmlText ? 1 : 0);
+  updateCountBadge("count-js", parts.js.length);
+
+  if(parts.css.length) found++;
+  if(htmlText.trim())  found++;
+  if(parts.js.length)  found++;
+  partsBadge.textContent = found + " / 3";
+}
+function updateCountBadge(id, n){
+  const el = document.getElementById(id);
+  el.textContent = n + (n === 1 ? " item" : " itens");
+  el.classList.toggle("multi", n > 1);
+}
+
+/* =====================================================
+   EXTERNOS DISPLAY
+   ===================================================== */
+function renderExternalsDisplay(external){
+  if(!external || !external.length){
+    externalsEl.classList.remove("show");
+    externalsEl.innerHTML = "";
+    return;
+  }
+
+  const ok      = external.filter(e => e.status === "ok").length;
+  const fail    = external.filter(e => e.status === "fail").length;
+  const loading = external.filter(e => e.status === "loading").length;
+  const pending = external.length - ok - fail - loading;
+  const selectedCount = external.filter(e => e.selected).length;
+
+  let html = '<div class="ext-header">';
+  html += '<div class="ext-header-info">';
+  html += '⚠ <b>' + external.length + '</b> externo(s)';
+  if(ok)      html += ' · <span style="color:var(--green)">' + ok + ' inline</span>';
+  if(loading) html += ' · <span style="color:#c9b6ff">' + loading + ' carregando</span>';
+  if(fail)    html += ' · <span style="color:var(--pink)">' + fail + ' falha</span>';
+  if(pending) html += ' · <span style="color:var(--orange)">' + pending + ' pendente</span>';
+  html += ' · <b style="color:var(--cyan)">' + selectedCount + '</b> marcado(s)';
+  html += '</div>';
+  html += '<div class="ext-header-actions">';
+  html += '<button class="toggler" data-ext-all="select-all">✓ Todos</button>';
+  html += '<button class="toggler" data-ext-all="select-none">✗ Nenhum</button>';
+  html += '<button data-ext-all="import">⬇️ Importar todos</button>';
+  html += '<button data-ext-all="download-selected">💾 Baixar selecionados</button>';
+  html += '<button data-ext-all="clear">🗑 Limpar inlines</button>';
+  html += '</div>';
+  html += '</div>';
+
+  html += '<ul class="ext-list">';
+  external.forEach(e => {
+    const tag = {
+      "css-link":"LINK","css-import":"@IMPORT","js-src":"SCRIPT SRC"
+    }[e.type] || e.type;
+
+    const statusCls = e.status === "ok" ? "ok"
+                    : e.status === "fail" ? "fail"
+                    : e.status === "loading" ? "loading"
+                    : "pending";
+    const statusLbl = e.status === "ok" ? "INLINE"
+                    : e.status === "fail" ? "FALHA"
+                    : e.status === "loading" ? "CARREGANDO"
+                    : "PENDENTE";
+
+    const extById = escapeAttr(e.id);
+    const friendlyName = filenameFromUrl(e.url, e.type === "js-src" ? "js" : "css");
+
+    html += '<li>';
+    html += '<input type="checkbox" class="ext-check" data-ext-id="' + extById + '"' + (e.selected ? " checked" : "") + '>';
+    html += '<span class="ext-tag">' + tag + '</span>';
+    html += '<div class="ext-url-block">';
+    html += '<div class="ext-url-name">';
+    html += '<span class="name-text" title="' + escapeAttr(friendlyName) + '">' + escapeHtml(friendlyName) + '</span>';
+    if(e.from) html += '<span class="name-from">' + escapeHtml(e.from) + '</span>';
+    html += '</div>';
+    html += '<input type="text" class="ext-url-input" data-ext-id="' + extById + '" value="' + escapeAttr(e.url) + '" spellcheck="false" title="' + escapeAttr(e.url) + '">';
+    html += '</div>';
+    html += '<span class="ext-actions">';
+    html += '<span class="ext-status ' + statusCls + '">' + statusLbl + '</span>';
+    html += '<button data-ext-action="paste" data-ext-id="' + extById + '" title="Colar conteúdo">📋</button>';
+    html += '<button data-ext-action="import" data-ext-id="' + extById + '" title="Importar via fetch">⬇️</button>';
+    html += '<button data-ext-action="file" data-ext-id="' + extById + '" title="Importar do computador">📁</button>';
+    html += '<button data-ext-action="download" data-ext-id="' + extById + '" title="Baixar arquivo">💾</button>';
+    if(e.content){
+      html += '<button data-ext-action="remove" data-ext-id="' + extById + '" title="Remover inline">✕</button>';
+    }
+    html += '</span>';
+    html += '</li>';
+  });
+  html += '</ul>';
+
+  externalsEl.innerHTML = html;
+  externalsEl.classList.add("show");
+}
+
+/* =====================================================
+   REBUILD / CONVERT
+   ===================================================== */
+function rebuild(){
+  resolvedParts = applyExternals(baseParts);
+  renderPartsDisplay(resolvedParts);
+  renderExternalsDisplay(baseParts.external);
+  renderModOutput();
+  convertOutput();
+}
+
+function convertOutput(){
+  const text = source.value;
+  if(!text.trim()){
+    output.value = "";
+    setStatus("Runtime aguardando...");
+    statusEl.className = "status";
+    return;
+  }
+  const looksHtml = /<\s*[a-zA-Z!/]/.test(text);
+  const selector = target.value;
+  let code = "";
+
+  switch(mode){
+    case "html":   code = htmlInjector(text, selector); break;
+    case "css":    code = cssInjector([text]); break;
+    case "js":     code = jsInjector([{ src: null, content: text }]); break;
+    case "bundle": code = fullBundle(text, selector); break;
+    case "css-only": {
+      const arr = resolvedParts.css.length ? resolvedParts.css : (looksHtml ? [] : [text]);
+      code = cssInjector(arr); break;
+    }
+    case "html-only": {
+      const markup = resolvedParts.html || (looksHtml ? "" : text);
+      code = htmlInjector(markup, selector); break;
+    }
+    case "js-only": {
+      const arr = resolvedParts.js.length ? resolvedParts.js : (looksHtml ? [] : [{ src: null, content: text }]);
+      code = jsInjector(arr); break;
+    }
+  }
+  output.value = code;
+
+  let extra = "";
+  if(mode.endsWith("-only")){
+    const k = mode.split("-")[0];
+    const c = k === "css" ? resolvedParts.css.length
+            : k === "js"  ? resolvedParts.js.length
+            : (resolvedParts.html ? 1 : 0);
+    extra = " · " + c + " " + (k === "html" ? "bloco" : "item(ns)") + " extraído(s)";
+  }
+  const okExt = baseParts.external.filter(e => e.status === "ok").length;
+  const totalExt = baseParts.external.length;
+  if(totalExt) extra += " · " + okExt + "/" + totalExt + " externo(s) inline";
+  setStatus("✓ " + MODE_LABEL[mode] + " · " + text.length + " chars" + extra);
+}
+
+function convert(){
+  baseParts = extractAndMerge(source.value);
+  resolvedParts = applyExternals(baseParts);
+  renderPartsDisplay(resolvedParts);
+  renderExternalsDisplay(baseParts.external);
+  renderModOutput();
+  convertOutput();
+}
+
+function detectBundleName(text){
+  if(bundleNameUserSet) return;
+  if(!text) return;
+  const m = text.match(/<title[^>]*>([^<]+)<\/title>/i);
+  if(m && m[1].trim()){
+    setBundleName(m[1].trim(), false);
+  }
+}
+
+/* =====================================================
+   UI EVENTS
+   ===================================================== */
+document.querySelectorAll(".mode").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".mode").forEach(x => x.classList.remove("active"));
+    btn.classList.add("active");
+    mode = btn.dataset.mode;
+    document.getElementById("modeBadge").textContent = MODE_LABEL[mode] || mode;
+    convertOutput();
+  });
+});
+function setMode(newMode){
+  mode = newMode;
+  document.querySelectorAll(".mode").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.mode === newMode);
+  });
+  document.getElementById("modeBadge").textContent = MODE_LABEL[newMode] || newMode;
+}
+document.querySelectorAll(".mod-tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".mod-tab").forEach(x => x.classList.remove("active"));
+    tab.classList.add("active");
+    currentModVer = tab.dataset.ver;
+    renderModOutput();
+    setStatus("✓ Visualizando: " + MOD_VER_LABEL[currentModVer]);
+  });
+});
+
+bundleNameInput.addEventListener("input", () => {
+  bundleNameUserSet = true;
+  bundleName = sanitizeBundleName(bundleNameInput.value);
+  renderModOutput();
+});
+bundleNameInput.addEventListener("blur", () => {
+  bundleNameInput.value = bundleName;
+});
+
+document.getElementById("pasteBtn").addEventListener("click", async () => {
+  try{
+    const text = await navigator.clipboard.readText();
+    source.value = text;
+    detectBundleName(text);
+    document.getElementById("fileType").textContent = "CLIPBOARD";
+    convert();
+  }catch(e){ alert("Clipboard bloqueado pelo navegador."); }
+});
+
+async function loadFile(file){
+  if(!file) return;
+  const text = await file.text();
+  source.value = text;
+  const base = file.name.replace(/\.[^.]+$/, "");
+  setBundleName(base, false);
+  const ext = file.name.split(".").pop().toLowerCase();
+  document.getElementById("fileType").textContent = ext.toUpperCase();
+  if(ext === "css")      setMode("css");
+  else if(ext === "js")  setMode("js");
+  else                   setMode("html");
+  convert();
+  setStatus("✓ " + file.name + " carregado");
+}
+document.getElementById("fileInput").addEventListener("change", e => loadFile(e.target.files[0]));
+
+const dropzone = document.getElementById("dropzone");
+dropzone.addEventListener("dragover", e => { e.preventDefault(); dropzone.classList.add("drag"); });
+dropzone.addEventListener("dragleave", () => dropzone.classList.remove("drag"));
+dropzone.addEventListener("drop", e => {
+  e.preventDefault();
+  dropzone.classList.remove("drag");
+  loadFile(e.dataTransfer.files[0]);
+});
+
+document.querySelectorAll("[data-copy]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const key = btn.dataset.copy;
+    const label = key === "output" ? "Módulo copiado."
+      : key === "modOutput" ? MOD_VER_LABEL[currentModVer] + " copiado."
+      : key.toUpperCase() + " copiado.";
+    copyText(getContent(key), label);
+  });
+});
+document.querySelectorAll("[data-dl]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const key = btn.dataset.dl;
+    const val = getContent(key);
+    if(!val || !val.trim()){ setStatus("⚠ Nada para baixar.", "warn"); return; }
+    download(fileNameFor(key), val, PARTS[key] ? PARTS[key].mime : "text/plain");
+    setStatus("✓ Download: " + fileNameFor(key));
+  });
+});
+document.querySelectorAll("[data-dl-json]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const key = btn.dataset.dlJson;
+    let data = key === "css" ? resolvedParts.css : key === "js" ? resolvedParts.js : resolvedParts[key];
+    if(!data || (Array.isArray(data) && !data.length)){ setStatus("⚠ Nada para baixar.", "warn"); return; }
+    const name = key === "css" ? "styles.json" : "module.json";
+    download(name, JSON.stringify(data, null, 2), "application/json");
+    setStatus("✓ Download: " + name);
+  });
+});
+document.getElementById("modDownloadBtn").addEventListener("click", () => {
+  if(!modOutput.value){ setStatus("⚠ Nada para baixar.", "warn"); return; }
+  const isJs = currentModVer === "injectjs";
+  let filename;
+  if(currentModVer === "monolith") filename = bundleName + "-monolith.html";
+  else if(currentModVer === "injectjs") filename = "inject.js";
+  else if(currentModVer === "inject") filename = bundleName + "-inject.html";
+  else if(currentModVer === "bundle") filename = bundleName + "-bundle.html";
+  else filename = bundleName + ".html";
+  download(filename, modOutput.value, isJs ? "application/javascript" : "text/html");
+  setStatus("✓ Download: " + filename);
+});
+document.getElementById("monolithBtn").addEventListener("click", () => {
+  if(!source.value.trim()){ setStatus("⚠ Cole algo no SOURCE INPUT primeiro.", "warn"); return; }
+  const html = buildMonolithHtml(baseParts.external, bundleName);
+  const filename = bundleName + "-monolith.html";
+  download(filename, html, "text/html");
+  setStatus("✓ Download: " + filename + " (" + fmtSize(html) + ")");
+});
+document.getElementById("bundleOnlyBtn").addEventListener("click", () => {
+  if(!source.value.trim()){ setStatus("⚠ Cole algo no SOURCE INPUT primeiro.", "warn"); return; }
+  const result = buildBundlePackZip();
+  if(!result) return;
+  const filename = bundleName + "-bundle-pack.zip";
+  download(filename, makeZip(result.files));
+  setStatus("✓ " + filename + " · " + result.files.length + " arquivo(s)");
+});
+
+/* =====================================================
+   MODAL PASTE
+   ===================================================== */
+const pasteModalEl = document.getElementById("pasteModal");
+const pasteUrlEl   = document.getElementById("pasteUrl");
+const pasteTextEl  = document.getElementById("pasteText");
+let pendingPasteId = null;
+
+function openPasteModal(id){
+  const ext = baseParts.external.find(e => e.id === id);
+  if(!ext) return;
+  pendingPasteId = id;
+  pasteUrlEl.textContent = ext.url;
+  pasteTextEl.value = ext.content || "";
+  pasteModalEl.classList.add("show");
+  setTimeout(() => pasteTextEl.focus(), 60);
+}
+function closePasteModal(){
+  pasteModalEl.classList.remove("show");
+  pendingPasteId = null;
+}
+document.getElementById("pasteClose").addEventListener("click", closePasteModal);
+document.getElementById("pasteCancel").addEventListener("click", closePasteModal);
+pasteModalEl.addEventListener("click", e => { if(e.target === pasteModalEl) closePasteModal(); });
+document.addEventListener("keydown", e => {
+  if(e.key === "Escape" && pasteModalEl.classList.contains("show")) closePasteModal();
+});
+document.getElementById("pasteConfirm").addEventListener("click", () => {
+  if(!pendingPasteId) return;
+  const ext = baseParts.external.find(e => e.id === pendingPasteId);
+  if(!ext) return;
+  const text = pasteTextEl.value;
+  if(!text || !text.trim()){ setStatus("⚠ Cole algo antes de confirmar.", "warn"); return; }
+  ext.content = text;
+  ext.status = "ok";
+  closePasteModal();
+  rebuild();
+  setStatus("✓ Colado e inlined: " + ext.url);
+});
+document.getElementById("pasteFileBtn").addEventListener("click", () => {
+  if(!pendingPasteId) return;
+  pendingFileExtId = pendingPasteId;
+  localFileInput.click();
+});
+
+localFileInput.addEventListener("change", async e => {
+  const file = e.target.files[0];
+  const id = pendingFileExtId;
+  pendingFileExtId = null;
+  localFileInput.value = "";
+  if(!file || !id) return;
+  const ext = baseParts.external.find(x => x.id === id);
+  if(!ext){ setStatus("⚠ Recurso não encontrado.", "warn"); return; }
+  const text = await file.text();
+  ext.content = text;
+  ext.status = "ok";
+  closePasteModal();
+  rebuild();
+  setStatus("✓ Arquivo local importado: " + file.name);
+});
+
+/* =====================================================
+   IMPORT (fetch) / DOWNLOAD
+   ===================================================== */
+async function importExternal(id){
+  const ext = baseParts.external.find(e => e.id === id);
+  if(!ext) return false;
+  ext.status = "loading";
+  renderExternalsDisplay(baseParts.external);
+  try{
+    const res = await fetch(ext.url, { mode: "cors" });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    ext.content = await res.text();
+    ext.status = "ok";
+    rebuild();
+    setStatus("✓ Importado: " + ext.url);
+    return true;
+  }catch(err){
+    ext.status = "fail";
+    rebuild();
+    setStatus("⚠ Falha ao importar " + ext.url + " — " + (err.message || err), "warn");
+    return false;
+  }
+}
+
+async function importAllExternals(){
+  const pending = baseParts.external.filter(e => e.status !== "ok");
+  if(!pending.length){ setStatus("⚠ Nenhum recurso pendente.", "warn"); return; }
+  setStatus("⏳ Importando " + pending.length + " recurso(s)...");
+  let ok = 0, fail = 0;
+  for(const ext of pending){
+    ext.status = "loading";
+    renderExternalsDisplay(baseParts.external);
+    try{
+      const res = await fetch(ext.url, { mode: "cors" });
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      ext.content = await res.text();
+      ext.status = "ok";
+      ok++;
+    }catch(err){ ext.status = "fail"; fail++; }
+    renderExternalsDisplay(baseParts.external);
+  }
+  rebuild();
+  setStatus("✓ Import all · " + ok + " sucesso(s), " + fail + " falha(s)", fail ? "warn" : "ok");
+}
+
+function clearAllInlines(){
+  let cleared = 0;
+  baseParts.external.forEach(e => { if(e.content) cleared++; e.content = ""; e.status = "pending"; });
+  rebuild();
+  setStatus("✓ " + cleared + " inline(s) removido(s).");
+}
+
+async function downloadExternal(id){
+  const ext = baseParts.external.find(e => e.id === id);
+  if(!ext) return false;
+  if(!ext.content){
+    setStatus("⏳ Buscando " + ext.url + "...");
+    try{
+      const res = await fetch(ext.url, { mode: "cors" });
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      ext.content = await res.text();
+      ext.status = "ok";
+      rebuild();
+    }catch(err){
+      ext.status = "fail";
+      rebuild();
+      setStatus("⚠ Falha: " + err.message, "warn");
+      return false;
+    }
+  }
+  const fallbackExt = ext.type === "js-src" ? "js" : "css";
+  const filename = filenameFromUrl(ext.url, fallbackExt);
+  const mime = ext.type === "js-src" ? "application/javascript" : "text/css";
+  download(filename, ext.content, mime);
+  setStatus("✓ Download: " + filename);
+  return true;
+}
+
+async function downloadSelectedExternals(){
+  const selected = baseParts.external.filter(e => e.selected);
+  if(!selected.length){ setStatus("⚠ Nenhum recurso selecionado.", "warn"); return; }
+  if(selected.length === 1){ await downloadExternal(selected[0].id); return; }
+
+  setStatus("⏳ Baixando " + selected.length + " recurso(s)...");
+  const enc = new TextEncoder();
+  const files = [];
+  let ok = 0, fail = 0;
+
+  for(const ext of selected){
+    if(!ext.content){
+      try{
+        const res = await fetch(ext.url, { mode: "cors" });
+        if(!res.ok) throw new Error("HTTP " + res.status);
+        ext.content = await res.text();
+        ext.status = "ok";
+      }catch(err){ ext.status = "fail"; fail++; continue; }
+    }
+    const fallbackExt = ext.type === "js-src" ? "js" : "css";
+    const filename = filenameFromUrl(ext.url, fallbackExt);
+    files.push({ name: "externals/" + filename, data: enc.encode(ext.content) });
+    ok++;
+  }
+  rebuild();
+  if(!files.length){ setStatus("⚠ Nada foi baixado.", "warn"); return; }
+  const zipName = bundleName + "-externals.zip";
+  download(zipName, makeZip(files));
+  setStatus("✓ " + zipName + " · " + ok + " ok, " + fail + " falha(s)", fail ? "warn" : "ok");
+}
+
+/* =====================================================
+   EVENT DELEGATION EXTERNOS
+   ===================================================== */
+externalsEl.addEventListener("click", e => {
+  const allBtn = e.target.closest("[data-ext-all]");
+  if(allBtn){
+    const act = allBtn.dataset.extAll;
+    if(act === "import") importAllExternals();
+    else if(act === "clear") clearAllInlines();
+    else if(act === "download-selected") downloadSelectedExternals();
+    else if(act === "select-all"){
+      baseParts.external.forEach(x => x.selected = true);
+      renderExternalsDisplay(baseParts.external);
+      setStatus("✓ Todos marcados.");
+    }
+    else if(act === "select-none"){
+      baseParts.external.forEach(x => x.selected = false);
+      renderExternalsDisplay(baseParts.external);
+      setStatus("✓ Seleção limpa.");
+    }
+    return;
+  }
+  const btn = e.target.closest("[data-ext-action]");
+  if(!btn) return;
+  const action = btn.dataset.extAction;
+  const id = btn.dataset.extId;
+  if(action === "paste")    openPasteModal(id);
+  if(action === "import")   importExternal(id);
+  if(action === "download") downloadExternal(id);
+  if(action === "file"){
+    pendingFileExtId = id;
+    localFileInput.click();
+  }
+  if(action === "remove"){
+    const ext = baseParts.external.find(e => e.id === id);
+    if(ext){
+      ext.content = "";
+      ext.status = "pending";
+      rebuild();
+      setStatus("✓ Inline removido: " + ext.url);
+    }
+  }
+});
+
+externalsEl.addEventListener("change", e => {
+  const check = e.target.closest(".ext-check");
+  if(!check) return;
+  const ext = baseParts.external.find(x => x.id === check.dataset.extId);
+  if(!ext) return;
+  ext.selected = check.checked;
+  const info = externalsEl.querySelector(".ext-header-info");
+  if(info){
+    const selectedCount = baseParts.external.filter(e => e.selected).length;
+    info.innerHTML = info.innerHTML.replace(
+      /<b style="color:var\(--cyan\)">\d+<\/b> marcado\(s\)/,
+      '<b style="color:var(--cyan)">' + selectedCount + '</b> marcado(s)'
+    );
+  }
+});
+
+let urlEditTimer = null;
+externalsEl.addEventListener("input", e => {
+  const inp = e.target.closest(".ext-url-input");
+  if(!inp) return;
+  clearTimeout(urlEditTimer);
+  urlEditTimer = setTimeout(() => {
+    applyUrlEdit(inp.dataset.extId, inp.value.trim(), inp);
+  }, 600);
+});
+externalsEl.addEventListener("keydown", e => {
+  const inp = e.target.closest(".ext-url-input");
+  if(!inp) return;
+  if(e.key === "Enter"){ e.preventDefault(); clearTimeout(urlEditTimer); applyUrlEdit(inp.dataset.extId, inp.value.trim(), inp); inp.blur(); }
+  if(e.key === "Escape"){ inp.blur(); }
+});
+externalsEl.addEventListener("blur", e => {
+  const inp = e.target.closest(".ext-url-input");
+  if(!inp) return;
+  clearTimeout(urlEditTimer);
+  applyUrlEdit(inp.dataset.extId, inp.value.trim(), inp);
+}, true);
+
+function applyUrlEdit(id, newUrl, inputEl){
+  const ext = baseParts.external.find(e => e.id === id);
+  if(!ext) return;
+  if(!newUrl || newUrl === ext.url) return;
+  ext.url = newUrl;
+  // sourceUrl and id stay the same (original URL from source)
+  ext.content = "";
+  ext.status = "pending";
+  rebuild();
+  setStatus("✓ URL atualizada: " + newUrl);
+  setTimeout(() => {
+    const again = externalsEl.querySelector('.ext-url-input[data-ext-id="' + CSS.escape(id) + '"]');
+    if(again && document.activeElement === document.body) again.focus();
+  }, 20);
+}
+
+/* =====================================================
+   MINI ZIP
+   ===================================================== */
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for(let i = 0; i < 256; i++){
+    let c = i;
+    for(let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[i] = c >>> 0;
+  }
+  return t;
+})();
+function crc32(buf){
+  let crc = 0xFFFFFFFF;
+  for(let i = 0; i < buf.length; i++) crc = (crc >>> 8) ^ CRC_TABLE[(crc ^ buf[i]) & 0xFF];
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+function makeZip(files){
+  const enc = new TextEncoder();
+  const now = new Date();
+  const time = ((now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1)) & 0xFFFF;
+  const date = (((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate()) & 0xFFFF;
+  const chunks = [];
+  const central = [];
+  let offset = 0;
+  files.forEach(f => {
+    const nameBytes = enc.encode(f.name);
+    const crc = crc32(f.data);
+    const size = f.data.length;
+    const lh = new Uint8Array(30 + nameBytes.length);
+    const dv = new DataView(lh.buffer);
+    dv.setUint32(0, 0x04034b50, true);
+    dv.setUint16(4, 20, true);
+    dv.setUint16(6, 0x0800, true);
+    dv.setUint16(8, 0, true);
+    dv.setUint16(10, time, true);
+    dv.setUint16(12, date, true);
+    dv.setUint32(14, crc, true);
+    dv.setUint32(18, size, true);
+    dv.setUint32(22, size, true);
+    dv.setUint16(26, nameBytes.length, true);
+    dv.setUint16(28, 0, true);
+    lh.set(nameBytes, 30);
+    chunks.push(lh, f.data);
+    central.push({ nameBytes, crc, size, offset });
+    offset += lh.length + size;
+  });
+  const cdChunks = [];
+  let cdSize = 0;
+  central.forEach(c => {
+    const ch = new Uint8Array(46 + c.nameBytes.length);
+    const dv = new DataView(ch.buffer);
+    dv.setUint32(0, 0x02014b50, true);
+    dv.setUint16(4, 20, true);
+    dv.setUint16(6, 20, true);
+    dv.setUint16(8, 0x0800, true);
+    dv.setUint16(10, 0, true);
+    dv.setUint16(12, time, true);
+    dv.setUint16(14, date, true);
+    dv.setUint32(16, c.crc, true);
+    dv.setUint32(20, c.size, true);
+    dv.setUint32(24, c.size, true);
+    dv.setUint16(28, c.nameBytes.length, true);
+    dv.setUint16(30, 0, true);
+    dv.setUint16(32, 0, true);
+    dv.setUint16(34, 0, true);
+    dv.setUint16(36, 0, true);
+    dv.setUint32(38, 0, true);
+    dv.setUint32(42, c.offset, true);
+    ch.set(c.nameBytes, 46);
+    cdChunks.push(ch);
+    cdSize += ch.length;
+  });
+  const eocd = new Uint8Array(22);
+  const dv = new DataView(eocd.buffer);
+  dv.setUint32(0, 0x06054b50, true);
+  dv.setUint16(4, 0, true);
+  dv.setUint16(6, 0, true);
+  dv.setUint16(8, central.length, true);
+  dv.setUint16(10, central.length, true);
+  dv.setUint32(12, cdSize, true);
+  dv.setUint32(16, offset, true);
+  dv.setUint16(20, 0, true);
+  return new Blob([...chunks, ...cdChunks, eocd], { type: "application/zip" });
+}
+
+/* =====================================================
+   BUILD BUNDLE PACK
+   ===================================================== */
+function buildBundlePackZip(){
+  const base = extractAndMerge(source.value);
+  baseParts = base;
+  resolvedParts = applyExternals(base);
+  renderPartsDisplay(resolvedParts);
+  renderExternalsDisplay(baseParts.external);
+
+  const enc = new TextEncoder();
+  const files = [];
+
+  const modular = buildModularHtml(base.external, bundleName);
+  const bundle = buildBundleHtml(base.external, bundleName);
+
+  files.push({ name: "index.html", data: enc.encode(modular.html) });
+  files.push({ name: "index-bundle.html", data: enc.encode(bundle.html) });
+  if(bundle.bundleCss) files.push({ name: "css/bundle.css", data: enc.encode(bundle.bundleCss) });
+  if(bundle.bundleJs)  files.push({ name: "js/bundle.js",  data: enc.encode(bundle.bundleJs) });
+
+  modular.cssFiles.forEach((c, i) => {
+    files.push({ name: modular.cssPaths[i], data: enc.encode(c) });
+  });
+  modular.jsFiles.forEach((c, i) => {
+    files.push({ name: modular.jsPaths[i], data: enc.encode(c) });
+  });
+
+  const L = [];
+  L.push("BUNDLE PACK · " + bundleName);
+  L.push("==============================".slice(0, 30));
+  L.push("");
+  L.push("index.html          → HTML modular (link individual + script src), estrutura original preservada");
+  L.push("index-bundle.html   → HTML que só carrega css/bundle.css e js/bundle.js");
+  L.push("css/bundle.css      → TODO o CSS concatenado");
+  L.push("js/bundle.js        → TODO o JS inline concatenado");
+  L.push("");
+  const extCss = base.external.filter(e => e.type === "css-link" && !e.content).map(e => e.url);
+  const extJs  = base.external.filter(e => e.type === "js-src" && !e.content).map(e => e.url);
+  if(extCss.length || extJs.length){
+    L.push("EXTERNOS AINDA REFERENCIADOS (não importados):");
+    extCss.forEach(u => L.push("  - [CSS] " + u));
+    extJs.forEach(u  => L.push("  - [JS ] " + u));
+  }
+  files.push({ name: "README.txt", data: enc.encode(L.join("\n")) });
+  return { files, parts: resolvedParts };
+}
+
+/* =====================================================
+   BUILD ZIP COMPLETO
+   ===================================================== */
+function buildPartsZip(){
+  if(!source.value.trim()){ setStatus("⚠ Cole algo no SOURCE INPUT primeiro.", "warn"); return null; }
+
+  const base = extractAndMerge(source.value);
+  baseParts = base;
+  resolvedParts = applyExternals(base);
+  renderPartsDisplay(resolvedParts);
+  renderExternalsDisplay(baseParts.external);
+
+  const enc = new TextEncoder();
+  const files = [];
+  const selector = target.value || "#inject-here";
+
+  const modular = buildModularHtml(base.external, bundleName);
+  const bundle = buildBundleHtml(base.external, bundleName);
+  const monolithHtml = buildMonolithHtml(base.external, bundleName);
+
+  // Versões HTML
+  files.push({ name: "index.html", data: enc.encode(modular.html) });
+  files.push({ name: "index-bundle.html", data: enc.encode(bundle.html) });
+  files.push({ name: "index-inject.html", data: enc.encode(buildInjectHtmlFile(resolvedParts, bundleName)) });
+  files.push({ name: "inject.js", data: enc.encode(buildInjectJsFile(resolvedParts, selector)) });
+  files.push({ name: "monolith.html", data: enc.encode(monolithHtml) });
+
+  // CSS/JS individuais
+  modular.cssFiles.forEach((c, i) => {
+    files.push({ name: modular.cssPaths[i], data: enc.encode(c) });
+  });
+  modular.jsFiles.forEach((c, i) => {
+    files.push({ name: modular.jsPaths[i], data: enc.encode(c) });
+  });
+
+  // bundle.css / bundle.js
+  if(bundle.bundleCss) files.push({ name: "css/bundle.css", data: enc.encode(bundle.bundleCss) });
+  if(bundle.bundleJs)  files.push({ name: "js/bundle.js",  data: enc.encode(bundle.bundleJs) });
+
+  // markup puro (sem scripts/styles) — só para referência
+  if(resolvedParts.html) files.push({ name: "html/markup.html", data: enc.encode(resolvedParts.html) });
+
+  // Avid externos ainda pendentes
+  const stillExternal = base.external.filter(e => e.type === "js-src" && !e.content);
+  if(stillExternal.length){
+    const notes = stillExternal.map(e => '// <script src="' + e.url + '">  — externo, NÃO inlined').join("\n");
+    files.push({ name: "js/external-scripts.txt", data: enc.encode(notes + "\n") });
+  }
+
+  // README
+  const L = [];
+  L.push("RUNTIME · BUNDLE MODULARIZADO · " + bundleName);
+  L.push("==============================");
+  L.push("");
+  L.push("Alvo do injetor: " + selector);
+  L.push("Estilos inline: " + resolvedParts.css.length + " · Scripts inline: " + resolvedParts.js.filter(s => !s.src).length);
+  const extCss = base.external.filter(e => e.type === "css-link" && !e.content).map(e => e.url);
+  const extJs  = base.external.filter(e => e.type === "js-src" && !e.content).map(e => e.url);
+  if(extCss.length || extJs.length){
+    L.push("Externos referenciados (não inlined):");
+    extCss.forEach(u => L.push("  - [CSS] " + u));
+    extJs.forEach(u  => L.push("  - [JS ] " + u));
+  }
+  L.push("");
+  L.push("5 VERSÕES:");
+  L.push("  index.html          modular individual (estrutura original preservada)");
+  L.push("  index-bundle.html   bundle.css + bundle.js");
+  L.push("  index-inject.html   auto-contido (#inject-here)");
+  L.push("  inject.js           fonte pura");
+  L.push("  monolith.html       TUDO inline, fonte original integralmente preservada");
+  L.push("");
+  L.push("Estrutura:");
+  modular.cssPaths.forEach(p => L.push("  " + p));
+  if(bundle.bundleCss) L.push("  css/bundle.css");
+  modular.jsPaths.forEach(p => L.push("  " + p));
+  if(bundle.bundleJs) L.push("  js/bundle.js");
+  if(resolvedParts.html) L.push("  html/markup.html (markup puro, sem scripts/styles)");
+  files.push({ name: "README.txt", data: enc.encode(L.join("\n")) });
+
+  return { files, parts: resolvedParts };
+}
+
+function triggerZip(){
+  const result = buildPartsZip();
+  if(!result) return;
+  const name = bundleName + "-bundle.zip";
+  download(name, makeZip(result.files));
+  setStatus("✓ " + name + " · " + result.files.length + " arquivo(s)");
+}
+document.getElementById("zipPartsBtn").addEventListener("click", triggerZip);
+document.getElementById("zipBtn").addEventListener("click", triggerZip);
+document.getElementById("zipBtn2").addEventListener("click", triggerZip);
+
+document.getElementById("bundlePackBtn").addEventListener("click", () => {
+  if(!source.value.trim()){ setStatus("⚠ Cole algo no SOURCE INPUT primeiro.", "warn"); return; }
+  const result = buildBundlePackZip();
+  if(!result) return;
+  const name = bundleName + "-bundle-pack.zip";
+  download(name, makeZip(result.files));
+  setStatus("✓ " + name + " · " + result.files.length + " arquivo(s)");
+});
+
+/* =====================================================
+   BOTÕES GERAIS
+   ===================================================== */
+document.getElementById("convertBtn").addEventListener("click", convert);
+document.getElementById("clearBtn").addEventListener("click", () => {
+  source.value = "";
+  output.value = "";
+  modOutput.value = "";
+  document.getElementById("fileType").textContent = "TEXT";
+  baseParts     = { css: [], html: "", js: [], external: [] };
+  resolvedParts = { css: [], html: "", js: [], external: [] };
+  renderPartsDisplay(resolvedParts);
+  renderExternalsDisplay([]);
+  renderModOutput();
+  statusEl.textContent = "Runtime aguardando...";
+  statusEl.className = "status";
+});
+
+let debounceTimer = null;
+source.addEventListener("input", () => {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    detectBundleName(source.value);
+    convert();
+  }, 300);
+});
+</script>
+</body>
+</html>
