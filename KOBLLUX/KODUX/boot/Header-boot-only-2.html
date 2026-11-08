@@ -1,0 +1,565 @@
+<!-- ═══════════════════════════════════════════════════════════════════
+     KOB · SONETO BUNDLE v1.1 (compact)
+     Cole ANTES do </head> do seu host (Forge, MXP, etc.)
+     - Tone.js: CDN primário → vendor/Tone.js fallback
+     - KOB_SPEECH pipeline · KOBBus click-to-speak · KOBSonoro · TTS outline
+     - 17 arquétipos · header Soneto · chips orbe
+     ═══════════════════════════════════════════════════════════════════ -->
+
+<!-- ▸ Tone.js · CDN primário com fallback local -->
+<script
+  src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js"
+  onerror="var s=document.createElement('script');s.src='vendor/Tone.js';s.onerror=function(){console.warn('[KOB-SONETO] Tone.js CDN e vendor indisponíveis')};document.head.appendChild(s);this.onerror=null">
+</script>
+
+<!-- ▸ CSS -->
+<style id="kob-soneto-css">
+#kob-soneto-header{position:fixed;top:0;left:0;right:0;z-index:9000;display:flex;align-items:center;gap:8px;justify-content:space-between;min-height:44px;padding:7px 14px;background:linear-gradient(180deg,color-mix(in srgb,var(--kob-L-primary,#22d3ee) 8%,transparent),transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid color-mix(in srgb,var(--kob-L-secondary,#0E7C9E) 40%,transparent);font-family:system-ui,-apple-system,sans-serif;color:#e8f4ff;transition:transform .28s cubic-bezier(.4,0,.2,1),opacity .22s ease}
+#kob-soneto-header.hidden{transform:translateY(-100%);opacity:0;pointer-events:none}
+#kob-soneto-header .hd2-title{flex:1 1 auto;min-width:0;max-width:44vw;overflow:hidden;text-align:left;background:none;border:0;color:inherit;padding:2px 4px;cursor:pointer;height:26px;display:flex;align-items:center}
+#kob-soneto-header .hd2-short{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;font:700 10.5px/1.1 ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase}
+#kob-soneto-header .hd2-full{display:none;white-space:nowrap;font:700 10.5px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase}
+#kob-soneto-header .hd2-title.mq .hd2-short{display:none}
+#kob-soneto-header .hd2-title.mq .hd2-full{display:inline-block;animation:hd2Slide var(--mq-dur,9s) linear 1 both}
+#kob-soneto-header .hd2-title.playing .hd2-short{color:var(--kob-L-primary,#22d3ee)}
+@keyframes hd2Slide{from{transform:translateX(44vw)}to{transform:translateX(-100%)}}
+#kob-soneto-header .hd2-btns{display:flex;gap:6px;flex:0 0 auto}
+#kob-soneto-header .hd2-b{width:34px;height:34px;border-radius:50%;border:1px solid color-mix(in srgb,var(--kob-L-secondary,#0E7C9E) 60%,transparent);background:color-mix(in srgb,var(--kob-L-primary,#22d3ee) 8%,transparent);color:inherit;font-size:15px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0;transition:all .18s}
+#kob-soneto-header .hd2-b:hover{border-color:var(--kob-L-primary,#22d3ee);background:color-mix(in srgb,var(--kob-L-primary,#22d3ee) 16%,transparent)}
+#kob-soneto-header .hd2-b.playing{border-color:var(--kob-L-primary,#22d3ee);color:var(--kob-L-primary,#22d3ee);box-shadow:0 0 12px color-mix(in srgb,var(--kob-L-primary,#22d3ee) 40%,transparent)}
+#kob-soneto-header .hd2-holo{display:none;flex-direction:column;gap:1px;min-width:0;overflow:hidden;white-space:nowrap;font:700 9.5px/1.15 ui-monospace,monospace;letter-spacing:.05em}
+#kob-soneto-header .hd2-title.holo-on .hd2-short{display:none}
+#kob-soneto-header .hd2-title.holo-on .hd2-holo{display:flex}
+#kob-soneto-header .hd2-holo i{font-style:normal;overflow:hidden;text-overflow:clip}
+#kob-soneto-header .hd2-holo .hm{color:var(--kob-L-primary,#22d3ee)}
+#kob-soneto-header .hd2-holo .ht{opacity:.8}
+#kob-soneto-header .hd2-holo .ha{font-size:8px;opacity:.6}
+#kob-soneto-load{position:fixed;left:0;right:0;top:0;height:3px;z-index:96000;display:none;overflow:hidden;pointer-events:none}
+#kob-soneto-load.on{display:block}
+#kob-soneto-load:before{content:"";position:absolute;top:0;height:100%;width:35%;background:var(--kob-L-primary,#22d3ee);animation:kobLoadSlide 1s linear infinite}
+#kob-soneto-load span{position:fixed;top:6px;left:50%;transform:translateX(-50%);font:700 10px ui-monospace,monospace;letter-spacing:.08em;padding:3px 10px;border-radius:99px;background:rgba(0,0,0,.6);color:#fff}
+@keyframes kobLoadSlide{from{left:-35%}to{left:100%}}
+#kob-soneto-outline{position:fixed;display:none;pointer-events:none;z-index:2147483000;border:1px dashed var(--kob-L-primary,#22d3ee);border-radius:9px;box-shadow:0 6px 20px color-mix(in srgb,var(--kob-L-primary,#22d3ee) 30%,transparent);background:linear-gradient(0deg,rgba(255,255,255,.02),transparent);transition:all .15s cubic-bezier(.175,.885,.32,1.275)}
+.kob-soneto-chip{display:inline-flex;align-items:center;justify-content:center;min-width:22px;max-width:38px;height:22px;padding:0 6px;border-radius:999px;font-size:8px;line-height:1;letter-spacing:.04em;text-transform:uppercase;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid color-mix(in srgb,var(--kob-L-primary,#22d3ee) 35%,transparent);color:var(--kob-L-primary,#22d3ee);background:color-mix(in srgb,var(--kob-L-primary,#22d3ee) 10%,transparent);box-sizing:border-box}
+html.kob-perf-lite #kob-soneto-header{backdrop-filter:none;-webkit-backdrop-filter:none}
+html.kob-perf-lite #kob-soneto-outline{box-shadow:none;transition:none}
+@media (prefers-reduced-motion:reduce){#kob-soneto-header{transition:none}#kob-soneto-outline{transition:none}}
+</style>
+
+<!-- ▸ HTML do header + loading + outline -->
+<div id="kob-soneto-load"><span>CARREGANDO…</span></div>
+<header id="kob-soneto-header" data-kob-soneto>
+  <button type="button" class="hd2-b" id="kob-soneto-arch-btn" title="Trocar arquétipo de voz">◐</button>
+  <button type="button" class="hd2-title" id="kob-soneto-title" title="Arquivo ativo">
+    <span class="hd2-short" id="kob-soneto-short">KOBLLUX</span>
+    <span class="hd2-full" id="kob-soneto-full"></span>
+    <span class="hd2-holo" id="kob-soneto-holo"><i class="hm"></i><i class="ht"></i><b class="ha"></b></span>
+  </button>
+  <div class="hd2-btns">
+    <button type="button" class="hd2-b" id="kob-soneto-copy" title="Copiar">⧉</button>
+    <button type="button" class="hd2-b" id="kob-soneto-dl" title="Baixar TXT">↓</button>
+    <button type="button" class="hd2-b" id="kob-soneto-tts" title="Ler documento ativo (play/stop)">🎧</button>
+    <button type="button" class="hd2-b" id="kob-soneto-music" title="Trilha sonora (play/stop)">🎵</button>
+  </div>
+  <button type="button" class="hd2-b" id="kob-soneto-theme" title="Tema">◑</button>
+</header>
+<div id="kob-soneto-outline"></div>
+
+<!-- ▸ CORE JS -->
+<script id="kob-soneto-core">
+(function KOB_SONETO(){
+  'use strict';
+  if (window.KOB_SONETO) { console.log('[KOB-SONETO] já instalado v' + window.KOB_SONETO); return; }
+  window.KOB_SONETO = '1.1';
+
+  /* ══ 1. KOB_SPEECH — pipeline (único dono do speak) ══ */
+  if (!window.KOB_SPEECH && 'speechSynthesis' in window) {
+    var ss = window.speechSynthesis, native = ss.speak.bind(ss), stages = [];
+    var at = function(i){ return function(u){ return i < stages.length ? stages[i].run(u, at(i+1)) : native(u); }; };
+    window.KOB_SPEECH = {
+      use: function(name, order, run){ stages = stages.filter(function(s){ return s.name !== name; }); stages.push({name:name, order:order, run:run}); stages.sort(function(a,b){ return a.order - b.order; }); return true; },
+      has: function(name){ return stages.some(function(s){ return s.name === name; }); },
+      list: function(){ return stages.map(function(s){ return s.name + ':' + s.order; }); }
+    };
+    ss.speak = function(u){ return at(0)(u); };
+  }
+
+  /* ══ 2. CHUNKER ══ */
+  window.KOB_TTS_CHUNK = window.KOB_TTS_CHUNK || function(txt, max){
+    max = max || 220;
+    var atoms = [];
+    function hard(s){
+      var cur = '', ws = s.split(' ');
+      for (var i = 0; i < ws.length; i++){
+        var w = ws[i];
+        if (w.length > max){ if (cur){ atoms.push(cur); cur = ''; } for (var k = 0; k < w.length; k += max) atoms.push(w.slice(k, k+max)); continue; }
+        if ((cur ? cur.length+1 : 0) + w.length > max){ atoms.push(cur); cur = w; } else cur = cur ? cur+' '+w : w;
+      }
+      if (cur) atoms.push(cur);
+    }
+    String(txt == null ? '' : txt).split(/\n+/).forEach(function(line){
+      line = line.replace(/\s+/g,' ').trim(); if (!line) return;
+      line.split(/(?<=[.!?…;:])\s+/).forEach(function(sent){
+        if (sent.length <= max){ atoms.push(sent); return; }
+        sent.split(/(?<=[,)\]—–])\s+/).forEach(function(part){
+          if (part.length <= max) atoms.push(part); else hard(part);
+        });
+      });
+    });
+    var out = [], buf = '';
+    atoms.forEach(function(a){ if (buf && buf.length+1+a.length > max){ out.push(buf); buf = a; } else buf = buf ? buf+' '+a : a; });
+    if (buf) out.push(buf);
+    return out;
+  };
+
+  /* ══ 3. 17 ARQUÉTIPOS (compacto: n,v,l,r,p,c1,c2) ══ */
+  var ARC = {
+    ATLAS:   {n:'Atlas',    v:'Daniel',  l:'en-US', r:1.02,  p:1.39, c1:'#78e3ff', c2:'#b978ff'},
+    NOVA:    {n:'Nova',     v:'Luciana', l:'pt-BR', r:1.063, p:1.34, c1:'#ff6b6b', c2:'#ffb347'},
+    VITALIS: {n:'Vitalis',  v:'Rocko',   l:'pt-BR', r:0.96,  p:1.42, c1:'#4ecdc4', c2:'#45b7d1'},
+    PULSE:   {n:'Pulse',    v:'Reed',    l:'pt-BR', r:1.00,  p:1.78, c1:'#a8e6cf', c2:'#d4a5a5'},
+    ARTEMIS: {n:'Artemis',  v:'Paulina', l:'es-MX', r:1.00,  p:1.23, c1:'#ffd93d', c2:'#ff9f1c'},
+    SERENA:  {n:'Serena',   v:'Joana',   l:'pt-BR', r:0.92,  p:0.90, c1:'#b8e1ff', c2:'#a0b9ff'},
+    KAOS:    {n:'Kaos',     v:'Rocko',   l:'pt-BR', r:1.28,  p:0.67, c1:'#ff8066', c2:'#b624ff'},
+    GENUS:   {n:'Genus',    v:'Reed',    l:'pt-BR', r:0.98,  p:1.20, c1:'#95e1d3', c2:'#f38181'},
+    LUMINE:  {n:'Lumine',   v:'Flo',     l:'fr-FR', r:1.03,  p:1.87, c1:'#f9f3b2', c2:'#ffe69b'},
+    SOLUS:   {n:'Solus',    v:'Satu',    l:'fi-FI', r:0.90,  p:0.58, c1:'#ffb347', c2:'#ff8c42'},
+    RHEA:    {n:'Rhea',     v:'Alice',   l:'it-IT', r:1.02,  p:1.44, c1:'#b5eaea', c2:'#80b3ff'},
+    AION:    {n:'Aion',     v:'Milena',  l:'ru-RU', r:1.07,  p:1.08, c1:'#c79aff', c2:'#9f7aff'},
+    KODUX:   {n:'Kodux',    v:'Rocko',   l:'pt-BR', r:1.00,  p:0.07, c1:'#F97316', c2:'#fb923c'},
+    BLLUE:   {n:'Bllue',    v:'Zuzana',  l:'cs-CZ', r:0.94,  p:1.69, c1:'#8fd3ff', c2:'#b8e1ff'},
+    JESUS:   {n:'Jesus',    v:'Sara',    l:'da-DK', r:1.09,  p:0.03, c1:'#FFD700', c2:'#FFB84D'},
+    KOBLLUX: {n:'KOBLLUX',  v:'Luciana', l:'pt-BR', r:0.98,  p:0.48, c1:'#22D3EE', c2:'#0E7C9E'},
+    INFODOSE:{n:'Infodose', v:'Luciana', l:'pt-BR', r:1.06,  p:0.96, c1:'#22C55E', c2:'#166534'}
+  };
+  var ARCH_LIST = Object.keys(ARC);
+  window.KOB_SONETO_ARCH = 'KOBLLUX';
+
+  /* ══ 4. VOZES ══ */
+  var voices = [];
+  function loadVoices(){ voices = ('speechSynthesis' in window) ? speechSynthesis.getVoices() : []; }
+  if ('speechSynthesis' in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; setTimeout(loadVoices, 400); }
+  var norm = function(s){ return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); };
+  function findVoice(cfg){
+    if (!voices.length) loadVoices();
+    var n = norm(cfg.v || cfg.nome || ''), l = norm(cfg.l || cfg.lang || '').split('-')[0];
+    return voices.find(function(v){ return norm(v.name).includes(n) && norm(v.lang).startsWith(l); })
+        || voices.find(function(v){ return norm(v.lang).startsWith(l); })
+        || voices.find(function(v){ return norm(v.lang).startsWith('pt'); })
+        || voices[0] || null;
+  }
+  function forArch(name, text){
+    var cfg = ARC[String(name||'KOBLLUX').toUpperCase()] || ARC.KOBLLUX;
+    var u = new SpeechSynthesisUtterance(text || '');
+    u.lang = cfg.l; u.rate = cfg.r; u.pitch = cfg.p;
+    var v = findVoice(cfg);
+    if (v){ u.voice = v; u.lang = v.lang || cfg.l; }
+    return u;
+  }
+  window.KBLX_VOICE = window.KBLX_VOICE || { map: ARC, find: findVoice, forArch: forArch };
+
+  /* ══ 5. CORES (KOBLayers simplificado) ══ */
+  var root = document.documentElement;
+  function hexToRgb(h){ h = String(h).replace('#',''); if (h.length===3) h=h.split('').map(function(c){return c+c}).join(''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
+  function mix(a,b,t){ var A=hexToRgb(a),B=hexToRgb(b); return '#'+A.map(function(v,i){ var x=Math.round(v+(B[i]-v)*t); return x.toString(16).padStart(2,'0'); }).join(''); }
+  function applyLayers(activeArch){
+    var U = ARC['KOBLLUX'], A = ARC[String(activeArch||'KOBLLUX').toUpperCase()] || U;
+    root.style.setProperty('--kob-L-primary',   mix(U.c1, U.c2, 0.35));
+    root.style.setProperty('--kob-L-secondary', mix(A.c1, A.c2, 0.35));
+    root.style.setProperty('--kob-L-u1', U.c1); root.style.setProperty('--kob-L-u2', U.c2);
+    root.style.setProperty('--kob-L-a1', A.c1); root.style.setProperty('--kob-L-a2', A.c2);
+    root.style.setProperty('--kob-voice-primary', U.c1);
+    root.style.setProperty('--kob-voice-secondary', A.c1);
+    root.style.setProperty('--kob-blob-primary', U.c1);
+    root.style.setProperty('--kob-blob-secondary', A.c2);
+    root.style.setProperty('--active-color', U.c1);
+    root.style.setProperty('--active-secondary', A.c1);
+    root.style.setProperty('--active-glow', mix(U.c1, '#000000', 0.6));
+  }
+  function setArch(name){
+    name = String(name||'KOBLLUX').toUpperCase();
+    if (!ARC[name]) name = 'KOBLLUX';
+    window.KOB_SONETO_ARCH = name;
+    document.body.setAttribute('data-arch', name.toLowerCase());
+    document.body.setAttribute('data-voice-arch', name.toLowerCase());
+    applyLayers(name);
+    try { window.dispatchEvent(new CustomEvent('kob:arch', { detail: { arch: name } })); } catch(e){}
+    paintHeader();
+    try { KOBSonoro && KOBSonoro.transition(name); } catch(e){}
+    return name;
+  }
+  window.applyArch = window.applyArch || function(n){ return setArch(n); };
+
+  /* ══ 6. KOBBUS — click-to-speak (arquétipo fala o texto clicado) ══ */
+  var busClickMode = 'auto';
+  try { busClickMode = localStorage.getItem('kob:voice:click') || 'auto'; } catch(e){}
+  var KOBBus = window.KOBBus = {
+    get clickMode(){ return busClickMode; },
+    setClickMode: function(m){ busClickMode = m; try { localStorage.setItem('kob:voice:click', m); } catch(e){} return m; },
+    cycleClickMode: function(){ var m = ['auto','labels','off']; return this.setClickMode(m[(m.indexOf(busClickMode)+1)%3]); },
+    currentArch: function(){ return window.KOB_SONETO_ARCH || 'KOBLLUX'; },
+    extractText: function(target){
+      if (!target || target.nodeType !== 1) return '';
+      var ctl = target.closest && target.closest('button,a,[role="button"]');
+      if (ctl){
+        if (ctl.hasAttribute('data-speak')) return ctl.getAttribute('data-speak');
+        if (busClickMode === 'labels'){
+          var lab = ctl.getAttribute('aria-label') || ctl.getAttribute('title') || (ctl.innerText||'').trim();
+          if (lab && lab.length < 80) return lab;
+        }
+        return '';
+      }
+      var blk = target.closest && target.closest('p,li,h1,h2,h3,h4,h5,h6,blockquote,pre,td,th');
+      if (blk) return (blk.innerText || '').replace(/\s+/g,' ').trim();
+      return '';
+    },
+    speak: function(text, opts){
+      text = String(text||'').replace(/\s+/g,' ').trim();
+      if (!text || busClickMode === 'off') return false;
+      try { speechSynthesis.cancel(); } catch(e){}
+      var u = forArch(this.currentArch(), text);
+      if (opts){ if (opts.rate) u.rate = opts.rate; if (opts.pitch) u.pitch = opts.pitch; if (opts.onend) u.onend = opts.onend; if (opts.onstart) u.onstart = opts.onstart; if (opts.onerror) u.onerror = opts.onerror; }
+      speechSynthesis.speak(u);
+      return true;
+    },
+    say: function(text, opts){ return this.speak(text, opts); },
+    stop: function(){ try { speechSynthesis.cancel(); } catch(e){} },
+    nextArch: function(){ var i = ARCH_LIST.indexOf(this.currentArch()); var n = ARCH_LIST[(i+1)%ARCH_LIST.length]; setArch(n); return n; }
+  };
+
+  /* click → fala texto */
+  document.addEventListener('click', function(e){
+    if (busClickMode === 'off') return;
+    var t = e.target;
+    if (!t || t.closest && t.closest('#kob-soneto-header, .kob-soneto-ignore, button, input, textarea, select, a, [data-kob-ignore]')) {
+      if (!(t.closest && t.closest('[data-speak]'))) return;
+    }
+    var text = KOBBus.extractText(t);
+    if (text) KOBBus.speak(text);
+  }, true);
+
+  /* ══ 7. KOBLLUX — speakText + block TTS com outline ══ */
+  var outline = document.getElementById('kob-soneto-outline');
+  var KOBTTS = {
+    blocks: [], curBlock: 0, speaking: false, chunkList: [], chunkIdx: 0, gen: 0,
+    scan: function(){
+      var r = document.querySelector('#kd-inject-target') || document.querySelector('main') || document.body;
+      var sel = 'h1,h2,h3,h4,p,li,blockquote,pre,td,th';
+      this.blocks = Array.prototype.slice.call(r.querySelectorAll(sel)).filter(function(n){ return (n.innerText||'').trim().length > 0; });
+      this.curBlock = 0;
+      return this.blocks;
+    },
+    start: function(){
+      if (!this.blocks.length) this.scan();
+      if (!this.blocks.length) { console.warn('[KOB] nenhum bloco para ler'); return; }
+      if (this.speaking) { this.stop(); return; }
+      this.speaking = true; this.gen++;
+      try { speechSynthesis.cancel(); } catch(e){}
+      var btn = document.getElementById('kob-soneto-tts'); if (btn) btn.classList.add('playing');
+      var self = this;
+      setTimeout(function(){ self.speakBlock(self.curBlock, 0); }, 60);
+    },
+    stop: function(){
+      this.gen++;
+      this.speaking = false;
+      try { speechSynthesis.cancel(); } catch(e){}
+      var btn = document.getElementById('kob-soneto-tts'); if (btn) btn.classList.remove('playing');
+      if (outline) outline.style.display = 'none';
+    },
+    toggle: function(){ if (this.speaking) this.stop(); else this.start(); },
+    speakBlock: function(idx, fromChunk){
+      if (!this.speaking) return;
+      if (idx >= this.blocks.length) { this.stop(); return; }
+      this.curBlock = idx;
+      var el = this.blocks[idx];
+      var txt = String(el.innerText || '').replace(/\s+/g,' ').trim();
+      if (!txt) { this.speakBlock(idx+1, 0); return; }
+      this.chunkList = window.KOB_TTS_CHUNK(txt, 220);
+      this.chunkIdx = fromChunk || 0;
+      this.speakChunk();
+    },
+    speakChunk: function(){
+      if (!this.speaking) return;
+      if (this.chunkIdx >= this.chunkList.length) { this.speakBlock(this.curBlock+1, 0); return; }
+      var self = this;
+      var u = forArch(window.KOB_SONETO_ARCH, this.chunkList[this.chunkIdx]);
+      u.onstart = function(){ if (self.chunkIdx === 0) self.showOutline(self.blocks[self.curBlock]); };
+      u.onend = function(){ if (!self.speaking) return; self.chunkIdx++; setTimeout(function(){ self.speakChunk(); }, 60); };
+      u.onerror = function(ev){ if (!self.speaking) return; if (ev && (ev.error === 'interrupted' || ev.error === 'canceled')) return; self.chunkIdx++; setTimeout(function(){ self.speakChunk(); }, 100); };
+      try { speechSynthesis.speak(u); } catch(e){}
+    },
+    showOutline: function(el){
+      if (!el || !outline) return;
+      var r = el.getBoundingClientRect();
+      if (r.top + r.height < 0 || r.top > innerHeight){ outline.style.display = 'none'; return; }
+      outline.style.left = (r.left-4) + 'px';
+      outline.style.top  = (r.top-4) + 'px';
+      outline.style.width = (r.width+8) + 'px';
+      outline.style.height = (r.height+8) + 'px';
+      outline.style.display = 'block';
+    }
+  };
+
+  window.KOBLLUX = window.KOBLLUX || {};
+  window.KOBLLUX.speakText = function(txt, opts){ return KOBBus.speak(txt, opts); };
+  window.KOBLLUX.startSpeech = function(){ KOBTTS.start(); };
+  window.KOBLLUX.stopSpeech  = function(){ KOBTTS.stop(); };
+  window.KOBLLUX.toggleSpeech = function(){ KOBTTS.toggle(); };
+  window.KOBLLUX.rebuildBlocks = function(){ return KOBTTS.scan(); };
+
+  /* hide outline on scroll/resize */
+  window.addEventListener('scroll', function(){ if (outline && outline.style.display !== 'none') outline.style.display = 'none'; }, {passive:true, capture:true});
+  window.addEventListener('resize', function(){ if (outline && outline.style.display !== 'none') outline.style.display = 'none'; }, {passive:true});
+
+  /* ══ 8. KOBSONORO — sfx + transition + trilha ══ */
+  var KOBSonoro = window.KOBSonoro = window.KOBSonoro || {};
+  var SCALES = {
+    melancolia: ['A3','B3','C4','D4','E4','F4','G#4','A4','B4','C5','D5','E5','F5','G#5','A5'],
+    alegria:    ['C4','D4','E4','G4','A4','C5','D5','E5','G5','A5','C6','D6','E6','G6','A6'],
+    misterio:   ['C4','D4','E4','F#4','G#4','A#4','C5','D5','E5','F#5','G#5','A#5','C6','D6','E6'],
+    sonho:      ['F3','G3','A3','B3','C4','D4','E4','F4','G4','A4','B4','C5','D5','E5','F5'],
+    oriental:   ['A3','A#3','D4','E4','F4','A4','A#4','D5','E5','F5','A5']
+  };
+  var MODES = {ionian:[0,2,4,5,7,9,11],dorian:[0,2,3,5,7,9,10],phrygian:[0,1,3,5,7,8,10],lydian:[0,2,4,6,7,9,11],mixolydian:[0,2,4,5,7,9,10],aeolian:[0,2,3,5,7,8,10],harmMinor:[0,2,3,5,7,8,11],pentMaj:[0,2,4,7,9],pentMin:[0,3,5,7,10],blues:[0,3,5,6,7,10],hirajoshi:[0,2,3,7,8]};
+  var ARCH_MUSIC = {
+    ATLAS:['dorian','triangle',.55], NOVA:['lydian','sine',.6], VITALIS:['mixolydian','triangle',.45],
+    PULSE:['pentMin','square',.3], ARTEMIS:['aeolian','sine',.65], SERENA:['pentMaj','sine',.7],
+    KAOS:['phrygian','triangle',.6], GENUS:['harmMinor','sine',.59], LUMINE:['ionian','triangle',.5],
+    SOLUS:['hirajoshi','sine',.8], RHEA:['mixolydian','sine',.55], AION:['harmMinor','sine',.7],
+    KODUX:['phrygian','sawtooth',.47], BLLUE:['blues','triangle',.5], JESUS:['ionian','sine',.75],
+    KOBLLUX:['dorian','triangle',.5], INFODOSE:['mixolydian','sine',.55]
+  };
+  var ALPHA = 'abcdefghijklmnopqrstuvwxyzáàãâéêíóôõúçñ';
+  var SND = { started: false, playing: false, part: null, synths: {}, reverb: null, delay: null };
+
+  async function ensureAudio(){
+    if (SND.started) return true;
+    if (typeof Tone === 'undefined'){ await new Promise(function(r){ var t = setInterval(function(){ if (typeof Tone !== 'undefined' || performance.now() > 5000){ clearInterval(t); r(); } }, 100); }); }
+    if (typeof Tone === 'undefined') return false;
+    try { await Tone.start(); } catch(e){}
+    try {
+      var lim = new Tone.Limiter(-2).toDestination();
+      SND.reverb = new Tone.Reverb({decay:3.5, wet:0.4}).connect(lim);
+      SND.delay  = new Tone.FeedbackDelay('8n', 0.25).connect(SND.reverb);
+      SND.synths.lead = new Tone.PolySynth(Tone.Synth, {oscillator:{type:'triangle'}, envelope:{attack:.02,decay:.3,sustain:.2,release:1.2}}).connect(SND.delay);
+      SND.synths.lead.volume.value = -8;
+      SND.synths.pad = new Tone.PolySynth(Tone.Synth, {oscillator:{type:'triangle'}, envelope:{attack:.35,decay:.4,sustain:.55,release:1.8}}).connect(SND.reverb);
+      SND.synths.pad.volume.value = -27;
+      SND.synths.bubble = new Tone.Synth({oscillator:{type:'sine'}, envelope:{attack:.01,decay:.15,sustain:0,release:.2}}).connect(SND.reverb);
+      SND.synths.crystal = new Tone.PolySynth(Tone.FMSynth, {harmonicity:3, modulationIndex:6, envelope:{attack:.005,decay:.4,sustain:0,release:1.2}}).connect(SND.reverb);
+      SND.synths.impact = new Tone.MembraneSynth({pitchDecay:.05, octaves:4, envelope:{attack:.001,decay:.3,sustain:0,release:.4}}).connect(lim);
+      SND.synths.noise = new Tone.NoiseSynth({noise:{type:'white'}, envelope:{attack:.001,decay:.2,sustain:0,release:.3}}).connect(SND.reverb);
+      SND.synths.portal = new Tone.Synth({oscillator:{type:'sawtooth'}, envelope:{attack:.15,decay:.4,sustain:.2,release:.8}}).connect(SND.delay);
+      SND.started = true;
+      return true;
+    } catch(e){ console.warn('[KOB-SONETO] audio err', e); return false; }
+  }
+  function mtof(m){ return 440 * Math.pow(2, (m-69)/12); }
+
+  var SIG = {
+    ATLAS:[57,[0,4,7,12,7,4],0.12,0.09,'triangle'], NOVA:[57,[0,7,11,16,11],0.15,0.08,'sine'],
+    VITALIS:[57,[0,7,4,0,-5],0.10,0.05,'triangle'], PULSE:[45,[0,3,7,10,7,3],0.12,0.06,'square'],
+    ARTEMIS:[45,[0,3,7,12,15],0.14,0.08,'sine'], SERENA:[57,[0,4,9,14,9,4],0.16,0.10,'sine'],
+    KAOS:[33,[0,1,3,8,3,1,0],0.09,0.04,'sawtooth'], GENUS:[45,[0,3,7,8,7,3],0.13,0.08,'sine'],
+    LUMINE:[57,[0,4,9,12,16,12],0.11,0.06,'triangle'], SOLUS:[45,[0,2,7,2,-5],0.20,0.14,'sine'],
+    RHEA:[57,[0,5,7,12,7,5,0],0.13,0.09,'sine'], AION:[45,[0,3,8,12,8,3],0.14,0.09,'sine'],
+    KODUX:[33,[0,3,6,3,0,-5],0.10,0.05,'sawtooth'], BLLUE:[45,[0,3,7,6,3,0],0.12,0.07,'triangle'],
+    JESUS:[57,[0,7,12,19,12],0.22,0.16,'sine'], KOBLLUX:[57,[0,3,7,10,14,10],0.15,0.09,'triangle'],
+    INFODOSE:[57,[0,2,5,7,9,12,9],0.11,0.06,'sine']
+  };
+
+  KOBSonoro.transition = async function(arch){
+    var a = String(arch||window.KOB_SONETO_ARCH||'KOBLLUX').toUpperCase();
+    var sig = SIG[a] || SIG.KOBLLUX;
+    if (!await ensureAudio()) return;
+    try { SND.synths.lead.set({oscillator:{type:sig[4]}}); } catch(e){}
+    try { SND.synths.lead.releaseAll(Tone.now()); } catch(e){}
+    var t = Tone.now() + 0.05;
+    sig[1].forEach(function(off){
+      var f = mtof(sig[0] + off);
+      try { SND.synths.lead.triggerAttackRelease(f, sig[2], t); } catch(e){}
+      t += sig[3];
+    });
+  };
+  KOBSonoro.sfx = async function(desc){
+    if (!await ensureAudio()) return;
+    var d = String(desc||'').toLowerCase(); var now = Tone.now();
+    try {
+      if (/bolha|bubble|gota|pingo/.test(d)){ var b = 600 + Math.random()*400; SND.synths.bubble.triggerAttackRelease(b, .12, now); SND.synths.bubble.triggerAttackRelease(b*1.5, .1, now+.08); }
+      else if (/cristal|crystal|vidro|sino/.test(d)){ [800,1200,1600].forEach(function(f,i){ SND.synths.crystal.triggerAttackRelease(f, .3, now+i*.04); }); }
+      else if (/impacto|impact|pancada|thud|boom/.test(d)){ SND.synths.impact.triggerAttackRelease('C1', .2, now); }
+      else if (/sopro|whoosh|ruído|noise/.test(d)){ SND.synths.noise.triggerAttackRelease(.25, now); }
+      else if (/portal|transição|transition/.test(d)){ SND.synths.portal.frequency.cancelScheduledValues(now); SND.synths.portal.frequency.setValueAtTime(200, now); SND.synths.portal.frequency.exponentialRampToValueAtTime(1800, now+.5); SND.synths.portal.triggerAttackRelease('A3', .4, now); }
+      else { SND.synths.bubble.triggerAttackRelease(800, .1, now); SND.synths.bubble.triggerAttackRelease(1200, .1, now+.08); }
+    } catch(e){}
+  };
+  KOBSonoro.play = async function(text){
+    if (!await ensureAudio()) return false;
+    if (SND.playing) { KOBSonoro.stop(); return false; }
+    text = String(text || (window.KOBActive && KOBActive.text) || '').trim();
+    if (!text) return false;
+    var cfg = ARCH_MUSIC[window.KOB_SONETO_ARCH] || ARCH_MUSIC.KOBLLUX;
+    try { SND.reverb.wet.rampTo(cfg[2], 0.4); } catch(e){}
+    var base = SCALES.melancolia;
+    var rootMidi = Tone.Frequency(base[0]).toMidi();
+    var mode = MODES[cfg[0]] || MODES.dorian;
+    var notes = [];
+    for (var i = 0; i < 15; i++) notes.push(Tone.Frequency(rootMidi + Math.floor(i/mode.length)*12 + mode[i%mode.length], 'midi').toNote());
+    var evs = []; var step = 0; var SD = Tone.Time('16n').toSeconds();
+    for (var j = 0; j < text.length; j++){
+      var ch = text[j], lo = ch.toLowerCase();
+      if (ch === ' ' || ch === '\n'){ step += ch === '\n' ? 3 : 1; continue; }
+      if (ch === '.' || ch === '!' || ch === '?'){ step += 4; continue; }
+      if (ch === ',' || ch === ';'){ step += 2; continue; }
+      var ai = ALPHA.indexOf(lo);
+      if (ai !== -1){
+        evs.push({t: step*SD, note: notes[ai % notes.length], d: ch === ch.toUpperCase() ? '8n' : '16n'});
+        step += ch === ch.toUpperCase() ? 1.8 : 1.4;
+      }
+    }
+    if (!evs.length) return false;
+    try { Tone.Transport.stop(); Tone.Transport.cancel(0); } catch(e){}
+    SND.part = new Tone.Part(function(time, ev){
+      try { SND.synths.lead.triggerAttackRelease(mtof(Tone.Frequency(ev.note).toMidi()), ev.d, time); } catch(e){}
+    }, evs).start(0);
+    Tone.Transport.bpm.value = 130;
+    Tone.Transport.start();
+    SND.playing = true;
+    var btn = document.getElementById('kob-soneto-music'); if (btn) btn.classList.add('playing');
+    try { window.dispatchEvent(new CustomEvent('kob:sonoro-state', {detail:{playing:true}})); } catch(e){}
+    return true;
+  };
+  KOBSonoro.stop = function(){
+    if (SND.part){ try { SND.part.dispose(); } catch(e){} SND.part = null; }
+    try { Tone.Transport.stop(); Tone.Transport.cancel(0); } catch(e){}
+    try { Object.keys(SND.synths).forEach(function(k){ SND.synths[k].releaseAll && SND.synths[k].releaseAll(); }); } catch(e){}
+    SND.playing = false;
+    var btn = document.getElementById('kob-soneto-music'); if (btn) btn.classList.remove('playing');
+    try { window.dispatchEvent(new CustomEvent('kob:sonoro-state', {detail:{playing:false}})); } catch(e){}
+  };
+  KOBSonoro.isPlaying = function(){ return SND.playing; };
+  KOBSonoro.toggle = function(text){ if (SND.playing) return KOBSonoro.stop(); return KOBSonoro.play(text); };
+
+  /* ══ 9. HEADER — wiring ══ */
+  var active = { title: '', text: '' };
+  var LIM = 16;
+  function paintHeader(){
+    var sh = document.getElementById('kob-soneto-short');
+    var fu = document.getElementById('kob-soneto-full');
+    if (!sh) return;
+    var t = String(active.title || 'KOBLLUX').trim();
+    sh.textContent = t.length > LIM ? t.slice(0, LIM-1) + '…' : t;
+    if (fu) fu.textContent = t;
+    var holo = document.querySelector('#kob-soneto-holo .ha');
+    if (holo) holo.textContent = window.KOB_SONETO_ARCH + ' · ' + (ARCH_MUSIC[window.KOB_SONETO_ARCH]||['dorian','tri',.5])[0];
+  }
+  function toast(msg){ if (window.KBLX_TOAST){ try { KBLX_TOAST(msg); } catch(e){} } else console.log('[KOB-SONETO]', msg); }
+
+  var btnArch  = document.getElementById('kob-soneto-arch-btn');
+  var btnCopy  = document.getElementById('kob-soneto-copy');
+  var btnDl    = document.getElementById('kob-soneto-dl');
+  var btnTts   = document.getElementById('kob-soneto-tts');
+  var btnMusic = document.getElementById('kob-soneto-music');
+  var btnTheme = document.getElementById('kob-soneto-theme');
+  var btnTitle = document.getElementById('kob-soneto-title');
+
+  if (btnArch) btnArch.addEventListener('click', function(){ var i = ARCH_LIST.indexOf(window.KOB_SONETO_ARCH); setArch(ARCH_LIST[(i+1)%ARCH_LIST.length]); toast('◐ ' + window.KOB_SONETO_ARCH); });
+  if (btnTts) btnTts.addEventListener('click', function(){ KOBTTS.toggle(); });
+  if (btnMusic) btnMusic.addEventListener('click', function(){
+    var t = active.text || (window.KOBActive && KOBActive.text) || '';
+    if (!t) { toast('▣ Sem documento'); return; }
+    KOBSonoro.toggle(t);
+  });
+  if (btnCopy) btnCopy.addEventListener('click', async function(){
+    var t = active.text || (window.KOBActive && KOBActive.text) || '';
+    if (!t) { toast('▣ Sem documento'); return; }
+    try { await navigator.clipboard.writeText(t); toast('⧉ Copiado'); } catch(e){ toast('❌ Erro'); }
+  });
+  if (btnDl) btnDl.addEventListener('click', function(){
+    var t = active.text || (window.KOBActive && KOBActive.text) || '';
+    if (!t) { toast('▣ Sem documento'); return; }
+    var b = new Blob([t], {type:'text/plain;charset=utf-8'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = (active.title || 'kob-soneto').replace(/[^\w\-]+/g,'_') + '.txt';
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1500);
+    toast('⤓ Baixado');
+  });
+  if (btnTheme) btnTheme.addEventListener('click', function(){
+    var cur = document.documentElement.getAttribute('data-theme');
+    var next = cur === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('kobllux-theme', next); } catch(e){}
+    toast('◑ ' + next);
+  });
+  if (btnTitle) btnTitle.addEventListener('click', function(){
+    if (!active.title || active.title.length <= LIM) return;
+    var fu = document.getElementById('kob-soneto-full');
+    if (!fu) return;
+    fu.style.setProperty('--mq-dur', Math.max(6, Math.min(22, active.title.length*0.22)) + 's');
+    btnTitle.classList.add('mq');
+  });
+  document.addEventListener('animationend', function(e){ if (e.target && e.target.id === 'kob-soneto-full'){ var t = document.getElementById('kob-soneto-title'); if (t) t.classList.remove('mq'); } });
+
+  /* marca playing no botão TTS conforme estado */
+  if (window.KOB_SPEECH) {
+    /* sem wrapper extra: KOBTTS já controla a classe .playing em start/stop */
+  }
+
+  /* API pública de documento ativo */
+  window.kobSetActiveDoc = function(title, text){
+    active.title = String(title||'');
+    active.text = String(text||'');
+    paintHeader();
+    KOBTTS.scan();
+    toast('▣ ' + (active.title || 'doc'));
+  };
+  if (window.KOBActive){ active.title = KOBActive.title || ''; active.text = KOBActive.text || ''; }
+
+  /* ══ 10. LOADING BAR ══ */
+  var busy = 0, showT;
+  window.KOB_LOADING = window.KOB_LOADING || function(on){
+    busy += on ? 1 : -1; if (busy < 0) busy = 0;
+    clearTimeout(showT);
+    var bar = document.getElementById('kob-soneto-load');
+    if (!bar) return;
+    if (busy > 0) showT = setTimeout(function(){ bar.classList.add('on'); }, 250);
+    else bar.classList.remove('on');
+  };
+  ['readAsText','readAsArrayBuffer','readAsDataURL'].forEach(function(fn){
+    if (!FileReader.prototype[fn] || FileReader.prototype[fn].__kobHooked) return;
+    var o = FileReader.prototype[fn];
+    FileReader.prototype[fn] = function(){ window.KOB_LOADING(true); this.addEventListener('loadend', function(){ window.KOB_LOADING(false); }, {once:true}); return o.apply(this, arguments); };
+    FileReader.prototype[fn].__kobHooked = true;
+  });
+
+  /* ══ 11. BOOT ══ */
+  try { var t = localStorage.getItem('kobllux-theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch(e){}
+  setArch(window.KOB_SONETO_ARCH);
+  paintHeader();
+  window.addEventListener('load', function(){ setTimeout(function(){ KOBTTS.scan(); paintHeader(); }, 600); });
+
+  /* ══ 12. API pública ══ */
+  window.KOBSoneto = {
+    version: '1.1',
+    get arch(){ return window.KOB_SONETO_ARCH; },
+    setArch: setArch, list: function(){ return ARCH_LIST.slice(); },
+    speak: function(txt, opts){ return KOBBus.speak(txt, opts); },
+    say: function(txt, opts){ return KOBBus.say(txt, opts); },
+    stop: function(){ KOBBus.stop(); KOBTTS.stop(); },
+    readDoc: function(){ KOBTTS.toggle(); },
+    transition: function(a){ return KOBSonoro.transition(a); },
+    sfx: function(d){ return KOBSonoro.sfx(d); },
+    play: function(t){ return KOBSonoro.play(t); },
+    stopMusic: function(){ KOBSonoro.stop(); },
+    setDoc: window.kobSetActiveDoc,
+    get doc(){ return { title: active.title, text: active.text }; },
+    cycleClickMode: function(){ return KOBBus.cycleClickMode(); },
+    get clickMode(){ return KOBBus.clickMode; }
+  };
+
+  console.log('%c[KOB-SONETO v1.1]%c ✓ 17 arquétipos · TTS outline · click-to-speak · SFX · trilha · cores',
+    'background:#22d3ee;color:#000;padding:2px 8px;border-radius:3px', 'color:#22d3ee');
+})();
+</script>
