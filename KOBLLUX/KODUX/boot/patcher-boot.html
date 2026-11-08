@@ -1,0 +1,39 @@
+<style id="kd-patch-blobs-zindex">
+/* ══════════════════════════════════════════════════════
+   PATCH · BLOBS VISÍVEIS NO LOADER + Z-INDEX LIMPO
+   Cole antes do </body>
+══════════════════════════════════════════════════════ */
+
+/* 1) Blobs VISÍVEIS durante o loader (antes do boot) */
+.kd-blob   { opacity: .22 !important; }
+.kd-blob-1 { opacity: .22 !important; }
+.kd-blob-2 { opacity: .18 !important; }
+.kd-blob-3 { opacity: .28 !important; }
+
+/* 2) Pós-boot: mantém os valores originais (não regride) */
+body.kd-booted .kd-blob   { opacity: .32 !important; }
+body.kd-booted .kd-blob-2 { opacity: .28 !important; }
+
+/* 3) Z-index stack unificado (elimina os 3 conflitos de #kdc) */
+#kd-stage         { z-index: 9000;  }   /* fundo persistente */
+#kd-stage .kd-blob{ z-index: 9001;  }   /* blobs sobre o stage bg */
+.kodux-boot-veil  { z-index: 9002;  }   /* veil sobre os blobs */
+#kodux-boot       { z-index: 9010;  }   /* tela de boot */
+#kdc              {
+  position: fixed;
+  inset: 0;
+  z-index: 9020;          /* card acima do boot, abaixo de modais */
+  pointer-events: none;
+  mix-blend-mode: normal;
+}
+#kdc.fusao-ativa  { mix-blend-mode: lighten; }
+
+/* 4) Stage desce para trás depois do boot */
+body.kd-booted #kd-stage { z-index: -1; }
+
+/* 5) Modais e toasts mantêm supremacia */
+.modal-overlay    { z-index: 99998 !important; }
+.toaster-wrap     { z-index: 99999 !important; }
+#nv-toast         { z-index: 100000 !important; }
+#kd-qa-menu       { z-index: 100001 !important; }
+</style>

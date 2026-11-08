@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PATCH · Solar Boot Fix · KODUX</title>
+<style>
+:root {
+  --bg:#07090d; --panel:#10141b; --text:#eaf2ff;
+  --cyan:#00f2ff; --green:#39ffb6; --orange:#ff9d42;
+  --u-base: clamp(0px,calc(100vw/44),20px);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:ui-monospace,monospace;padding:24px;line-height:1.6}
+h1{color:var(--cyan);font-size:16px;margin-bottom:8px}
+h2{color:var(--green);font-size:13px;margin:20px 0 6px;text-transform:uppercase;letter-spacing:.1em}
+p{color:#8fa0bb;font-size:12px;margin-bottom:12px}
+pre{background:#080b10;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;
+  font-size:11px;white-space:pre;overflow-x:auto;color:#cde8ff}
+.tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;margin-right:6px}
+.bug{background:rgba(255,85,119,.15);color:#ff8ba4;border:1px solid rgba(255,85,119,.3)}
+.fix{background:rgba(57,255,182,.12);color:var(--green);border:1px solid rgba(57,255,182,.3)}
+.note{background:rgba(0,242,255,.1);color:var(--cyan);border:1px solid rgba(0,242,255,.25)}
+hr{border:none;border-top:1px solid rgba(255,255,255,.07);margin:24px 0}
+</style>
+</head>
+<body>
+
+<h1>🔧 PATCH · Solar-boot-v0-nanai-okfusi · KODUX</h1>
+<p>Cole os blocos abaixo no arquivo principal antes do <code>&lt;/body&gt;</code>. Remove duplicatas e corrige os 4 problemas mapeados.</p>
+
+<hr>
+
+<!-- ═══════════════════════════════════════════════════════
+     DIAGNÓSTICO
+═══════════════════════════════════════════════════════ -->
+<h2>🩺 Diagnóstico — problemas encontrados</h2>
+
+<p><span class="tag bug">BUG 1</span> <strong>Blobs invisíveis no loader</strong> — linha 835:<br>
+<code>.kd-blob{ opacity:.0 }</code> — opacity zero mata todos os 3 blobs antes do boot acontecer.<br>
+O blob-3 tem <code>opacity:.28</code> inline, mas blob-1 e blob-2 herdam <code>.0</code>. Depois do boot, a regra <code>body.kd-booted .kd-blob{ opacity:.32 }</code> resolve, mas <em>durante</em> o loader ficam invisíveis.</p>
+
+<p><span class="tag bug">BUG 2</span> <strong>Z-index caótico</strong> — 5 definições conflitantes de <code>#kdc</code> (linhas 847, 884, 888). O estágio <code>#kd-stage</code> usa <code>z-index:99998</code> e o veil interno também usa 99998 — estão no mesmo nível, podendo bloquear os blobs.<br>
+O <code>#kdc</code> aparece 3× no CSS com z-index diferente (100001, 1, e sem valor).</p>
+
+<p><span class="tag bug">BUG 3</span> <strong>Duplicatas JS</strong> — keyframes <code>orbSpin</code> / <code>orbPulse</code> definidos 3× cada. Bloco <code>#kdc .orb</code> e <code>#kdc .orb-core</code> duplicados (linhas 581-601 e 727-750). Reset <code>*{margin:0;padding:0}</code> aparece 4×.</p>
+
+<p><span class="tag bug">BUG 4</span> <strong>Safe-theme ausente</strong> — Nenhum guard garante que <code>--kob-voice-primary/secondary</code> e as variáveis de modo (day/night/sunset) sejam restauradas se um HTML injetado sobrescrever o <code>:root</code>.</p>
+
+<hr>
+
+<!-- ═══════════════════════════════════════════════════════
+     BLOCO 1 — CSS FIX (cola no <style> ou antes do </body>)
+═══════════════════════════════════════════════════════ -->
+<h2>📌 Bloco 1 — CSS Fix: Blobs + Z-index (colar antes do <code>&lt;/body&gt;</code>)</h2>
+<pre id="css-fix">
+&lt;style id="kd-patch-blobs-zindex"&gt;
+/* ══════════════════════════════════════════════════════
+   PATCH · BLOBS VISÍVEIS NO LOADER + Z-INDEX LIMPO
+   Cole antes do &lt;/body&gt;
+══════════════════════════════════════════════════════ */
+
+/* 1) Blobs VISÍVEIS durante o loader (antes do boot) */
+.kd-blob   { opacity: .22 !important; }
+.kd-blob-1 { opacity: .22 !important; }
+.kd-blob-2 { opacity: .18 !important; }
+.kd-blob-3 { opacity: .28 !important; }
+
+/* 2) Pós-boot: mantém os valores originais (não regride) */
+body.kd-booted .kd-blob   { opacity: .32 !important; }
+body.kd-booted .kd-blob-2 { opacity: .28 !important; }
+
+/* 3) Z-index stack unificado (elimina os 3 conflitos de #kdc) */
+#kd-stage         { z-index: 9000;  }   /* fundo persistente */
+#kd-stage .kd-blob{ z-index: 9001;  }   /* blobs sobre o stage bg */
+.kodux-boot-veil  { z-index: 9002;  }   /* veil sobre os blobs */
+#kodux-boot       { z-index: 9010;  }   /* tela de boot */
+#kdc              {
+  position: fixed;
+  inset: 0;
+  z-index: 9020;          /* card acima do boot, abaixo de modais */
+  pointer-events: none;
+  mix-blend-mode: normal;
+}
+#kdc.fusao-ativa  { mix-blend-mode: lighten; }
+
+/* 4) Stage desce para trás depois do boot */
+body.kd-booted #kd-stage { z-index: -1; }
+
+/* 5) Modais e toasts mantêm supremacia */
+.modal-overlay    { z-index: 99998 !important; }
+.toaster-wrap     { z-index: 99999 !important; }
+#nv-toast         { z-index: 100000 !important; }
+#kd-qa-menu       { z-index: 100001 !important; }
+&lt;/style&gt;
+</pre>
+<button onclick="copyBlock('css-fix')" style="margin-top:8px;padding:6px 14px;background:rgba(57,255,182,.15);border:1px solid rgba(57,255,182,.4);color:#39ffb6;border-radius:8px;cursor:pointer;font-size:11px">📋 Copiar Bloco 1</button>
+
+<hr>
+
+<!-- ═══════════════════════════════════════════════════════
+     BLOCO 2 — SAFE-THEME GUARD JS
+═══════════════════════════════════════════════════════ -->
+<h2>📌 Bloco 2 — Safe-Theme Guard JS (colar antes do <code>&lt;/body&gt;</code>, depois do Bloco 1)</h2>
+<pre id="js-safetheme">
+&lt;script id="kd-safe-theme-guard"&gt;
+/* ══════════════════════════════════════════════════════
+   SAFE-THEME GUARD — KODUX Solar Boot
+   Restaura variáveis de voz + modo se HTML injetado
+   sobrescrever o :root. Roda em DOMContentLoaded + load.
+══════════════════════════════════════════════════════ */
+(function() {
+  'use strict';
+
+  /* Paleta base por modo */
+  var THEMES = {
+    night: {
+      '--kob-voice-primary':   '#00f2ff',
+      '--kob-voice-secondary': '#bd00ff',
+      '--kob-voice-accent':    '#39ffb6',
+      '--bg':                  '#07090d',
+      '--text':                '#eaf2ff',
+      '--muted':               '#7f8da3'
+    },
+    day: {
+      '--kob-voice-primary':   '#007aff',
+      '--kob-voice-secondary': '#6e40c9',
+      '--kob-voice-accent':    '#00b894',
+      '--bg':                  '#f0f4ff',
+      '--text':                '#17202b',
+      '--muted':               'rgba(20,30,50,.55)'
+    },
+    sunset: {
+      '--kob-voice-primary':   '#ff9d42',
+      '--kob-voice-secondary': '#ff5577',
+      '--kob-voice-accent':    '#ffd60a',
+      '--bg':                  '#1a0a00',
+      '--text':                '#fff8f0',
+      '--muted':               'rgba(255,220,180,.65)'
+    }
+  };
+
+  /* ── Detecta o modo atual ── */
+  function currentMode() {
+    var html  = document.documentElement;
+    var body  = document.body;
+    /* Tenta via dataset/class (day/night/sunset) */
+    var m = html.dataset.theme || html.dataset.mode ||
+            (body.classList.contains('mode-day')    ? 'day'    :
+             body.classList.contains('mode-sunset') ? 'sunset' :
+             body.classList.contains('mode-night')  ? 'night'  : null);
+    /* Fallback: localStorage */
+    if (!m) { try { m = localStorage.getItem('di_solarMode'); } catch(_){} }
+    return m || 'night';
+  }
+
+  /* ── Aplica as vars no :root ── */
+  function applyTheme(mode) {
+    var palette = THEMES[mode] || THEMES.night;
+    var root    = document.documentElement;
+    Object.keys(palette).forEach(function(k) {
+      root.style.setProperty(k, palette[k]);
+    });
+    /* marca o modo no html para seletores CSS */
+    root.setAttribute('data-theme', mode);
+    root.setAttribute('data-mode',  mode);
+    document.body.setAttribute('data-mode', mode);
+  }
+
+  /* ── Guard: verifica se as vars ainda estão certas ── */
+  function guard() {
+    var root   = document.documentElement;
+    var mode   = currentMode();
+    var palette = THEMES[mode] || THEMES.night;
+    var style   = getComputedStyle(root);
+    /* checa só a primary — se sumiram, restaura tudo */
+    var primary = style.getPropertyValue('--kob-voice-primary').trim();
+    if (!primary || primary === 'initial' || primary === '') {
+      applyTheme(mode);
+    }
+  }
+
+  /* ── API pública ── */
+  window.KoduxSafeTheme = {
+    apply: applyTheme,
+    guard: guard,
+    mode:  currentMode
+  };
+
+  /* ── Boot ── */
+  function init() {
+    applyTheme(currentMode());
+    /* Roda o guard a cada 2s para pegar injeções tardias */
+    setInterval(guard, 2000);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+  window.addEventListener('load', function() { applyTheme(currentMode()); });
+
+  /* Escuta mudanças de modo feitas pelo SolarUpgrade ou App */
+  document.addEventListener('solar:mode', function(e) {
+    if (e && e.detail && e.detail.mode) applyTheme(e.detail.mode);
+  });
+
+  console.log('%c[SAFE-THEME]%c ✓ Guard ativo — modo: ' + currentMode(),
+    'background:#39ffb6;color:#000;padding:2px 6px;border-radius:3px',
+    'color:#39ffb6');
+})();
+&lt;/script&gt;
+</pre>
+<button onclick="copyBlock('js-safetheme')" style="margin-top:8px;padding:6px 14px;background:rgba(57,255,182,.15);border:1px solid rgba(57,255,182,.4);color:#39ffb6;border-radius:8px;cursor:pointer;font-size:11px">📋 Copiar Bloco 2</button>
+
+<hr>
+
+<!-- ═══════════════════════════════════════════════════════
+     RESUMO — O QUE REMOVER DO ORIGINAL
+═══════════════════════════════════════════════════════ -->
+<h2>🗑 Duplicatas para remover / comentar no original</h2>
+
+<p>As regras abaixo aparecem mais de uma vez no CSS. Comente ou delete as repetições — mantém apenas a ÚLTIMA ocorrência (que o patch sobrescreve de qualquer forma):</p>
+
+<pre>
+Regra duplicada                               Linhas (aprox.)
+──────────────────────────────────────────────────────────────
+@keyframes orbSpin { ... }                    L603  +  L794
+@keyframes orbPulse { ... }                   L606  +  L797
+#kdc .orb { ... }                             L581  +  L727
+#kdc .orb-core { ... }                        L588  +  L734
+#kdc { position:fixed; z-index:100001 }       L847
+#kdc { position:fixed; z-index:1 }            L884   ← remover esta
+#kdc { position:fixed; z-index:1 }            L888   ← e esta
+*{ margin:0;padding:0;box-sizing }            4× — manter só 1
+html,body{ background: ... }                  L18, L829, L830, L1719, L1944
+                                              — manter só a do :root principal
+.kodux-boot { ... } (bloco inteiro)           L196-204  +  L1037-1046
+                                              — manter só L1037 (a última)
+footer { text-align:center... }              L193  +  L1035  — manter 1
+</pre>
+
+<p><span class="tag note">NOTA</span> Os dois <code>@keyframes orbSpin</code> extras no body (linhas 1973 e 1979, dentro de <code>&lt;style data-kodux-source&gt;</code>) já estão vazios (<code>{ }</code>) — podem ser deletados.</p>
+
+<hr>
+
+<!-- ═══════════════════════════════════════════════════════
+     RESUMO RÁPIDO
+═══════════════════════════════════════════════════════ -->
+<h2>✅ Resumo do que o patch faz</h2>
+<pre>
+1. Blobs visíveis no loader  → opacity .22/.18/.28 durante boot
+2. Blobs pós-boot           → opacity .32/.28 (mantém original)
+3. Z-index stack limpo      → stage 9000 / boot 9010 / card 9020
+4. #kdc sem conflito        → 1 definição única, mix-blend condicional
+5. Safe-theme guard         → restaura --kob-voice-* se injeção sumir vars
+6. Eventos solar:mode       → SolarUpgrade.setMode() dispara o guard
+</pre>
+
+<script>
+function copyBlock(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var text = el.textContent;
+  navigator.clipboard.writeText(text).then(function() {
+    var btn = el.nextElementSibling;
+    if (btn) { var orig = btn.textContent; btn.textContent = '✓ Copiado!'; setTimeout(function(){ btn.textContent = orig; }, 1500); }
+  }).catch(function() {
+    var ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+  });
+}
+</script>
+
+</body>
+</html>
