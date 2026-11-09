@@ -3841,6 +3841,397 @@ window.__kdc={els:els,state:state,setMode:window.setMode,restore:restoreSavedMod
 
 </script>
 
+<!-- ═══════════════════════════════════════════════════════════════
+     PATCH · KD LOCAL FILE SUPPORT (iOS/Safari file://)
+     ═══════════════════════════════════════════════════════════════ -->
+<!--<style id="kd-patch-local-files">
+#kd-local-panel{
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.015)),var(--panel);
+  padding:14px 16px;margin-bottom:14px;
+}
+#kd-local-panel .kd-local-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#kd-local-panel .kd-local-row button{min-height:40px;padding:0 14px;border-radius:11px}
+#kd-local-panel .kd-local-status{font-size:11px;color:var(--muted);margin-top:10px;font-family:ui-monospace,monospace}
+#kd-local-panel .kd-local-status.ok{color:var(--green)}
+#kd-local-panel .kd-local-status.err{color:var(--red)}
+#kd-local-drop{
+  margin-top:10px;border:2px dashed var(--line);border-radius:12px;
+  padding:16px;text-align:center;color:var(--muted);font-size:12px;
+  transition:.15s;cursor:pointer;
+}
+#kd-local-drop.hover{border-color:var(--cyan);color:var(--cyan);background:rgba(0,242,255,.05)}
+#kd-local-list{
+  margin-top:10px;max-height:180px;overflow:auto;
+  font:11px/1.5 ui-monospace,monospace;color:var(--muted);
+  background:#080a0d;border:1px solid var(--line);border-radius:10px;padding:8px 10px;
+}
+#kd-local-list .lf{display:flex;justify-content:space-between;gap:8px;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+#kd-local-list .lf:last-child{border-bottom:0}
+#kd-local-list .lf button{min-height:22px;padding:0 6px;font-size:10px;border-radius:6px}
+</style> -->
 
+<!-- Painel a injetar dentro do view INJECTOR (via JS) e também disponível no FORGE -->
+<!--<script>
+(() => {
+'use strict';
+if (window.__KD_LOCAL_READY__) return;
+window.__KD_LOCAL_READY__ = true;
+
+/* ═══════════════════════════════════════════════════════════════
+   MAPA DE ARQUIVOS LOCAIS
+   chave = caminho normalizado (ex: "kxt-divs-hud.html", "style.css")
+   valor = { file: File, text: string|null, blobURL: string|null, type }
+   ═══════════════════════════════════════════════════════════════ */
+const local = window.__KD_LOCAL__ = {
+  files: new Map(),
+  rootName: '',
+  ready: false
+};
+
+const ROOT_KEY = 'kd-local-root-hint';
+const EXT_TYPE = (n) => {
+  const e = n.toLowerCase().split('.').pop();
+  if (e === 'js' || e === 'mjs') return 'js';
+  if (e === 'css') return 'css';
+  if (e === 'html' || e === 'htm') return 'html';
+  if (e === 'json') return 'json';
+  if (e === 'svg' || e === 'png' || e === 'jpg' || e === 'jpeg' || e === 'gif' || e === 'webp' || e === 'ico') return 'image';
+  return 'other';
+};
+
+const rel = (f) => (f.webkitRelativePath || f.name || '').replace(/^\.?\//, '').toLowerCase();
+const baseName = (p) => p.split('/').pop();
+
+/* ═══════════════════════════════════════════════════════════════
+   INGESTÃO DE ARQUIVOS
+   ═══════════════════════════════════════════════════════════════ */
+async function ingestFiles(fileList, opts = {}) {
+  const arr = Array.from(fileList || []);
+  if (!arr.length) return;
+  let added = 0;
+  for (const file of arr) {
+    const path = rel(file);
+    if (!path) continue;
+    if (path.startsWith('.')) continue; // .DS_Store etc.
+    const ext = EXT_TYPE(path);
+    let text = null;
+    if (ext === 'js' || ext === 'css' || ext === 'html' || ext === 'json' || ext === 'svg' || file.type.startsWith('text/')) {
+      try { text = await file.text(); } catch(_) {}
+    }
+    let blobURL = null;
+    // Blob URLs funcionam mesmo para imagens etc.
+    if (ext === 'image') {
+      try { blobURL = URL.createObjectURL(file); } catch(_) {}
+    }
+    const entry = { file, text, blobURL, type: ext, size: file.size, path };
+    local.files.set(path, entry);
+    // também indexa só pelo basename para refs curtas (ex: <script src="inject.js">)
+    const bn = baseName(path);
+    if (!local.files.has(bn)) local.files.set(bn, entry);
+    added++;
+  }
+  local.rootName = arr[0]?.webkitRelativePath?.split('/')[0] || local.rootName;
+  local.ready = local.files.size > 0;
+  try { localStorage.setItem(ROOT_KEY, local.rootName); } catch(_){}
+
+  renderLocalList();
+  updateLocalStatus();
+  kdLog(`📁 ${added} arquivo(s) carregado(s)${local.rootName ? ' de "'+local.rootName+'"' : ''}.`, 'ok');
+  return added;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESOLVER LOCAL (procura por: path exato, sufixo, basename)
+   ═══════════════════════════════════════════════════════════════ */
+function findLocal(pathHint) {
+  if (!pathHint || !local.files.size) return null;
+  let key = String(pathHint).replace(/^\.?\//, '').toLowerCase().trim();
+  if (local.files.has(key)) return local.files.get(key);
+
+  // Remove prefixos tipo "html/" / "m0d selecta/" — tenta sufixos progressivos
+  const parts = key.split('/').filter(Boolean);
+  for (let i = 1; i < parts.length; i++) {
+    const suffix = parts.slice(i).join('/');
+    if (local.files.has(suffix)) return local.files.get(suffix);
+  }
+  // Por basename
+  const bn = baseName(key);
+  if (local.files.has(bn)) return local.files.get(bn);
+
+  // Fuzzy: termina com o mesmo basename + extensão
+  for (const [k, v] of local.files) {
+    if (k.endsWith('/' + bn)) return v;
+  }
+  return null;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FETCH WRAPPER — o coração do patch
+   Intercepta fetch() globalmente e resolve:
+   1) arquivos locais (input type=file)
+   2) file:// (tenta nativo; se falhar, erro claro)
+   3) https (deixa passar)
+   ═══════════════════════════════════════════════════════════════ */
+const _origFetch = window.fetch.bind(window);
+window.fetch = async function(input, init) {
+  try {
+    const url = typeof input === 'string' ? input : (input && input.url) || '';
+    const isFileProto = url.startsWith('file://');
+    const isRelative = !/^[a-z][a-z0-9+.\-]*:/i.test(url);
+
+    // 1) arquivo local?
+    if (local.files.size && (isFileProto || isRelative || url.includes('/'))) {
+      // Extrai só o path útil do file://
+      let hint = url;
+      if (isFileProto) {
+        try {
+          // file:///private/var/.../M0D%20SELECTA%20/Kxt-divs-hud.html
+          const decoded = decodeURIComponent(url.replace(/^file:\/\//, ''));
+          hint = decoded.split('/').slice(-3).join('/'); // pega 3 últimas partes
+        } catch(_) { hint = url; }
+      }
+      const hit = findLocal(hint) || findLocal(baseName(hint));
+      if (hit) {
+        kdLog(`📁 [local] ${hit.path}`, 'ok');
+        if (hit.text != null) {
+          return new Response(hit.text, {
+            status: 200, statusText: 'OK (local)',
+            headers: { 'Content-Type': mimeFor(hit.type), 'X-KD-Source': 'local' }
+          });
+        }
+        if (hit.blobURL) {
+          // para imagens, devolve blob cru
+          const r = await _origFetch(hit.blobURL);
+          return r;
+        }
+        return new Response(hit.file, {
+          status: 200, statusText: 'OK (local)',
+          headers: { 'Content-Type': mimeFor(hit.type), 'X-KD-Source': 'local' }
+        });
+      }
+    }
+
+    // 2) file:// sem cache local — explica e falha
+    if (isFileProto) {
+      const msg = `file:// bloqueado pelo navegador. Use o painel "Arquivos Locais" para selecionar a pasta "${local.rootName || 'M0D SELECTA'}" ou arraste os arquivos.`;
+      kdLog('⛔ ' + msg, 'error');
+      throw new TypeError(msg);
+    }
+
+    // 3) deixa passar normalmente
+    return _origFetch(input, init);
+  } catch (e) {
+    if (e && e.message && e.message.startsWith('file:// bloqueado')) throw e;
+    throw e;
+  }
+};
+
+function mimeFor(t) {
+  switch (t) {
+    case 'js': return 'text/javascript';
+    case 'css': return 'text/css';
+    case 'html': return 'text/html';
+    case 'json': return 'application/json';
+    case 'svg': return 'image/svg+xml';
+    default: return 'text/plain';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   UI — painel injetado no INJECTOR + FORGE
+   ═══════════════════════════════════════════════════════════════ */
+function buildPanelHTML() {
+  const savedRoot = localStorage.getItem(ROOT_KEY) || '';
+  return `
+  <div id="kd-local-panel">
+    <div class="kd-local-row" style="justify-content:space-between;margin-bottom:8px">
+      <strong style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">📁 Arquivos Locais</strong>
+      <button class="kd-small kd-btn-danger" id="kd-local-clear" title="Limpar cache local">LIMPAR</button>
+    </div>
+    <div class="kd-local-row">
+      <label class="kd-btn-file" style="flex:1">
+        📂 Escolher PASTA (recomendado)
+        <input type="file" id="kd-local-dir" webkitdirectory directory multiple hidden>
+      </label>
+      <label class="kd-btn-file" style="flex:1">
+        📄 Escolher ARQUIVOS
+        <input type="file" id="kd-local-files" multiple hidden>
+      </label>
+    </div>
+    <div id="kd-local-drop">↘ Arraste a pasta <b>M0D SELECTA</b> ou o <b>Kxt-divs-hud.html</b> aqui</div>
+    <div class="kd-local-status" id="kd-local-status">
+      ${savedRoot ? `Última pasta: <b>${savedRoot}</b> · ${local.files.size} arquivo(s) em cache` : 'Nenhum arquivo carregado.'}
+    </div>
+    <div id="kd-local-list"></div>
+  </div>`;
+}
+
+function injectPanel() {
+  // No view INJECTOR: injeta antes da details "Fonte"
+  const injView = document.getElementById('kd-view-inject');
+  if (injView && !document.getElementById('kd-local-panel')) {
+    const firstDetails = injView.querySelector('details.kd-section');
+    if (firstDetails) firstDetails.insertAdjacentHTML('beforebegin', buildPanelHTML());
+  }
+  // No view FORGE: injeta antes de "Caminhos"
+  const forgeView = document.getElementById('kd-view-forge');
+  if (forgeView && !document.getElementById('kd-local-panel-forge')) {
+    const firstDetails = forgeView.querySelector('details.kd-section');
+    if (firstDetails) {
+      const div = document.createElement('div');
+      div.innerHTML = buildPanelHTML().replace('id="kd-local-panel"', 'id="kd-local-panel-forge"')
+        .replace(/kd-local-dir/g, 'kd-local-dir-forge')
+        .replace(/kd-local-files/g, 'kd-local-files-forge')
+        .replace(/kd-local-drop/g, 'kd-local-drop-forge')
+        .replace(/kd-local-status/g, 'kd-local-status-forge')
+        .replace(/kd-local-list/g, 'kd-local-list-forge')
+        .replace(/kd-local-clear/g, 'kd-local-clear-forge');
+      firstDetails.insertAdjacentHTML('beforebegin', div.innerHTML);
+    }
+  }
+  bindPanel();
+}
+
+function bindPanel() {
+  const wire = (prefix) => {
+    const dirInp = document.getElementById(`kd-local-dir${prefix}`) || document.getElementById(`kd-local-dir${prefix === '-forge' ? '-forge' : ''}`);
+    const fileInp = document.getElementById(`kd-local-files${prefix}`);
+    const drop = document.getElementById(`kd-local-drop${prefix}`);
+    const clear = document.getElementById(`kd-local-clear${prefix}`);
+    if (dirInp) dirInp.addEventListener('change', (e) => ingestFiles(e.target.files).then(() => { dirInp.value = ''; }));
+    if (fileInp) fileInp.addEventListener('change', (e) => ingestFiles(e.target.files).then(() => { fileInp.value = ''; }));
+    if (drop) {
+      drop.addEventListener('click', () => dirInp && dirInp.click());
+      drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('hover'); });
+      drop.addEventListener('dragleave', () => drop.classList.remove('hover'));
+      drop.addEventListener('drop', async (e) => {
+        e.preventDefault(); drop.classList.remove('hover');
+        const items = e.dataTransfer.items;
+        if (items && items.length && items[0].webkitGetAsEntry) {
+          // travessia recursiva de diretório
+          const files = [];
+          for (const it of items) {
+            const entry = it.webkitGetAsEntry();
+            if (entry) await walkEntry(entry, files);
+          }
+          ingestFiles(files);
+        } else {
+          ingestFiles(e.dataTransfer.files);
+        }
+      });
+    }
+    if (clear) clear.addEventListener('click', () => {
+      local.files.forEach(v => v.blobURL && URL.revokeObjectURL(v.blobURL));
+      local.files.clear(); local.ready = false; local.rootName = '';
+      localStorage.removeItem(ROOT_KEY);
+      renderLocalList(); updateLocalStatus();
+      kdLog('🗑 Cache local limpo.');
+    });
+  };
+  wire('');
+  wire('-forge');
+}
+
+async function walkEntry(entry, out) {
+  if (entry.isFile) {
+    await new Promise(res => entry.file(f => { out.push(f); res(); }, () => res()));
+  } else if (entry.isDirectory) {
+    const reader = entry.createReader();
+    const entries = await new Promise(res => reader.readEntries(res, () => res([])));
+    for (const e of entries) await walkEntry(e, out);
+  }
+}
+
+function renderLocalList() {
+  const html = [...local.files.values()]
+    .filter((v, i, arr) => arr.findIndex(x => x.file === v.file) === i) // dedupe
+    .sort((a, b) => a.path.localeCompare(b.path))
+    .map(v => `<div class="lf"><span>${v.path}</span><span>${(v.size/1024).toFixed(1)}k · ${v.type}</span></div>`)
+    .join('') || '<div style="color:var(--muted)">— vazio —</div>';
+
+  ['kd-local-list', 'kd-local-list-forge'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  });
+}
+
+function updateLocalStatus() {
+  const txt = local.ready
+    ? `<span style="color:var(--green)">✓ ${local.files.size} entrada(s)</span>${local.rootName ? ' · pasta: <b>'+local.rootName+'</b>' : ''}`
+    : 'Nenhum arquivo carregado.';
+  ['kd-local-status', 'kd-local-status-forge'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.innerHTML = txt; el.classList.toggle('ok', local.ready); }
+  });
+}
+
+function kdLog(msg, type) {
+  const box = document.getElementById('kd-log');
+  if (!box) return;
+  const line = document.createElement('div');
+  line.className = 'kd-log-line';
+  line.textContent = '› ' + msg;
+  if (type === 'error') line.style.color = '#ff8ba4';
+  if (type === 'ok') line.style.color = '#39ffb6';
+  if (type === 'warn') line.style.color = '#ff9d42';
+  box.appendChild(line); box.scrollTop = box.scrollHeight;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS PÚBLICOS
+   ═══════════════════════════════════════════════════════════════ */
+window.KD_LOCAL = {
+  ingest: ingestFiles,
+  find: findLocal,
+  list: () => [...local.files.values()],
+  clear: () => { local.files.clear(); local.ready = false; renderLocalList(); updateLocalStatus(); },
+  // Atalho para abrir o HTML local diretamente
+  open: async (pathHint) => {
+    const hit = findLocal(pathHint);
+    if (!hit) { kdLog(`✗ Não encontrado localmente: ${pathHint}`, 'error'); return false; }
+    if (hit.text == null) { kdLog(`✗ ${hit.path} não tem conteúdo texto (tipo ${hit.type})`, 'error'); return false; }
+    const urlInp = document.getElementById('kd-url');
+    const inline = document.getElementById('kd-inline-html');
+    if (urlInp) urlInp.value = 'local://' + hit.path;
+    // joga no inline e analisa
+    if (inline) inline.value = hit.text;
+    const btn = document.querySelector('[data-kd-act="load-inline"]');
+    if (btn) btn.click();
+    kdLog(`📁 Aberto: ${hit.path}`, 'ok');
+    return true;
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   INICIALIZAÇÃO
+   ═══════════════════════════════════════════════════════════════ */
+function boot() {
+  injectPanel();
+  // re-injeta quando trocar de aba (o DOM é preservado, mas garante que está lá)
+  document.getElementById('kd-tab-forge')?.addEventListener('click', () => setTimeout(injectPanel, 50));
+  document.getElementById('kd-tab-inject')?.addEventListener('click', () => setTimeout(injectPanel, 50));
+  updateLocalStatus();
+
+  // Restaura última pasta carregada (só o nome, os arquivos precisam ser re-selecionados)
+  const saved = localStorage.getItem(ROOT_KEY);
+  if (saved) kdLog(`📁 Última pasta: "${saved}" — clique em "Escolher PASTA" para recarregar.`, 'warn');
+
+  // Atalho: se o inputUrl receber um file://, mostra dica
+  const urlInp = document.getElementById('kd-url');
+  if (urlInp) {
+    urlInp.addEventListener('change', () => {
+      if (urlInp.value.startsWith('file://') && !local.ready) {
+        kdLog('⛔ file:// bloqueado. Use o painel "Arquivos Locais" acima.', 'warn');
+      }
+    });
+  }
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+else boot();
+
+})();
+</script>-->
 </body>
 </html>
