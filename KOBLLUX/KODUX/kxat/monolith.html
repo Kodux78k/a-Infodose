@@ -6,7 +6,13 @@
 <link rel="manifest" href="manifest.json"> <meta name="theme-color" content="#05070a"> <link rel="apple-touch-icon" href="icon-192.png">
 
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;600;900&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
-
+<!-- ═══ DEPENDÊNCIAS EXTERNAS (faltavam) ═══ -->
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+<!-- (opcional, para sanitizar HTML de IA) -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script> -->
  <style data-inlined-from="https://kodux78k.github.io/oiDual--Y-/css/KxTsK-unified.css">
 :root {
   --bg-deep: #050811; 
@@ -362,7 +368,58 @@ select.btn { width: 100%; padding: 8px; background: rgba(0,0,0,0.4); color: #fff
 <style data-inlined-from="https://infodose.com.br/css/iFSw-base.css">
 /* [Conteúdo do iFSw-base.css permanece idêntico ao original - omitido aqui por espaço] */
 </style>
+<style type="text/css" media="all">
+    /* ═══════════════════════════════════════════════════════════════
+   OVERRIDE: Backdrop das respostas da IA (conversa)
+   ═══════════════════════════════════════════════════════════════ */
+.msg-block.ai {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.78) 0%, rgba(15, 23, 42, 0.68) 100%) !important;
+  backdrop-filter: blur(18px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(180%) !important;
+  border: 1px solid rgba(0, 242, 255, 0.15) !important;
+  border-left: 2px solid var(--secondary) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+.msg-block.user {
+  background: linear-gradient(135deg, rgba(0, 245, 255, 0.10) 0%, rgba(0, 200, 220, 0.06) 100%) !important;
+  backdrop-filter: blur(12px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(160%) !important;
+  border: 1px solid rgba(0, 245, 255, 0.10) !important;
+  border-right: 2px solid var(--primary) !important;
+}
+.msg-block.system {
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  background: rgba(0, 0, 0, 0.25) !important;
+}
 
+/* Status do modelo AUTO */
+#autoModelStatus {
+  display: none;
+  font-size: 0.68rem;
+  color: var(--neon-cyan);
+  background: rgba(0, 242, 255, 0.08);
+  border: 1px solid rgba(0, 242, 255, 0.18);
+  border-radius: 6px;
+  padding: 4px 8px;
+  margin-top: 6px;
+  font-family: var(--font-code);
+  letter-spacing: 0.3px;
+  word-break: break-all;
+}
+
+/* Cockpit button — sem context menu em long-press */
+#orbToggle {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+#orbToggle.long-pressing {
+  transform: translateX(-50%) scale(0.92);
+  filter: drop-shadow(0 0 30px var(--primary));
+  transition: transform 0.15s ease, filter 0.15s ease;
+</style>
   <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 </head>
 <body class="field-closed" data-mode="night">
@@ -463,7 +520,7 @@ select.btn { width: 100%; padding: 8px; background: rgba(0,0,0,0.4); color: #fff
                    <!-- ID renomeado para evitar duplicata com o drawerSettings -->
                    <input type="password" id="apiKeyInputNeural" placeholder="sk-or-..." autocomplete="off" style="width:100%;margin-bottom:6px;padding:8px;border-radius:6px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);color:#fff">
                    
-                   <div class="model-toggle">
+                   <!--<div class="model-toggle">
                       <select id="modelSelect" class="btn">
                         <option value="" disabled="">Selecione Modelo</option>
                         <option value="nvidia/nemotron-3-nano-30b-a3b:free">NemoTron (Free)</option>
@@ -471,8 +528,22 @@ select.btn { width: 100%; padding: 8px; background: rgba(0,0,0,0.4); color: #fff
                         <option value="mistralai/devstral-2512:free">DevStral</option>
                         <option value="openai/gpt-oss-120b:free">OSS120b</option>
                       </select>
-                   </div>
-                   
+                   </div>-->
+                   <div class="section-title" style="margin-top:8px">PROMPT DE TREINO (ROLE)</div>
+<textarea id="systemRoleInputCard" placeholder="Ex: Você é o Oráculo Dual. Responda em PT-BR, denso e direto..."
+  style="width:100%;margin-bottom:8px;padding:8px;border-radius:6px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);color:#fff;min-height:64px;font-family:var(--font-code);font-size:0.78rem;resize:vertical"></textarea>
+
+<div class="section-title" style="margin-top:8px">MODELO DE IA</div>
+<div class="model-toggle">
+   <select id="modelSelect" class="btn">
+     <option value="auto-free">🎯 AUTO (OpenRouter Free)</option>
+     <option value="nvidia/nemotron-3-nano-30b-a3b:free">NemoTron (Free)</option>
+     <option value="allenai/molmo-2-8b:free">MolMo (Free)</option>
+     <option value="mistralai/devstral-2512:free">DevStral</option>
+     <option value="openai/gpt-oss-120b:free">OSS120b</option>
+   </select>
+</div>
+<div id="autoModelStatus">Aguardando primeira chamada…</div>
                    <div class="panel-divider" style="margin:10px 0; border-top:1px solid rgba(255,255,255,0.05)"></div>
                    <button id="saveSystemBtn" class="trigger-btn" style="margin-top:12px;background:var(--neon-cyan);color:#000;border:none;font-weight:700">SALVAR CONFIGURAÇÃO</button>
                 </div>
@@ -1096,35 +1167,37 @@ body{ overflow-y:auto; height:100%}
         } catch(e){ showToaster('Erro ao copiar ativação', 'error'); }
     });
 
-    els.saveSystemBtn.addEventListener('click', () => {
-         infodoseName = document.getElementById('infodoseNameInput').value.trim();
-         // Usa o ID exclusivo do systemCard
-         const newKey = document.getElementById('apiKeyInputNeural').value.trim();
-         const newModel = document.getElementById('modelSelect').value.trim();
-         
-         if(newKey) {
-             apiKey = newKey;
-             localStorage.setItem('di_apiKey', apiKey);
-             // Sincroniza com o drawer
-             const drawerKey = document.getElementById('apiKeyInput');
-             if (drawerKey) drawerKey.value = newKey;
-             if(typeof STATE !== 'undefined') {
-                 const active = STATE.keys.find(k=>k.active);
-                 if(active) { active.token = newKey; saveData(); }
-             }
-         }
-         
-         modelName = newModel || modelName;
-         localStorage.setItem('di_modelName', modelName);
-         localStorage.setItem('di_infodoseName', infodoseName);
-         // Propaga pro cockpit
-         const modelInput = document.getElementById('inputModel');
-         if (modelInput) modelInput.value = modelName;
-         
-         toggleSection('systemCard', false);
-         showToaster('Configurações Salvas (di_ synced)', 'success');
-    });
-
+els.saveSystemBtn.addEventListener('click', () => {
+    infodoseName = document.getElementById('infodoseNameInput').value.trim();
+    
+    // 🔑 lê dos inputs sincronizados
+    const newKey = window.getActiveKey ? window.getActiveKey() : (document.getElementById('apiKeyInputNeural')?.value.trim() || '');
+    const newRole = window.getActiveRole ? window.getActiveRole() : (document.getElementById('systemRoleInputCard')?.value.trim() || '');
+    
+    // 🎯 modelo: se select é auto-free, guarda 'auto-free'; senão guarda o id
+    const sel = document.getElementById('modelSelect');
+    const newModel = sel ? sel.value : (document.getElementById('inputModel')?.value.trim() || 'auto-free');
+    
+    if (newKey) {
+        apiKey = newKey;
+        localStorage.setItem('di_apiKey', newKey);
+    }
+    if (newRole) localStorage.setItem('di_systemRole', newRole);
+    if (newModel) {
+        modelName = newModel;
+        localStorage.setItem('di_modelName', newModel);
+        // reflete no cockpit se não for auto-free
+        if (newModel !== 'auto-free') {
+            const cm = document.getElementById('inputModel');
+            if (cm) cm.value = newModel;
+        }
+    }
+    localStorage.setItem('di_infodoseName', infodoseName);
+    
+    toggleSection('systemCard', false);
+    showToaster('Configurações salvas', 'success');
+    console.log('[SAVE_CONFIG] card', { infodoseName, hasKey: !!newKey, roleLen: (newRole || '').length, model: newModel });
+});
     const FIRST_PREVIEW_KEY = 'fusion_orb_smallpreview_shown';
 
     function showFirstRunPreviewIfNeeded() {
@@ -2410,8 +2483,20 @@ const App = {
         this.state.isProcessing = true;
         document.getElementById('field-toggle-handle').innerHTML = `<span class="footer-dot pulse"></span> ${getRandomText(FOOTER_TEXTS.loading)}`;
         
-        const key = localStorage.getItem(STORAGE.API_KEY);
-        if (!key && !document.getElementById('inputModel').value.includes(':free')) { this.announce("Erro: API Key."); this.state.isProcessing = false; return; }
+        // 🔑 Chave: lê dos dois inputs (sincronizados), fallback localStorage
+const key = (window.getActiveKey ? window.getActiveKey() : '') || localStorage.getItem(STORAGE.API_KEY) || '';
+
+// 🎯 Modelo: resolve AUTO (OpenRouter Free) ou usa o escolhido
+let model;
+try {
+    model = await (window.resolveModel ? window.resolveModel() : Promise.resolve(
+        (document.getElementById('inputModel')?.value || '').trim() ||
+        'nvidia/nemotron-3-nano-30b-a3b:free'
+    ));
+} catch (e) {
+    console.warn('[AI_SEND] resolveModel falhou:', e);
+    model = 'nvidia/nemotron-3-nano-30b-a3b:free';
+}
 
         try {
             document.body.classList.add('loading');
@@ -2569,8 +2654,16 @@ const App = {
         document.getElementById('btnAutoSolar').onclick = () => this.enableAutoSolar();
         
         document.getElementById('inputUserId').onchange=(e)=>{localStorage.setItem(STORAGE.USER_ID,e.target.value);this.updateUI();};
-        document.getElementById('btnSaveConfig').onclick=()=>{localStorage.setItem(STORAGE.API_KEY,document.getElementById('apiKeyInput').value);localStorage.setItem(STORAGE.SYSTEM_ROLE,document.getElementById('systemRoleInput').value);this.indexedDB.saveCustomCSS(document.getElementById('customCssInput').value);toggleDrawer('drawerSettings');this.announce("Salvo");};
-        document.getElementById('bgUploadInput').onchange=(e)=>this.indexedDB.handleBackgroundUpload(e.target.files[0]);
+document.getElementById('btnSaveConfig').onclick = () => {
+    const k = window.getActiveKey ? window.getActiveKey() : (document.getElementById('apiKeyInput')?.value || '');
+    const r = window.getActiveRole ? window.getActiveRole() : (document.getElementById('systemRoleInput')?.value || '');
+    if (k) localStorage.setItem(STORAGE.API_KEY, k);
+    if (r) localStorage.setItem(STORAGE.SYSTEM_ROLE, r);
+    this.indexedDB.saveCustomCSS(document.getElementById('customCssInput').value);
+    toggleDrawer('drawerSettings');
+    this.announce("Salvo");
+    console.log('[SAVE_CONFIG] drawer', { hasKey: !!k, roleLen: r.length });
+};        document.getElementById('bgUploadInput').onchange=(e)=>this.indexedDB.handleBackgroundUpload(e.target.files[0]);
         document.getElementById('btnSettings').onclick=()=>toggleDrawer('drawerSettings');
         document.getElementById('btnDeck').onclick=()=>{ toggleDrawer('drawerDeck'); this.renderDeck(); }; // Garante render ao abrir
         document.getElementById('btnClearCss').onclick=()=>this.indexedDB.clearAsset(STORAGE.CUSTOM_CSS);
@@ -2905,7 +2998,239 @@ if(window.__RENDERBUS__?.on){
 <script>
 /* [Background handler — igual ao original, sem mudanças] */
 </script>
-
+<script>
+    /* ═══════════════════════════════════════════════════════════════
+   DUAL SYNC + AUTO MODEL + COCKPIT LONG-PRESS
+   ═══════════════════════════════════════════════════════════════ */
+(function setupDualSyncAndAuto() {
+    'use strict';
+    
+    /* ---------- 1. API KEY: sync bidirecional ---------- */
+    const KEY_IDS = ['apiKeyInput', 'apiKeyInputNeural'];
+    let keyTimer;
+    KEY_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', () => {
+            const val = el.value;
+            KEY_IDS.forEach(other => {
+                if (other === id) return;
+                const o = document.getElementById(other);
+                if (o && o.value !== val) o.value = val;
+            });
+            clearTimeout(keyTimer);
+            keyTimer = setTimeout(() => {
+                if (val) localStorage.setItem('di_apiKey', val);
+            }, 250);
+        });
+    });
+    window.getActiveKey = function() {
+        const a = document.getElementById('apiKeyInputNeural');
+        const b = document.getElementById('apiKeyInput');
+        return (a && a.value) || (b && b.value) || '';
+    };
+    
+    /* ---------- 2. SYSTEM ROLE (training/prompt): sync bidirecional ---------- */
+    const ROLE_IDS = ['systemRoleInput', 'systemRoleInputCard'];
+    let roleTimer;
+    ROLE_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', () => {
+            const val = el.value;
+            ROLE_IDS.forEach(other => {
+                if (other === id) return;
+                const o = document.getElementById(other);
+                if (o && o.value !== val) o.value = val;
+            });
+            clearTimeout(roleTimer);
+            roleTimer = setTimeout(() => {
+                localStorage.setItem('di_systemRole', val);
+            }, 400);
+        });
+    });
+    window.getActiveRole = function() {
+        const a = document.getElementById('systemRoleInputCard');
+        const b = document.getElementById('systemRoleInput');
+        return (a && a.value) || (b && b.value) || 'Você é Dual.';
+    };
+    
+    /* ---------- 3. AUTO MODEL (OpenRouter Free) ---------- */
+    let _autoModelList = null;
+    let _autoModelCache = null;
+    
+    async function fetchFreeModels() {
+        if (_autoModelList && _autoModelList.length) return _autoModelList;
+        try {
+            const res = await fetch('https://openrouter.ai/api/v1/models');
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            _autoModelList = (data.data || []).filter(m => {
+                const p = m.pricing || {};
+                return (String(p.prompt) === '0' || p.prompt === 0) &&
+                    (String(p.completion) === '0' || p.completion === 0);
+            });
+            console.log('[AUTO_MODEL] Free models encontrados:', _autoModelList.length);
+            console.log('[AUTO_MODEL] Exemplos:', _autoModelList.slice(0, 8).map(m => m.id));
+        } catch (e) {
+            console.warn('[AUTO_MODEL] Fetch falhou:', e);
+            _autoModelList = [];
+        }
+        return _autoModelList;
+    }
+    
+    function showAutoModelStatus(id, fromCache) {
+        const el = document.getElementById('autoModelStatus');
+        if (el) {
+            el.style.display = 'block';
+            el.textContent = (fromCache ? '🎯 ' : '🔄 ') + id;
+        }
+        // reflete no cockpit input
+        const cockpitModel = document.getElementById('inputModel');
+        if (cockpitModel) cockpitModel.value = id;
+        console.log('[AUTO_MODEL] Selecionado:', id);
+    }
+    
+    window.resolveModel = async function() {
+        const sel = document.getElementById('modelSelect');
+        const chosen = sel ? sel.value : '';
+        
+        // Se não for AUTO, retorna o que está no select
+        if (chosen && chosen !== 'auto-free') return chosen;
+        
+        // Se não selecionou nada no select, usa o cockpit input ou fallback
+        if (!chosen) {
+            const cockpitModel = document.getElementById('inputModel');
+            const v = (cockpitModel && cockpitModel.value.trim()) || '';
+            if (v) return v;
+        }
+        
+        // AUTO: cache?
+        if (_autoModelCache) {
+            showAutoModelStatus(_autoModelCache, true);
+            return _autoModelCache;
+        }
+        
+        // AUTO: fetch
+        const free = await fetchFreeModels();
+        
+        // Preferência por modelos conhecidamente estáveis
+        const preferred = [
+            'nvidia/nemotron-3-nano-30b-a3b:free',
+            'openai/gpt-oss-120b:free',
+            'mistralai/devstral-2512:free',
+            'allenai/molmo-2-8b:free',
+            'google/gemma-2-9b-it:free',
+            'meta-llama/llama-3.2-3b-instruct:free',
+            'qwen/qwen-2.5-7b-instruct:free',
+            'microsoft/phi-3-mini-128k-instruct:free'
+        ];
+        for (const id of preferred) {
+            if (free.find(m => m.id === id)) {
+                _autoModelCache = id;
+                showAutoModelStatus(id, false);
+                return id;
+            }
+        }
+        if (free[0]) {
+            _autoModelCache = free[0].id;
+            showAutoModelStatus(_autoModelCache, false);
+            return _autoModelCache;
+        }
+        
+        // Fallback offline (pode estar obsoleto, mas ao menos tenta)
+        _autoModelCache = 'nvidia/nemotron-3-nano-30b-a3b:free';
+        showAutoModelStatus(_autoModelCache + ' (fallback)', false);
+        return _autoModelCache;
+    };
+    
+    /* ---------- 4. COCKPIT: long-press → drawer, click → cycle solar ---------- */
+    function setupCockpitButton() {
+        const orbBtn = document.getElementById('orbToggle');
+        if (!orbBtn) {
+            console.warn('[COCKPIT] #orbToggle não encontrado');
+            return;
+        }
+        
+        // Remove listener antigo (onclick → toggleDrawer)
+        orbBtn.onclick = null;
+        
+        let pressTimer = null;
+        let longPressed = false;
+        const LONG_PRESS_MS = 500;
+        
+        const start = (e) => {
+            longPressed = false;
+            orbBtn.classList.add('long-pressing');
+            pressTimer = setTimeout(() => {
+                longPressed = true;
+                orbBtn.classList.remove('long-pressing');
+                if (navigator.vibrate) { try { navigator.vibrate(30); } catch (_) {} }
+                if (typeof toggleDrawer === 'function') toggleDrawer('drawerProfile');
+                if (window.App && App.speakText) App.speakText('Cockpit');
+                console.log('[COCKPIT] Long-press → drawer aberto');
+            }, LONG_PRESS_MS);
+        };
+        
+        const end = (e) => {
+            clearTimeout(pressTimer);
+            orbBtn.classList.remove('long-pressing');
+            if (!longPressed) {
+                // clique rápido = ciclo solar
+                if (window.App && typeof App.cycleSolar === 'function') {
+                    App.cycleSolar();
+                    console.log('[COCKPIT] Click → cycleSolar');
+                } else {
+                    console.warn('[COCKPIT] App.cycleSolar indisponível');
+                }
+            }
+            longPressed = false;
+        };
+        
+        const cancel = () => {
+            clearTimeout(pressTimer);
+            longPressed = false;
+            orbBtn.classList.remove('long-pressing');
+        };
+        
+        orbBtn.addEventListener('pointerdown', start);
+        orbBtn.addEventListener('pointerup', end);
+        orbBtn.addEventListener('pointercancel', cancel);
+        orbBtn.addEventListener('pointerleave', cancel);
+        orbBtn.addEventListener('contextmenu', (e) => e.preventDefault());
+    }
+    
+    // Espera o App estar disponível (init é assíncrono)
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => setTimeout(setupCockpitButton, 100));
+    } else {
+        setTimeout(setupCockpitButton, 100);
+    }
+    
+    /* ---------- 5. Reset cache quando muda modelo manualmente ---------- */
+    const sel = document.getElementById('modelSelect');
+    if (sel) {
+        sel.addEventListener('change', () => {
+            if (sel.value !== 'auto-free') {
+                _autoModelCache = null;
+                const status = document.getElementById('autoModelStatus');
+                if (status) status.style.display = 'none';
+                const cockpitModel = document.getElementById('inputModel');
+                if (cockpitModel) cockpitModel.value = sel.value;
+            } else {
+                _autoModelCache = null;
+                const status = document.getElementById('autoModelStatus');
+                if (status) {
+                    status.style.display = 'block';
+                    status.textContent = 'Pronto para auto-selecionar…';
+                }
+            }
+        });
+    }
+    
+    console.log('[DUAL_SYNC] Setup completo (API key, role, auto model, cockpit)');
+})();
+</script>
 <!-- APP (Dual.Infodose v7.9) — com logging melhorado -->
 <script>
 /* =========================================================
@@ -2944,14 +3269,17 @@ function initDIConstants() {
     const modeIndicator = document.getElementById('modeIndicator');
     if (modeIndicator) modeIndicator.textContent = `${di_infodoseName} · ${di_solarMode.toUpperCase()}`;
 
-    // ⚠️ Sincroniza AMBOS os inputs de API key (drawer + systemCard)
-    const keyA = document.getElementById('apiKeyInput');       // drawer
-    const keyB = document.getElementById('apiKeyInputNeural'); // systemCard
-    if (keyA) keyA.value = di_apiKey;
-    if (keyB) keyB.value = di_apiKey;
+// Sincroniza API key (drawer + card)
+['apiKeyInput', 'apiKeyInputNeural'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = di_apiKey;
+});
 
-    const systemRoleInput = document.getElementById('systemRoleInput');
-    if (systemRoleInput) systemRoleInput.value = di_systemRole;
+// Sincroniza systemRole (drawer + card)
+['systemRoleInput', 'systemRoleInputCard'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = di_systemRole;
+});
     const inputUserId = document.getElementById('inputUserId');
     if (inputUserId) inputUserId.value = di_userName;
     const inputModel = document.getElementById('inputModel');
@@ -3082,9 +3410,16 @@ const App = {
         if (uidEl) uidEl.value = s.getItem(STORAGE.USER_ID) || '';
         
         // ⚠️ Modelo default garantido
-        const modelEl = document.getElementById('inputModel');
-        if (modelEl) modelEl.value = s.getItem(STORAGE.MODEL) || 'nvidia/nemotron-3-nano-30b-a3b:free';
-
+// Modelo: default AUTO na primeira vez
+const savedModel = s.getItem(STORAGE.MODEL) || 'auto-free';
+const modelEl = document.getElementById('inputModel');
+if (modelEl) modelEl.value = savedModel;
+const selEl = document.getElementById('modelSelect');
+if (selEl) {
+// Se o valor salvo não existe no select, cai em auto-free
+const exists = Array.from(selEl.options).some(o => o.value === savedModel);
+selEl.value = exists ? savedModel : 'auto-free';
+}
         this.state.isAutoSolar = s.getItem(STORAGE.SOLAR_AUTO) !== 'false';
         if (this.state.isAutoSolar) this.autoByTime(); else this.setMode(s.getItem(STORAGE.SOLAR_MODE) || 'night');
 
@@ -3213,8 +3548,7 @@ const App = {
             const reqBody = {
                 model: model,
                 messages: [
-                    { role: 'system', content: (document.getElementById('systemRoleInput')?.value) || 'Você é Dual.' },
-                    ...this.state.messages.slice(-10).map(m => ({ role: m.role, content: m.content })),
+{ role: 'system', content: (window.getActiveRole ? window.getActiveRole() : (document.getElementById('systemRoleInput')?.value || 'Você é Dual.')) },                    ...this.state.messages.slice(-10).map(m => ({ role: m.role, content: m.content })),
                     { role: 'user', content: `${txt}\n\n[KOBLLUX]\nUNO:${fractal.trinity.UNO}\nSELO:${fractal.seal}` }
                 ]
             };
