@@ -3,6 +3,7 @@
  * Architecture: Widget Loader / Self-Contained / IIFE
  * Features: Live Snapshots, Fusion/Sandbox Modes, DOMPurify Security
  * Patch Note: Compact Exit Button (SVG), CSS classes optimization.
+ * Refactor: Removed Tailwind + Lucide dependencies (native CSS + inline SVG).
  */
 
 const FusionOS = (() => {
@@ -13,10 +14,9 @@ const FusionOS = (() => {
         fusionLayerId: 'navRoot',
         customCssRootId: 'custom-css-root',
         storageKeyLegacy: 'fusion_os_v5_ultimate',
-        voice: false, // Voice disabled by default for performance
+        voice: false,
     };
 
-    // Default apps (The Core Hub)
     const DEFAULT_APPS = [
         { id: 'DELTA', name: 'Delta Hub', desc: 'Interface de conexão externa.', url: 'https://kodux78k.github.io/DualInfodose-VirgemHuB/index.html', icon: 'globe', active: true, code: 'DELTA' }
     ];
@@ -28,6 +28,23 @@ const FusionOS = (() => {
         customCSS: '',
         currentTab: 'dashboard',
         userData: { user: 'Visitante', system: 'SINGULARITY', stats: {} }
+    };
+
+    // --- SVG ICON LIBRARY (Lucide-compatible paths, no external deps) ---
+    const Icons = {
+        dashboard: (s = 20) => `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>`,
+        layers: (s = 20) => `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>`,
+        beaker: (s = 20) => `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 3h15"/><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"/><path d="M6 14h12"/></svg>`,
+        power: (s = 20) => `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></svg>`,
+        terminal: (s = 20) => `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>`,
+        arrowRight: (s = 20) => `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>`,
+        chevronDown: (s = 20) => `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>`,
+        eyeOff: (s = 20) => `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>`,
+        trash: (s = 20) => `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>`,
+        ghost: (s = 20) => `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z"/></svg>`,
+        globe: (s = 20) => `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>`,
+        box: (s = 20) => `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>`,
+        icon: (name, s = 20) => (Icons[name] || Icons.box)(s)
     };
 
     // --- 2. SUBSYSTEMS ---
@@ -63,7 +80,6 @@ const FusionOS = (() => {
                 _state.installed = [...DEFAULT_APPS];
             }
 
-            // User Identity Logic
             const kardDataRaw = localStorage.getItem('fusion_os_data_v2');
             if (kardDataRaw) {
                 try {
@@ -79,19 +95,7 @@ const FusionOS = (() => {
             }
             _state.userData.system = window.di_infodoseName || localStorage.getItem('di_infodoseName') || _state.userData.system;
         },
-        injectDeps: () => {
-            if (!document.querySelector('script[src*="tailwindcss"]')) {
-                const s = document.createElement('script');
-                s.src = 'https://cdn.tailwindcss.com';
-                document.head.appendChild(s);
-            }
-            if (!document.querySelector('script[src*="unpkg.com/lucide"]') && !window.lucide) {
-                const s = document.createElement('script');
-                s.src = 'https://unpkg.com/lucide@latest';
-                s.onload = () => { try { window.lucide.createIcons(); } catch(e){} };
-                document.head.appendChild(s);
-            }
-        },
+        injectDeps: () => { /* Dependencies now bundled inline */ },
         triggerShake: () => {
             document.body.style.animation = "shake 0.32s cubic-bezier(.36,.07,.19,.97) both";
             setTimeout(() => document.body.style.animation = "", 340);
@@ -106,89 +110,205 @@ const FusionOS = (() => {
     // --- 3. UI GENERATOR (Styles & HTML) ---
     const UI = {
         styles: `
-            /* Base + imported fonts */
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=JetBrains+Mono:wght@400;700&display=swap');
-            @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;600;900&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap');
 
-            #${CONFIG.rootId} { font-family: 'Inter', sans-serif; color: white; pointer-events: auto; }
-            
-            /* Monolith Architecture */
-            .monolith-wrapper { perspective: 2000px; z-index: 9998; pointer-events: none; }
+            /* --- RESET / BASE --- */
+            #${CONFIG.rootId} { font-family: 'Inter', sans-serif; color: #fff; pointer-events: auto; }
+            #${CONFIG.rootId} *, #${CONFIG.rootId} *::before, #${CONFIG.rootId} *::after { box-sizing: border-box; }
+            #${CONFIG.rootId} button { font-family: inherit; cursor: pointer; }
+            #${CONFIG.rootId} h2, #${CONFIG.rootId} h3, #${CONFIG.rootId} h4, #${CONFIG.rootId} p { margin: 0; }
+            #${CONFIG.rootId} svg { display: block; }
+
+            /* --- MONOLITH --- */
+            .monolith-wrapper { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; perspective: 2000px; z-index: 9998; pointer-events: none; }
+            @media (min-width: 768px) { .monolith-wrapper { padding: 48px; } }
             .monolith {
+                width: 100%; max-width: 1100px; height: 75vh;
+                display: flex; flex-direction: column; position: relative;
                 background: rgba(10, 10, 14, 0.95);
-                backdrop-filter: blur(60px);
+                backdrop-filter: blur(60px); -webkit-backdrop-filter: blur(60px);
                 border: 1px solid rgba(255,255,255,0.08);
-                border-radius: 40px;
-                transform-origin: bottom center;
+                border-radius: 40px; transform-origin: bottom center;
                 clip-path: circle(0% at 50% 100%);
                 transform: translateY(60px) scale(0.9); opacity: 0;
                 transition: all 0.7s cubic-bezier(0.19, 1, 0.22, 1);
                 pointer-events: none; overflow: hidden;
                 box-shadow: 0 40px 100px -20px rgba(0,0,0,0.8);
             }
-            .os-active .monolith {
-                transform: translateY(0) scale(1); opacity: 1;
-                clip-path: circle(150% at 50% 100%); pointer-events: auto;
-            }
+            .os-active .monolith { transform: translateY(0) scale(1); opacity: 1; clip-path: circle(150% at 50% 100%); pointer-events: auto; }
 
-            /* Nav Tabs */
-            .tab-btn { width:44px; height:44px; border-radius:14px; transition: all .3s; color: rgba(255,255,255,0.3); display:flex; align-items:center; justify-content:center; background:transparent; border:1px solid transparent; }
-            .tab-btn:hover { color:#fff; background: rgba(255,255,255,0.04); }
-            .tab-btn.active { color:#00f2ff; background: rgba(0,242,255,0.08); border-color: rgba(0,242,255,0.12); box-shadow: 0 0 12px rgba(0,242,255,0.06); }
+            /* --- HEADER --- */
+            .os-header { height: 96px; position: relative; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; background: rgba(0,0,0,0.12); border-bottom: 1px solid rgba(255,255,255,0.05); flex-shrink: 0; user-select: none; }
+            @media (min-width: 768px) { .os-header { padding: 0 48px; } }
+            .os-header-left, .os-header-right { position: relative; z-index: 20; display: flex; align-items: center; }
+            .os-header-left { gap: 12px; }
+            .os-header-right { gap: 20px; }
 
-            /* Runtime Layer (Sandbox) */
-            .runtime-layer { position:absolute; inset:0; background:#050505; transform: translateY(100%); transition: .6s cubic-bezier(0.19, 1, 0.22, 1); z-index: 100; }
+            /* Tabs */
+            .tab-btn { width: 44px; height: 44px; border-radius: 14px; transition: all .3s; color: rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; background: transparent; border: 1px solid transparent; padding: 0; }
+            .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.04); }
+            .tab-btn.active { color: #00f2ff; background: rgba(0,242,255,0.08); border-color: rgba(0,242,255,0.12); box-shadow: 0 0 12px rgba(0,242,255,0.06); }
+
+            /* Header Center */
+            .os-header-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 10; display: flex; flex-direction: column; align-items: center; pointer-events: none; opacity: 0.8; width: 100%; max-width: 220px; }
+            .os-system-id { font-size: 10px; font-weight: 900; letter-spacing: 0.4em; color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 4px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
+            .os-context-row { display: flex; align-items: center; justify-content: center; width: 100%; gap: 8px; }
+            .status-line { height: 1px; width: 32px; background: linear-gradient(90deg, transparent, rgba(0,242,255,0.5), transparent); }
+            .os-context { font-size: 9px; color: #22d3ee; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em; font-weight: 700; white-space: nowrap; }
+
+            /* User Block */
+            .os-user-block { display: none; flex-direction: column; align-items: flex-end; text-align: right; }
+            @media (min-width: 768px) { .os-user-block { display: flex; } }
+            .os-user-label { font-size: 8px; color: rgba(255,255,255,0.2); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+            .os-user-name { font-size: 9px; color: rgba(34,211,238,0.8); font-family: 'JetBrains Mono', monospace; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+
+            /* Power */
+            .os-power-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; transition: all .2s; padding: 0; }
+            .os-power-btn:hover { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #f87171; }
+
+            /* --- MAIN --- */
+            .os-main { flex: 1; overflow-y: auto; padding: 32px; background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.2)); position: relative; z-index: 10; }
+            @media (min-width: 768px) { .os-main { padding: 48px; } }
+
+            /* --- RUNTIME LAYER --- */
+            .runtime-layer { position: absolute; inset: 0; background: #050505; transform: translateY(100%); transition: transform .6s cubic-bezier(0.19, 1, 0.22, 1); z-index: 100; display: flex; flex-direction: column; }
             .runtime-layer.visible { transform: translateY(0); }
+            .os-runtime-bar { height: 64px; background: #09090b; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; padding: 0 32px; flex-shrink: 0; }
+            .os-runtime-status { display: flex; align-items: center; gap: 12px; }
+            .os-ping-wrap { position: relative; display: flex; height: 8px; width: 8px; }
+            .os-ping { position: absolute; display: inline-flex; height: 100%; width: 100%; border-radius: 50%; background: #22d3ee; opacity: 0.75; animation: ping 1.1s cubic-bezier(0,0,0.2,1) infinite; }
+            .os-ping-dot { position: relative; display: inline-flex; border-radius: 50%; height: 8px; width: 8px; background: #06b6d4; }
+            @keyframes ping { 75%, 100% { transform: scale(2); opacity: 0; } }
+            .os-runtime-title { font-size: 10px; color: #22d3ee; font-family: 'JetBrains Mono', monospace; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; }
+            .os-runtime-min-btn { padding: 8px 16px; border-radius: 8px; font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.4); background: transparent; border: 1px solid transparent; transition: all .2s; text-transform: uppercase; letter-spacing: 0.1em; }
+            .os-runtime-min-btn:hover { color: #fff; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.1); }
+            .os-frame { flex: 1; border: none; background: #000; width: 100%; height: 100%; }
 
-            /* Orb Trigger */
+            /* --- ORB --- */
             :root { --orb-cyan: #00f2ff; --orb-purple: #bd00ff; }
-            .orb-trigger {
-                position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-                width: 72px; height: 72px; cursor: pointer; z-index: 10010;
-                display: grid; place-items:center; background: transparent; border: none; pointer-events: auto; outline: none;
-                transition: transform 0.36s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            }
+            .orb-trigger { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 72px; height: 72px; cursor: pointer; z-index: 10010; display: grid; place-items: center; background: transparent; border: none; pointer-events: auto; outline: none; transition: transform 0.36s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
             .orb-trigger:hover { transform: translateX(-50%) scale(1.08); }
             .orb-core0 { width: 10px; height: 10px; background: #fff; border-radius: 50%; box-shadow: 0 0 18px rgba(255,255,255,0.95); transition: transform .36s, box-shadow .36s, background .36s; }
-            .orb-ring { position: absolute; width: 52px; height: 52px; border-radius: 50%; border:2px solid transparent; border-top-color: var(--orb-cyan); border-bottom-color: var(--orb-purple); animation: orb-spin 4s linear infinite; opacity: .75; transition: all .45s ease; }
-            .os-active .orb-core { background: var(--orb-cyan); box-shadow: 0 0 30px var(--orb-cyan); transform: scale(1.18); }
+            .orb-ring { position: absolute; width: 52px; height: 52px; border-radius: 50%; border: 2px solid transparent; border-top-color: var(--orb-cyan); border-bottom-color: var(--orb-purple); animation: orb-spin 4s linear infinite; opacity: .75; transition: all .45s ease; }
+            .os-active .orb-core0 { background: var(--orb-cyan); box-shadow: 0 0 30px var(--orb-cyan); transform: scale(1.18); }
             .os-active .orb-ring { animation-duration: 1.25s; opacity: 1; border-color: var(--orb-cyan); box-shadow: 0 0 20px rgba(0,242,255,0.18); }
             @keyframes orb-spin { to { transform: rotate(360deg); } }
             @keyframes shake { 0% { transform: translate(1px,1px); } 10% { transform: translate(-1px,-2px); } 100% { transform: translate(0); } }
 
-            /* Accordion */
-            .accordion-item { transition: all .4s cubic-bezier(.25,1,.5,1); overflow: hidden; border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(145deg, rgba(255,255,255,0.02) 0%, rgba(0,0,0,0.3) 100%); border-radius: 16px; }
-            .accordion-item.expanded { background: linear-gradient(145deg, rgba(0,242,255,0.04) 0%, rgba(0,0,0,0.45) 100%); border-color: rgba(0,242,255,0.18); box-shadow: 0 10px 40px -10px rgba(0,0,0,0.6); transform: scale(1.01); margin: 10px 0; }
-            .preview-frame { width: 133%; height: 133%; pointer-events: none; opacity: .6; transform: scale(.75); transform-origin: top left; border:none; background:transparent; }
-
-            /* Utilities */
-            .custom-scroll::-webkit-scrollbar { width: 6px; height:6px; }
+            /* --- SCROLLBAR --- */
+            .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
             .custom-scroll::-webkit-scrollbar-thumb { background: rgba(0, 242, 255, 0.16); border-radius: 10px; }
             .custom-scroll::-webkit-scrollbar-track { background: transparent; }
 
-            /* --- NEW: COMPACT EXIT BUTTON --- */
-            .fusion-exit-btn {
-                width: 40px; height: 40px; padding: 0;
-                display: inline-flex; align-items: center; justify-content: center;
-                border-radius: 999px;
-                font-size: 12px; font-weight: 800;
-                color: var(--orb-cyan);
-                background: rgba(0,0,0,0.45);
-                border: 1px solid rgba(220,38,38,0.22);
-                box-shadow: 0 8px 20px rgba(220,38,38,0.08);
-                transition: transform .16s ease, background .16s ease, color .16s ease;
-                -webkit-tap-highlight-color: transparent; cursor: pointer;
-            }
-            .fusion-exit-btn:hover {
-                transform: scale(1.06); background: rgba(220,38,38,0.10); color: #fff;
-            }
-            .fusion-exit-ctrl-wrap {
-                touch-action: manipulation;
-                -webkit-backface-visibility: hidden; backface-visibility: hidden;
-            }
+            /* --- EXIT BUTTON --- */
+            .fusion-exit-ctrl-wrap { position: fixed; top: 32px; left: 50%; transform: translateX(-50%); z-index: 10020; touch-action: manipulation; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+            .fusion-exit-ctrl-wrap.hidden { display: none; }
+            .fusion-exit-btn { width: 40px; height: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; font-size: 12px; font-weight: 800; color: var(--orb-cyan); background: rgba(0,0,0,0.45); border: 1px solid rgba(220,38,38,0.22); box-shadow: 0 8px 20px rgba(220,38,38,0.08); transition: transform .16s ease, background .16s ease, color .16s ease; -webkit-tap-highlight-color: transparent; cursor: pointer; }
+            .fusion-exit-btn:hover { transform: scale(1.06); background: rgba(220,38,38,0.10); color: #fff; }
+
+            /* --- ACCORDION --- */
+            .accordion-item { transition: all .4s cubic-bezier(.25,1,.5,1); overflow: hidden; border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(145deg, rgba(255,255,255,0.02) 0%, rgba(0,0,0,0.3) 100%); border-radius: 16px; height: 70px; position: relative; cursor: pointer; }
+            .accordion-item.expanded { background: linear-gradient(145deg, rgba(0,242,255,0.04) 0%, rgba(0,0,0,0.45) 100%); border-color: rgba(0,242,255,0.18); box-shadow: 0 10px 40px -10px rgba(0,0,0,0.6); transform: scale(1.01); margin: 10px 0; }
+            .preview-frame { width: 133%; height: 133%; pointer-events: none; opacity: .6; transform: scale(.75); transform-origin: top left; border: none; background: transparent; }
+
+            /* Accordion internals */
+            .acc-header { height: 70px; display: flex; align-items: center; padding: 0 24px; gap: 20px; position: relative; z-index: 20; background: rgba(0,0,0,0.2); }
+            .acc-icon { width: 40px; height: 40px; border-radius: 8px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); color: #22d3ee; flex-shrink: 0; }
+            .acc-info { flex: 1; min-width: 0; }
+            .acc-title-row { display: flex; align-items: center; gap: 8px; }
+            .acc-title { font-size: 14px; font-weight: 700; color: #fff; letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .acc-code { font-size: 9px; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; color: rgba(255,255,255,0.3); font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
+            .acc-chevron { color: rgba(255,255,255,0.3); transition: transform .3s; flex-shrink: 0; }
+            .accordion-item.expanded .acc-chevron { transform: rotate(180deg); }
+            .acc-body { position: absolute; top: 70px; left: 0; width: 100%; height: 250px; background: rgba(0,0,0,0.4); display: flex; pointer-events: auto; }
+            .acc-preview { width: 50%; height: 100%; border-right: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden; background: #000; }
+            .acc-preview-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.1); z-index: 0; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; }
+            .acc-preview iframe { position: relative; z-index: 10; }
+            .acc-preview-overlay { position: absolute; inset: 0; z-index: 20; }
+            .acc-details { width: 50%; height: 100%; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; }
+            .acc-desc-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #06b6d4; margin: 0 0 8px 0; font-weight: 700; }
+            .acc-desc { font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.5; margin: 0; }
+            .acc-actions { display: flex; flex-direction: column; gap: 8px; }
+            .acc-launch-row { display: flex; gap: 8px; }
+            .acc-btn { flex: 1; font-size: 10px; font-weight: 700; padding: 12px 0; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.05em; transition: all .2s; border: none; }
+            .acc-btn-sandbox { background: rgba(255,255,255,0.1); color: #fff; }
+            .acc-btn-sandbox:hover { background: rgba(255,255,255,0.2); }
+            .acc-btn-fusion { background: rgba(6,182,212,0.2); color: #22d3ee; }
+            .acc-btn-fusion:hover { background: #06b6d4; color: #000; }
+            .acc-mgmt-row { display: flex; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); }
+            .acc-mgmt-btn { flex: 1; font-size: 9px; padding: 8px 0; background: transparent; border: none; color: rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; gap: 4px; transition: color .2s; }
+            .acc-mgmt-btn:hover { color: #fff; }
+            .acc-mgmt-btn.danger:hover { color: #f87171; }
+
+            /* --- DASHBOARD --- */
+            .dash-root { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; max-width: 672px; margin: 0 auto; transition: all .5s; }
+            .dash-card { width: 100%; background: rgba(255,255,255,0.02); border-radius: 36px; padding: 32px; border: 1px solid rgba(255,255,255,0.1); position: relative; overflow: hidden; }
+            .dash-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(6,182,212,0.05), rgba(168,85,247,0.05)); opacity: 0.5; transition: opacity .3s; pointer-events: none; }
+            .dash-card:hover::before { opacity: 1; }
+            .dash-card-inner { position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 32px; }
+            @media (min-width: 768px) { .dash-card-inner { flex-direction: row; } }
+            .dash-avatar { width: 96px; height: 96px; flex-shrink: 0; border-radius: 16px; overflow: hidden; box-shadow: 0 0 30px rgba(0,242,255,0.1); border: 1px solid rgba(255,255,255,0.05); }
+            .dash-avatar svg { width: 100%; height: 100%; }
+            .dash-info { text-align: center; flex: 1; min-width: 0; }
+            @media (min-width: 768px) { .dash-info { text-align: left; } }
+            .dash-greeting { display: flex; align-items: baseline; justify-content: center; gap: 12px; margin-bottom: 4px; }
+            @media (min-width: 768px) { .dash-greeting { justify-content: flex-start; } }
+            .dash-hello { font-size: 24px; color: rgba(255,255,255,0.4); font-weight: 200; }
+            .dash-name { font-size: 30px; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
+            @media (min-width: 768px) { .dash-name { font-size: 36px; } }
+            .dash-subtitle { font-size: 24px; text-transform: uppercase; margin-bottom: 8px; }
+            .dash-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin-top: 12px; }
+            @media (min-width: 768px) { .dash-stats { justify-content: flex-start; } }
+            .dash-stat { background: rgba(0,0,0,0.4); padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); text-align: center; }
+            .dash-stat-label { display: block; font-size: 9px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; }
+            .dash-stat-value { color: #34d399; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; }
+
+            /* Terminal */
+            .dash-terminal-wrap { margin-top: 32px; width: 100%; max-width: 480px; position: relative; }
+            .dash-terminal-glow { position: absolute; inset: -2px; background: linear-gradient(to right, #06b6d4, #9333ea); border-radius: 12px; opacity: 0.2; filter: blur(4px); transition: opacity 1s; pointer-events: none; }
+            .dash-terminal-wrap:hover .dash-terminal-glow { opacity: 0.6; }
+            .dash-terminal { position: relative; display: flex; align-items: center; background: #000; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); }
+            .dash-terminal-icon { padding-left: 16px; color: #06b6d4; display: flex; align-items: center; }
+            .dash-terminal-input { width: 100%; background: transparent; border: none; color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 14px; padding: 16px; outline: none; text-transform: uppercase; letter-spacing: 0.1em; }
+            .dash-terminal-input::placeholder { color: rgba(255,255,255,0.2); }
+            .dash-terminal-submit { margin-right: 8px; padding: 8px; background: transparent; border: none; border-radius: 8px; color: #22d3ee; transition: background .2s; display: flex; align-items: center; }
+            .dash-terminal-submit:hover { background: rgba(255,255,255,0.1); }
+            .dash-terminal-hint { text-align: center; margin-top: 12px; font-size: 9px; color: rgba(255,255,255,0.2); text-transform: uppercase; letter-spacing: 0.3em; }
+
+            /* Empty */
+            .dash-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: rgba(255,255,255,0.3); }
+            .dash-empty svg { margin-bottom: 16px; opacity: 0.5; }
+            .dash-empty p { margin: 0; }
+
+            /* Apps list */
+            .apps-list { display: flex; flex-direction: column; gap: 16px; padding-bottom: 80px; }
+
+            /* --- LAB --- */
+            .lab-root { height: 100%; display: flex; flex-direction: column; gap: 32px; }
+            .lab-panel { background: rgba(255,255,255,0.02); padding: 24px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); }
+            .lab-panel.grow { flex: 1; display: flex; flex-direction: column; }
+            .lab-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; }
+            .lab-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #22d3ee; margin: 0; }
+            .lab-title.purple { color: #c084fc; }
+            .lab-upload { background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 4px; font-size: 9px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: background .2s; }
+            .lab-upload:hover { background: rgba(255,255,255,0.1); }
+            .lab-upload input { display: none; }
+            .lab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; height: 200px; }
+            .lab-textarea { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 16px; font-size: 10px; font-family: 'JetBrains Mono', monospace; color: #a1a1aa; outline: none; resize: none; }
+            .lab-textarea.output { color: rgba(6,182,212,0.7); }
+            .lab-textarea.css-input { flex: 1; color: rgba(244,114,182,0.8); }
+            .lab-actions { display: flex; gap: 8px; margin-top: 12px; }
+            .lab-btn { width: 128px; font-weight: 700; padding: 8px 0; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.1em; font-size: 10px; transition: all .2s; border: none; }
+            .lab-btn-convert { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.4); }
+            .lab-btn-convert:hover { background: rgba(6,182,212,0.2); color: #22d3ee; }
+            .lab-btn-inject { background: rgba(6,182,212,0.2); color: #22d3ee; }
+            .lab-btn-inject:hover { background: #06b6d4; color: #fff; }
+            .lab-save-row { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+            .lab-save-hint { font-size: 9px; color: rgba(255,255,255,0.2); }
+            .lab-btn-save { background: rgba(168,85,247,0.2); color: #c084fc; font-weight: 700; padding: 8px 24px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.1em; font-size: 9px; transition: all .2s; border: none; }
+            .lab-btn-save:hover { background: #a855f7; color: #fff; }
         `,
         build: () => {
-            // --- Safety Checks for Root ---
             if (!document.getElementById(CONFIG.fusionLayerId)) {
                 const nav = document.createElement('div'); nav.id = CONFIG.fusionLayerId; document.body.appendChild(nav);
             }
@@ -198,52 +318,53 @@ const FusionOS = (() => {
             const existing = document.getElementById(CONFIG.rootId);
             if (existing) existing.remove();
 
-            // --- Monolith Container ---
             const container = document.createElement('div');
             container.id = CONFIG.rootId;
             container.innerHTML = `
                 <style>${UI.styles}</style>
-                <div class="monolith-wrapper fixed inset-0 flex items-center justify-center p-6 md:p-12">
-                    <div class="monolith w-full max-w-[1100px] h-[75vh] flex flex-col relative shadow-2xl">
-                        
-                        <header class="h-24 relative flex items-center justify-between px-8 md:px-12 bg-black/12 border-b border-white/5 shrink-0 select-none">
-                            <div class="relative z-20 flex items-center gap-3">
-                                <button onclick="FusionOS.setTab('dashboard')" id="tab-dashboard" class="tab-btn" title="Perfil / Dashboard"><i data-lucide="layout-dashboard" class="w-5 h-5"></i></button>
-                                <button onclick="FusionOS.setTab('apps')" id="tab-apps" class="tab-btn" title="Módulos"><i data-lucide="layers" class="w-5 h-5"></i></button>
-                                <button onclick="FusionOS.setTab('lab')" id="tab-lab" class="tab-btn" title="Laboratório"><i data-lucide="beaker" class="w-5 h-5"></i></button>
+                <div class="monolith-wrapper">
+                    <div class="monolith">
+                        <header class="os-header">
+                            <div class="os-header-left">
+                                <button onclick="FusionOS.setTab('dashboard')" id="tab-dashboard" class="tab-btn" title="Perfil / Dashboard">${Icons.dashboard(20)}</button>
+                                <button onclick="FusionOS.setTab('apps')" id="tab-apps" class="tab-btn" title="Módulos">${Icons.layers(20)}</button>
+                                <button onclick="FusionOS.setTab('lab')" id="tab-lab" class="tab-btn" title="Laboratório">${Icons.beaker(20)}</button>
                             </div>
 
-                            <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center pointer-events-none opacity-80 w-full max-w-[220px]">
-                                <span id="sys-identity" class="text-[10px] font-black tracking-[0.4em] text-white/30 uppercase mb-1 drop-shadow-md text-center truncate w-full">${_state.userData.system}</span>
-                                <div class="flex items-center justify-center w-full">
-                                    <div class="status-line w-8"></div>
-                                    <span id="header-context" class="text-[9px] text-cyan-400 font-mono tracking-widest font-bold">DASHBOARD</span>
-                                    <div class="status-line w-8"></div>
+                            <div class="os-header-center">
+                                <span id="sys-identity" class="os-system-id">${_state.userData.system}</span>
+                                <div class="os-context-row">
+                                    <div class="status-line"></div>
+                                    <span id="header-context" class="os-context">DASHBOARD</span>
+                                    <div class="status-line"></div>
                                 </div>
                             </div>
 
-                            <div class="relative z-20 flex items-center gap-5">
-                                <div class="hidden md:flex flex-col items-end text-right">
-                                    <span class="text-[8px] text-white/20 font-bold uppercase tracking-wider">Operator</span>
-                                    <span id="user-identity" class="text-[9px] text-cyan-400/80 font-mono font-bold uppercase tracking-wide">${_state.userData.user}</span>
+                            <div class="os-header-right">
+                                <div class="os-user-block">
+                                    <span class="os-user-label">Operator</span>
+                                    <span id="user-identity" class="os-user-name">${_state.userData.user}</span>
                                 </div>
-                                <button onclick="FusionOS.toggle()" class="w-10 h-10 rounded-full border border-white/5 bg-white/5 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 text-white/30 flex items-center justify-center transition-all" title="Fechar Sistema">
-                                    <i data-lucide="power" class="w-4 h-4"></i>
+                                <button onclick="FusionOS.toggle()" class="os-power-btn" title="Fechar Sistema">
+                                    ${Icons.power(16)}
                                 </button>
                             </div>
                         </header>
 
-                        <main id="monolith-content" class="flex-1 overflow-y-auto custom-scroll p-8 md:p-12 bg-gradient-to-b from-transparent to-black/20 relative z-10"></main>
+                        <main id="monolith-content" class="os-main custom-scroll"></main>
 
-                        <div id="os-runtime" class="runtime-layer flex flex-col">
-                            <div class="h-16 bg-zinc-950 border-b border-white/10 flex justify-between items-center px-8 shrink-0">
-                                <div class="flex items-center gap-3">
-                                    <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span></span>
-                                    <span id="runtime-title" class="text-[10px] text-cyan-400 font-mono font-bold tracking-[0.2em] uppercase">PROCESS_RUNNING</span>
+                        <div id="os-runtime" class="runtime-layer">
+                            <div class="os-runtime-bar">
+                                <div class="os-runtime-status">
+                                    <span class="os-ping-wrap">
+                                        <span class="os-ping"></span>
+                                        <span class="os-ping-dot"></span>
+                                    </span>
+                                    <span id="runtime-title" class="os-runtime-title">PROCESS_RUNNING</span>
                                 </div>
-                                <button onclick="FusionOS.closeRuntime()" class="px-4 py-2 rounded-lg text-[9px] font-bold text-white/40 hover:text-white hover:bg-white/10 transition-all uppercase tracking-widest border border-transparent hover:border-white/10">Minimizar</button>
+                                <button onclick="FusionOS.closeRuntime()" class="os-runtime-min-btn">Minimizar</button>
                             </div>
-                            <iframe id="os-frame" class="flex-1 border-none bg-black"></iframe>
+                            <iframe id="os-frame" class="os-frame"></iframe>
                         </div>
                     </div>
                 </div>
@@ -253,7 +374,7 @@ const FusionOS = (() => {
                     <div class="orb-core orb-core0"></div>
                 </button>
 
-                <div id="fusion-exit-ctrl" class="fixed top-8 left-1/2 -translate-x-1/2 hidden z-[10020] fusion-exit-ctrl-wrap" role="dialog" aria-hidden="true">
+                <div id="fusion-exit-ctrl" class="fusion-exit-ctrl-wrap hidden" role="dialog" aria-hidden="true">
                     <button onclick="FusionOS.exitFusion()" class="fusion-exit-btn" aria-label="Encerrar Fusão" title="Encerrar Fusão">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <circle cx="12" cy="12" r="8"></circle>
@@ -263,9 +384,7 @@ const FusionOS = (() => {
                 </div>
             `;
             document.body.appendChild(container);
-            UI.refreshIcons();
             FusionOS.setTab(_state.currentTab || 'dashboard');
-            // Ensure orb click toggles
             const orb = document.getElementById('orb-trigger');
             if (orb) orb.addEventListener('click', () => FusionOS.toggle());
         },
@@ -278,12 +397,10 @@ const FusionOS = (() => {
             }
             document.getElementById(CONFIG.customCssRootId).innerHTML = `<style>${css}</style>`;
         },
-        refreshIcons() {
-            if (window.lucide) try { window.lucide.createIcons(); } catch (e) { /* ignore */ }
-        }
+        refreshIcons() { /* No-op: icons are inlined as SVG */ }
     };
 
-    // --- 4. PARSER / LAB (HTML -> Kernel) ---
+    // --- 4. PARSER / LAB ---
     const Parser = {
         convertFromHtmlSource(inputHtml) {
             if (!inputHtml) return '';
@@ -320,26 +437,24 @@ window.FusionModule.init();`;
             Utils.load();
             if (_state.customCSS) UI.injectCustomCSS(_state.customCSS);
 
-            // Lazy load Lab UI into DOM if active tab needs it
             const monolith = document.getElementById('monolith-content');
             if (monolith) {
-                // Lab Template
                 const labHtml = `
                     <div id="fusion-lab-placeholder" style="display:none;">
-                        <div class="glass-panel p-6 rounded-3xl">
-                            <div class="flex justify-between items-end mb-4">
-                                <h2 class="text-sm font-bold uppercase tracking-widest text-cyan-400">Conversor de Monólitos</h2>
-                                <label class="bg-white/5 hover:bg-white/10 px-3 py-1 rounded text-[9px] cursor-pointer transition-colors border border-white/10">
-                                    Importar .html <input id="lab-upload-file" type="file" class="hidden" />
+                        <div class="lab-panel">
+                            <div class="lab-header">
+                                <h2 class="lab-title">Conversor de Monólitos</h2>
+                                <label class="lab-upload">
+                                    Importar .html <input id="lab-upload-file" type="file" />
                                 </label>
                             </div>
-                            <div class="grid grid-cols-2 gap-4 h-[200px]">
-                                <textarea id="lab-input" placeholder="HTML Source..." class="bg-black/40 border border-white/5 rounded-xl p-4 text-[10px] font-mono text-zinc-400 focus:outline-none resize-none"></textarea>
-                                <textarea id="lab-output" readonly placeholder="Kernel Output..." class="bg-black/40 border border-white/5 rounded-xl p-4 text-[10px] font-mono text-cyan-500/70 focus:outline-none resize-none"></textarea>
+                            <div class="lab-grid">
+                                <textarea id="lab-input" placeholder="HTML Source..." class="lab-textarea"></textarea>
+                                <textarea id="lab-output" readonly placeholder="Kernel Output..." class="lab-textarea output"></textarea>
                             </div>
-                            <div class="flex gap-2 mt-3">
-                                <button id="lab-convert-btn" class="w-32 bg-white/5 hover:bg-cyan-500/20 hover:text-cyan-400 text-white/40 font-bold py-2 rounded-xl uppercase tracking-widest text-[10px] transition-all">Converter</button>
-                                <button id="lab-inject-btn" class="w-32 bg-cyan-500/20 hover:bg-cyan-500 hover:text-white text-cyan-400 font-bold py-2 rounded-xl uppercase tracking-widest text-[10px] transition-all">Injetar</button>
+                            <div class="lab-actions">
+                                <button id="lab-convert-btn" class="lab-btn lab-btn-convert">Converter</button>
+                                <button id="lab-inject-btn" class="lab-btn lab-btn-inject">Injetar</button>
                             </div>
                         </div>
                     </div>
@@ -347,7 +462,6 @@ window.FusionModule.init();`;
                 const fragment = document.createRange().createContextualFragment(labHtml);
                 monolith.appendChild(fragment);
 
-                // Listeners for Lab
                 const fileInput = document.getElementById('lab-upload-file');
                 if (fileInput) fileInput.addEventListener('change', (ev) => FusionOS.handleUpload(ev.target));
 
@@ -367,7 +481,6 @@ window.FusionModule.init();`;
                 });
             }
 
-            // Terminal Input Compatibility
             const term = document.getElementById('os-terminal');
             if (term) {
                 term.addEventListener('keydown', (e) => {
@@ -408,111 +521,100 @@ window.FusionModule.init();`;
         },
 
         render: () => {
-            // New monolith UI rendering per tab
             const content = document.getElementById('monolith-content');
-            if (!content) return; // safety
-            
-            UI.refreshIcons();
+            if (!content) return;
             const user = _state.userData;
 
             if (_state.currentTab === 'dashboard') {
                 const nameHash = Utils.generateHash(user.user);
                 const h1 = nameHash % 360;
-                const avatarSvg = `<svg viewBox="0 0 100 100" class="w-full h-full"><defs><linearGradient id="avGrad"><stop offset="0%" stop-color="hsl(${h1}, 90%, 50%)"/><stop offset="100%" stop-color="hsl(${(h1+40)%360}, 90%, 50%)"/></linearGradient></defs><circle cx="50" cy="50" r="45" fill="#080b12" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><circle cx="50" cy="50" r="20" fill="url(#avGrad)"/></svg>`;
+                const avatarSvg = `<svg viewBox="0 0 100 100"><defs><linearGradient id="avGrad"><stop offset="0%" stop-color="hsl(${h1}, 90%, 50%)"/><stop offset="100%" stop-color="hsl(${(h1+40)%360}, 90%, 50%)"/></linearGradient></defs><circle cx="50" cy="50" r="45" fill="#080b12" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><circle cx="50" cy="50" r="20" fill="url(#avGrad)"/></svg>`;
 
                 content.innerHTML = `
-                    <div class="flex flex-col items-center justify-center h-full max-w-2xl mx-auto transition-all duration-500">
-                        <div class="w-full glass rounded-[36px] p-8 border border-white/10 relative overflow-hidden group">
-                            <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 opacity-50 group-hover:opacity-100 transition-opacity"></div>
-                            <div class="relative z-10 flex flex-col md:flex-row items-center gap-8">
-                                <div class="w-24 h-24 shrink-0 rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(0,242,255,0.1)] border border-white/5">${avatarSvg}</div>
-                                <div class="text-center md:text-left flex-1">
-                                    <div class="flex items-baseline justify-center md:justify-start gap-3 mb-1">
-                                        <span class="text-2xl text-white/40 font-thin">Olá,</span>
-                                        <span class="text-3xl md:text-4xl font-bold text-white tracking-tight">${user.user}</span>
+                    <div class="dash-root">
+                        <div class="dash-card">
+                            <div class="dash-card-inner">
+                                <div class="dash-avatar">${avatarSvg}</div>
+                                <div class="dash-info">
+                                    <div class="dash-greeting">
+                                        <span class="dash-hello">Olá,</span>
+                                        <span class="dash-name">${user.user}</span>
                                     </div>
-                                    <div class="text-2xl uppercase mb-2">DUAL // FUSION</div>
-                                    
-                                    <div class="flex flex-wrap justify-center md:justify-start gap-4 mt-3">
-                                        <div class="bg-black/40 px-4 py-2 rounded-lg border border-white/5 text-center">
-                                            <span class="block text-[9px] text-white/40 uppercase tracking-widest">SISTEMA</span>
-                                            <span class="text-emerald-400 font-mono text-sm font-bold">ONLINE</span>
+                                    <div class="dash-subtitle">DUAL // FUSION</div>
+
+                                    <div class="dash-stats">
+                                        <div class="dash-stat">
+                                            <span class="dash-stat-label">SISTEMA</span>
+                                            <span class="dash-stat-value">ONLINE</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="mt-8 w-full max-w-[480px] relative group">
-                            <div class="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-xl opacity-20 group-hover:opacity-60 blur transition duration-1000"></div>
-                            <div class="relative flex items-center bg-black rounded-xl border border-white/10">
-                                <div class="pl-4 text-cyan-500"><i data-lucide="terminal" class="w-5 h-5"></i></div>
-                                <input id="os-terminal-input" type="text" 
-                                    placeholder="INSIRA CODE MAP OU COMANDO..." 
-                                    class="w-full bg-transparent border-none text-white font-mono text-sm p-4 focus:ring-0 focus:outline-none uppercase tracking-widest placeholder:text-white/20"
+                        <div class="dash-terminal-wrap">
+                            <div class="dash-terminal-glow"></div>
+                            <div class="dash-terminal">
+                                <div class="dash-terminal-icon">${Icons.terminal(20)}</div>
+                                <input id="os-terminal-input" type="text"
+                                    placeholder="INSIRA CODE MAP OU COMANDO..."
+                                    class="dash-terminal-input"
                                     autocomplete="off"
                                     onkeydown="if(event.key === 'Enter') { FusionOS.handleCommand(this.value.trim().toUpperCase()); this.value = ''; }"
                                 >
-                                <button onclick="FusionOS.handleCommand(document.getElementById('os-terminal-input').value.trim().toUpperCase()); document.getElementById('os-terminal-input').value = '';" 
-                                    class="mr-2 p-2 hover:bg-white/10 rounded-lg text-cyan-400 transition-colors">
-                                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                                <button class="dash-terminal-submit"
+                                    onclick="FusionOS.handleCommand(document.getElementById('os-terminal-input').value.trim().toUpperCase()); document.getElementById('os-terminal-input').value = '';">
+                                    ${Icons.arrowRight(16)}
                                 </button>
                             </div>
-                            <div class="text-center mt-3 text-[9px] text-white/20 uppercase tracking-[0.3em]">
-                                Pressione ENTER para injetar código
-                            </div>
+                            <div class="dash-terminal-hint">Pressione ENTER para injetar código</div>
                         </div>
                     </div>
                 `;
             } else if (_state.currentTab === 'apps') {
                 const visibleApps = _state.installed.filter(a => !_state.hiddenApps.includes(a.id));
                 if (visibleApps.length === 0) {
-                    content.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-white/30"><i data-lucide="ghost" class="w-12 h-12 mb-4 opacity-50"></i><p>Nenhum módulo visível.</p></div>`;
-                    UI.refreshIcons();
+                    content.innerHTML = `<div class="dash-empty">${Icons.ghost(48)}<p>Nenhum módulo visível.</p></div>`;
                     return;
                 }
                 content.innerHTML = `
-                    <div class="flex flex-col gap-4 pb-20">
+                    <div class="apps-list">
                         ${visibleApps.map(app => `
-                            <div id="acc-${app.id}" class="accordion-item h-[70px] rounded-2xl relative group cursor-pointer" onclick="FusionOS.toggleAccordion('${app.id}')">
-                                <div class="h-[70px] flex items-center px-6 gap-5 relative z-20 bg-black/20">
-                                    <div class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center border border-white/10 text-cyan-400">
-                                        <i data-lucide="${app.icon || 'box'}" class="w-5 h-5"></i>
-                                    </div>
-                                    <div class="flex-1">
-                                        <div class="flex items-center gap-2">
-                                            <h3 class="text-sm font-bold text-white tracking-wide">${app.name}</h3>
-                                            <span class="text-[9px] bg-white/5 px-2 py-0.5 rounded text-white/30 font-mono">${app.id}</span>
+                            <div id="acc-${app.id}" class="accordion-item" onclick="FusionOS.toggleAccordion('${app.id}')">
+                                <div class="acc-header">
+                                    <div class="acc-icon">${Icons.icon(app.icon || 'box', 20)}</div>
+                                    <div class="acc-info">
+                                        <div class="acc-title-row">
+                                            <h3 class="acc-title">${app.name}</h3>
+                                            <span class="acc-code">${app.id}</span>
                                         </div>
                                     </div>
-                                    <i data-lucide="chevron-down" class="w-4 h-4 text-white/30 transition-transform duration-300"></i>
+                                    <div class="acc-chevron">${Icons.chevronDown(16)}</div>
                                 </div>
 
-                                <div class="absolute top-[70px] left-0 w-full h-[250px] bg-black/40 flex" style="pointer-events:auto;">
-                                    <div class="w-1/2 h-full border-r border-white/5 relative overflow-hidden bg-black">
-                                        <div class="absolute inset-0 flex items-center justify-center text-white/10 z-0">
-                                            <span class="text-[9px] tracking-widest uppercase">Carregando Preview...</span>
-                                        </div>
-                                        <iframe data-src="${app.url}" class="preview-frame z-10 relative"></iframe>
-                                        <div class="absolute inset-0 z-20"></div>
+                                <div class="acc-body">
+                                    <div class="acc-preview">
+                                        <div class="acc-preview-placeholder">Carregando Preview...</div>
+                                        <iframe data-src="${app.url}" class="preview-frame"></iframe>
+                                        <div class="acc-preview-overlay"></div>
                                     </div>
 
-                                    <div class="w-1/2 h-full p-6 flex flex-col justify-between">
+                                    <div class="acc-details">
                                         <div>
-                                            <h4 class="text-[10px] uppercase tracking-widest text-cyan-500 mb-2 font-bold">Descrição</h4>
-                                            <p class="text-xs text-white/50 leading-relaxed">${app.desc || ''}</p>
+                                            <h4 class="acc-desc-label">Descrição</h4>
+                                            <p class="acc-desc">${app.desc || ''}</p>
                                         </div>
-                                        <div class="flex flex-col gap-2">
-                                            <div class="flex gap-2">
-                                                <button onclick="event.stopPropagation(); FusionOS.launch('${app.id}', 'sandbox')" class="flex-1 bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold py-3 rounded-lg uppercase tracking-wider transition-all">Janela</button>
-                                                <button onclick="event.stopPropagation(); FusionOS.launch('${app.id}', 'fusion')" class="flex-1 bg-cyan-500/20 hover:bg-cyan-500 text-cyan-400 hover:text-black text-[10px] font-bold py-3 rounded-lg uppercase tracking-wider transition-all">Fusão</button>
+                                        <div class="acc-actions">
+                                            <div class="acc-launch-row">
+                                                <button onclick="event.stopPropagation(); FusionOS.launch('${app.id}', 'sandbox')" class="acc-btn acc-btn-sandbox">Janela</button>
+                                                <button onclick="event.stopPropagation(); FusionOS.launch('${app.id}', 'fusion')" class="acc-btn acc-btn-fusion">Fusão</button>
                                             </div>
-                                            <div class="flex gap-2 mt-2 pt-2 border-t border-white/5">
-                                                <button onclick="event.stopPropagation(); FusionOS.toggleAppVisibility('${app.id}')" class="flex-1 text-white/30 hover:text-white text-[9px] py-2 flex items-center justify-center gap-1">
-                                                    <i data-lucide="eye-off" class="w-3 h-3"></i> Ocultar
+                                            <div class="acc-mgmt-row">
+                                                <button onclick="event.stopPropagation(); FusionOS.toggleAppVisibility('${app.id}')" class="acc-mgmt-btn">
+                                                    ${Icons.eyeOff(12)} Ocultar
                                                 </button>
-                                                <button onclick="event.stopPropagation(); FusionOS.removeApp('${app.id}')" class="flex-1 text-white/30 hover:text-red-400 text-[9px] py-2 flex items-center justify-center gap-1">
-                                                    <i data-lucide="trash-2" class="w-3 h-3"></i> Remover
+                                                <button onclick="event.stopPropagation(); FusionOS.removeApp('${app.id}')" class="acc-mgmt-btn danger">
+                                                    ${Icons.trash(12)} Remover
                                                 </button>
                                             </div>
                                         </div>
@@ -524,54 +626,53 @@ window.FusionModule.init();`;
                 `;
             } else if (_state.currentTab === 'lab') {
                 content.innerHTML = `
-                    <div class="h-full flex flex-col gap-8">
-                        <div class="glass-panel p-6 rounded-3xl">
-                            <div class="flex justify-between items-end mb-4">
-                                <h2 class="text-sm font-bold uppercase tracking-widest text-cyan-400">Conversor de Monólitos</h2>
-                                <label class="bg-white/5 hover:bg-white/10 px-3 py-1 rounded text-[9px] cursor-pointer transition-colors border border-white/10">
-                                    Importar .html <input type="file" id="lab-upload-file-2" class="hidden" />
+                    <div class="lab-root">
+                        <div class="lab-panel">
+                            <div class="lab-header">
+                                <h2 class="lab-title">Conversor de Monólitos</h2>
+                                <label class="lab-upload">
+                                    Importar .html <input type="file" id="lab-upload-file-2" />
                                 </label>
                             </div>
-                            <div class="grid grid-cols-2 gap-4 h-[200px]">
-                                <textarea id="lab-input-2" placeholder="HTML Source..." class="bg-black/40 border border-white/5 rounded-xl p-4 text-[10px] font-mono text-zinc-400 focus:outline-none resize-none"></textarea>
-                                <textarea id="lab-output-2" readonly placeholder="Kernel Output..." class="bg-black/40 border border-white/5 rounded-xl p-4 text-[10px] font-mono text-cyan-500/70 focus:outline-none resize-none"></textarea>
+                            <div class="lab-grid">
+                                <textarea id="lab-input-2" placeholder="HTML Source..." class="lab-textarea"></textarea>
+                                <textarea id="lab-output-2" readonly placeholder="Kernel Output..." class="lab-textarea output"></textarea>
                             </div>
-                            <div class="flex gap-2 mt-3">
-                                <button id="lab-convert-btn-2" class="w-32 bg-white/5 hover:bg-cyan-500/20 hover:text-cyan-400 text-white/40 font-bold py-2 rounded-xl uppercase tracking-widest text-[10px] transition-all">Converter</button>
-                                <button id="lab-inject-btn-2" class="w-32 bg-cyan-500/20 hover:bg-cyan-500 hover:text-white text-cyan-400 font-bold py-2 rounded-xl uppercase tracking-widest text-[10px] transition-all">Injetar</button>
+                            <div class="lab-actions">
+                                <button id="lab-convert-btn-2" class="lab-btn lab-btn-convert">Converter</button>
+                                <button id="lab-inject-btn-2" class="lab-btn lab-btn-inject">Injetar</button>
                             </div>
                         </div>
 
-                        <div class="glass-panel p-6 rounded-3xl flex-1 flex flex-col">
-                            <h2 class="text-sm font-bold uppercase tracking-widest text-purple-400 mb-4">Global Styles Override</h2>
-                            <textarea id="css-input" placeholder="/* Cole seu CSS aqui para personalizar o Fusion OS */" class="flex-1 bg-black/40 border border-white/5 rounded-xl p-4 text-[10px] font-mono text-pink-300/80 focus:outline-none resize-none custom-scroll">${_state.customCSS || ''}</textarea>
-                            <div class="flex justify-between items-center mt-3">
-                                <span class="text-[9px] text-white/20">Aplica-se imediatamente. Persistente.</span>
-                                <button id="save-css-btn" class="bg-purple-500/20 hover:bg-purple-500 hover:text-white text-purple-400 font-bold py-2 px-6 rounded-lg uppercase tracking-widest text-[9px] transition-all">Salvar CSS</button>
+                        <div class="lab-panel grow">
+                            <h2 class="lab-title purple" style="margin-bottom:16px;">Global Styles Override</h2>
+                            <textarea id="css-input" placeholder="/* Cole seu CSS aqui para personalizar o Fusion OS */" class="lab-textarea css-input custom-scroll">${_state.customCSS || ''}</textarea>
+                            <div class="lab-save-row">
+                                <span class="lab-save-hint">Aplica-se imediatamente. Persistente.</span>
+                                <button id="save-css-btn" class="lab-btn-save">Salvar CSS</button>
                             </div>
                         </div>
                     </div>
                 `;
 
-                // Wire up Lab 2 logic with slight delay to ensure DOM readiness
                 setTimeout(() => {
                     const up = document.getElementById('lab-upload-file-2');
                     if (up) up.addEventListener('change', (e) => FusionOS.handleUpload(e.target));
-                    
+
                     const convBtn = document.getElementById('lab-convert-btn-2');
                     if (convBtn) convBtn.addEventListener('click', () => {
                         const src = document.getElementById('lab-input-2').value;
                         document.getElementById('lab-output-2').value = Parser.convertFromHtmlSource(src);
                         Utils.speak("Processado.");
                     });
-                    
+
                     const injBtn = document.getElementById('lab-inject-btn-2');
                     if (injBtn) injBtn.addEventListener('click', () => {
                         const code = document.getElementById('lab-output-2').value;
                         if (!code) { Utils.speak("Nenhum kernel para injetar."); return; }
                         try { eval(code); Utils.speak("Módulo injetado."); } catch (e) { console.error(e); Utils.speak("Erro ao injetar módulo."); }
                     });
-                    
+
                     const cssBtn = document.getElementById('save-css-btn');
                     if (cssBtn) cssBtn.addEventListener('click', () => {
                         const css = document.getElementById('css-input').value;
@@ -582,7 +683,6 @@ window.FusionModule.init();`;
                     });
                 }, 60);
             }
-            UI.refreshIcons();
         },
 
         launch: async (code, mode) => {
@@ -605,16 +705,15 @@ window.FusionModule.init();`;
         performFusion: async (module) => {
             const layer = document.getElementById(CONFIG.fusionLayerId);
             if (!layer) return alert("Erro: NavRoot não encontrado.");
-            if (_state.active) FusionOS.toggle(); // fecha painél suavemente
+            if (_state.active) FusionOS.toggle();
             document.getElementById('fusion-exit-ctrl').classList.remove('hidden');
             Utils.speak("Fusão iniciada.");
 
-            let content = "";
             if (module.url) {
                 try {
                     const resp = await fetch(module.url);
                     if (!resp.ok) throw new Error("Network");
-                    content = await resp.text();
+                    const content = await resp.text();
                     FusionOS.injectIntoDOM(layer, content);
                 } catch (e) {
                     const ifr = document.createElement('iframe');
@@ -631,7 +730,6 @@ window.FusionModule.init();`;
 
         injectIntoDOM: (target, html) => {
             target.innerHTML = html;
-            // Script Re-Hydration
             target.querySelectorAll('script').forEach(old => {
                 const s = document.createElement('script');
                 [...old.attributes].forEach(a => s.setAttribute(a.name, a.value));
@@ -684,16 +782,16 @@ window.FusionModule.init();`;
                 'TST1': { name: 'TST1', url: 'https://kodux78k.github.io/oiDual-tst1/' },
                 'ADU': { name: 'Adega Urbana', url: 'https://kodux78k.github.io/oiDual-AdegaUrbana/' },
                 '78F': { name: 'Iframe 78frames', url: 'https://kodux78k.github.io/oiDual-78F/' },
-'KXTZ': { name: 'KxT KBllX', url: 'https://kodux78k.github.io/oiDual-KxT/' },
-'U87': { name: 'UNo87', url: 'https://kodux78k.github.io/oiDual--Y-/HubUno-87-m0d.html/' },
-'U32': { name: 'UNo32', url: 'https://kodux78k.github.io/oiDual--Y-/HubUno-32-m0d.html/' },
+                'KXTZ': { name: 'KxT KBllX', url: 'https://kodux78k.github.io/oiDual-KxT/' },
+                'U87': { name: 'UNo87', url: 'https://kodux78k.github.io/oiDual--Y-/HubUno-87-m0d.html/' },
+                'U32': { name: 'UNo32', url: 'https://kodux78k.github.io/oiDual--Y-/HubUno-32-m0d.html/' },
                 'CDI': { name: 'CORRETORA DUALINFODOSE', url: 'https://kodux78k.github.io/oiDual--Y-/main/blob/corretoraDual-app-m0d.html/' },
-                'DH0':  { name: 'DH0', url: 'https://kodux78k.github.io/oiDual-H0/' },
-'START': { name: 'starT', url: 'https://kodux78k.github.io/oiDual-starT/' },
-'78K':  { name: '78K ID HOME', url: 'https://kodux78k.github.io/oiDual-idHome/' },
-'NAV':  { name: 'NAV', url: 'https://kodux78k.github.io/oiDual-infodek/' },
-'VWRDI':  { name: 'VwR-di', url: 'https://kodux78k.github.io/oiDual-VwR-di/' },
-'DH10':  { name: 'H0-di', url: 'https://kodux78k.github.io/oiDual-H0/' },
+                'DH0': { name: 'DH0', url: 'https://kodux78k.github.io/oiDual-H0/' },
+                'START': { name: 'starT', url: 'https://kodux78k.github.io/oiDual-starT/' },
+                '78K': { name: '78K ID HOME', url: 'https://kodux78k.github.io/oiDual-idHome/' },
+                'NAV': { name: 'NAV', url: 'https://kodux78k.github.io/oiDual-infodek/' },
+                'VWRDI': { name: 'VwR-di', url: 'https://kodux78k.github.io/oiDual-VwR-di/' },
+                'DH10': { name: 'H0-di', url: 'https://kodux78k.github.io/oiDual-H0/' },
                 'RESET': 'RESET'
             };
 
