@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>KOBLLUX · LIGHT — Cockpit Edition</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#05070a">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;600;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <style>
+  :root {
+    --bg-deep: #050811;
+    --bg-day: radial-gradient(circle at 30% 20%, #ffffff 0%, #f2f8ff 18%, #d0e9ff 40%, #9ed0ff 65%, #6bb9ff 85%, #59a8ff 100%);
+    --bg-sunset: linear-gradient(180deg, #fbcfe8 0%, #fb923c 20%, #4c1d95 60%, #111827 100%);
+    --bg-night: radial-gradient(circle at 20% 0%, #0b1020 0%, #121c3b 40%, #1a237e 80%, #000000 100%);
+    --bg-panel: rgba(10, 14, 24, 0.95);
+    --primary: #00f5ff;
+    --secondary: #ff4bff;
+    --text-main: #e4ecff;
+    --text-muted: #9aa4c8;
+    --neon-cyan: #00f2ff;
+    --neon-purple: #bd00ff;
+    --neon-success: #00ff9d;
+    --font-ui: 'Montserrat', sans-serif;
+    --font-code: 'JetBrains Mono', monospace;
+    --glass-surface: rgba(18,18,22,0.65);
+    --glass-border: rgba(255,255,255,0.06);
+    --ease-overshoot: cubic-bezier(0.34, 1.3, 0.64, 1);
+    --ease-smooth: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; outline:none; user-select:none; }
+  html, body { width:100%; height:100vh; margin:0; padding:0; background:var(--bg-deep); color:var(--text-main); font-family:var(--font-ui); overflow:hidden; transition:background 0.8s cubic-bezier(0.4,0,0.2,1); position:relative; display:flex; flex-direction:column; align-items:center; }
+  .cyber-input, input, textarea { user-select:text !important; -webkit-user-select:text !important; }
+  body[data-mode="day"] { background:var(--bg-day) !important; color:#1a1a1a !important; }
+  body[data-mode="sunset"] { background:var(--bg-sunset) !important; color:#fff !important; }
+  body[data-mode="night"] { background:var(--bg-night) !important; color:var(--text-main) !important; }
+  body[data-mode="day"] .btn-icon { color:#333; border-color:rgba(0,0,0,0.2); }
+  body[data-mode="day"] .cockpit-item { background:rgba(0,0,0,0.05); color:#000; }
+  body[data-mode="day"] .cockpit-input { color:#000; border-bottom-color:rgba(0,0,0,0.3); }
+  body[data-mode="day"] .drawer-content { background:#fff; color:#222; }
+  body[data-mode="day"] .sun-background { opacity:0.5; }
+  body[data-mode="day"] #particles-js { opacity:0.6; }
+  .sky-layer { position:fixed; inset:0; z-index:0; pointer-events:none; }
+  .sun-background { position:absolute; width:300px; height:300px; border-radius:50%; background:radial-gradient(circle at 30% 30%,#fffde7 0%,#fff176 40%,#ffb300 100%); filter:blur(60px); opacity:0; transition:opacity 2s; animation:sun-orbit 60s linear infinite; }
+  #particles-js { position:fixed; inset:0; z-index:0; opacity:0.8; pointer-events:none; }
+  #bg-fake-custom { position:fixed; inset:0; z-index:1; mix-blend-mode:lighten; opacity:0.12; background-size:cover; background-position:center; pointer-events:none; }
+  .ambient-light { position:fixed; inset:0; z-index:0; pointer-events:none; }
+  .blob { position:absolute; border-radius:50%; filter:blur(100px); opacity:0.14; animation:float 25s infinite alternate ease-in-out; }
+  .blob-1 { width:60vw; height:60vw; background:var(--neon-cyan); top:-20%; left:-20%; }
+  .blob-2 { width:50vw; height:50vw; background:var(--neon-purple); bottom:-20%; right:-20%; animation-delay:-5s; }
+  .header-orb { position:fixed; top:40px; left:50%; transform:translateX(-50%); width:70px; height:70px; z-index:15; animation:floatOrb 6s ease-in-out infinite; cursor:pointer; transition:all 0.5s ease; }
+  .header-orb svg { width:100%; height:100%; transition:fill 0.5s ease; filter:drop-shadow(0 0 10px rgba(0,245,255,0.5)); }
+  body[data-mode="day"] .header-orb svg { fill:#fff176; filter:drop-shadow(0 0 20px #ffb300); }
+  body[data-mode="sunset"] .header-orb svg { fill:#ffb74d; filter:drop-shadow(0 0 30px #e65100); }
+  body[data-mode="night"] .header-orb svg { fill:white; filter:drop-shadow(0 0 15px var(--primary)); }
+  #usernameDisplay { position:fixed; top:120px; left:50%; transform:translateX(-50%); z-index:10; font-size:0.75rem; color:var(--text-muted); opacity:0.6; pointer-events:none; text-transform:uppercase; letter-spacing:2px; }
+  #modeIndicator { position:fixed; top:10px; left:50%; transform:translateX(-50%); font-size:0.65rem; font-weight:bold; opacity:0.5; z-index:20; text-transform:uppercase; letter-spacing:1px; }
+  .top-bar { position:fixed; top:0; left:0; right:0; padding:15px; display:flex; justify-content:space-between; z-index:20; pointer-events:none; }
+  .top-grp { display:flex; gap:10px; pointer-events:auto; }
+  .btn-icon { width:44px; height:44px; border-radius:50%; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:inherit; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:0.2s; backdrop-filter:blur(5px); }
+  .btn-icon:hover { background:rgba(255,255,255,0.2); transform:scale(1.05); border-color:var(--primary); }
+  .btn-icon svg { width:20px; height:20px; stroke:currentColor; stroke-width:2; fill:none; }
+  .drawer { position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:100; opacity:0; pointer-events:none; transition:opacity 0.3s; display:flex; align-items:center; justify-content:center; }
+  .drawer.open { opacity:1; pointer-events:auto; }
+  .drawer-content { width:90%; max-width:450px; max-height:85vh; background:var(--bg-panel); border:1px solid rgba(255,255,255,0.1); border-radius:20px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,0.5); transform:scale(0.9); transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+  .drawer.open .drawer-content { transform:scale(1); }
+  .drawer-header { padding:15px 20px; border-bottom:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); }
+  .drawer-header h3 { margin:0; font-size:1.1rem; display:flex; align-items:center; gap:10px; }
+  .drawer-body { padding:20px; overflow-y:auto; flex:1; }
+  .cockpit-grid { display:flex; flex-direction:column; gap:15px; }
+  .cockpit-item { background:rgba(255,255,255,0.03); padding:10px 15px; border-radius:10px; border:1px solid rgba(255,255,255,0.05); display:flex; flex-direction:column; }
+  .cockpit-label { font-size:0.7rem; color:var(--primary); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px; }
+  .cockpit-input { background:transparent; border:none; color:white; font-family:var(--font-code); font-size:1rem; outline:none; width:100%; border-bottom:1px dashed rgba(255,255,255,0.1); padding-bottom:5px; transition:0.3s; }
+  .cockpit-input:focus { border-bottom-color:var(--secondary); }
+  .control-row { display:flex; gap:10px; margin-top:20px; }
+  .btn-block { flex:1; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:inherit; cursor:pointer; font-size:0.85rem; font-weight:600; transition:0.2s; }
+  .btn-block:hover { background:rgba(255,255,255,0.15); border-color:var(--primary); }
+  #snap-zone { position:fixed; top:0; left:0; right:0; height:80px; background:linear-gradient(to bottom,rgba(0,242,255,0.25),transparent); opacity:0; pointer-events:none; transition:opacity 0.3s ease; z-index:9000; box-shadow:0 0 40px rgba(0,242,255,0.1); }
+  #snap-zone.active { opacity:1; }
+  .container { position:absolute; inset:0; pointer-events:none; display:flex; align-items:center; justify-content:center; perspective:1200px; z-index:10; }
+  .fusion-card { pointer-events:auto; width:100%; max-width:440px; max-height:78vh; overflow-y:auto; overflow-x:hidden; background:var(--glass-surface); backdrop-filter:blur(30px); -webkit-backdrop-filter:blur(30px); border:1px solid var(--glass-border); border-radius:36px; padding:30px 25px; box-shadow:0 40px 100px rgba(0,0,0,0.8); position:relative; opacity:0; transform:translateY(50px) scale(0.96); display:flex; flex-direction:column; gap:8px; transition:width 0.5s var(--ease-smooth),height 0.5s var(--ease-smooth),border-radius 0.5s var(--ease-smooth),opacity 0.4s,left 0.4s var(--ease-smooth),top 0.4s var(--ease-smooth),box-shadow 0.4s; will-change:transform,width,height,border-radius,left,top; touch-action:none; }
+  .fusion-card::-webkit-scrollbar { display:none; }
+  .fusion-card.active { opacity:1; transform:translateY(0) scale(1); }
+  .fusion-card.closed { width:260px; padding:14px 16px; border-radius:22px; }
+  .fusion-card.closed .card-body { display:none; }
+  .fusion-card.orb { position:fixed !important; width:68px !important; height:68px !important; padding:0 !important; border-radius:50% !important; align-items:center; justify-content:center; box-shadow:0 15px 40px rgba(0,0,0,0.6),0 0 20px rgba(0,242,255,0.2); z-index:9999; cursor:grab; overflow:visible; }
+  .fusion-card.orb:active { cursor:grabbing; transform:scale(0.95); }
+  .fusion-card.orb .text-block, .fusion-card.orb .clock-widget, .fusion-card.orb .card-body, .fusion-card.orb .small-preview { display:none !important; }
+  .fusion-card.orb .card-header { margin:0; width:100%; height:100%; justify-content:center; padding:0; }
+  .fusion-card.orb .avatar-slot { width:54px; height:54px; border-radius:50%; margin:0; opacity:1; pointer-events:none; }
+  .orb-menu-trigger { position:absolute; bottom:-30px; left:50%; transform:translateX(-50%); width:24px; height:24px; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.2); border-radius:50%; display:none; align-items:center; justify-content:center; cursor:pointer; color:#fff; font-size:12px; pointer-events:auto; backdrop-filter:blur(4px); }
+  .fusion-card.orb:hover .orb-menu-trigger { display:flex; }
+  .fusion-card.hud { position:fixed !important; top:0 !important; left:50% !important; transform:translateX(-50%) !important; width:96% !important; max-width:600px !important; height:64px !important; padding:0 16px !important; border-radius:0 0 24px 24px !important; flex-direction:row; align-items:center; justify-content:space-between; box-shadow:0 10px 40px rgba(0,0,0,0.7); z-index:1; overflow:visible; border-top:none; opacity:0.78; touch-action:none; }
+  .fusion-card.hud .card-body, .fusion-card.hud .small-preview { display:none !important; }
+  .fusion-card.hud .card-header { margin:0; width:100%; justify-content:space-between; }
+  .fusion-card.hud .avatar-slot { width:40px; height:40px; }
+  .fusion-card.hud .brand-dual { font-size:1.2rem; margin:0; }
+  .fusion-card.hud .greeting-row { display:none; }
+  .fusion-card.hud .text-block { flex:unset; }
+  .drag-handle { width:60px; height:5px; background:rgba(255,255,255,0.15); border-radius:10px; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); display:none; cursor:grab; pointer-events:none; transition:background 0.3s; }
+  .fusion-card.hud:active .drag-handle { background:var(--neon-cyan); width:70px; }
+  .fusion-card.hud .drag-handle { display:block; }
+  .hud-menu-btn { display:none; background:transparent; border:none; color:rgba(255,255,255,0.6); cursor:pointer; }
+  .fusion-card.hud .hud-menu-btn { display:block; }
+  .card-header { display:flex; align-items:center; gap:15px; margin-bottom:18px; width:100%; cursor:pointer; touch-action:none; }
+  .avatar-slot { width:64px; height:64px; border-radius:18px; overflow:hidden; opacity:0; transition:opacity 0.35s; }
+  .avatar-slot.shown { opacity:1; }
+  .text-block { flex:1; display:flex; flex-direction:column; justify-content:center; }
+  .greeting-row { font-size:1.5rem; line-height:1; display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; }
+  .txt-thin { font-weight:200; color:rgba(255,255,255,0.7); }
+  .txt-heavy { font-weight:600; color:#fff; }
+  .brand-dual { font-size:2.2rem; font-weight:900; line-height:0.95; text-transform:uppercase; letter-spacing:-2px; margin-top:4px; background:linear-gradient(-45deg,#fff,var(--neon-cyan),var(--neon-purple),#fff); background-size:300%; -webkit-background-clip:text; -webkit-text-fill-color:transparent; animation:gradientFlow 4s ease infinite; }
+  .clock-widget { text-align:right; }
+  .time-display { font-family:var(--font-code); font-size:1rem; color:rgba(255,255,255,0.5); font-weight:700; }
+  .status-led { font-size:0.6rem; color:var(--neon-cyan); text-transform:uppercase; letter-spacing:1px; margin-top:4px; display:block; }
+  .small-preview { display:none; align-items:center; gap:10px; margin-top:8px; padding:8px 10px; border-radius:10px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); font-family:var(--font-code); font-size:0.86rem; color:rgba(255,255,255,0.9); cursor:pointer; }
+  .small-preview .mini-avatar { width:30px; height:30px; border-radius:6px; flex-shrink:0; overflow:hidden; display:inline-flex; align-items:center; justify-content:center; }
+  .small-preview .small-text { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:calc(100% - 110px); }
+  .small-preview .ident-badge { margin-left:auto; font-weight:700; font-size:0.78rem; padding:4px 8px; border-radius:999px; background:rgba(255,255,255,0.03); color:rgba(255,255,255,0.9); border:1px solid rgba(255,255,255,0.02); }
+  .fusion-card.closed:not(.orb):not(.hud) .small-preview { display:flex; }
+  .card-body { display:flex; flex-direction:column; gap:12px; }
+  .stagger-item { opacity:0; transform:translateY(15px); transition:opacity 0.4s ease,transform 0.4s var(--ease-overshoot); }
+  .content-visible .stagger-item { opacity:1; transform:translateY(0); }
+  .content-visible .stagger-item:nth-child(1) { transition-delay:0.1s; }
+  .content-visible .stagger-item:nth-child(2) { transition-delay:0.18s; }
+  .content-visible .stagger-item:nth-child(3) { transition-delay:0.25s; }
+  .cyber-input { width:100%; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:16px 50px 16px 18px; color:#fff; font-family:var(--font-code); font-size:0.9rem; }
+  .activation-wrap { display:flex; flex-direction:column; gap:8px; }
+  .activation-card { background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.04); padding:12px; border-radius:10px; overflow:hidden; transition:all 320ms var(--ease-smooth); }
+  .activation-pre { font-family:var(--font-code); white-space:pre-wrap; margin:0; padding:8px; background:rgba(0,0,0,0.12); border-radius:8px; border:1px dashed rgba(255,255,255,0.03); color:#fff; font-size:0.75rem; }
+  .activation-hidden { max-height:0; opacity:0; padding:0 12px; pointer-events:none; margin-top:0; }
+  .activation-open { max-height:567px; opacity:1; padding:12px; margin-top:4px; }
+  .activation-toggle { display:flex; align-items:center; justify-content:space-between; padding:8px 4px; cursor:pointer; opacity:0.9; transition:0.2s; }
+  .activation-toggle:hover { opacity:1; }
+  .trigger-btn { width:100%; padding:12px; border:1px dashed rgba(255,255,255,0.1); border-radius:12px; background:rgba(255,255,255,0.02); color:rgba(255,255,255,0.5); font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; cursor:pointer; display:flex; justify-content:center; align-items:center; gap:8px; transition:0.2s; }
+  .trigger-btn:hover { background:rgba(255,255,255,0.04); color:#fff; border-color:rgba(255,255,255,0.3); }
+  .mode-btn { background:rgba(0,242,255,0.05); border-color:rgba(0,242,255,0.2); color:var(--neon-cyan); }
+  .mode-btn.active-mode { background:var(--neon-cyan); color:#000; box-shadow:0 0 20px rgba(0,242,255,0.4); border-color:transparent; }
+  .toaster-wrap { position:fixed; right:20px; bottom:20px; z-index:99999; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+  .toaster { pointer-events:auto; background:linear-gradient(180deg,#0b1220,#071018); border:1px solid rgba(255,255,255,0.06); padding:10px 14px; border-radius:10px; box-shadow:0 18px 40px rgba(0,0,0,0.6); font-family:var(--font-ui); font-size:0.95rem; opacity:0; transform:translateY(8px); transition:all 260ms var(--ease-smooth); }
+  .toaster.show { opacity:1; transform:translateY(0); }
+  .toaster.error { border-color:var(--neon-danger,#ff4b6b); color:var(--neon-danger,#ff4b6b); }
+  .toaster.success { border-color:var(--neon-success); color:var(--neon-success); }
+  .logo-container { position:relative; z-index:1; width:300px; max-width:80%; animation:glow 3s ease-in-out infinite alternate; padding:20px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:transform 1.2s ease,opacity 1.2s ease; margin-top:18vh; }
+  .logo-container object { width:100%; height:auto; display:block; }
+  .infodose { margin-top:25px; font-size:2em; color:#ccc; opacity:0; animation:fadeInX 2s forwards 2s,pulse 4s infinite ease-in-out 4s; z-index:1; position:relative; }
+  .infodose strong { font-weight:700; color:#fff; }
+  .frase { position:absolute; bottom:60px; font-size:1.2em; color:#999; opacity:0; animation:fadeIn 2s forwards 3s; z-index:1; padding:0 20px; width:100%; text-align:center; }
+  .frase strong { font-weight:700; color:#fff; }
+  @keyframes sun-orbit { 0%{transform:translate(-20vw,10vh)} 50%{transform:translate(80vw,-10vh)} 100%{transform:translate(-20vw,10vh)} }
+  @keyframes floatOrb { 0%,100%{transform:translate(-50%,0)} 50%{transform:translate(-50%,-8px)} }
+  @keyframes float { 0%{transform:translate(0,0)} 100%{transform:translate(40px,60px)} }
+  @keyframes gradientFlow { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+  @keyframes pulsex { 50%{opacity:.4;box-shadow:0 0 9px currentColor} }
+  @keyframes glow { from{filter:drop-shadow(0 0 10px #00ffff) drop-shadow(0 0 20px #ff00ff)} to{filter:drop-shadow(0 0 25px #00ffff) drop-shadow(0 0 35px #ff00ff)} }
+  @keyframes fadeIn { to{opacity:1} }
+  @keyframes fadeInX { to{opacity:1} }
+  @keyframes pulse { 0%{transform:scale(1)} 50%{transform:scale(1.08)} 100%{transform:scale(1)} }
+  .splash-shell { position:fixed; inset:0; z-index:2; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:24px 20px 90px; pointer-events:none; isolation:isolate; }
+  .splash-shell .logo-container { pointer-events:auto; position:relative; margin:0; width:min(300px,72vw); max-width:80%; flex:0 0 auto; }
+  .splash-shell .infodose { position:relative; margin:12px 0 0; text-align:center; z-index:1; }
+  .splash-shell .frase { position:relative; inset:auto; width:auto; margin-top:10px; padding:0 12px; text-align:center; font-size:clamp(.78rem,3.2vw,1rem); color:rgba(225,235,255,.66); letter-spacing:.04em; }
+  @media (max-width:768px) { .infodose{font-size:1.5em} .frase{font-size:1em;bottom:66px} .logo-container{width:220px} }
+  @media (max-height:650px) { .splash-shell{padding-bottom:70px} .splash-shell .logo-container{width:min(190px,48vw)} .splash-shell .infodose{font-size:1.25rem} }
+  html { overflow-y:auto; overflow-x:hidden; height:200vh; }
+  body { overflow-y:auto; height:100%; }
+  #mainCard { z-index:30; }
+  #mainCard .card-header { touch-action:pan-y; }
+  </style>
+</head>
+<body class="field-closed" data-mode="night">
+
+  <div class="ambient-light"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
+  <div id="snap-zone"></div>
+  <div class="toaster-wrap" id="toasterWrap"></div>
+
+  <div id="particles-js"></div>
+
+  <section class="splash-shell" id="splashShell" aria-label="Dual Infodose">
+    <div class="logo-container" id="logo">
+      <object data="https://kodux78k.github.io/oiDual-oiio/3D_logo_Dual_Infodose_10.svg" type="image/svg+xml"></object>
+    </div>
+    <div class="infodose">dual.<strong>Infodose</strong></div>
+    <div class="frase"><strong>Presença, conexão e consciência.</strong></div>
+  </section>
+
+  <div class="container">
+    <div class="fusion-card closed" id="mainCard">
+      <div class="card-header" id="cardHeader">
+        <div class="avatar-slot" id="avatarTarget" title="Cockpit"></div>
+        <div class="text-block">
+          <div class="greeting-row">
+            <span class="txt-thin" id="lblHello">Oi,</span>
+            <span class="txt-heavy" id="lblName">Convidado</span>
+          </div>
+          <div class="brand-dual">DUAL</div>
+        </div>
+        <div class="clock-widget">
+          <div class="time-display" id="clockTime">00:00</div>
+          <span class="status-led">ONLINE</span>
+        </div>
+        <button class="hud-menu-btn" id="hudMenuBtn" title="Menu Rápido">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"></line><line x1="4" x2="20" y1="6" y2="6"></line><line x1="4" x2="20" y1="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div class="orb-menu-trigger" id="orbMenuTrigger" title="Menu Rápido">●●●</div>
+      <div class="drag-handle"></div>
+
+      <div class="small-preview" id="smallPreview">
+        <div class="mini-avatar" id="smallMiniAvatar"></div>
+        <div class="small-text" id="smallText">Aguardando ativação...</div>
+        <div class="ident-badge" id="smallIdent">--</div>
+      </div>
+
+      <div class="card-body" id="cardBody">
+        <div class="input-wrapper stagger-item">
+          <input type="text" class="cyber-input" id="inputUser" placeholder="Identifique-se..." autocomplete="off">
+        </div>
+
+        <div class="activation-wrap stagger-item">
+          <div class="activation-toggle" onclick="toggleSection('activationCard')">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:10px;height:10px;border-radius:99px;background:var(--neon-cyan)"></div>
+              <strong style="letter-spacing:1px;font-size:0.9rem">Ativação ASCII</strong>
+            </div>
+            <div style="margin-left:auto;font-size:0.82rem;color:rgba(255,255,255,0.6)">BASE v1</div>
+          </div>
+          <div id="activationCard" class="activation-card activation-hidden">
+            <div style="display:flex;align-items:flex-start;gap:10px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="mini-avatar" id="actMiniAvatar"></div>
+                <div><div style="font-weight:700">CÉREBRO</div><div style="font-size:0.78rem;opacity:0.6"><span id="actName">User</span></div></div>
+              </div>
+              <div class="activation-badge" id="actBadge" style="margin-left:auto; color:var(--neon-cyan); font-size:0.8em">v:--</div>
+            </div>
+            <pre id="actPre" class="activation-pre">Carregando...</pre>
+            <div class="activation-controls" style="display:flex;gap:8px;margin-top:8px">
+              <button class="trigger-btn" id="copyActBtn">COPIAR</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stagger-item" style="margin-top:8px">
+          <div class="stat-lbl" style="margin-bottom:6px;font-size:0.6rem;color:rgba(255,255,255,0.4)">CICLO SOLAR · COCKPIT SYNC</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div id="cardSolarStatus" style="flex:1;font-family:var(--font-code);font-size:.72rem;color:var(--neon-cyan)">NIGHT (AUTO)</div>
+            <button class="trigger-btn" id="cardCycleSolarBtn" style="flex:1">CICLAR</button>
+            <button class="trigger-btn" id="cardAutoSolarBtn" style="flex:1">AUTO</button>
+          </div>
+        </div>
+
+        <div class="stagger-item" style="margin-top:4px">
+          <div class="stat-lbl" style="margin-bottom:6px; font-size:0.6rem; color:rgba(255,255,255,0.4)">INTERFACE MODE</div>
+          <div style="display:flex; gap:8px;">
+            <button class="trigger-btn mode-btn active-mode" id="btnModeCard" onclick="setMode('card')" style="flex:1" title="Modo Padrão">CARD</button>
+            <button class="trigger-btn mode-btn" id="btnModeOrb" onclick="setMode('orb')" style="flex:1" title="Flutuante">ORB</button>
+            <button class="trigger-btn mode-btn" id="btnModeHud" onclick="setMode('hud')" style="flex:1" title="Barra de Topo">HUD</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <svg style="display:none">
+    <symbol id="icon-orb" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="8"></circle></symbol>
+    <symbol id="icon-cards" viewBox="0 0 24 24"><rect x="2" y="2" width="16" height="16" rx="2"></rect><path d="M22 6v14a2 2 0 0 1-2 2H6"></path></symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></symbol>
+  </svg>
+
+  <div class="sky-layer"><div class="sun-background"></div></div>
+  <div id="bg-fake-custom"></div>
+  <div id="modeIndicator">CARREGANDO nO.Sºlar...</div>
+
+  <div class="header-orb" id="orbToggle" title="Abrir Cockpit"><svg><use href="#icon-orb"></use></svg></div>
+  <div id="usernameDisplay"></div>
+
+  <div class="top-bar">
+    <div class="top-grp">
+      <button class="btn-icon" id="btnSettings" title="Cockpit"><svg><use href="#icon-settings"></use></svg></button>
+    </div>
+  </div>
+
+  <div id="drawerProfile" class="drawer">
+    <div class="drawer-content">
+      <div class="drawer-header">
+        <h3><svg style="width:20px;height:20px;margin-right:8px;stroke:var(--secondary)"><use href="#icon-orb"></use></svg> Cockpit Solar</h3>
+        <button class="btn-icon" onclick="toggleDrawer('drawerProfile')">✕</button>
+      </div>
+      <div class="drawer-body">
+        <div class="cockpit-item" style="text-align:center;margin-bottom:15px;">
+          <div class="cockpit-label">Ciclo Solar</div>
+          <div id="statusSolarMode" style="font-size:1.2rem;font-weight:bold;margin:5px 0;">AUTO</div>
+          <div class="control-row">
+            <button class="btn-block" id="btnCycleSolar">Manual ☀️/🌙</button>
+            <button class="btn-block" id="btnAutoSolar">Auto 🕒</button>
+          </div>
+        </div>
+        <div class="cockpit-grid">
+          <div class="cockpit-item">
+            <div class="cockpit-label">Identificação</div>
+            <input type="text" id="inputUserId" class="cockpit-input" placeholder="Anônimo">
+          </div>
+          <div class="cockpit-item">
+            <div class="cockpit-label">Background</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span id="bgStatusText" style="font-size:0.8rem;color:var(--text-muted)">Nenhum</span>
+              <label class="btn-icon" style="width:30px;height:30px;border-radius:5px;">
+                <input type="file" id="bgUploadInput" accept="image/*" style="display:none">
+                <svg><use href="#icon-cards"></use></svg>
+              </label>
+            </div>
+          </div>
+          <div id="bgThumbPanel" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:15px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="frase"><strong>Sempre</strong> único<strong>. Sempre</strong> seu<strong>.</strong></div>
+
+<script>
+/* =========================================================
+   KOBLLUX · LIGHT — Cockpit Core (consolidado)
+   Solar + BG + Drawer + Orb + Fusion Card + Identidade
+   Um único IIFE. App global. Zero duplicação.
+========================================================= */
+(function(){
+  'use strict';
+
+  /* ========== STORAGE KEYS ========== */
+  const S = {
+    SOLAR_MODE: 'di_solarMode',
+    SOLAR_AUTO: 'di_solarAuto',
+    USER:       'di_userName',
+    DOSE:       'di_infodoseName',
+    BG_IMAGES:  'di_bgImages',
+    UI_STATE:   'fusion_os_ui_state'
+  };
+
+  /* ========== ELS ========== */
+  const $ = id => document.getElementById(id);
+  const els = {
+    card:           $('mainCard'),
+    header:         $('cardHeader'),
+    avatarTgt:      $('avatarTarget'),
+    input:          $('inputUser'),
+    lblName:        $('lblName'),
+    clock:          $('clockTime'),
+    smallPreview:   $('smallPreview'),
+    smallMiniAvatar:$('smallMiniAvatar'),
+    smallText:      $('smallText'),
+    smallIdent:     $('smallIdent'),
+    actPre:         $('actPre'),
+    actName:        $('actName'),
+    actMiniAvatar:  $('actMiniAvatar'),
+    actBadge:       $('actBadge'),
+    orbMenuTrigger: $('orbMenuTrigger'),
+    hudMenuBtn:     $('hudMenuBtn'),
+    snapZone:       $('snap-zone'),
+    copyActBtn:     $('copyActBtn'),
+    orbToggle:      $('orbToggle'),
+    btnSettings:    $('btnSettings'),
+    inputUserId:    $('inputUserId'),
+    usernameDisplay:$('usernameDisplay'),
+    modeIndicator:  $('modeIndicator')
+  };
+
+  /* ========== DRAG STATE ========== */
+  const dragState = {
+    isOrb: false, isHud: false, isDragging: false, timer: null,
+    startX: 0, startY: 0, dragOffsetX: 0, dragOffsetY: 0, pointerId: null
+  };
+
+  const FIRST_PREVIEW_DURATION = 1780;
+  const HUD_SNAP_THRESHOLD    = 60;
+  const SWIPE_DOWN_THRESHOLD  = 80;
+  const LONG_PRESS_MS         = 350;
+
+  /* ========== UTILS ========== */
+  const hashStr = s => {
+    let h = 0xdeadbeef;
+    for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 2654435761);
+    return (h ^ h >>> 16) >>> 0;
+  };
+  const createSvg = (id, sz) =>
+    `<svg viewBox="0 0 100 100" width="${sz}" height="${sz}"><defs><linearGradient id="g${id}"><stop offset="0%" stop-color="#00f2ff"/><stop offset="100%" stop-color="#bd00ff"/></linearGradient></defs><circle cx="50" cy="50" r="48" fill="#080b12" stroke="rgba(255,255,255,0.1)"/><circle cx="50" cy="50" r="20" fill="url(#g${id})" opacity="0.9"/></svg>`;
+  const createMiniSvg = (name, sz = 30) => {
+    const s = hashStr(name || 'D');
+    const h1 = s % 360, h2 = (s * 37) % 360;
+    const grad = `<linearGradient id="gm${s}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(${h1},90%,50%)"/><stop offset="1" stop-color="hsl(${h2},90%,50%)"/></linearGradient>`;
+    return `<svg width="${sz}" height="${sz}" viewBox="0 0 32 32"><defs>${grad}</defs><rect width="32" height="32" rx="8" fill="#0a1016"/><circle cx="16" cy="16" r="6" fill="url(#gm${s})"/></svg>`;
+  };
+  const escapeHtml = s => s ? String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) : '';
+
+  /* ========== UI HELPERS (globais) ========== */
+  function showToaster(txt, type = 'default') {
+    const wrap = $('toasterWrap');
+    if (!wrap) return;
+    const t = document.createElement('div');
+    t.className = `toaster ${type}`;
+    t.innerText = txt;
+    wrap.appendChild(t);
+    setTimeout(() => t.classList.add('show'), 10);
+    setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2500);
+  }
+
+  function toggleDrawer(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('open');
+  }
+
+  function toggleSection(id, forceOpen = false) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const h = el.classList.contains('activation-hidden');
+    if (forceOpen && !h) return;
+    el.classList.toggle('activation-hidden', !forceOpen && !h);
+    el.classList.toggle('activation-open', forceOpen || h);
+  }
+
+  /* ========== IDENTIDADE ========== */
+  function updateInterface(name) {
+    const safe = (name || 'Convidado').trim() || 'Convidado';
+    if (els.lblName) els.lblName.innerText = safe;
+    if (els.input && els.input !== document.activeElement) els.input.value = safe;
+    if (els.inputUserId && els.inputUserId !== document.activeElement) els.inputUserId.value = safe;
+    if (els.usernameDisplay) els.usernameDisplay.textContent = safe;
+
+    if (els.smallMiniAvatar) els.smallMiniAvatar.innerHTML = createMiniSvg(safe);
+    if (els.actMiniAvatar)   els.actMiniAvatar.innerHTML   = createMiniSvg(safe, 96);
+    if (els.actName)         els.actName.innerText         = safe;
+    if (els.avatarTgt)       els.avatarTgt.innerHTML       = createSvg('Main', 96);
+
+    const phrases = ["Foco estável.", "Ritmo criativo.", "Percepção sutil."];
+    if (els.smallText) {
+      els.smallText.innerText = safe === 'Convidado'
+        ? 'Aguardando...'
+        : `${safe} · ${phrases[safe.length % phrases.length]}`;
+    }
+    if (els.smallIdent) els.smallIdent.innerText = '--';
+    if (els.actBadge)   els.actBadge.innerText   = 'v:--';
+
+    if (els.actPre) {
+      const line = `+${'-'.repeat(safe.length + 4)}+`;
+      els.actPre.innerText = `${line}\n| ${safe.toUpperCase()} |\n${line}\nID: ${hashStr(safe).toString(16)}`;
+    }
+  }
+
+  function syncUser(v) {
+    const clean = (v || '').trim();
+    localStorage.setItem(S.USER, clean);
+    updateInterface(clean || 'Convidado');
+  }
+
+  /* ========== UI STATE (posição/modo) ========== */
+  function saveUIState() {
+    const mode = dragState.isOrb ? 'orb' : (dragState.isHud ? 'hud' : 'card');
+    try {
+      localStorage.setItem(S.UI_STATE, JSON.stringify({
+        mode, left: els.card.style.left, top: els.card.style.top
+      }));
+    } catch(_){}
+  }
+
+  /* ========== DRAG / CARD / ORB / HUD ========== */
+  function handleStart(e) {
+    if (['INPUT','TEXTAREA','SELECT','BUTTON'].includes(e.target.tagName)) {
+      if (!e.target.closest('.orb-menu-trigger')) return;
+    }
+    if (!dragState.isOrb && !dragState.isHud && !els.header.contains(e.target)) return;
+
+    dragState.startX = e.clientX;
+    dragState.startY = e.clientY;
+    dragState.pointerId = e.pointerId;
+
+    if (dragState.isOrb || dragState.isHud) {
+      dragState.isDragging = true;
+      try { els.card.setPointerCapture(e.pointerId); } catch(_){}
+      const r = els.card.getBoundingClientRect();
+      dragState.dragOffsetX = e.clientX - r.left;
+      dragState.dragOffsetY = e.clientY - r.top;
+      els.card.style.transition = 'none';
+      return;
+    }
+    dragState.timer = setTimeout(() => { transmuteToOrb(e); saveUIState(); }, LONG_PRESS_MS);
+  }
+
+  function handleMove(e) {
+    if (!dragState.isOrb && !dragState.isHud && dragState.timer) {
+      const dx = e.clientX - dragState.startX;
+      const dy = e.clientY - dragState.startY;
+      if (Math.hypot(dx, dy) > 12 && (dy < -10 || Math.abs(dx) > 18)) {
+        clearTimeout(dragState.timer); dragState.timer = null;
+        transmuteToOrb(e);
+        const r = els.card.getBoundingClientRect();
+        dragState.dragOffsetX = e.clientX - r.left;
+        dragState.dragOffsetY = e.clientY - r.top;
+        try { els.card.setPointerCapture(e.pointerId); } catch(_){}
+        els.card.style.transition = 'none';
+      }
+    }
+    if (!dragState.isDragging) return;
+    e.preventDefault();
+    if (dragState.isOrb) {
+      const x = e.clientX - dragState.dragOffsetX;
+      const y = e.clientY - dragState.dragOffsetY;
+      els.card.style.left = `${x}px`;
+      els.card.style.top  = `${y}px`;
+      if (y < HUD_SNAP_THRESHOLD) els.snapZone.classList.add('active');
+      else els.snapZone.classList.remove('active');
+    } else if (dragState.isHud) {
+      const dy = e.clientY - dragState.startY;
+      if (dy > 0) {
+        els.card.style.transform = `translateX(-50%) translateY(${dy * 0.4}px)`;
+        if (dy > SWIPE_DOWN_THRESHOLD) els.snapZone.classList.add('active');
+        else els.snapZone.classList.remove('active');
+      }
+    }
+  }
+
+  function handleEnd(e) {
+    if (dragState.timer) { clearTimeout(dragState.timer); dragState.timer = null; }
+    if (dragState.isDragging) {
+      dragState.isDragging = false;
+      try { els.card.releasePointerCapture && els.card.releasePointerCapture(dragState.pointerId); } catch(_){}
+      els.card.style.transition = '';
+      els.snapZone.classList.remove('active');
+      if (dragState.isOrb) {
+        const r = els.card.getBoundingClientRect();
+        if (r.top < HUD_SNAP_THRESHOLD) setMode('hud');
+        else saveUIState();
+      } else if (dragState.isHud) {
+        const dy = e.clientY - dragState.startY;
+        if (dy > SWIPE_DOWN_THRESHOLD) {
+          els.card.style.left = `${e.clientX - 34}px`;
+          els.card.style.top  = `${e.clientY - 10}px`;
+          setMode('orb');
+        } else {
+          els.card.style.transform = `translateX(-50%) translateY(0)`;
+        }
+      }
+    } else {
+      if (!dragState.isOrb && !dragState.isHud && els.header.contains(e.target)) toggleCardState();
+    }
+    dragState.pointerId = null;
+  }
+
+  function transmuteToOrb(ev) {
+    const x = ev.clientX, y = ev.clientY;
+    if (navigator.vibrate) navigator.vibrate(40);
+    els.card.classList.add('orb', 'closed');
+    els.card.classList.remove('content-visible');
+    els.card.style.left = (x - 34) + 'px';
+    els.card.style.top  = (y - 34) + 'px';
+    dragState.isOrb = true; dragState.isHud = false;
+    dragState.isDragging = true;
+    if (ev.pointerId) {
+      dragState.pointerId = ev.pointerId;
+      try { els.card.setPointerCapture(ev.pointerId); } catch(_){}
+      const r = els.card.getBoundingClientRect();
+      dragState.dragOffsetX = x - r.left;
+      dragState.dragOffsetY = y - r.top;
+    }
+    updateModeButtons('orb');
+  }
+
+  function revertToCard() {
+    dragState.isOrb = false; dragState.isHud = false;
+    els.card.style.transition = 'all 0.5s var(--ease-smooth)';
+    els.card.style.left = ''; els.card.style.top = '';
+    els.card.style.width = ''; els.card.style.height = '';
+    els.card.style.transform = '';
+    els.card.classList.remove('orb', 'hud', 'closed');
+    setTimeout(() => els.card.classList.add('content-visible'), 300);
+  }
+
+  function setMode(mode, isInitialLoad = false) {
+    updateModeButtons(mode);
+    if (mode === 'card') {
+      revertToCard();
+    } else if (mode === 'orb') {
+      dragState.isOrb = true; dragState.isHud = false;
+      els.card.classList.add('orb', 'closed');
+      els.card.classList.remove('hud', 'content-visible');
+      els.card.style.transform = 'none';
+    } else if (mode === 'hud') {
+      dragState.isHud = true; dragState.isOrb = false;
+      els.card.classList.add('hud', 'closed');
+      els.card.classList.remove('orb', 'content-visible');
+      els.card.style.top = ''; els.card.style.left = ''; els.card.style.transform = '';
+    }
+    if (!isInitialLoad) saveUIState();
+  }
+
+  function updateModeButtons(mode) {
+    ['btnModeCard','btnModeOrb','btnModeHud'].forEach(id => {
+      const b = document.getElementById(id);
+      if (b) b.classList.remove('active-mode');
+    });
+    const map = { card:'btnModeCard', orb:'btnModeOrb', hud:'btnModeHud' };
+    const b = document.getElementById(map[mode]);
+    if (b) b.classList.add('active-mode');
+  }
+
+  function toggleCardState() {
+    if (els.card.classList.contains('animating')) return;
+    const isClosed = els.card.classList.contains('closed');
+    els.card.classList.add('animating');
+    if (isClosed) {
+      els.card.classList.remove('closed');
+      els.card.animate(
+        [{transform:'scale(0.95)',opacity:0.8},{transform:'scale(1)',opacity:1}],
+        {duration:400}
+      ).onfinish = () => {
+        els.card.classList.remove('animating');
+        els.card.classList.add('content-visible');
+      };
+    } else {
+      els.card.classList.remove('content-visible');
+      els.card.animate(
+        [{transform:'translateY(0)',opacity:1},{transform:'translateY(10px)',opacity:1}],
+        {duration:200}
+      ).onfinish = () => {
+        els.card.classList.add('closed');
+        els.card.classList.remove('animating');
+      };
+    }
+  }
+
+  /* ========== SOLAR ========== */
+  const Solar = {
+    isAuto: localStorage.getItem(S.SOLAR_AUTO) !== 'false',
+    mode:   localStorage.getItem(S.SOLAR_MODE) || 'night',
+
+    setMode(m) {
+      this.mode = m;
+      document.body.dataset.mode = m;
+      localStorage.setItem(S.SOLAR_MODE, m);
+      this.updateUI();
+      if (els.modeIndicator) {
+        const dose = localStorage.getItem(S.DOSE) || 'KOBLLUX';
+        els.modeIndicator.textContent = `${dose} · ${m.toUpperCase()}`;
+      }
+    },
+    cycle() {
+      const n = this.mode === 'day'
+        ? 'sunset'
+        : (this.mode === 'sunset' ? 'night' : 'day');
+      this.isAuto = false;
+      localStorage.setItem(S.SOLAR_AUTO, 'false');
+      this.setMode(n);
+    },
+    enableAuto() {
+      this.isAuto = true;
+      localStorage.setItem(S.SOLAR_AUTO, 'true');
+      this.autoByTime();
+    },
+    autoByTime() {
+      const h = new Date().getHours();
+      this.setMode((h >= 6 && h < 17) ? 'day' : (h >= 17 && h < 19) ? 'sunset' : 'night');
+    },
+    updateUI() {
+      const label = `${this.mode.toUpperCase()} ${this.isAuto ? '(AUTO)' : '(MAN)'}`;
+      const a = $('statusSolarMode');
+      const b = $('cardSolarStatus');
+      if (a) a.textContent = label;
+      if (b) b.textContent = label;
+    }
+  };
+
+  /* ========== BACKGROUND ========== */
+  const BG = {
+    get() {
+      try { return JSON.parse(localStorage.getItem(S.BG_IMAGES) || '[]'); }
+      catch(_) { return []; }
+    },
+    save(list) {
+      try { localStorage.setItem(S.BG_IMAGES, JSON.stringify(list || [])); } catch(_){}
+    },
+    apply(url) {
+      const el = $('bg-fake-custom');
+      if (!el) return;
+      el.style.backgroundImage = url ? `url("${url}")` : '';
+      el.style.opacity = url ? '0.12' : '0';
+      el.style.filter = 'saturate(0.9) contrast(1.05)';
+      const s = $('bgStatusText');
+      if (s) s.textContent = url ? 'Ativo' : 'Nenhum';
+    },
+    setActive(id) {
+      const list = this.get().map(b => ({...b, active: b.id === id}));
+      this.save(list);
+      const active = list.find(b => b.active);
+      if (active) this.apply(active.data);
+      this.render();
+    },
+    remove(id) {
+      let list = this.get().filter(b => b.id !== id);
+      if (!list.some(b => b.active) && list[0]) { list[0].active = true; this.apply(list[0].data); }
+      if (list.length === 0) this.apply(null);
+      this.save(list);
+      this.render();
+    },
+    render() {
+      const panel = $('bgThumbPanel');
+      if (!panel) return;
+      const list = this.get();
+      panel.innerHTML = '';
+      if (list.length === 0) {
+        panel.innerHTML = '<div style="grid-column:1/-1;color:var(--text-muted);text-align:center;font-size:.85rem">Nenhum background salvo. Faça upload.</div>';
+        return;
+      }
+      list.forEach(bg => {
+        const w = document.createElement('div');
+        w.title = bg.name || bg.id;
+        w.style.cssText =
+          `position:relative;height:70px;border-radius:8px;cursor:pointer;` +
+          `background-image:url("${bg.data}");background-size:cover;background-position:center;` +
+          `overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.35);transition:transform .15s ease;` +
+          `border:${bg.active ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,.12)'}`;
+        const btns = document.createElement('div');
+        btns.style.cssText = 'position:absolute;right:6px;top:6px;display:flex;gap:6px';
+        const rm = document.createElement('button');
+        rm.textContent = '✕';
+        rm.style.cssText = 'background:rgba(0,0,0,.6);border:none;color:#fff;font-size:11px;border-radius:6px;padding:4px 6px;cursor:pointer';
+        rm.onclick = e => { e.stopPropagation(); if (confirm('Remover background?')) BG.remove(bg.id); };
+        btns.appendChild(rm);
+        w.appendChild(btns);
+        w.onclick = () => BG.setActive(bg.id);
+        panel.appendChild(w);
+      });
+    },
+    bindUpload() {
+      const inp = $('bgUploadInput');
+      if (!inp || inp._bound) return;
+      inp._bound = true;
+      inp.onchange = e => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const list = BG.get().map(b => ({...b, active: false}));
+          list.unshift({ id: 'bg_' + Date.now(), name: file.name, data: ev.target.result, active: true });
+          BG.save(list);
+          BG.apply(ev.target.result);
+          BG.render();
+          inp.value = '';
+        };
+        reader.readAsDataURL(file);
+      };
+    },
+    init() {
+      const active = this.get().find(b => b.active);
+      if (active) this.apply(active.data);
+      this.render();
+      this.bindUpload();
+    }
+  };
+
+  /* ========== APP (namespace global) ========== */
+  const App = {
+    state: { solarMode: Solar.mode, isAutoSolar: Solar.isAuto, isOrb: false, isHud: false },
+
+    // Núcleo exposto
+    Solar, BG, toggleDrawer, toggleSection, setMode, showToaster,
+
+    // Açúcar com compat
+    setMode(m){ setMode(m); this.state.isOrb = dragState.isOrb; this.state.isHud = dragState.isHud; },
+    cycleSolar(){ Solar.cycle(); this.syncState(); },
+    enableAutoSolar(){ Solar.enableAuto(); this.syncState(); },
+    autoByTime(){ Solar.autoByTime(); this.syncState(); },
+    updateUI(){ Solar.updateUI(); },
+    syncState(){ this.state.solarMode = Solar.mode; this.state.isAutoSolar = Solar.isAuto; },
+
+    // Compat com chamadas antigas que possam sobrar no HTML
+    showToast(msg, err){ showToaster(msg, err ? 'error' : 'default'); },
+    speakText(){},
+    announce(msg){ try { console.log('[App.announce]', msg); } catch(_){} },
+    toggleField(){},
+    renderDeck(){},
+    crystallizeSession(){},
+    initDIConstants(){ initConstants(); },
+
+    init(){
+      initConstants();
+      this.bind();
+
+      BG.init();
+
+      if (Solar.isAuto) Solar.autoByTime();
+      else Solar.setMode(Solar.mode);
+      Solar.updateUI();
+      this.syncState();
+
+      if (typeof particlesJS !== 'undefined') {
+        particlesJS('particles-js', {
+          particles: {
+            number: { value: 24 },
+            color:  { value: ['#0ff','#f0f'] },
+            shape:  { type: 'circle' },
+            opacity:{ value: 0.4 },
+            size:   { value: 2.4 },
+            line_linked: { enable: true, distance: 150, color: '#ffffff', opacity: 0.4, width: 1 },
+            move:   { enable: true, speed: 1.5 }
+          },
+          retina_detect: true
+        });
+      }
+
+      // Relógio
+      setInterval(() => {
+        if (els.clock) els.clock.innerText =
+          new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+      }, 1000);
+
+      // Boot do card
+      setTimeout(() => this.bootCard(), 100);
+
+      console.log('[KOBLLUX] App.init() OK');
+    },
+
+    bind(){
+      // Solar (card + drawer)
+      ['cardCycleSolarBtn','btnCycleSolar'].forEach(id => {
+        const el = $(id); if (el) el.onclick = () => App.cycleSolar();
+      });
+      ['cardAutoSolarBtn','btnAutoSolar'].forEach(id => {
+        const el = $(id); if (el) el.onclick = () => App.enableAutoSolar();
+      });
+
+      // Orb (header) e Settings → abrem Cockpit
+      if (els.orbToggle)   els.orbToggle.onclick   = () => toggleDrawer('drawerProfile');
+      if (els.btnSettings) els.btnSettings.onclick = () => toggleDrawer('drawerProfile');
+
+      // Orb menu trigger (●●● do modo orb) e HUD menu → volta pro card
+      if (els.orbMenuTrigger) els.orbMenuTrigger.onclick = e => { e.stopPropagation(); setMode('card'); };
+      if (els.hudMenuBtn)     els.hudMenuBtn.onclick     = e => { e.stopPropagation(); setMode('card'); };
+
+      // Header: em HUD, clicar volta pro card (sem ser menu btn)
+      if (els.header) {
+        els.header.addEventListener('click', e => {
+          if (dragState.isHud && !dragState.isDragging && !e.target.closest('.hud-menu-btn')) {
+            setMode('card');
+          }
+        });
+      }
+      if (els.card) {
+        els.card.addEventListener('contextmenu', e => {
+          if (dragState.isOrb || dragState.isHud) { e.preventDefault(); setMode('card'); }
+        });
+      }
+
+      // Pointer events do drag
+      if (els.card)   els.card.addEventListener('pointerdown', handleStart, {passive:false});
+      window.addEventListener('pointermove', handleMove, {passive:false});
+      window.addEventListener('pointerup',   handleEnd,  {passive:false});
+
+      // Identidade - card
+      if (els.input) {
+        els.input.addEventListener('input', e => syncUser(e.target.value));
+      }
+      // Identidade - drawer
+      if (els.inputUserId) {
+        els.inputUserId.addEventListener('input', e => syncUser(e.target.value));
+      }
+
+      // Copiar ativação
+      if (els.copyActBtn) {
+        els.copyActBtn.onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(els.actPre.innerText);
+            showToaster('Ativação copiada', 'success');
+          } catch(_){ showToaster('Erro ao copiar', 'error'); }
+        };
+      }
+    },
+
+    bootCard(){
+      els.card.classList.add('active');
+      els.avatarTgt.classList.add('shown');
+      updateInterface(localStorage.getItem(S.USER) || 'Convidado');
+
+      let savedMode = 'card', savedLeft = null, savedTop = null;
+      try {
+        const raw = localStorage.getItem(S.UI_STATE);
+        if (raw) {
+          const p = JSON.parse(raw);
+          savedMode = p.mode || 'card';
+          savedLeft = p.left;
+          savedTop  = p.top;
+        }
+      } catch(_){}
+
+      // Preview inicial
+      dragState.isOrb = false; dragState.isHud = false;
+      els.card.classList.remove('orb', 'hud');
+      els.card.classList.add('closed');
+      els.card.classList.remove('content-visible');
+      els.card.style.left = ''; els.card.style.top = ''; els.card.style.transform = '';
+      els.card.style.opacity = 0;
+      els.card.style.transition = 'opacity 400ms ease';
+      requestAnimationFrame(() => { els.card.style.opacity = 1; });
+
+      // Restaura modo salvo
+      setTimeout(() => {
+        els.card.style.transition = 'all 600ms var(--ease-smooth)';
+        if (savedMode === 'orb') {
+          if (savedLeft) els.card.style.left = savedLeft;
+          if (savedTop)  els.card.style.top  = savedTop;
+          setMode('orb', true);
+        } else if (savedMode === 'hud') {
+          setMode('hud', true);
+        } else {
+          setMode('card', true);
+          els.card.classList.remove('closed');
+          els.card.classList.add('content-visible');
+        }
+        App.state.isOrb = dragState.isOrb;
+        App.state.isHud = dragState.isHud;
+      }, FIRST_PREVIEW_DURATION);
+    }
+  };
+
+  /* ========== CONSTANTS ========== */
+  function initConstants() {
+    const user = localStorage.getItem(S.USER) || 'Viajante';
+    const dose = localStorage.getItem(S.DOSE) || 'KOBLLUX';
+    const mode = localStorage.getItem(S.SOLAR_MODE) || 'night';
+
+    if (els.usernameDisplay) els.usernameDisplay.textContent = user;
+    if (els.modeIndicator)   els.modeIndicator.textContent   = `${dose} · ${mode.toUpperCase()}`;
+    if (els.inputUserId)     els.inputUserId.value           = user;
+    if (els.input)           els.input.value                 = user;
+
+    if (!localStorage.getItem(S.USER))       localStorage.setItem(S.USER, user);
+    if (!localStorage.getItem(S.DOSE))       localStorage.setItem(S.DOSE, dose);
+    if (!localStorage.getItem(S.SOLAR_MODE)) localStorage.setItem(S.SOLAR_MODE, mode);
+  }
+
+  /* ========== EXPORTS GLOBAIS ========== */
+  window.App            = App;
+  window.Solar          = Solar;
+  window.BG             = BG;
+  window.toggleDrawer   = toggleDrawer;
+  window.toggleSection  = toggleSection;
+  window.setMode        = setMode;
+  window.showToaster    = showToaster;
+  window.initDIConstants = initConstants;
+
+  /* ========== BOOT ========== */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => App.init());
+  } else {
+    App.init();
+  }
+})();
+</script>
+
+</body>
+</html>
