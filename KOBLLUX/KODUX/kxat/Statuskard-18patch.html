@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
+</head>
+
+<body>
+  <script id="patch-fusion-card-fix">
+  (() => {
+    if (window.__DI_FUSION_FIX__) return;
+    window.__DI_FUSION_FIX__ = true;
+    
+    /* ══════════════════════════════════════════════════
+       FUSION CARD FIX — Atualização de Interface & Orb
+       ══════════════════════════════════════════════════ */
+    
+    let _lastOrbName = null;
+    
+    window.updateInterface = function updateInterfaceFixed(name) {
+      const safe = (name || '').trim() || 'Convidado';
+      
+      // Atualiza textos
+      const lblName = document.getElementById('lblName');
+      if (lblName) lblName.innerText = safe;
+      
+      const input = document.getElementById('inputUser');
+      if (input && document.activeElement !== input) input.value = safe;
+      
+      const actName = document.getElementById('actName');
+      if (actName) actName.innerText = safe;
+      
+      // Avatar principal (só recria se o nome mudou para preservar animação)
+      const avatarTgt = document.getElementById('avatarTarget');
+      if (avatarTgt && typeof window.makeOrbAvatar === 'function') {
+        if (_lastOrbName !== safe) {
+          avatarTgt.innerHTML = window.makeOrbAvatar(safe, 64);
+          avatarTgt.classList.add('shown');
+          _lastOrbName = safe;
+        }
+      }
+      
+      // Mini avatares
+      const smallMini = document.getElementById('smallMiniAvatar');
+      if (smallMini && typeof window.makeOrbAvatar === 'function') {
+        if (smallMini.dataset.orbName !== safe) {
+          smallMini.innerHTML = window.makeOrbAvatar(safe, 24);
+          smallMini.dataset.orbName = safe;
+        }
+      }
+      
+      const actMini = document.getElementById('actMiniAvatar');
+      if (actMini && typeof window.makeOrbAvatar === 'function') {
+        if (actMini.dataset.orbName !== safe) {
+          actMini.innerHTML = window.makeOrbAvatar(safe, 36);
+          actMini.dataset.orbName = safe;
+        }
+      }
+      
+      // Badge / identificador da chave ativa
+      const keys = (window.STATE && window.STATE.keys) || [];
+      const active = keys.find(k => k.active);
+      const smallIdent = document.getElementById('smallIdent');
+      if (smallIdent) smallIdent.innerText = active ? active.name : '--';
+      const actBadge = document.getElementById('actBadge');
+      if (actBadge) actBadge.innerText = active ? `key:${active.name}` : 'v:--';
+      
+      // Texto do preview
+      const smallText = document.getElementById('smallText');
+      if (smallText) {
+        smallText.innerText = active ?
+          `${active.name} [ATIVO]` :
+          (safe === 'Convidado' ? 'Aguardando...' : `${safe} · canal ASCII ativo`);
+      }
+      
+      // Bloco ASCII de ativação
+      const actPre = document.getElementById('actPre');
+      if (actPre) {
+        const line = `+${'-'.repeat(safe.length + 4)}+`;
+        const hash = (s) => {
+          let h = 0xdeadbeef;
+          for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 2654435761);
+          return ((h ^ (h >>> 16)) >>> 0).toString(16);
+        };
+        actPre.innerText = `${line}\n| ${safe.toUpperCase()} |\n${line}\nID: ${hash(safe)}`;
+      }
+      
+      // Sincronização externa (di_overrideSync)
+      if (typeof window.di_overrideSync === 'function') {
+        try { window.di_overrideSync(safe); } catch (_) {}
+      }
+    };
+    
+    /* ══════════════════════════════════════════════════
+       Reforço: re-renderiza o orb ao voltar para o CARD
+       ══════════════════════════════════════════════════ */
+    const mainCard = document.getElementById('mainCard');
+    if (mainCard) {
+      let wasOrb = mainCard.classList.contains('orb');
+      let wasHud = mainCard.classList.contains('hud');
+      
+      const classMo = new MutationObserver(() => {
+        const isOrb = mainCard.classList.contains('orb');
+        const isHud = mainCard.classList.contains('hud');
+        
+        // Saiu de ORB/HUD e voltou para o CARD principal
+        if ((wasOrb || wasHud) && !isOrb && !isHud) {
+          const name =
+            localStorage.getItem('di_userName') ||
+            document.getElementById('inputUser')?.value?.trim() ||
+            'Convidado';
+          _lastOrbName = null; // Força recriação limpa do orb
+          window.updateInterface(name);
+        }
+        
+        wasOrb = isOrb;
+        wasHud = isHud;
+      });
+      classMo.observe(mainCard, { attributes: true, attributeFilter: ['class'] });
+    }
+    
+    /* ══════════════════════════════════════════════════
+       Inicialização
+       ══════════════════════════════════════════════════ */
+    const initName = () => {
+      const name =
+        localStorage.getItem('di_userName') ||
+        document.getElementById('inputUser')?.value?.trim() ||
+        'Convidado';
+      _lastOrbName = null;
+      window.updateInterface(name);
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initName);
+    } else {
+      initName();
+    }
+    
+    console.log('[DI_FUSION_FIX] Patch limpo aplicado com sucesso.');
+  })();
+</script>
+<style id="patch-status-hud">
+#modeIndicator {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.65rem;
+  font-weight: 700;
+  opacity: 0.75;
+  z-index: 20;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--font-code, 'JetBrains Mono', monospace);
+  color: var(--text-muted, #9aa4c8);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: opacity 0.3s ease, border-color 0.3s ease;
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: 92vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#modeIndicator .di-status-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+#modeIndicator .di-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+  flex-shrink: 0;
+}
+
+#modeIndicator .di-status-sep {
+  opacity: 0.35;
+  margin: 0 2px;
+}
+
+/* Cores por estado */
+#modeIndicator[data-orch="online"]    .di-status-orch    { color: #00ff9d; }
+#modeIndicator[data-orch="offline"]   .di-status-orch    { color: #ff4b6b; }
+#modeIndicator[data-orch="nokey"]     .di-status-orch    { color: #ffd700; }
+
+#modeIndicator[data-chat="idle"]      .di-status-chat    { color: rgba(255,255,255,0.55); }
+#modeIndicator[data-chat="busy"]      .di-status-chat    { color: #00f5ff; }
+#modeIndicator[data-chat="busy"]      .di-status-chat .di-status-dot {
+  animation: di-pulse 1s ease-in-out infinite;
+}
+
+#modeIndicator[data-net="offline"]    .di-status-net     { color: #ff4b6b; }
+
+#modeIndicator .di-status-arch {
+  color: var(--secondary, #ff4bff);
+  font-weight: 800;
+}
+
+@keyframes di-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(1.3); }
+}
+
+body[data-mode="day"] #modeIndicator {
+  background: rgba(255, 255, 255, 0.65);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #222;
+}
+
+@media (max-width: 480px) {
+  #modeIndicator {
+    font-size: 0.55rem;
+    padding: 3px 8px;
+    gap: 5px;
+  }
+  #modeIndicator .di-status-sep { margin: 0 1px; }
+}
+</style>
+
+<script id="patch-status-hud-js">
+(() => {
+  if (window.__DI_STATUS_HUD__) return;
+  window.__DI_STATUS_HUD__ = true;
+
+  const el = document.getElementById('modeIndicator');
+  if (!el) return;
+
+  /* ─────────────────────────────────────────────
+     Arquétipos (mesma lista do KODUX)
+     ───────────────────────────────────────────── */
+  const ARQUETIPOS = [
+    'Atlas', 'Nova', 'Vitalis', 'Pulse', 'Artemis',
+    'Serena', 'Kaos', 'Genus', 'Lumine', 'Solus',
+    'Rhea', 'Aion'
+  ];
+
+  function hashName(s) {
+    let h = 0xdeadbeef;
+    for (let i = 0; i < s.length; i++) {
+      h = Math.imul(h ^ s.charCodeAt(i), 2654435761);
+    }
+    return (h ^ (h >>> 16)) >>> 0;
+  }
+
+  function getArquetipo(name) {
+    const safe = (name || '').trim() || 'Convidado';
+    return ARQUETIPOS[hashName(safe) % ARQUETIPOS.length];
+  }
+
+  /* ─────────────────────────────────────────────
+     Estado interno
+     ───────────────────────────────────────────── */
+  const state = {
+    orch: 'nokey',   // online | offline | nokey
+    chat: 'idle',    // idle | busy
+    net:  navigator.onLine ? 'online' : 'offline',
+    arch: getArquetipo(localStorage.getItem('di_userName') || 'Convidado')
+  };
+
+  /* ─────────────────────────────────────────────
+     Render
+     ───────────────────────────────────────────── */
+  function render() {
+    const orchIcon = state.orch === 'online' ? '●' : (state.orch === 'offline' ? '●' : '○');
+    const orchLabel = state.orch === 'online' ? 'or' : (state.orch === 'offline' ? 'or' : 'or');
+    const chatLabel = state.chat === 'busy' ? 'busy' : 'idle';
+    const netLabel  = state.net === 'online' ? '' : '· offline';
+
+    el.dataset.orch = state.orch;
+    el.dataset.chat = state.chat;
+    el.dataset.net  = state.net;
+
+    el.innerHTML = `
+      <span class="di-status-item di-status-arch" title="Arquétipo ativo">🧠 ${state.arch}</span>
+      <span class="di-status-sep">|</span>
+      <span class="di-status-item di-status-orch" title="OpenRouter: ${state.orch}">
+        <span class="di-status-dot"></span>${orchLabel}
+      </span>
+      <span class="di-status-sep">|</span>
+      <span class="di-status-item di-status-chat" title="Chat: ${state.chat}">
+        <span class="di-status-dot"></span>${chatLabel}
+      </span>
+      ${state.net === 'offline'
+        ? `<span class="di-status-sep">|</span><span class="di-status-item di-status-net">⚠ ${netLabel.trim()}</span>`
+        : ''}
+    `;
+  }
+
+  /* ─────────────────────────────────────────────
+     Detectores de estado
+     ───────────────────────────────────────────── */
+
+  // 1) OpenRouter — baseado na presença de chave
+  function checkOrchKey() {
+    const key =
+      localStorage.getItem('di_apiKey') ||
+      document.getElementById('apiKeyInput')?.value ||
+      document.getElementById('apiKeyInputNeural')?.value ||
+      '';
+    if (!key.trim()) {
+      state.orch = 'nokey';
+    } else if (state.orch === 'nokey') {
+      // tem chave, assume online até provar o contrário
+      state.orch = 'online';
+    }
+    render();
+  }
+
+  // 2) Chat — observa App.state.isProcessing
+  let _lastProcessing = null;
+  function watchChatState() {
+    const App = window.App;
+    if (!App || !App.state) {
+      setTimeout(watchChatState, 400);
+      return;
+    }
+    setInterval(() => {
+      const busy = !!App.state.isProcessing;
+      if (busy !== _lastProcessing) {
+        _lastProcessing = busy;
+        state.chat = busy ? 'busy' : 'idle';
+        render();
+      }
+    }, 250);
+  }
+
+  // 3) Rede
+  window.addEventListener('online',  () => { state.net = 'online';  render(); });
+  window.addEventListener('offline', () => { state.net = 'offline'; render(); });
+
+  // 4) Arquétipo — reage ao nome do usuário
+  function watchArquetipo() {
+    // Escuta input do nome
+    const inputUser = document.getElementById('inputUser');
+    if (inputUser) {
+      inputUser.addEventListener('input', () => {
+        const newArch = getArquetipo(inputUser.value);
+        if (newArch !== state.arch) {
+          state.arch = newArch;
+          render();
+        }
+      });
+    }
+
+    // Escuta storage (outra aba)
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'di_userName') {
+        const newArch = getArquetipo(e.newValue);
+        if (newArch !== state.arch) {
+          state.arch = newArch;
+          render();
+        }
+      }
+    });
+  }
+
+  // 5) Intercepta fetch para detectar erro de OpenRouter
+  const _origFetch = window.fetch;
+  if (typeof _origFetch === 'function') {
+    window.fetch = async function(...args) {
+      const url = (args[0] && args[0].toString()) || '';
+      const isOrch = url.includes('openrouter.ai');
+      if (isOrch) {
+        state.chat = 'busy';
+        render();
+      }
+      try {
+        const res = await _origFetch.apply(this, args);
+        if (isOrch) {
+          if (res.status === 401 || res.status === 403) {
+            state.orch = 'offline';
+          } else if (res.ok) {
+            state.orch = 'online';
+          }
+          state.chat = 'idle';
+          render();
+        }
+        return res;
+      } catch (err) {
+        if (isOrch) {
+          state.orch = 'offline';
+          state.chat = 'idle';
+          render();
+        }
+        throw err;
+      }
+    };
+  }
+
+  /* ─────────────────────────────────────────────
+     Boot
+     ───────────────────────────────────────────── */
+  function boot() {
+    checkOrchKey();
+    render();
+    watchChatState();
+    watchArquetipo();
+
+    // Re-checa chave quando o usuário salva no SYSTEM & NEURAL ou no drawer
+    const saveSys = document.getElementById('saveSystemBtn');
+    if (saveSys) saveSys.addEventListener('click', () => setTimeout(checkOrchKey, 100));
+
+    const saveCfg = document.getElementById('btnSaveConfig');
+    if (saveCfg) saveCfg.addEventListener('click', () => setTimeout(checkOrchKey, 100));
+
+    // Re-checa quando cola chave no input direto
+    ['apiKeyInput', 'apiKeyInputNeural'].forEach(id => {
+      const inp = document.getElementById(id);
+      if (inp) inp.addEventListener('blur', checkOrchKey);
+    });
+
+    console.log('[DI_STATUS_HUD] HUD de status ativo. Formato: 🧠 Arquétipo | ● OR | ● Chat');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();
+</script>
+</body>
+
+</html>
