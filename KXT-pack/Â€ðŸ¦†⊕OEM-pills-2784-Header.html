@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="theme-color" content="#05060a">
+<title>Espaço da Mente · Pílulas Vivas · v7.1</title>
+<style>
+:root{
+  --bg:#05060a; --glass:rgba(255,255,255,.04); --border:rgba(255,255,255,.08);
+  --text:#e8e8f0; --muted:#8a8aa3;
+  --glow:#7b61ff; --glow2:#00f5ff;
+  --gold:#f7d774; --green:#7effa1; --red:#ff6b6b; --orange:#ffa502;
+  --mono:ui-monospace,SFMono-Regular,"JetBrains Mono",Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{min-height:100%;background:var(--bg)}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  min-height:100vh;overflow-x:hidden;
+  display:flex;flex-direction:column;align-items:center;
+  padding:calc(20px + env(safe-area-inset-top)) 14px calc(40px + env(safe-area-inset-bottom));
+  -webkit-font-smoothing:antialiased;
+}
+.app{width:100%;max-width:820px;
+overflow-y:auto;
+position:relative;z-index:1;display:flex;flex-direction:column;gap:12px}
+
+/* TOPBAR · universal actions */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:8px 10px;background:var(--glass);border:1px solid var(--border);
+  border-radius:16px;backdrop-filter:blur(20px);flex-wrap:wrap;
+  position:sticky;top:0;z-index:50;
+}
+.brand{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:1.4px}
+.brand .badge{padding:3px 6px;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:8px;letter-spacing:1px}
+.uni-actions{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.uni-label{font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-right:2px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.icon-btn{
+  width:30px;height:30px;display:grid;place-items:center;padding:0;
+  border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,.035);
+  color:var(--muted);cursor:pointer;transition:.2s;font-size:13px;line-height:1;
+  font-family:inherit;font-weight:700;
+}
+.icon-btn:hover{color:var(--text);border-color:var(--glow);background:rgba(255,255,255,.08)}
+.icon-btn:active{transform:scale(.92)}
+.icon-btn.playing{color:#fff;border-color:rgba(0,245,255,.5);background:rgba(0,245,255,.12);animation:pulse 1.5s ease-in-out infinite}
+.icon-btn.accent{color:#000;border-color:transparent;background:linear-gradient(135deg,var(--glow),var(--glow2))}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,245,255,.45)}50%{box-shadow:0 0 0 7px rgba(0,245,255,0)}}
+
+/* NAV SLIDER */
+.navbar{
+  display:flex;gap:4px;padding:6px;background:var(--glass);border:1px solid var(--border);
+  border-radius:14px;overflow-x:auto;scrollbar-width:none;backdrop-filter:blur(20px);
+  scroll-snap-type:x mandatory;
+}
+.navbar::-webkit-scrollbar{display:none}
+.nav-tab{
+  appearance:none;border:1px solid transparent;background:transparent;color:var(--muted);
+  border-radius:9px;padding:7px 12px;font:700 10.5px/1 inherit;letter-spacing:.8px;
+  text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:.2s;
+  scroll-snap-align:start;font-family:inherit;
+}
+.nav-tab:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.nav-tab.active{color:#fff;background:linear-gradient(135deg,var(--glow),var(--glow2))}
+.nav-tab .cnt{
+  font-size:8px;padding:1px 5px;border-radius:999px;background:rgba(0,0,0,.3);
+  margin-left:5px;font-weight:800;
+}
+.nav-tab.active .cnt{background:rgba(0,0,0,.25);color:#fff}
+
+/* VIEWS */
+.view{display:none;flex-direction:column;gap:12px;animation:fadeIn .25s}
+.view.active{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* =====================================================
+   PARALLAX HERO CARROSSEL DE PÍLULAS
+===================================================== */
+.px-hero{
+  position:relative;width:100%;min-height:340px;
+  border-radius:22px;overflow:hidden;
+  border:1px solid var(--border);
+  background:#0a0c12;
+  isolation:isolate;
+}
+.px-bg{
+  position:absolute;inset:0;z-index:0;
+  background:radial-gradient(circle at 30% 40%, rgba(123,97,255,.6), transparent 60%);
+  transition:background .7s ease;
+  will-change:background;
+}
+.px-bg::after{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(circle at 15% 80%, rgba(0,245,255,.15), transparent 55%),
+    radial-gradient(circle at 85% 20%, rgba(255,43,214,.12), transparent 55%);
+  animation:pxDrift 12s ease-in-out infinite alternate;
+}
+@keyframes pxDrift{
+  0%{transform:translate(0,0) scale(1)}
+  100%{transform:translate(2%,-2%) scale(1.05)}
+}
+.px-overlay{
+  position:absolute;inset:0;z-index:1;
+  background:linear-gradient(180deg, rgba(0,0,0,.15) 0%, rgba(0,0,0,.55) 55%, rgba(0,0,0,.9) 100%);
+}
+.px-content{
+  position:relative;z-index:2;
+  padding:26px 22px 110px;
+  display:flex;flex-direction:column;gap:10px;
+  min-height:340px;
+  pointer-events:none;
+}
+.px-tag{
+  display:inline-flex;align-self:flex-start;
+  font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:800;
+  color:var(--glow2);
+  padding:4px 9px;border-radius:999px;
+  border:1px solid rgba(0,245,255,.35);
+  background:rgba(0,245,255,.06);
+  animation:pxFade .5s ease;
+}
+.px-title{
+  font-size:clamp(22px,5vw,30px);font-weight:300;line-height:1.12;
+  letter-spacing:-.6px;
+  background:linear-gradient(90deg,#fff 30%,var(--glow2) 80%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 2px 30px rgba(0,0,0,.4);
+  animation:pxFade .55s ease;
+  max-width:92%;
+}
+.px-desc{
+  font-size:12.5px;color:rgba(255,255,255,.68);line-height:1.55;
+  max-width:82%;
+  animation:pxFade .65s ease;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.px-actions{
+  margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;
+  pointer-events:auto;
+  animation:pxFade .75s ease;
+}
+.px-actions .btn{
+  backdrop-filter:blur(12px);
+  background:rgba(0,0,0,.4);border-color:rgba(255,255,255,.15);
+  color:#fff;
+}
+.px-actions .btn:hover{border-color:var(--glow2);background:rgba(0,245,255,.12)}
+@keyframes pxFade{
+  0%{opacity:0;transform:translateY(8px)}
+  100%{opacity:1;transform:translateY(0)}
+}
+
+.px-track{
+  position:absolute;left:0;right:0;bottom:0;z-index:3;
+  display:flex;gap:8px;
+  padding:12px 14px 14px;
+  overflow-x:auto;scrollbar-width:none;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+  mask-image:linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+  -webkit-mask-image:linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+}
+.px-track::-webkit-scrollbar{display:none}
+
+.px-chip{
+  flex:0 0 auto;scroll-snap-align:center;
+  width:132px;height:62px;
+  display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;
+  padding:9px 11px;border-radius:13px;
+  background:rgba(0,0,0,.55);
+  border:1px solid rgba(255,255,255,.1);
+  backdrop-filter:blur(14px);
+  cursor:pointer;transition:.28s cubic-bezier(.22,.8,.3,1);
+  color:var(--muted);user-select:none;position:relative;overflow:hidden;
+}
+.px-chip:hover{border-color:rgba(123,97,255,.5);color:var(--text);transform:translateY(-2px)}
+.px-chip.active{
+  color:#fff;
+  border-color:rgba(0,245,255,.6);
+  background:rgba(0,245,255,.1);
+  box-shadow:0 0 0 1px rgba(0,245,255,.35), 0 8px 24px rgba(0,245,255,.18);
+  transform:translateY(-3px) scale(1.02);
+}
+.px-chip.active::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,var(--glow2),var(--glow));
+  box-shadow:0 0 12px var(--glow2);
+}
+.px-chip .ico{font-size:18px;line-height:1}
+.px-chip .tt{
+  font-size:9.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;
+  line-height:1.25;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.px-chip.active .tt{color:#fff}
+
+.px-empty{
+  flex:1;min-width:200px;display:grid;place-items:center;text-align:center;
+  padding:20px;color:var(--muted);font-size:11px;line-height:1.55;
+  border:1px dashed rgba(255,255,255,.15);border-radius:13px;
+  background:rgba(0,0,0,.4);
+}
+.px-empty b{color:var(--glow2)}
+
+/* PREVIEW da pílula ativa (render markdown rico) */
+.painel{
+  background:var(--glass);border:1px solid var(--border);
+  border-radius:18px;padding:14px;backdrop-filter:blur(20px);
+  display:flex;flex-direction:column;gap:12px;
+}
+.painel-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.painel-title{
+  font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;
+  color:var(--text);display:flex;align-items:center;gap:6px;
+}
+.painel-title .dot{width:6px;height:6px;border-radius:50%;background:var(--glow2);box-shadow:0 0 8px var(--glow2)}
+.painel-sub{font-size:10px;color:var(--muted);margin-top:1px}
+
+.label{display:block;font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:7px;font-weight:700}
+
+textarea{
+  width:100%;min-height:110px;background:#080a0d;border:1px solid var(--border);
+  border-radius:11px;color:var(--text);font-size:13.5px;line-height:1.6;padding:11px;
+  resize:vertical;font-family:inherit;outline:none;transition:.2s;
+}
+textarea:focus{border-color:var(--glow);box-shadow:0 0 0 3px rgba(123,97,255,.12)}
+textarea::placeholder{color:var(--muted)}
+
+.btn{
+  appearance:none;border:1px solid var(--border);background:rgba(255,255,255,.035);
+  color:var(--text);border-radius:11px;min-height:38px;padding:9px 12px;
+  font:700 11px/1.2 inherit;cursor:pointer;transition:.2s;letter-spacing:.4px;
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+}
+.btn:hover{background:rgba(255,255,255,.07);border-color:var(--glow)}
+.btn:active{transform:scale(.97)}
+.btn.primary{
+  background:linear-gradient(135deg,var(--glow),var(--glow2));
+  border-color:transparent;color:#fff;
+}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent}
+.btn.small{min-height:32px;padding:6px 10px;font-size:10px}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap}
+.btn-row .btn{flex:1;min-width:100px}
+
+.moji-tag{
+  display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;
+  font-size:9px;letter-spacing:.8px;text-transform:uppercase;font-weight:800;
+  background:rgba(247,215,116,.12);color:var(--gold);border:1px solid rgba(247,215,116,.35);
+}
+.moji-tag.clean{background:rgba(126,255,161,.1);color:var(--green);border-color:rgba(126,255,161,.3)}
+
+/* GRID secundário (todas as pílulas) */
+.pill-grid{
+  display:grid;grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));
+  gap:10px;
+}
+.pilula{
+  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));
+  border:1px solid var(--border);border-radius:78px; padding:18px;
+  display:flex;flex-direction:column;overflow:hidden;
+  transition:.25s;cursor:pointer;position:relative;
+}
+.pilula:hover{border-color:rgba(123,97,255,.4);transform:translateY(-2px)}
+.pilula.active{border-color:rgba(0,245,255,.55);box-shadow:0 0 0 1px rgba(0,245,255,.25),0 0 20px rgba(0,245,255,.12)}
+.pilula.active::after{
+  content:'ATIVA';position:absolute;top:8px;right:8px;
+  font-size:7px;letter-spacing:1px;font-weight:900;
+  padding:2px 6px;border-radius:5px;background:var(--glow2);color:#000;
+}
+.pilula-head{
+  display:flex;align-items:center;gap:6px;padding:8px 19px;border-radius:49px;
+  border-bottom:1px solid var(--border);background:rgba(0,0,0,.2);
+}
+.pilula-icon{font-size:13px;line-height:1}
+.pilula-title{
+  flex:1;min-width:0;font-size:10px;font-weight:800;
+  letter-spacing:.6px;text-transform:uppercase;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.pilula-preview{
+  flex:1;min-height:70px;max-height:110px;overflow-y:auto;
+  padding:9px 11px;font-size:11.5px;line-height:1.5;color:#c8d0d8;
+  position:relative;
+}
+.pilula-preview::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:28px;
+  background:linear-gradient(transparent,rgba(11,14,18,.95));pointer-events:none;
+}
+.pilula-preview em{color:var(--muted);font-style:italic}
+.pilula-actions{
+  display:flex;gap:3px;padding:6px 7px;border-top:1px solid var(--border);
+  background:rgba(0,0,0,.2);
+}
+.pilula-actions button{
+  flex:1;min-width:0;appearance:none;border:1px solid var(--border);
+  background:rgba(255,255,255,.03);color:var(--muted);border-radius:6px;
+  padding:5px 3px;font:700 10px/1 inherit;cursor:pointer;transition:.15s;
+  font-family:inherit;
+}
+.pilula-actions button:hover{color:var(--text);border-color:var(--glow)}
+.pilula-actions button.playing{color:#fff;border-color:rgba(0,245,255,.5);background:rgba(0,245,255,.12)}
+.pilula-actions button.tint-seed{color:var(--glow)}
+.pilula-actions button.tint-mirror{color:var(--glow2)}
+.pilula-actions button.tint-inject{color:var(--gold)}
+
+.pilula-new{
+  display:grid;place-items:center;min-height:120px;
+  border:1px dashed rgba(0,245,255,.4);background:rgba(0,245,255,.03);
+  border-radius:14px;cursor:pointer;color:var(--glow2);
+  font:800 10px/1 inherit;letter-spacing:1px;text-transform:uppercase;
+  transition:.2s;padding:16px;font-family:inherit;
+}
+.pilula-new:hover{background:rgba(0,245,255,.08)}
+.pilula-new span{display:block;font-size:20px;margin-bottom:5px}
+
+/* OUTPUT render */
+.out-wrap{
+  background:rgba(0,0,0,.25);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;display:flex;flex-direction:column;
+}
+.out-head{
+  display:flex;gap:6px;padding:8px 10px;
+  border-bottom:1px solid var(--border);background:rgba(255,255,255,.025);
+  flex-wrap:wrap;align-items:center;
+}
+.out-tabs{display:flex;gap:3px;flex-wrap:wrap}
+.tab{
+  padding:5px 10px;border-radius:7px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);cursor:pointer;
+  font:700 9.5px/1 inherit;letter-spacing:.8px;text-transform:uppercase;
+  font-family:inherit;
+}
+.tab:hover{color:var(--text);border-color:rgba(123,97,255,.4)}
+.tab.active{color:#fff;border-color:transparent;background:linear-gradient(135deg,var(--glow),var(--glow2))}
+.out-meta{margin-left:auto;font-size:10px;color:var(--muted);font-family:var(--mono)}
+
+.out-content{
+  max-height:52vh;min-height:180px;overflow-y:auto;overflow-x:hidden;
+  padding:16px;font-size:14.5px;line-height:1.75;
+  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+}
+.out-content::-webkit-scrollbar{width:8px}
+.out-content::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:4px}
+.out-content.raw{white-space:pre-wrap;overflow-wrap:anywhere}
+.out-content.rich{white-space:normal}
+.out-content.rich h1{
+  font-size:1.45em;line-height:1.2;margin:1rem 0 .5rem;
+  background:linear-gradient(90deg,var(--glow),var(--glow2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-.4px;
+}
+.out-content.rich h2{
+  font-size:1.15em;line-height:1.25;margin:1.1rem 0 .5rem;
+  color:var(--text);padding-left:10px;border-left:3px solid var(--glow);
+}
+.out-content.rich h3{font-size:1em;color:var(--glow2);margin:.9rem 0 .4rem}
+.out-content.rich p{margin:.65rem 0;line-height:1.78}
+.out-content.rich blockquote{
+  margin:.8rem 0;padding:.6rem .9rem;border-left:3px solid var(--glow2);
+  border-radius:0 12px 12px 0;background:rgba(0,245,255,.04);
+}
+.out-content.rich ul,.out-content.rich ol{margin:.5rem 0;padding-left:1.4rem}
+.out-content.rich code{
+  font-family:var(--mono);font-size:.88em;padding:.1rem .35rem;
+  border-radius:5px;background:rgba(255,255,255,.08);color:var(--green);
+}
+.out-content.rich pre{
+  margin:.8rem 0;padding:.9rem 1rem;border-radius:12px;background:rgba(0,0,0,.5);
+  border:1px solid var(--border);overflow-x:auto;font-family:var(--mono);
+  font-size:12.5px;line-height:1.55;color:var(--green);
+}
+
+.chip-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip-toggle{
+  padding:5px 10px;border-radius:8px;border:1px solid var(--border);
+  background:rgba(255,255,255,.03);color:var(--muted);
+  font:700 10px/1 inherit;letter-spacing:.5px;cursor:pointer;transition:.15s;
+  font-family:inherit;
+}
+.chip-toggle:hover{color:var(--text);border-color:var(--glow)}
+.chip-toggle.on{color:#000;background:linear-gradient(135deg,var(--glow),var(--glow2));border-color:transparent}
+.num-input{
+  width:58px;padding:5px 7px;border-radius:8px;border:1px solid var(--border);
+  background:#080a0d;color:var(--text);font:700 12px/1 var(--mono);
+  outline:none;text-align:center;
+}
+.num-input:focus{border-color:var(--glow)}
+
+.lex-list{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;padding-right:4px}
+.lex-item{
+  display:grid;grid-template-columns:minmax(0,1fr) 40px minmax(0,1.2fr) 28px;
+  gap:8px;align-items:center;padding:7px 9px;border-radius:10px;
+  background:rgba(255,255,255,.02);border:1px solid var(--border);
+}
+.lex-word{font-family:var(--mono);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lex-count{font-size:10px;color:var(--glow2);text-align:center;font-weight:800}
+.lex-repl{
+  width:100%;padding:6px 8px;border-radius:7px;border:1px solid var(--border);
+  background:#080a0d;color:var(--text);font:500 12px/1.3 var(--mono);outline:none;
+}
+.lex-repl:focus{border-color:var(--glow2)}
+.lex-clear{
+  width:24px;height:24px;display:grid;place-items:center;border-radius:7px;
+  border:1px solid var(--border);background:rgba(255,107,107,.06);color:var(--red);
+  cursor:pointer;font-weight:700;font-size:12px;
+}
+.a-card{border:1px solid var(--border);border-radius:14px;overflow:hidden;background:rgba(0,0,0,.15)}
+.a-body{max-height:220px;overflow-y:auto;padding:6px;display:flex;flex-direction:column;gap:5px}
+.a-item{
+  display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:start;
+  padding:8px 10px;border-radius:9px;background:rgba(255,255,255,.02);
+  border:1px solid transparent;cursor:pointer;transition:.15s;
+  font-size:12.5px;line-height:1.55;
+}
+.a-item:hover{background:rgba(255,255,255,.05)}
+.a-item.sel{border-color:rgba(0,245,255,.35);background:rgba(0,245,255,.05)}
+.a-item input{margin-top:3px;accent-color:var(--glow2)}
+.a-empty{padding:14px;text-align:center;color:var(--muted);font-size:11px;font-style:italic}
+
+.hint{
+  font-size:10.5px;color:var(--muted);line-height:1.6;
+  background:rgba(123,97,255,.05);border-left:2px solid var(--glow);
+  padding:8px 11px;border-radius:6px;
+}
+.hint b{color:var(--glow2)}
+input[type=file]{display:none}
+
+#toasts{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;z-index:9999;pointer-events:none}
+.toast{
+  background:rgba(10,15,30,.95);border:1px solid var(--border);color:var(--text);
+  padding:10px 16px;border-radius:10px;font-size:12.5px;
+  box-shadow:0 10px 30px rgba(0,0,0,.5);
+  animation:pop 2.4s ease forwards;
+}
+@keyframes pop{0%{transform:translateY(10px);opacity:0}10%,85%{transform:translateY(0);opacity:1}100%{transform:translateY(10px);opacity:0}}
+
+@media(max-width:480px){
+  .px-hero{min-height:300px}
+  .px-content{padding:20px 16px 100px;min-height:300px}
+  .px-title{font-size:22px}
+  .px-chip{width:118px;height:58px}
+  .pill-grid{grid-template-columns:1fr 1fr}
+  .nav-tab{padding:6px 10px;font-size:9.5px}
+}
+</style>
+</head>
+<body>
+
+<!--
+<script type="module" src="https://www.infodose.com.br/Nebula/NEB.js"></script>
+  
+  <script type="module" src="https://www.infodose.com.br/Nebula/di_Jogador.js"></script>
+-->
+  
+
+<script type="module" src="https://www.infodose.com.br/js/modules/Dual_[Theme].js"></script>
+
+     <div class="dual-app app">
+<!-- ═══════════════════════════════════════════════════════
+     HEADER GLOBAL
+     1. TOCAR NO HEADER
+        → COLAPSA MAIN
+     2. TOCAR NA BOLINHA
+        → MUDA TEMA
+     3. ROLAR PARA BAIXO
+        → HEADER SOBE
+     4. ROLAR PARA CIMA
+        → HEADER VOLTA
+═══════════════════════════════════════════════════════ -->
+<header style="z-index:7890" class="topbar header-visible" id="main-header">
+    <!-- ÁREA DO SISTEMA -->
+
+  <div class="brand">
+    <span>ESPAÇO DA MENTE</span>
+    <span class="badge">v7.1</span>
+
+    <span class="uni-label" id="activePillLabel">— sem ativa —</span>
+
+  </div>
+  <div class="uni-actions">
+
+    <button class="icon-btn" data-uni="tts" title="Ouvir pílula ativa">🎧</button>
+    <button class="icon-btn" data-uni="copy" title="Copiar">⧉</button>
+    <button class="icon-btn" data-uni="download-md" title="Baixar .md">↓</button>
+   <button class="icon-btn" data-uni="to-seed" title="→ Semente">🌱</button>
+    <button class="icon-btn" data-uni="to-mirror" title="→ Espelho">🪞</button>
+    <button class="icon-btn" data-uni="inject" title="Injetar no TTS em curso">⊕</button>
+    <button class="icon-btn accent" data-uni="save-pill" title="Salvar como pílula">💊</button>
+  <button class="icon-btn" data-uni="revert" title="Reverter p/ texto corrido">↺</button>
+  </div>
+
+    <!-- ÚNICO CONTROLE DE TEMA -->
+
+  <button id="theme-dot" class="theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>
+       </button>  
+
+
+</header>
+<!-- ═══════════════════════════════════════════════════════
+     MAIN
+═══════════════════════════════════════════════════════ -->
+<main id="main-content">
+
+
+<!-- TOPBAR APP -->
+
+<!-- TOPBAR · UNIVERSAL ACTIONS -->
+
+<!-- NAV SLIDER -->
+<nav class="navbar">
+  <button class="nav-tab active" data-view="pilulas">💊 Pílulas <span class="cnt" id="cntPilulas">0</span></button>
+  <button class="nav-tab" data-view="semente">🌱 Semente</button>
+  <button class="nav-tab" data-view="editor">📝 Editor</button>
+  <button class="nav-tab" data-view="analise">🧠 Análise 369</button>
+  <button class="nav-tab" data-view="resultado">✨ Resultado</button>
+</nav>
+
+<!-- VIEW · PÍLULAS -->
+<section class="view active" data-view="pilulas">
+
+  <!-- PARALLAX HERO CARROSSEL -->
+  <div class="px-hero" id="pxHero">
+    <div class="px-bg" id="pxBg"></div>
+    <div class="px-overlay"></div>
+
+    <div class="px-content">
+      <span class="px-tag" id="pxTag">PÍLULA</span>
+      <h2 class="px-title" id="pxTitle">—</h2>
+      <p class="px-desc" id="pxDesc">Cola ou importa um texto pra começar.</p>
+      <div class="px-actions" id="pxActions">
+        <button class="btn small" data-action="pilula-import">+ Importar</button>
+        <button class="btn small" data-action="pilula-paste">⧋ Colar</button>
+        <button class="btn small" data-action="pilula-new">＋ Nova</button>
+      </div>
+    </div>
+
+    <div class="px-track" id="pxTrack"></div>
+  </div>
+
+  <!-- PREVIEW da pílula ativa -->
+  <div class="painel" id="activePillPanel" style="display:none">
+    <div class="painel-head">
+      <div class="painel-title"><span class="dot"></span>Preview · <span id="pvTitle">—</span></div>
+      <div style="margin-left:auto;display:flex;gap:4px;flex-wrap:wrap" id="pvActions"></div>
+    </div>
+    <div class="out-content" id="pvContent" style="max-height:44vh;min-height:140px;border-radius:11px;background:rgba(0,0,0,.22);border:1px solid var(--border)"></div>
+  </div>
+
+  <!-- GRID secundária (todas as pílulas) -->
+  <div class="painel">
+    <div class="painel-head">
+      <div class="painel-title"><span class="dot"></span>Todas as Pílulas</div>
+    </div>
+    <div class="pill-grid" id="pillGrid"></div>
+  </div>
+
+</section>
+
+<!-- VIEW · SEMENTE -->
+<section class="view" data-view="semente">
+  <div class="painel">
+    <div class="painel-head">
+      <div class="painel-title"><span class="dot"></span>Configuração da Semente</div>
+      <div style="margin-left:auto;display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn small ghost" data-action="paste-seed">⧋ Colar</button>
+        <button class="btn small ghost" data-action="import-seed">+ Importar</button>
+        <button class="btn small ghost" data-action="clear-seed">✕ Limpar</button>
+        <button class="btn small primary" data-action="save-seed-pill">💊 Salvar</button>
+      </div>
+    </div>
+    <label class="label" for="seed">Semente · Texto 1</label>
+    <textarea id="seed" placeholder="Cola ou importa o texto bruto da semente…"></textarea>
+    <div id="seedMoji" class="chip-row"></div>
+    <input type="file" id="file-seed" accept=".txt,.md,.html,.json,.pdf">
+  </div>
+
+  <div class="painel">
+    <div class="painel-head">
+      <div class="painel-title"><span class="dot" style="background:var(--glow)"></span>Configuração do Espelho</div>
+      <div style="margin-left:auto;display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn small ghost" data-action="paste-mirror">⧋ Colar</button>
+        <button class="btn small ghost" data-action="import-mirror">+ Importar</button>
+        <button class="btn small ghost" data-action="clear-mirror">✕ Limpar</button>
+        <button class="btn small primary" data-action="save-mirror-pill">💊 Salvar</button>
+      </div>
+    </div>
+    <label class="label" for="mirror">Espelho · Texto 2 (opcional, empilhável)</label>
+    <textarea id="mirror" placeholder="Cola ou importa o texto do espelho…"></textarea>
+    <div id="mirrorMoji" class="chip-row"></div>
+    <input type="file" id="file-mirror" accept=".txt,.md,.html,.json,.pdf">
+  </div>
+
+  <div class="painel">
+    <div class="painel-head">
+      <div class="painel-title"><span class="dot"></span>Divisor · 3 · 6 · 9</div>
+    </div>
+    <div class="chip-row">
+      <button class="chip-toggle" data-split="3">3 parágrafos</button>
+      <button class="chip-toggle" data-split="6">6 parágrafos</button>
+      <button class="chip-toggle on" data-split="9">9 parágrafos</button>
+      <button class="chip-toggle" data-split="manual">Manual</button>
+      <input type="number" class="num-input" id="splitManual" value="9" min="1" max="40">
+    </div>
+    <div class="chip-row">
+      <button class="chip-toggle on" data-flag="autoTitle">Títulos automáticos</button>
+      <button class="chip-toggle on" data-flag="structural">Estrutura ◆ ◇</button>
+      <button class="chip-toggle" data-flag="numerar">Numerar capítulos</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" data-action="fundir">⊕ FUNDIR FRACTAL</button>
+    </div>
+    <div class="hint">
+      A fusão aplica <b>3·6·9</b> (Semente / Espelho / Semente), formata em Markdown com capítulos gerados a partir do léxico do próprio texto — <b>nunca inventa fato</b>.
+    </div>
+  </div>
+
+  <div class="painel" id="seedRenderPanel" style="display:none">
+    <div class="painel-head">
+      <div class="painel-title"><span class="dot"></span>Render · Resultado da Fusão</div>
+    </div>
+    <div class="out-wrap">
+      <div class="out-head">
+        <div class="out-tabs">
+          <button class="tab active" data-view="md">Markdown</button>
+          <button class="tab" data-view="html">Rico</button>
+          <button class="tab" data-view="slices">Fatias</button>
+          <button class="tab" data-view="raw">RAW</button>
+        </div>
+        <div class="out-meta" id="outMeta">—</div>
+      </div>
+      <div class="out-content raw" id="outContent"></div>
+    </div>
+  </div>
+</section>
+
+<!-- VIEW · EDITOR -->
+<section class="view" data-view="editor">
+  <div class="painel">
+    <div class="painel-head">
+      <div class="painel-title"><span class="dot"></span>Editor Markdown</div>
+      <div style="margin-left:auto;display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn small ghost" data-action="load-to-editor">← Carregar Resultado</button>
+        <button class="btn small ghost" data-action="download-md">↓ .md</button>
+      </div>
+    </div>
+    <label class="label" for="editor">Documento</label>
+    <textarea id="editor" style="min-height:220px;font-family:var(--mono);font-size:12.5px" placeholder="# Título&#10;&#10;Corpo em Markdown…"></textarea>
+  </div>
+  <div class="painel">
+    <div class="painel-head"><div class="painel-title"><span class="dot"></span>Preview</div></div>
+    <div class="out-content rich" id="editorPreview" style="background:rgba(0,0,0,.22);border:1px solid var(--border);border-radius:11px"></div>
+  </div>
+</section>
+
+<!-- VIEW · ANÁLISE -->
+<section class="view" data-view="analise">
+  <div class="painel">
+    <div class="painel-head">
+      <div class="painel-title"><span class="dot"></span>Gerardo 369</div>
+      <div style="margin-left:auto;display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn small primary" data-action="analyze">🧠 Analisar</button>
+        <button class="btn small ghost" data-action="select-all">☑ Tudo</button>
+        <button class="btn small ghost" data-action="invert-sel">⇄ Inverter</button>
+      </div>
+    </div>
+    <div class="chip-row">
+      <button class="btn small ghost" data-action="copy-filter" data-filter="meta">⧉ Meta</button>
+      <button class="btn small ghost" data-action="copy-filter" data-filter="ctx">⧉ Contexto</button>
+      <button class="btn small ghost" data-action="copy-filter" data-filter="noise">⧉ Ruído</button>
+      <button class="btn small ghost" data-action="tts-filter" data-filter="meta">🎧 Meta</button>
+      <button class="btn small ghost" data-action="tts-filter" data-filter="ctx">🎧 Contexto</button>
+      <button class="btn small ghost" data-action="tts-filter" data-filter="noise">🎧 Ruído</button>
+      <button class="btn small ghost" data-action="inject-filter" data-filter="meta">⊕ Meta→TTS</button>
+      <button class="btn small ghost" data-action="inject-filter" data-filter="ctx">⊕ Ctx→TTS</button>
+      <button class="btn small ghost" data-action="inject-filter" data-filter="noise">⊕ Ruído→TTS</button>
+    </div>
+  </div>
+
+  <div id="analysisGrid" style="display:flex;flex-direction:column;gap:10px">
+    <div class="painel"><div class="a-empty">Clica em <b>Analisar</b> pra extrair camadas.</div></div>
+  </div>
+
+  <div class="painel" id="newsBlock" style="display:none">
+    <div class="painel-head"><div class="painel-title"><span class="dot"></span>📰 Notícia · Projeção</div></div>
+    <div class="a-card"><div class="a-body" id="newsBody" style="max-height:none"></div></div>
+  </div>
+
+  <div class="painel">
+    <div class="painel-head"><div class="painel-title"><span class="dot"></span>Léxico · Limpeza</div>
+      <div style="margin-left:auto;display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn small ghost" data-action="scan-lex">🔍 Escanear</button>
+        <button class="btn small primary" data-action="apply-lex">✓ Aplicar</button>
+      </div>
+    </div>
+    <div class="chip-row">
+      <label style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">
+        Mín. <input type="number" class="num-input" id="lexMin" value="4" min="2" max="30">
+      </label>
+      <button class="chip-toggle on" data-flag="lexWholeWord">Palavra inteira</button>
+      <button class="chip-toggle on" data-flag="lexNoStop">Ignorar stopwords</button>
+    </div>
+    <div class="lex-list" id="lexList"><div class="a-empty">Clica em <b>Escanear</b> pra detectar repetições.</div></div>
+  </div>
+</section>
+
+<!-- VIEW · RESULTADO -->
+<section class="view" data-view="resultado">
+  <div class="painel">
+    <div class="painel-head">
+      <div class="painel-title"><span class="dot"></span>Resultado · Pílula Viva</div>
+      <div style="margin-left:auto;display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn small ghost" data-action="copy-md">⧉ .md</button>
+        <button class="btn small ghost" data-action="download-md">↓ .md</button>
+        <button class="btn small ghost" data-action="download-txt">↓ .txt</button>
+        <button class="btn small ghost" data-action="toggle-tts">🎧</button>
+        <button class="btn small ghost" data-action="revert">↺ Corrido</button>
+        <button class="btn small ghost" data-action="restore-raw">↺ RAW</button>
+        <button class="btn small primary" data-action="save-result-pill">💊 Salvar</button>
+      </div>
+    </div>
+    <div class="out-wrap">
+      <div class="out-head">
+        <div class="out-tabs">
+          <button class="tab active" data-view="md">Markdown</button>
+          <button class="tab" data-view="html">Rico</button>
+          <button class="tab" data-view="slices">Fatias</button>
+          <button class="tab" data-view="raw">RAW</button>
+        </div>
+        <div class="out-meta" id="outMeta2">—</div>
+      </div>
+      <div class="out-content raw" id="outContent2"></div>
+    </div>
+    <div class="hint">
+      <b>Ao vivo:</b> quando estiveres a ouvir um texto (🎧) e clicares em <b>⊕</b> numa pílula ou camada, o trecho é inserido <b>a partir do ponto que está sendo lido</b>.
+    </div>
+  </div>
+</section>
+
+</div>
+
+<div id="toasts"></div>
+
+<script>
+(function(){
+'use strict';
+const $ = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const uid = ()=> (crypto.randomUUID?.() || ('p_'+Date.now()+'_'+Math.random().toString(36).slice(2,8)));
+
+const toast = (msg)=>{
+  const t = document.createElement('div');
+  t.className='toast'; t.textContent=msg;
+  $('#toasts').appendChild(t);
+  setTimeout(()=>t.remove(), 2400);
+};
+const escapeHtml = s => String(s??'')
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+const escapeRegex = s => String(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+
+/* =========================================================
+   MOJIBAKE / ASCII BUGADÃO v3
+========================================================= */
+const MOJIBAKE = {
+  'â€œ':'“','â€':'”','â€˜':'‘','â€™':'’',
+  'â€“':'–','â€”':'—','â€¦':'…','â€¢':'•',
+  'Â©':'©','Â®':'®','Â°':'°','Â·':'·','Â ':' ',
+  'Ã©':'é','Ã£':'ã','Ã§':'ç','Ã¡':'á','Ã³':'ó','Ãº':'ú','Ã­':'í','Ãµ':'õ',
+  'Ãª':'ê','Ã´':'ô','Ã¢':'â','Ã ':'à','Ã‰':'É','Ã"':'Ó','Ã‡':'Ç',
+  'Ã‚':'Â','Ãƒ':'Ã','Ã•':'Õ','Ãš':'Ú','Ã‹':'Ë'
+};
+const MOJI_ORDER = Object.keys(MOJIBAKE).sort((a,b)=>b.length-a.length);
+function detectMojibake(str){ if(!str) return 0; let h=0; for(const k of MOJI_ORDER) if(str.includes(k)) h++; return h; }
+function repairMojibake(str){
+  if(!str) return str;
+  let out = str;
+  for(const k of MOJI_ORDER) out = out.split(k).join(MOJIBAKE[k]);
+  try{
+    if(/[ÃÂ]/.test(out)){
+      const fx = decodeURIComponent(escape(out));
+      if(fx !== out) out = fx;
+    }
+  }catch(e){}
+  return out;
+}
+
+/* =========================================================
+   STORAGE / ESTADO
+========================================================= */
+const LS = {
+  get(k,def){ try{ const v=localStorage.getItem('esm7_'+k); return v===null?def:JSON.parse(v); }catch(e){ return def; } },
+  set(k,v){ try{ localStorage.setItem('esm7_'+k, JSON.stringify(v)); }catch(e){} }
+};
+
+const state = {
+  view: 'pilulas',
+  pills: [],
+  activePillId: null,
+  seed: '', mirror: '',
+  sourceRaw: '', derivedMd: '', derivedPlain: '', slices: [],
+  outView: 'md',
+  splitMode: 9,
+  flags: { autoTitle:true, structural:true, numerar:false, lexWholeWord:true, lexNoStop:true },
+  lexRules: [],
+  analysis: {meta:[],ctx:[],noise:[],fact:[],meaning:[],all:[],news:{}},
+  selections: {meta:new Set(),ctx:new Set(),noise:new Set(),fact:new Set(),meaning:new Set()},
+  ttsPlaying: false, ttsUtter: null, ttsCharIndex: 0, ttsBuffer: ''
+};
+
+function persist(){
+  LS.set('pills', state.pills);
+  LS.set('seed', state.seed);
+  LS.set('mirror', state.mirror);
+  LS.set('sourceRaw', state.sourceRaw);
+  LS.set('derivedMd', state.derivedMd);
+  LS.set('splitMode', state.splitMode);
+  LS.set('flags', state.flags);
+  LS.set('lexRules', state.lexRules);
+  LS.set('activePillId', state.activePillId);
+  LS.set('analysis', {
+    meta: state.analysis.meta, ctx: state.analysis.ctx,
+    noise: state.analysis.noise, fact: state.analysis.fact,
+    meaning: state.analysis.meaning, all: state.analysis.all,
+    news: state.analysis.news
+  });
+}
+
+/* =========================================================
+   STOPWORDS / MOTOR 369 / FORMATTER
+========================================================= */
+const STOP = new Set(('a o e de do da dos das um uma em no na nos nas para por com sem que se ao aos as os é foi são ser como mais muito já eu você isso esse essa ele ela eles elas seu sua seus suas meu minha meus minhas vai tem ter tá né pra pro aqui ali então porque também quando onde qual quem tipo assim enfim entendeu').split(/\s+/));
+
+function merge369(a,b){
+  const s1 = a.split(/(?<=[.!?…])\s+/).map(s=>s.trim()).filter(Boolean);
+  const s2 = b.split(/(?<=[.!?…])\s+/).map(s=>s.trim()).filter(Boolean);
+  const max = Math.max(s1.length, s2.length);
+  const out=[];
+  for(let i=0;i<max;i++){
+    const p=i%3;
+    if(p===0 && s1[i]) out.push(s1[i]);
+    else if(p===1 && s2[i]) out.push(s2[i]);
+    else if(p===2 && s1[i]) out.push(s1[i]);
+    else if(s2[i]) out.push(s2[i]);
+  }
+  return out.join('. ')+'.';
+}
+function splitSentences(text){
+  return String(text||'').replace(/\s+/g,' ').split(/(?<=[.!?…])\s+/).map(s=>s.trim()).filter(Boolean);
+}
+function buildParagraphs(text, target=3){
+  const sents = splitSentences(text);
+  const paras = []; let buf=[];
+  for(const s of sents){
+    buf.push(s);
+    if(buf.length>=target || s.length>220){ paras.push(buf.join(' ')); buf=[]; }
+  }
+  if(buf.length) paras.push(buf.join(' '));
+  return paras;
+}
+function deriveTitle(paras, idx){
+  const words = (paras.join(' ').match(/[\wÀ-ú]{4,}/g)||[]).map(w=>w.toLowerCase()).filter(w=>!STOP.has(w));
+  const freq = {};
+  words.forEach(w=>freq[w]=(freq[w]||0)+1);
+  const top = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,3).map(x=>x[0]);
+  if(!top.length) return `Bloco ${String(idx+1).padStart(2,'0')}`;
+  return top.map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' · ');
+}
+function formatDocument(raw, splitEvery){
+  const paras = buildParagraphs(raw, 3);
+  if(!paras.length) return {md:'', chapters:[]};
+  const chapters = [];
+  for(let i=0;i<paras.length;i+=splitEvery) chapters.push(paras.slice(i, i+splitEvery));
+  const mdParts = [];
+  chapters.forEach((ch, i)=>{
+    const title = state.flags.autoTitle ? deriveTitle(ch, i) : `Bloco ${String(i+1).padStart(2,'0')}`;
+    const num = String(i+1).padStart(2,'0');
+    const head = state.flags.numerar ? `# CAPÍTULO ${num} — ${title}` : `# ${title}`;
+    mdParts.push(head); mdParts.push('');
+    ch.forEach(p=>{ mdParts.push(p); mdParts.push(''); });
+  });
+  return {md: mdParts.join('\n').trim(), chapters};
+}
+
+/* =========================================================
+   LÉXICO / ANÁLISE
+========================================================= */
+function detectRepeats(text, minCount, skipStop){
+  const wordRe = /[\p{L}\p{N}][\p{L}\p{N}-]{2,}/gu;
+  const counts = {}; let m;
+  while((m = wordRe.exec(text)) !== null){
+    const lw = m[0].toLowerCase();
+    if(skipStop && STOP.has(lw)) continue;
+    if(lw.length<3) continue;
+    counts[lw] = (counts[lw]||0)+1;
+  }
+  return Object.entries(counts).filter(([_,c])=>c>=minCount).sort((a,b)=>b[1]-a[1]).map(([word,count])=>({word,count}));
+}
+function applyLexicon(text, rules){
+  if(!text) return text;
+  let out = text;
+  const sorted = [...rules].sort((a,b)=>b.word.length-a.word.length);
+  for(const r of sorted){
+    if(!r.word) continue;
+    const repl = r.replacement ?? '';
+    const esc = escapeRegex(r.word);
+    let regex;
+    try{
+      if(state.flags.lexWholeWord) regex = new RegExp(`(?<![\\p{L}\\p{N}_])${esc}(?![\\p{L}\\p{N}_])`,'giu');
+      else regex = new RegExp(esc,'giu');
+    }catch(e){ regex = new RegExp(esc,'gi'); }
+    out = out.replace(regex, ()=> repl);
+  }
+  return out;
+}
+const META_RX = /\b(princ[íi]pio|padr[ãa]o|sempre|universal|estrutura|arqu[eé]tipo|metacamada|atemporal|transversal|qualquer contexto|aplic[áa]vel)\b/i;
+const NOISE_RX = /\b(hahah+|kkk+|aff+|nem vem|tipo assim|n[ée]\?|entendeu\?|tá ligado|saca|enfim)\b/i;
+function classifySentence(s){
+  const low = s.toLowerCase();
+  const wc = s.split(/\s+/).length;
+  if(NOISE_RX.test(low)) return 'noise';
+  if(META_RX.test(low)) return 'meta';
+  if(/\b(aconteceu|descobri|percebi|encontrei|resultado|dados|estudo|pesquisa|mudou|novo|nova|hoje|agora|lan[çc]ou|criou|produziu)\b/.test(low)) return 'fact';
+  if(/\b(significa|importante|essencial|ponto|n[úu]cleo|eixo|impacto|por isso|isso muda|sentido)\b/.test(low)) return 'meaning';
+  if(wc<=5) return 'noise';
+  if(/\d/.test(s)) return 'fact';
+  return 'ctx';
+}
+function analyzeText(text){
+  const sents = splitSentences(text);
+  const all = sents.map((s,i)=>({i, s, type: classifySentence(s)}));
+  const byType = t => all.filter(x=>x.type===t);
+  const sc = x => (x.type==='fact'?4:0)+(x.type==='meaning'?3:0)+(x.type==='ctx'?1:0)-(x.type==='noise'?3:0);
+  const ranked = [...all].sort((a,b)=>sc(b)-sc(a));
+  return {
+    meta: byType('meta'), ctx: byType('ctx'), noise: byType('noise'),
+    fact: byType('fact'), meaning: byType('meaning'), all,
+    news: {
+      happened: ranked.find(x=>x.type==='fact')?.s || ranked[0]?.s || '—',
+      meaning: ranked.find(x=>x.type==='meaning')?.s || ranked[1]?.s || '—',
+      matters: byType('ctx')[0]?.s || ranked[2]?.s || '—'
+    }
+  };
+}
+
+/* =========================================================
+   MARKDOWN
+========================================================= */
+const MD = (()=>{
+  const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  function inline(t){
+    let s = esc(t);
+    s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,(_,a,src)=>`<img alt="${a}" src="${src}">`);
+    s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,(_,l,u)=>`<a href="${u}" target="_blank" rel="noopener">${l}</a>`);
+    s = s.replace(/`([^`]+)`/g,(_,c)=>`<code>${c}</code>`);
+    s = s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+    s = s.replace(/(^|[^*])\*([^*]+)\*(?!\*)/g,'$1<em>$2</em>');
+    return s;
+  }
+  function render(text){
+    const lines = String(text??'').replace(/\r\n?/g,'\n').split('\n');
+    const out=[]; let i=0; let para=[]; let inList=null;
+    const flushPara = ()=>{ if(para.length){ const j=para.join(' ').trim(); if(j) out.push(`<p>${inline(j)}</p>`); para=[]; } };
+    const flushList = ()=>{ if(inList){ out.push(inList==='ol'?'</ol>':'</ul>'); inList=null; } };
+    while(i<lines.length){
+      const line = lines[i];
+      if(!line.trim()){ flushPara(); flushList(); i++; continue; }
+      let m = line.match(/^(#{1,6})\s+(.*)$/);
+      if(m){ flushPara(); flushList(); out.push(`<h${m[1].length}>${inline(m[2])}</h${m[1].length}>`); i++; continue; }
+      if(/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/.test(line)){ flushPara(); flushList(); out.push('<hr>'); i++; continue; }
+      if(/^\s*>\s?/.test(line)){
+        flushPara(); flushList();
+        const buf=[]; while(i<lines.length && /^\s*>\s?/.test(lines[i])){ buf.push(lines[i].replace(/^\s*>\s?/,'')); i++; }
+        out.push(`<blockquote>${inline(buf.join(' '))}</blockquote>`); continue;
+      }
+      let lm = line.match(/^(\s*)([-+*]|\d+\.)\s+(.*)$/);
+      if(lm){
+        flushPara();
+        const want = /^\d+\.$/.test(lm[2]) ? 'ol' : 'ul';
+        if(inList !== want){ flushList(); out.push(want==='ol'?'<ol>':'<ul>'); inList=want; }
+        out.push(`<li>${inline(lm[3])}</li>`); i++; continue;
+      }
+      let cm = line.match(/^::(\w+)\s*(.*)$/);
+      if(cm){ flushPara(); flushList(); out.push(`<blockquote><strong>::${cm[1]}</strong> ${inline(cm[2])}</blockquote>`); i++; continue; }
+      para.push(line.trim()); i++;
+    }
+    flushPara(); flushList();
+    return out.join('\n');
+  }
+  return {render};
+})();
+
+function mdToPlain(md){
+  return String(md||'')
+    .replace(/^#{1,6}\s+/gm,'').replace(/^::\w+\s*/gm,'').replace(/^---+\s*$/gm,'')
+    .replace(/^\s*[-+*]\s+/gm,'').replace(/^\s*\d+\.\s+/gm,'')
+    .replace(/`{1,3}([^`]*)`{1,3}/g,'$1')
+    .replace(/\*\*([^*]+)\*\*/g,'$1').replace(/\*([^*]+)\*/g,'$1')
+    .replace(/^\s*>\s?/gm,'').replace(/\n{3,}/g,'\n\n').trim();
+}
+
+/* =========================================================
+   PIPELINE + OUTPUT
+========================================================= */
+function runPipeline(){
+  const raw = state.sourceRaw;
+  if(!raw){
+    state.derivedMd=''; state.derivedPlain=''; state.slices=[];
+    renderOutput(); return;
+  }
+  const splitEvery = state.splitMode === 'manual'
+    ? Math.max(1, Math.min(40, parseInt($('#splitManual').value,10)||9))
+    : parseInt(state.splitMode,10) || 9;
+  const {md} = formatDocument(raw, splitEvery);
+  let out = md;
+  if(state.lexRules.length) out = applyLexicon(out, state.lexRules);
+  state.derivedMd = out;
+  state.derivedPlain = mdToPlain(out);
+  state.slices = buildSlices(out);
+  persist();
+  renderOutput();
+}
+function buildSlices(md){
+  const parts = md.split(/\n(?=# )/g).filter(p=>p.trim());
+  if(!parts.length) return md.trim()?[md]:[];
+  return parts;
+}
+function renderOutput(){
+  [['outContent','outMeta'], ['outContent2','outMeta2']].forEach(([cId,mId])=>{
+    const out = document.getElementById(cId);
+    const meta = document.getElementById(mId);
+    if(!out) return;
+    const view = state.outView;
+    out.classList.toggle('raw', view==='md'||view==='raw');
+    out.classList.toggle('rich', view==='html');
+    const md = state.derivedMd;
+    if(!md){
+      out.innerHTML = '<div class="a-empty">Sem documento. Cola na <b>Semente</b> e clica em <b>Fundir</b>.</div>';
+      if(meta) meta.textContent = '—';
+      return;
+    }
+    if(view==='md'){ out.textContent = md; if(meta) meta.textContent = `${md.length.toLocaleString('pt-BR')} chars · ${state.slices.length} fatias`; }
+    else if(view==='raw'){ out.textContent = state.sourceRaw; if(meta) meta.textContent = `RAW · ${state.sourceRaw.length.toLocaleString('pt-BR')} chars`; }
+    else if(view==='html'){ out.innerHTML = MD.render(md); if(meta) meta.textContent = 'HTML rico'; }
+    else if(view==='slices'){ out.innerHTML = state.slices.map((s,i)=>sliceCardHTML(s,i)).join(''); if(meta) meta.textContent = `${state.slices.length} fatias`; }
+    out.scrollTop = 0;
+  });
+  $$('.tab').forEach(t=>t.classList.toggle('active', t.dataset.view===state.outView));
+}
+function sliceCardHTML(slice, i){
+  const t = slice.match(/^#\s+(.+)$/m);
+  const title = t ? t[1] : `Fatia ${String(i+1).padStart(2,'0')}`;
+  return `<div style="margin-bottom:10px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:rgba(0,0,0,.2)">
+    <div style="font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--glow2);font-weight:800;margin-bottom:6px">${String(i+1).padStart(2,'0')} · ${escapeHtml(title)}</div>
+    <div>${MD.render(slice)}</div>
+  </div>`;
+}
+
+/* =========================================================
+   PÍLULAS · CRUD
+========================================================= */
+const TYPE_ICON = { txt:'📄', md:'📝', html:'🌐', pdf:'📕', raw:'📦', doc:'📘' };
+function detectType(name){
+  const ext = (name||'').split('.').pop().toLowerCase();
+  if(ext==='md'||ext==='markdown') return 'md';
+  if(ext==='html'||ext==='htm') return 'html';
+  if(ext==='pdf') return 'pdf';
+  if(ext==='txt') return 'txt';
+  if(ext==='json') return 'raw';
+  return 'raw';
+}
+function pillTitleFromContent(content){
+  if(!content) return 'Sem título';
+  const firstLine = String(content).split('\n').map(l=>l.trim()).find(l=>l.length>0);
+  if(firstLine){
+    const m = firstLine.match(/^#\s+(.+)$/);
+    if(m) return m[1].slice(0,42);
+    if(firstLine.length<=48) return firstLine.slice(0,42);
+  }
+  const words = String(content).match(/[\wÀ-ú]{4,}/g) || [];
+  const t = words.slice(0,4).join(' ');
+  return t ? (t.charAt(0).toUpperCase()+t.slice(1)).slice(0,42) : 'Sem título';
+}
+function pillExcerpt(content){
+  const plain = mdToPlain(content || '');
+  return plain.replace(/\n+/g,' ').slice(0, 180);
+}
+function saveAsPill(content, hintType){
+  if(!content || !content.trim()){ toast('Sem conteúdo'); return null; }
+  const type = hintType || 'raw';
+  const title = pillTitleFromContent(content);
+  const pill = { id: uid(), title, type, raw: content, md: content, createdAt: Date.now() };
+  state.pills.push(pill);
+  persist(); renderAllPills();
+  if(!state.activePillId) setActivePill(pill.id);
+  toast(`💊 Pílula "${title}" salva`);
+  return pill;
+}
+function deletePill(id){
+  const i = state.pills.findIndex(p=>p.id===id);
+  if(i<0) return;
+  const title = state.pills[i].title;
+  state.pills.splice(i,1);
+  if(state.activePillId===id) state.activePillId = state.pills[0]?.id || null;
+  persist(); renderAllPills(); renderPreview();
+  toast(`Pílula "${title}" removida`);
+}
+function setActivePill(id){
+  state.activePillId = id;
+  persist();
+  renderAllPills();
+  renderPreview();
+  updateUniBar();
+  pxSyncActive();
+}
+function getActivePill(){ return state.pills.find(p=>p.id===state.activePillId) || null; }
+
+/* =========================================================
+   PALETA · hash por pílula
+========================================================= */
+const PALETTE = [
+  ['#7b61ff','#00f5ff'],
+  ['#ff2bd6','#7b61ff'],
+  ['#00f5ff','#7effa1'],
+  ['#f7d774','#ff6b6b'],
+  ['#a29bfe','#f7d774'],
+  ['#7effa1','#00f5ff'],
+  ['#ffa502','#ff6b6b'],
+  ['#7b61ff','#a29bfe']
+];
+function pillPalette(pill, idx){
+  const key = (pill.id||String(idx));
+  let h=0; for(let i=0;i<key.length;i++) h = (h + key.charCodeAt(i)*31) % 100000;
+  return PALETTE[h % PALETTE.length];
+}
+function pillGradient(pill, idx){
+  const [a,b] = pillPalette(pill, idx);
+  return `radial-gradient(circle at 25% 30%, ${a}cc 0%, transparent 62%),
+          radial-gradient(circle at 78% 72%, ${b}99 0%, transparent 58%),
+          radial-gradient(circle at 50% 105%, ${a}66 0%, transparent 70%),
+          linear-gradient(160deg, #0a0c12 0%, #07080d 100%)`;
+}
+
+/* =========================================================
+   RENDER · PÍLULAS (grid + hero carousel)
+========================================================= */
+function renderAllPills(){
+  renderGrid();
+  renderHeroTrack();
+  const cnt = $('#cntPilulas'); if(cnt) cnt.textContent = state.pills.length;
+}
+function renderGrid(){
+  const grid = $('#pillGrid');
+  if(!grid) return;
+  if(!state.pills.length){
+    grid.innerHTML = `<button class="pilula-new" data-action="pilula-new"><div><span>＋</span>Nova pílula</div></button>`;
+    return;
+  }
+  grid.innerHTML = state.pills.map(p=>pillCardHTML(p, p.id===state.activePillId)).join('') +
+    `<button class="pilula-new" data-action="pilula-new"><div><span>＋</span>Nova</div></button>`;
+}
+function pillCardHTML(p, active){
+  const icon = TYPE_ICON[p.type] || '📦';
+  const preview = pillExcerpt(p.raw);
+  return `<div class="pilula${active?' active':''}" data-pill="${p.id}">
+    <div class="pilula-head">
+      <span class="pilula-icon">${icon}</span>
+      <span class="pilula-title" title="${escapeHtml(p.title)}">${escapeHtml(p.title)}</span>
+      <button class="icon-btn" style="width:20px;height:20px;font-size:9px" data-pill-act="del" title="Remover">✕</button>
+    </div>
+    <div class="pilula-preview">${preview ? escapeHtml(preview) + '…' : '<em>vazio</em>'}</div>
+    <div class="pilula-actions">
+      <button data-pill-act="tts" title="Ouvir">🎧</button>
+      <button data-pill-act="copy" title="Copiar">⧉</button>
+      <button data-pill-act="download" title="Baixar">↓</button>
+      <button class="tint-seed" data-pill-act="to-seed" title="→ Semente">S</button>
+      <button class="tint-mirror" data-pill-act="to-mirror" title="→ Espelho">E</button>
+      <button class="tint-inject" data-pill-act="inject" title="Injetar">⊕</button>
+    </div>
+  </div>`;
+}
+function renderPreview(){
+  const p = getActivePill();
+  const wrap = $('#activePillPanel');
+  if(!wrap) return;
+  if(!p){ wrap.style.display='none'; return; }
+  wrap.style.display='flex';
+  $('#pvTitle').textContent = p.title;
+  const out = $('#pvContent');
+  out.className = 'out-content rich';
+  out.innerHTML = MD.render(p.md || p.raw);
+  $('#pvActions').innerHTML = `
+    <button class="btn small ghost" data-pill-act="to-seed">→ Semente</button>
+    <button class="btn small ghost" data-pill-act="to-mirror">→ Espelho</button>
+    <button class="btn small primary" data-pill-act="inject">⊕ Injetar no TTS</button>
+  `;
+}
+
+/* =========================================================
+   PARALLAX HERO CARROSSEL
+========================================================= */
+function renderHeroTrack(){
+  const track = $('#pxTrack');
+  if(!track) return;
+  if(!state.pills.length){
+    track.innerHTML = `<div class="px-empty">Nenhuma pílula ainda.<br>Cola um texto ou clica em <b>+ Importar</b> acima.</div>`;
+    renderHeroContent(null, 0);
+    return;
+  }
+  track.innerHTML = state.pills.map((p, idx)=>{
+    const icon = TYPE_ICON[p.type] || '📦';
+    return `<div class="px-chip${p.id===state.activePillId?' active':''}" data-px-chip="${p.id}" data-px-idx="${idx}">
+      <span class="ico">${icon}</span>
+      <span class="tt">${escapeHtml(p.title)}</span>
+    </div>`;
+  }).join('');
+  const idx = Math.max(0, state.pills.findIndex(p=>p.id===state.activePillId));
+  const active = state.pills[idx] || state.pills[0];
+  renderHeroContent(active, idx);
+  // rolar o chip ativo pro centro
+  requestAnimationFrame(()=>{
+    const chip = track.querySelector('.px-chip.active');
+    if(chip) chip.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+  });
+}
+function renderHeroContent(pill, idx){
+  const bg = $('#pxBg');
+  const tag = $('#pxTag');
+  const title = $('#pxTitle');
+  const desc = $('#pxDesc');
+  const actions = $('#pxActions');
+  if(!pill){
+    if(bg) bg.style.background = 'radial-gradient(circle at 30% 40%, rgba(123,97,255,.4), transparent 60%)';
+    if(tag) tag.textContent = 'PÍLULA';
+    if(title) title.textContent = 'Sem pílulas';
+    if(desc) desc.textContent = 'Cola um texto em Semente ou importa um arquivo pra criar sua primeira pílula.';
+    if(actions) actions.innerHTML = `
+      <button class="btn small" data-action="pilula-import">+ Importar</button>
+      <button class="btn small" data-action="pilula-paste">⧋ Colar</button>
+      <button class="btn small" data-action="pilula-new">＋ Nova</button>`;
+    return;
+  }
+  if(bg) bg.style.background = pillGradient(pill, idx);
+  const typeLabel = (pill.type||'raw').toUpperCase();
+  if(tag) tag.textContent = `PÍLULA · ${typeLabel}`;
+  if(title) title.textContent = pill.title;
+  const excerpt = pillExcerpt(pill.raw);
+  if(desc) desc.textContent = excerpt || 'sem conteúdo';
+  if(actions) actions.innerHTML = `
+    <button class="btn small primary" data-pill-act="tts">🎧 Ouvir</button>
+    <button class="btn small" data-pill-act="to-seed">→ Semente</button>
+    <button class="btn small" data-pill-act="to-mirror">→ Espelho</button>
+    <button class="btn small" data-pill-act="inject">⊕ Injetar</button>`;
+  // animar entradas
+  [tag, title, desc, actions].forEach(el=>{
+    if(!el) return;
+    el.style.animation = 'none';
+    void el.offsetWidth;
+    el.style.animation = '';
+  });
+}
+function pxSyncActive(){
+  const track = $('#pxTrack');
+  if(!track) return;
+  $$('.px-chip', track).forEach(c=>{
+    c.classList.toggle('active', c.dataset.pxChip === state.activePillId);
+  });
+  const idx = state.pills.findIndex(p=>p.id===state.activePillId);
+  if(idx>=0) renderHeroContent(state.pills[idx], idx);
+  const active = track.querySelector('.px-chip.active');
+  if(active) active.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+}
+
+/* Sincronizar scroll do track com pílula ativa */
+let pxScrollRaf = null;
+function onPxTrackScroll(){
+  if(pxScrollRaf) return;
+  pxScrollRaf = requestAnimationFrame(()=>{
+    pxScrollRaf = null;
+    const track = $('#pxTrack');
+    if(!track) return;
+    const chips = [...track.querySelectorAll('.px-chip')];
+    if(!chips.length) return;
+    const trackRect = track.getBoundingClientRect();
+    const center = trackRect.left + trackRect.width/2;
+    let closest = null, best = Infinity;
+    for(const c of chips){
+      const r = c.getBoundingClientRect();
+      const cc = r.left + r.width/2;
+      const d = Math.abs(cc - center);
+      if(d < best){ best = d; closest = c; }
+    }
+    if(closest && closest.dataset.pxChip !== state.activePillId){
+      // Não força renderPills completo pra não perder o scroll; só atualiza estado e preview
+      state.activePillId = closest.dataset.pxChip;
+      persist();
+      // destacar chip
+      chips.forEach(c=>c.classList.toggle('active', c===closest));
+      const idx = state.pills.findIndex(p=>p.id===state.activePillId);
+      if(idx>=0) renderHeroContent(state.pills[idx], idx);
+      renderPreview();
+      updateUniBar();
+      // sincronizar grid (silencioso)
+      $$('#pillGrid .pilula').forEach(el=>el.classList.toggle('active', el.dataset.pill===state.activePillId));
+    }
+  });
+}
+function bindHeroTrackScroll(){
+  const track = $('#pxTrack');
+  if(!track || track.__bound) return;
+  track.__bound = true;
+  track.addEventListener('scroll', onPxTrackScroll, {passive:true});
+  track.addEventListener('scrollend', onPxTrackScroll, {passive:true});
+}
+
+/* =========================================================
+   TTS
+========================================================= */
+function speak(text, label){
+  if(!text || !text.trim()){ toast('Nada pra ouvir'); return; }
+  speechSynthesis.cancel();
+  state.ttsBuffer = text; state.ttsCharIndex = 0;
+  const u = new SpeechSynthesisUtterance(text);
+  const voices = speechSynthesis.getVoices();
+  const pt = voices.find(v=>v.lang.startsWith('pt'));
+  if(pt) u.voice = pt;
+  u.rate = 0.95; u.pitch = 1.0;
+  u.onboundary = (e)=>{ if(typeof e.charIndex==='number') state.ttsCharIndex = e.charIndex; };
+  u.onend = ()=>{ state.ttsPlaying=false; updateUniBar(); };
+  u.onerror = ()=>{ state.ttsPlaying=false; updateUniBar(); };
+  speechSynthesis.speak(u);
+  state.ttsPlaying = true; state.ttsUtter = u;
+  updateUniBar();
+  if(label) toast(`🎧 ${label}`);
+}
+function stopTTS(){ speechSynthesis.cancel(); state.ttsPlaying=false; updateUniBar(); }
+function toggleTTS(text, label){ if(state.ttsPlaying) stopTTS(); else speak(text, label); }
+
+function injectIntoCurrentTTS(addition, tag){
+  if(!addition || !addition.trim()){ toast('Nada pra injetar'); return; }
+  const marker = `\n\n[${tag||'INJETADO'}]\n${addition.trim()}\n\n`;
+  if(!state.ttsPlaying){
+    state.ttsBuffer = (state.ttsBuffer||'') + marker;
+    toast('Sem TTS ativo · acumulado no buffer');
+    return;
+  }
+  const idx = Math.max(0, Math.min(state.ttsCharIndex||0, state.ttsBuffer.length));
+  const merged = state.ttsBuffer.slice(0, idx) + marker + state.ttsBuffer.slice(idx);
+  stopTTS();
+  setTimeout(()=>speak(merged, `injetado ${tag||''} @${idx}`), 150);
+}
+
+/* =========================================================
+   HELPERS
+========================================================= */
+async function clipboardRead(){ try{ return await navigator.clipboard.readText(); }catch(e){ return null; } }
+async function clipboardWrite(text){
+  try{ await navigator.clipboard.writeText(text); return true; }
+  catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+    return true;
+  }
+}
+async function pasteToTarget(id){
+  const txt = await clipboardRead();
+  if(!txt){ toast('Clipboard bloqueado'); return; }
+  const fixed = repairMojibake(txt);
+  const el = document.getElementById(id);
+  el.value = fixed;
+  if(id==='seed') state.seed = fixed;
+  if(id==='mirror') state.mirror = fixed;
+  renderMojiTag(id); persist();
+  toast('Colado' + (txt!==fixed ? ' (mojibake reparado)' : ''));
+}
+function renderMojiTag(id){
+  const box = document.getElementById(id==='seed'?'seedMoji':'mirrorMoji');
+  if(!box) return;
+  const val = document.getElementById(id)?.value || '';
+  if(!val){ box.innerHTML=''; return; }
+  const hits = detectMojibake(val);
+  box.innerHTML = hits>0
+    ? `<span class="moji-tag">⚠ ${hits} padrões · reparar</span>
+       <button class="btn small ghost" data-action="repair-${id}">↺ Reparar</button>`
+    : `<span class="moji-tag clean">✓ sem mojibake</span>`;
+}
+function downloadBlob(content, filename, mime){
+  const blob = new Blob([content], {type: mime});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 500);
+}
+function updateUniBar(){
+  const p = getActivePill();
+  const lbl = $('#activePillLabel');
+  if(lbl) lbl.textContent = p ? `💊 ${p.title.slice(0,22)}` : '— sem ativa —';
+  $$('[data-uni]').forEach(b=>b.classList.toggle('playing', b.dataset.uni==='tts' && state.ttsPlaying));
+  $$('[data-pill-act="tts"]').forEach(b=>{
+    const id = b.closest('[data-pill],[data-px-chip]')?.dataset.pill || b.closest('[data-px-chip]')?.dataset.pxChip;
+    b.classList.toggle('playing', state.ttsPlaying && id===state.activePillId);
+  });
+}
+
+/* =========================================================
+   RENDER · LÉXICO / ANÁLISE
+========================================================= */
+function renderLex(){
+  const list = $('#lexList');
+  if(!list) return;
+  if(!state.lexRules.length){
+    list.innerHTML = '<div class="a-empty">Clica em <b>Escanear</b> pra detectar repetições.</div>';
+    return;
+  }
+  list.innerHTML = state.lexRules.map((r,i)=>`
+    <div class="lex-item">
+      <span class="lex-word" title="${escapeHtml(r.word)}">${escapeHtml(r.word)}</span>
+      <span class="lex-count">${r.count}×</span>
+      <input class="lex-repl" type="text" data-lex-idx="${i}" value="${escapeHtml(r.replacement||'')}" placeholder="(vazio = apagar)">
+      <button class="lex-clear" data-lex-clear="${i}">✕</button>
+    </div>`).join('');
+}
+function renderAnalysis(){
+  const grid = $('#analysisGrid');
+  if(!grid) return;
+  const a = state.analysis;
+  if(!a.all || !a.all.length){
+    grid.innerHTML = '<div class="painel"><div class="a-empty">Clica em <b>Analisar</b> pra extrair camadas.</div></div>';
+    $('#newsBlock').style.display = 'none';
+    return;
+  }
+  const layers = [
+    ['meta', '🦆', 'Metacamada', '#a29bfe'],
+    ['ctx', '🐆', 'Contexto', '#f7d774'],
+    ['noise', '🦭', 'Ruído', '#ff6b6b'],
+    ['fact', '📌', 'Fato', '#7effa1'],
+    ['meaning', '💡', 'Sentido', '#00f5ff']
+  ];
+  grid.innerHTML = layers.map(([key, icon, label, color])=>{
+    const items = a[key] || [];
+    if(!items.length) return '';
+    return `<div class="painel" style="padding:10px">
+      <div class="painel-head">
+        <div class="painel-title" style="color:${color}"><span class="dot" style="background:${color};box-shadow:0 0 8px ${color}"></span>${icon} ${label}</div>
+        <span style="margin-left:auto;font-size:10px;color:var(--muted);font-family:var(--mono);font-weight:700">${items.length}</span>
+      </div>
+      <div class="a-body">
+        ${items.map(it=>{
+          const sel = state.selections[key].has(it.i);
+          return `<label class="a-item ${sel?'sel':''}">
+            <input type="checkbox" data-layer="${key}" data-idx="${it.i}" ${sel?'checked':''}>
+            <span>${escapeHtml(it.s)}</span>
+          </label>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('') || '<div class="painel"><div class="a-empty">Sem itens classificados.</div></div>';
+  const n = a.news || {};
+  $('#newsBody').innerHTML = `
+    <div class="a-item" style="cursor:default"><input type="checkbox" checked disabled><span><b>O que aconteceu:</b> ${escapeHtml(n.happened||'—')}</span></div>
+    <div class="a-item" style="cursor:default"><input type="checkbox" checked disabled><span><b>O que significa:</b> ${escapeHtml(n.meaning||'—')}</span></div>
+    <div class="a-item" style="cursor:default"><input type="checkbox" checked disabled><span><b>Por que importa:</b> ${escapeHtml(n.matters||'—')}</span></div>`;
+  $('#newsBlock').style.display = 'block';
+}
+function getSelectedText(layer){
+  const items = state.analysis[layer] || [];
+  return items.filter(it => state.selections[layer].has(it.i)).map(it => it.s).join('\n\n');
+}
+
+/* =========================================================
+   NAV
+========================================================= */
+function switchView(v){
+  state.view = v;
+  $$('.nav-tab').forEach(t=>t.classList.toggle('active', t.dataset.view===v));
+  $$('.view').forEach(s=>s.classList.toggle('active', s.dataset.view===v));
+  if(v==='pilulas') setTimeout(bindHeroTrackScroll, 60);
+}
+
+/* =========================================================
+   FILE IMPORT
+========================================================= */
+function bindFile(inputId, targetId){
+  const inp = document.getElementById(inputId);
+  if(!inp) return;
+  inp.addEventListener('change', async (e)=>{
+    const f = e.target.files[0]; if(!f) return;
+    const name = f.name.toLowerCase();
+    const type = detectType(name);
+    if(type==='pdf'){ toast('PDF: integra teu JTS Delivery pra extrair texto'); inp.value=''; return; }
+    let text = await f.text();
+    if(type==='html'){
+      const div = document.createElement('div'); div.innerHTML = text;
+      text = div.textContent || div.innerText || '';
+    } else if(type==='raw' && name.endsWith('.json')){
+      try{
+        const j = JSON.parse(text);
+        text = j.input || j.text || j.raw || j.content || JSON.stringify(j, null, 2);
+      }catch(err){}
+    }
+    const fixed = repairMojibake(text);
+    document.getElementById(targetId).value = fixed;
+    if(targetId==='seed') state.seed = fixed;
+    if(targetId==='mirror') state.mirror = fixed;
+    renderMojiTag(targetId); persist();
+    saveAsPill(fixed, type);
+    inp.value='';
+    toast(`Importado · ${fixed.length.toLocaleString('pt-BR')} chars`);
+  });
+}
+
+/* =========================================================
+   EVENT DELEGATION
+========================================================= */
+document.addEventListener('click', async (e)=>{
+
+  // Nav
+  const nt = e.target.closest('.nav-tab');
+  if(nt){ switchView(nt.dataset.view); return; }
+
+  // Tabs output
+  const tb = e.target.closest('.tab');
+  if(tb){ state.outView = tb.dataset.view; renderOutput(); return; }
+
+  // Hero chip clicado
+  const pxChip = e.target.closest('[data-px-chip]');
+  if(pxChip){
+    // Verifica se clicou num botão dentro do chip (não existe, mas por segurança)
+    setActivePill(pxChip.dataset.pxChip);
+    return;
+  }
+
+  // Ação de pílula (funciona no grid E no hero)
+  const pillAct = e.target.closest('[data-pill-act]');
+  if(pillAct){
+    // Se veio do hero, pega do pill ativo; senão pega do data-pill do ancestral
+    const parentPill = pillAct.closest('[data-pill]');
+    const pillId = parentPill?.dataset.pill || state.activePillId;
+    const p = state.pills.find(x=>x.id===pillId);
+    if(!p) return;
+    const act = pillAct.dataset.pillAct;
+    if(act==='del'){ deletePill(p.id); return; }
+    if(act==='tts'){
+      if(state.activePillId !== p.id) setActivePill(p.id);
+      if(state.ttsPlaying && state.activePillId===p.id) stopTTS();
+      else speak(mdToPlain(p.md||p.raw), p.title);
+      return;
+    }
+    if(act==='copy'){ await clipboardWrite(p.md||p.raw); toast('Copiado'); return; }
+    if(act==='download'){ downloadBlob(p.md||p.raw, `${p.title.slice(0,24)}.md`, 'text/markdown;charset=utf-8'); return; }
+    if(act==='to-seed'){
+      state.seed = p.raw; $('#seed').value = p.raw;
+      renderMojiTag('seed'); persist(); switchView('semente'); toast('→ Semente');
+      return;
+    }
+    if(act==='to-mirror'){
+      const cur = state.mirror.trim();
+      state.mirror = cur ? (cur + '\n\n' + p.raw) : p.raw;
+      $('#mirror').value = state.mirror;
+      renderMojiTag('mirror'); persist(); switchView('semente'); toast('→ Espelho');
+      return;
+    }
+    if(act==='inject'){
+      if(state.activePillId !== p.id) setActivePill(p.id);
+      injectIntoCurrentTTS(mdToPlain(p.md||p.raw), p.title);
+      return;
+    }
+    return;
+  }
+
+  // Clique direto na pílula do grid (sem ser num botão)
+  const pEl = e.target.closest('.pilula');
+  if(pEl){ setActivePill(pEl.dataset.pill); return; }
+
+  // Ações universais do header
+  const un = e.target.closest('[data-uni]');
+  if(un){
+    const act = un.dataset.uni;
+    const p = getActivePill();
+    const content = p ? (p.md || p.raw) : state.derivedMd;
+    const plain = p ? mdToPlain(p.md||p.raw) : state.derivedPlain;
+    if(act==='tts'){ if(state.ttsPlaying) stopTTS(); else speak(plain, p ? p.title : 'resultado'); }
+    else if(act==='copy'){ if(!content){ toast('Nada'); return; } await clipboardWrite(content); toast('Copiado'); }
+    else if(act==='download-md'){ if(!content){ toast('Nada'); return; } downloadBlob(content, `pilula-${Date.now()}.md`, 'text/markdown;charset=utf-8'); }
+    else if(act==='to-seed'){
+      if(!p){ toast('Seleciona uma pílula'); return; }
+      state.seed = p.raw; $('#seed').value = p.raw;
+      renderMojiTag('seed'); persist(); switchView('semente'); toast('→ Semente');
+    }
+    else if(act==='to-mirror'){
+      if(!p){ toast('Seleciona uma pílula'); return; }
+      const cur = state.mirror.trim();
+      state.mirror = cur ? (cur + '\n\n' + p.raw) : p.raw;
+      $('#mirror').value = state.mirror;
+      renderMojiTag('mirror'); persist(); switchView('semente'); toast('→ Espelho');
+    }
+    else if(act==='inject'){
+      const txt = getSelectedText('ctx') || getSelectedText('meta') || plain;
+      injectIntoCurrentTTS(txt, 'PÍLULA');
+    }
+    else if(act==='save-pill'){
+      const c = p ? p.md : state.derivedMd;
+      if(!c){ toast('Sem conteúdo'); return; }
+      saveAsPill(c, 'md');
+    }
+    else if(act==='revert'){
+      if(p){ p.md = mdToPlain(p.md || p.raw); renderAllPills(); renderPreview(); }
+      else if(state.derivedMd){ state.derivedMd = state.derivedPlain; state.slices = buildSlices(state.derivedMd); renderOutput(); }
+      else { toast('Nada'); return; }
+      persist(); toast('Revertido');
+    }
+    return;
+  }
+
+  // Ações data-action
+  const a = e.target.closest('[data-action]');
+  if(!a) return;
+  const act = a.dataset.action;
+
+  if(act==='pilula-new'){ saveAsPill('# Nova pílula\n\n(edita aqui)','md'); return; }
+  if(act==='pilula-import'){ $('#file-seed').click(); return; }
+  if(act==='pilula-paste'){ pasteToTarget('seed'); saveAsPill($('#seed').value,'raw'); return; }
+
+  if(act==='paste-seed'){ pasteToTarget('seed'); return; }
+  if(act==='paste-mirror'){ pasteToTarget('mirror'); return; }
+  if(act==='import-seed'){ $('#file-seed').click(); return; }
+  if(act==='import-mirror'){ $('#file-mirror').click(); return; }
+  if(act==='clear-seed'){ $('#seed').value=''; state.seed=''; renderMojiTag('seed'); persist(); return; }
+  if(act==='clear-mirror'){ $('#mirror').value=''; state.mirror=''; renderMojiTag('mirror'); persist(); return; }
+  if(act==='save-seed-pill'){ saveAsPill($('#seed').value, 'raw'); return; }
+  if(act==='save-mirror-pill'){ saveAsPill($('#mirror').value, 'raw'); return; }
+  if(act==='repair-seed'){ state.seed = repairMojibake($('#seed').value); $('#seed').value = state.seed; renderMojiTag('seed'); persist(); toast('Reparado'); return; }
+  if(act==='repair-mirror'){ state.mirror = repairMojibake($('#mirror').value); $('#mirror').value = state.mirror; renderMojiTag('mirror'); persist(); toast('Reparado'); return; }
+
+  if(act==='fundir'){
+    let a1 = $('#seed').value.trim();
+    const b1 = $('#mirror').value.trim();
+    if(!a1){ toast('Cola a semente'); return; }
+    a1 = repairMojibake(a1);
+    const b1f = repairMojibake(b1);
+    state.sourceRaw = b1f ? merge369(a1, b1f) : a1;
+    runPipeline();
+    $('#seedRenderPanel').style.display = 'block';
+    switchView('semente');
+    toast(b1f ? 'Fundido · 3·6·9' : 'Formatado');
+    return;
+  }
+  if(act==='scan-lex'){
+    const raw = state.derivedPlain || state.sourceRaw || $('#seed').value;
+    if(!raw){ toast('Sem texto'); return; }
+    const min = parseInt($('#lexMin').value,10)||4;
+    state.lexRules = detectRepeats(raw, min, state.flags.lexNoStop).map(w=>({word:w.word,count:w.count,replacement:''}));
+    renderLex(); toast(`${state.lexRules.length} repetições`);
+    return;
+  }
+  if(act==='apply-lex'){ runPipeline(); toast('Léxico aplicado'); return; }
+  if(act==='analyze'){
+    const raw = state.derivedPlain || state.sourceRaw || $('#seed').value;
+    if(!raw){ toast('Sem texto'); return; }
+    state.analysis = analyzeText(raw);
+    ['meta','ctx','noise','fact','meaning'].forEach(k=>{
+      state.selections[k] = new Set((state.analysis[k]||[]).map(x=>x.i));
+    });
+    renderAnalysis(); persist(); toast('Analisado');
+    return;
+  }
+  if(act==='select-all'){
+    ['meta','ctx','noise','fact','meaning'].forEach(k=>{
+      state.selections[k] = new Set((state.analysis[k]||[]).map(x=>x.i));
+    });
+    renderAnalysis(); return;
+  }
+  if(act==='invert-sel'){
+    ['meta','ctx','noise','fact','meaning'].forEach(k=>{
+      const all = (state.analysis[k]||[]).map(x=>x.i);
+      const sel = state.selections[k];
+      state.selections[k] = new Set(all.filter(i=>!sel.has(i)));
+    });
+    renderAnalysis(); return;
+  }
+  if(act==='copy-filter'){
+    const t = getSelectedText(a.dataset.filter);
+    if(!t){ toast('Nada selecionado'); return; }
+    await clipboardWrite(t); toast(`${a.dataset.filter} copiado`); return;
+  }
+  if(act==='tts-filter'){
+    const t = getSelectedText(a.dataset.filter);
+    if(!t){ toast('Nada selecionado'); return; }
+    speak(t, a.dataset.filter); return;
+  }
+  if(act==='inject-filter'){
+    const t = getSelectedText(a.dataset.filter);
+    if(!t){ toast('Nada selecionado'); return; }
+    injectIntoCurrentTTS(t, a.dataset.filter); return;
+  }
+  if(act==='load-to-editor'){ $('#editor').value = state.derivedMd || ''; updateEditorPreview(); return; }
+  if(act==='copy-md'){ if(!state.derivedMd){ toast('Nada'); return; } await clipboardWrite(state.derivedMd); toast('Copiado'); return; }
+  if(act==='download-md'){ if(!state.derivedMd){ toast('Nada'); return; } downloadBlob(state.derivedMd, `resultado-${Date.now()}.md`, 'text/markdown;charset=utf-8'); return; }
+  if(act==='download-txt'){ if(!state.derivedPlain){ toast('Nada'); return; } downloadBlob(state.derivedPlain, `resultado-${Date.now()}.txt`, 'text/plain;charset=utf-8'); return; }
+  if(act==='toggle-tts'){ if(state.ttsPlaying) stopTTS(); else speak(state.derivedPlain, 'resultado'); return; }
+  if(act==='revert'){ if(!state.derivedMd){ toast('Nada'); return; } state.derivedMd = state.derivedPlain; state.slices = buildSlices(state.derivedMd); persist(); renderOutput(); toast('Revertido'); return; }
+  if(act==='restore-raw'){ if(!state.sourceRaw){ toast('Nada'); return; } state.derivedMd = state.sourceRaw; state.derivedPlain = state.sourceRaw; state.slices = buildSlices(state.derivedMd); persist(); renderOutput(); toast('RAW restaurado'); return; }
+  if(act==='save-result-pill'){ if(!state.derivedMd){ toast('Nada'); return; } saveAsPill(state.derivedMd, 'md'); return; }
+}, true);
+
+/* chips split / flags */
+document.addEventListener('click',(e)=>{
+  const sp = e.target.closest('[data-split]');
+  if(sp){
+    state.splitMode = sp.dataset.split==='manual' ? 'manual' : parseInt(sp.dataset.split,10);
+    $$('[data-split]').forEach(x=>x.classList.toggle('on', x===sp));
+    persist(); return;
+  }
+  const f = e.target.closest('[data-flag]');
+  if(f){
+    const k = f.dataset.flag;
+    state.flags[k] = !state.flags[k];
+    f.classList.toggle('on', state.flags[k]);
+    persist(); return;
+  }
+  const lc = e.target.closest('[data-lex-clear]');
+  if(lc){
+    const i = parseInt(lc.dataset.lexClear,10);
+    if(state.lexRules[i]){ state.lexRules[i].replacement=''; renderLex(); persist(); }
+    return;
+  }
+});
+document.addEventListener('input',(e)=>{
+  if(e.target.matches('[data-lex-idx]')){
+    const i = parseInt(e.target.dataset.lexIdx,10);
+    if(state.lexRules[i]){ state.lexRules[i].replacement = e.target.value; persist(); }
+  }
+});
+document.addEventListener('change',(e)=>{
+  const cb = e.target.closest('[data-layer][data-idx]');
+  if(cb){
+    const layer = cb.dataset.layer;
+    const idx = parseInt(cb.dataset.idx,10);
+    if(cb.checked) state.selections[layer].add(idx);
+    else state.selections[layer].delete(idx);
+    cb.closest('.a-item').classList.toggle('sel', cb.checked);
+  }
+});
+['seed','mirror'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('input', ()=>{
+    if(id==='seed') state.seed = el.value;
+    if(id==='mirror') state.mirror = el.value;
+    renderMojiTag(id); persist();
+  });
+});
+function updateEditorPreview(){
+  const md = $('#editor').value;
+  $('#editorPreview').innerHTML = MD.render(md);
+}
+const ed = $('#editor');
+if(ed) ed.addEventListener('input', updateEditorPreview);
+
+/* =========================================================
+   INIT
+========================================================= */
+window.addEventListener('load', ()=>{
+  if('speechSynthesis' in window) speechSynthesis.getVoices();
+
+  state.pills = LS.get('pills', []);
+  state.activePillId = LS.get('activePillId', null);
+  state.seed = LS.get('seed','');
+  state.mirror = LS.get('mirror','');
+  state.sourceRaw = LS.get('sourceRaw','');
+  state.derivedMd = LS.get('derivedMd','');
+  state.splitMode = LS.get('splitMode', 9);
+  state.flags = Object.assign(state.flags, LS.get('flags', {}));
+  state.lexRules = LS.get('lexRules', []);
+  const savedAnalysis = LS.get('analysis', null);
+  if(savedAnalysis){
+    state.analysis = Object.assign({meta:[],ctx:[],noise:[],fact:[],meaning:[],all:[],news:{}}, savedAnalysis);
+    ['meta','ctx','noise','fact','meaning'].forEach(k=>{
+      state.selections[k] = new Set((state.analysis[k]||[]).map(x=>x.i));
+    });
+  }
+  if(!state.activePillId && state.pills[0]) state.activePillId = state.pills[0].id;
+
+  $('#seed').value = state.seed;
+  $('#mirror').value = state.mirror;
+  $('#splitManual').value = LS.get('splitManual', 9);
+
+  $$('[data-split]').forEach(x=>x.classList.toggle('on', String(state.splitMode)===x.dataset.split));
+  $$('[data-flag]').forEach(x=>x.classList.toggle('on', !!state.flags[x.dataset.flag]));
+
+  renderMojiTag('seed'); renderMojiTag('mirror');
+  renderAllPills();
+  renderLex();
+  if(state.analysis.all?.length) renderAnalysis();
+  if(state.derivedMd){
+    state.derivedPlain = state.derivedPlain || mdToPlain(state.derivedMd);
+    state.slices = buildSlices(state.derivedMd);
+    $('#seedRenderPanel').style.display = 'block';
+    renderOutput();
+  } else if(state.sourceRaw){
+    runPipeline();
+    $('#seedRenderPanel').style.display = 'block';
+  }
+  renderPreview();
+  updateUniBar();
+  setTimeout(bindHeroTrackScroll, 120);
+
+  bindFile('file-seed','seed');
+  bindFile('file-mirror','mirror');
+
+  console.log('[Espaço da Mente v7.1] Parallax hero carousel pronto.');
+});
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1934 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#06060b">
+<title>NEBULA · Sistema Unificado</title>
+<style>
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root{
+  --bg:#06060b;
+  --panel:rgba(20,22,34,.55);
+  --panel-strong:rgba(13,15,24,.88);
+  --ink:#eef0f7;
+  --muted:#8f96ad;
+  --dim:#5d6478;
+  --border:rgba(255,255,255,.10);
+  --border-strong:rgba(255,255,255,.20);
+  --pill:999px;
+  --blur:20px;
+  /* Dinâmicos (archetype) */
+  --active:#7c5cff;
+  --active-2:#19d3c5;
+  --active-glow:rgba(124,92,255,.45);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:var(--bg);color:var(--ink);
+  font:400 15px/1.55 'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+  transition:background .5s ease;
+}
+body.solar-day{background:#0d0f18}
+body.solar-sunset{background:#0a0810}
+body.solar-night{background:#05060a}
+
+/* ============================================================
+   FUNDO — orbes reativos ao arquétipo
+   ============================================================ */
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.orb{
+  position:absolute;border-radius:50%;filter:blur(110px);opacity:.5;
+  will-change:transform;transition:background 1s ease;
+}
+.o1{width:600px;height:600px;top:-200px;left:-160px;
+  background:radial-gradient(circle,var(--active) 0%,transparent 70%);
+  animation:fl1 22s ease-in-out infinite}
+.o2{width:560px;height:560px;bottom:-220px;right:-140px;
+  background:radial-gradient(circle,var(--active-2) 0%,transparent 70%);
+  animation:fl2 26s ease-in-out infinite}
+.o3{width:440px;height:440px;top:35%;left:58%;opacity:.28;
+  background:radial-gradient(circle,var(--active) 0%,transparent 70%);
+  animation:fl3 30s ease-in-out infinite}
+@keyframes fl1{50%{transform:translate(90px,70px) scale(1.12)}}
+@keyframes fl2{50%{transform:translate(-110px,-70px) scale(1.15)}}
+@keyframes fl3{50%{transform:translate(-70px,90px) scale(.9)}}
+.noise{position:absolute;inset:0;opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E")}
+.vign{position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 35%,transparent 32%,rgba(3,3,8,.78))}
+
+/* ============================================================
+   PÍLULAS — base
+   ============================================================ */
+.pill{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:9px 15px;border-radius:var(--pill);
+  border:1px solid var(--border);background:var(--panel);
+  backdrop-filter:blur(var(--blur)) saturate(1.3);
+  -webkit-backdrop-filter:blur(var(--blur)) saturate(1.3);
+  color:var(--ink);font:600 13px/1 'Inter',sans-serif;
+  cursor:pointer;transition:.22s cubic-bezier(.22,1,.36,1);
+  white-space:nowrap;font-family:inherit;
+}
+.pill:hover{background:rgba(255,255,255,.11);border-color:var(--border-strong);transform:translateY(-1px)}
+.pill:active{transform:scale(.96)}
+.pill.primary{
+  background:linear-gradient(140deg,var(--active),color-mix(in oklab,var(--active) 55%,#000));
+  border-color:transparent;color:#000;
+  box-shadow:0 8px 26px var(--active-glow);
+}
+.pill.ghost{background:rgba(255,255,255,.05)}
+.pill.sm{padding:7px 12px;font-size:11.5px}
+.pill.xs{padding:5px 10px;font-size:10.5px}
+.pill.on{
+  background:linear-gradient(140deg,var(--active),var(--active-2));
+  color:#000;border-color:transparent;
+  box-shadow:0 6px 20px var(--active-glow);
+}
+
+.tab-pill{
+  padding:7px 14px;border-radius:var(--pill);
+  border:1px solid var(--border);background:rgba(255,255,255,.04);
+  color:var(--muted);font:600 12px/1 'Inter',sans-serif;
+  cursor:pointer;transition:.2s;font-family:inherit;
+}
+.tab-pill:hover{color:var(--ink);background:rgba(255,255,255,.08)}
+.tab-pill.on{
+  color:#000;border-color:transparent;
+  background:linear-gradient(120deg,var(--active),var(--active-2));
+  box-shadow:0 6px 20px var(--active-glow);
+}
+
+/* ============================================================
+   TOPBAR
+   ============================================================ */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:60;
+  display:flex;align-items:center;gap:12px;
+  padding:14px 18px;
+  background:linear-gradient(180deg,rgba(6,6,11,.85),rgba(6,6,11,0));
+  backdrop-filter:blur(6px);
+}
+.brand-pill{
+  display:flex;align-items:center;gap:10px;
+  padding:6px 16px 6px 6px;border-radius:var(--pill);
+  border:1px solid var(--border);background:var(--panel);
+  backdrop-filter:blur(var(--blur));
+}
+.brand-mark{
+  width:34px;height:34px;border-radius:50%;
+  background:linear-gradient(140deg,var(--active),var(--active-2));
+  display:grid;place-items:center;color:#000;font-weight:800;font-size:15px;
+  box-shadow:0 6px 20px var(--active-glow);
+  transition:background .6s ease,box-shadow .6s ease;
+}
+.brand-text{display:flex;flex-direction:column;line-height:1}
+.brand-text b{font-size:12.5px;letter-spacing:.3px}
+.brand-text span{font-size:9.5px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:3px}
+
+.search-pill{
+  display:flex;align-items:center;gap:8px;flex:1;max-width:300px;
+  padding:9px 14px;border-radius:var(--pill);
+  border:1px solid var(--border);background:var(--panel);
+  backdrop-filter:blur(var(--blur));transition:.2s;
+}
+.search-pill:focus-within{border-color:var(--active);box-shadow:0 0 0 3px var(--active-glow)}
+.search-pill svg{width:14px;height:14px;opacity:.5;flex:none}
+.search-pill input{background:none;border:none;outline:none;color:var(--ink);
+  font:500 13px/1 'Inter';width:100%;font-family:inherit}
+.search-pill input::placeholder{color:var(--dim)}
+.top-actions{display:flex;gap:8px;margin-left:auto}
+
+/* ============================================================
+   ARCH BAR — pílulas de arquétipo
+   ============================================================ */
+.arch-bar{
+  position:fixed;top:72px;left:50%;transform:translateX(-50%);
+  z-index:55;display:flex;gap:6px;padding:6px;
+  border-radius:var(--pill);
+  background:rgba(10,12,20,.6);border:1px solid var(--border);
+  backdrop-filter:blur(18px);
+  max-width:min(94vw,760px);overflow-x:auto;scrollbar-width:none;
+}
+.arch-bar::-webkit-scrollbar{display:none}
+.arch-chip{
+  padding:6px 12px;border-radius:var(--pill);
+  border:1px solid var(--border);background:rgba(255,255,255,.04);
+  color:var(--muted);font:600 10.5px/1 'Inter',sans-serif;cursor:pointer;
+  transition:.2s;letter-spacing:.4px;flex:none;
+  display:flex;align-items:center;gap:6px;font-family:inherit;
+}
+.arch-chip:hover{color:var(--ink);background:rgba(255,255,255,.08)}
+.arch-chip.on{
+  color:#000;border-color:transparent;
+  background:linear-gradient(120deg,var(--chip-c1),var(--chip-c2));
+  box-shadow:0 4px 14px var(--chip-glow);
+}
+.arch-chip .swatch{
+  width:8px;height:8px;border-radius:50%;
+  background:linear-gradient(120deg,var(--chip-c1),var(--chip-c2));
+  box-shadow:0 0 8px var(--chip-c1);
+}
+
+/* ============================================================
+   STAGE / CARROSSEL
+   ============================================================ */
+.stage-wrap{
+  position:fixed;inset:0;z-index:2;
+  display:grid;place-items:center;
+  perspective:1900px;perspective-origin:50% 45%;
+  padding-top:110px;
+}
+.stage{
+  position:relative;width:100%;height:100%;
+  transform-style:preserve-3d;touch-action:none;cursor:grab;
+}
+.stage.dragging{cursor:grabbing}
+.stage.dragging .card{transition:none!important}
+
+.card{
+  position:absolute;left:50%;top:48%;
+  width:min(300px,72vw);height:min(400px,56vh);
+  border-radius:26px;
+  background:
+    radial-gradient(120% 90% at 25% 0%,var(--glow,rgba(124,92,255,.28)),transparent 62%),
+    linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.025));
+  border:1px solid var(--border);
+  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+  box-shadow:0 30px 70px -20px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.14);
+  display:flex;flex-direction:column;overflow:hidden;
+  transition:transform .6s cubic-bezier(.22,1,.36,1),opacity .5s,box-shadow .4s;
+  will-change:transform,opacity;user-select:none;
+}
+.card.is-active{
+  box-shadow:0 40px 90px -20px rgba(0,0,0,.9),0 0 0 1px var(--active) inset,
+    inset 0 1px 0 rgba(255,255,255,.2);
+  cursor:pointer;
+}
+.card.is-active::after{
+  content:'';position:absolute;inset:0;border-radius:26px;pointer-events:none;
+  background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.09) 48%,transparent 62%);
+  transform:translateX(-120%);animation:shine 5s ease-in-out infinite;
+}
+@keyframes shine{0%,70%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+
+.thumb{
+  position:relative;height:52%;flex:none;overflow:hidden;
+  background:linear-gradient(150deg,var(--c),transparent 120%);
+  display:grid;place-items:center;
+  border-bottom:1px solid rgba(255,255,255,.07);
+}
+.thumb::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(120% 100% at 50% 0%,rgba(255,255,255,.22),transparent 65%);
+}
+.thumb .glyph{
+  font-size:48px;font-weight:800;letter-spacing:-2px;
+  color:rgba(255,255,255,.92);
+  font-family:ui-monospace,'SF Mono',Menlo,monospace;
+  text-shadow:0 6px 30px rgba(0,0,0,.35);position:relative;
+}
+.thumb-img{position:absolute;inset:0;background-size:cover;background-position:top center;
+  opacity:0;transition:opacity .5s}
+.thumb-img.on{opacity:1}
+.card-body{padding:16px 18px;display:flex;flex-direction:column;gap:9px;flex:1;min-height:0}
+.badge{
+  align-self:flex-start;font-size:9.5px;font-weight:800;letter-spacing:1.1px;
+  padding:4px 9px;border-radius:var(--pill);
+  color:var(--c);
+  background:color-mix(in srgb,var(--c) 16%,transparent);
+  border:1px solid color-mix(in srgb,var(--c) 32%,transparent);
+}
+.card h3{font-size:15px;font-weight:700;line-height:1.3;overflow:hidden;
+  text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.snippet{font-size:12px;line-height:1.55;color:var(--muted);flex:1;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical}
+.card-foot{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:10.5px;color:var(--dim);letter-spacing:.3px;
+  padding-top:10px;border-top:1px solid rgba(255,255,255,.06);
+}
+.del{
+  position:absolute;top:12px;right:12px;z-index:3;
+  width:30px;height:30px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(10,10,18,.55);backdrop-filter:blur(10px);
+  color:#fff;cursor:pointer;opacity:0;transition:.22s;
+  display:grid;place-items:center;font-size:13px;
+}
+.card:hover .del{opacity:1}
+.del:hover{background:#ff4d6a;border-color:#ff4d6a;transform:scale(1.08)}
+
+/* ============================================================
+   FILTER + NAV (pílulas)
+   ============================================================ */
+.filter-bar{
+  position:fixed;bottom:82px;left:50%;transform:translateX(-50%);
+  z-index:50;display:flex;gap:6px;
+  padding:6px;border-radius:var(--pill);
+  background:rgba(10,12,20,.6);border:1px solid var(--border);
+  backdrop-filter:blur(18px);
+  max-width:min(94vw,660px);overflow-x:auto;scrollbar-width:none;
+}
+.filter-bar::-webkit-scrollbar{display:none}
+
+.nav-dock{
+  position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
+  z-index:50;display:flex;align-items:center;gap:10px;
+  padding:8px 12px;border-radius:var(--pill);
+  background:var(--panel-strong);border:1px solid var(--border);
+  backdrop-filter:blur(24px) saturate(1.2);
+  box-shadow:0 20px 50px -18px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.04) inset;
+}
+.nav-dock button{
+  width:36px;height:36px;border-radius:50%;
+  border:1px solid var(--border);
+  background:rgba(255,255,255,.05);color:var(--ink);
+  font-size:17px;cursor:pointer;display:grid;place-items:center;
+  transition:.22s;font-family:inherit;
+}
+.nav-dock button:hover{background:rgba(255,255,255,.13);transform:scale(1.06)}
+.nav-dock button:active{transform:scale(.94)}
+.dots{display:flex;gap:6px;align-items:center;padding:0 6px;max-width:44vw;overflow:hidden}
+.dot{
+  width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);
+  cursor:pointer;transition:.3s;flex:none;
+}
+.dot.on{
+  background:linear-gradient(140deg,var(--active),var(--active-2));
+  width:22px;border-radius:5px;box-shadow:0 0 14px var(--active-glow);
+}
+
+/* ============================================================
+   EMPTY
+   ============================================================ */
+.empty{
+  position:fixed;inset:0;z-index:5;display:none;place-items:center;padding:24px;
+}
+.empty.on{display:grid}
+.empty-inner{
+  width:min(460px,92vw);padding:44px 32px;border-radius:28px;text-align:center;
+  background:var(--panel);border:1px dashed var(--border-strong);
+  backdrop-filter:blur(18px);
+}
+.empty-inner .big{
+  width:74px;height:74px;margin:0 auto 20px;border-radius:50%;
+  background:linear-gradient(140deg,var(--active),var(--active-2));
+  display:grid;place-items:center;font-size:30px;color:#000;
+  box-shadow:0 16px 44px var(--active-glow);
+  animation:bob 3.5s ease-in-out infinite;
+}
+@keyframes bob{50%{transform:translateY(-9px)}}
+.empty-inner h2{font-size:19px;margin-bottom:9px;letter-spacing:-.3px}
+.empty-inner p{font-size:13px;color:var(--muted);line-height:1.65;margin-bottom:22px}
+.empty-inner .hint{font-size:11px;color:var(--dim);margin-top:16px;margin-bottom:0}
+
+/* ============================================================
+   READER
+   ============================================================ */
+.reader{
+  position:fixed;inset:0;z-index:120;display:none;
+  align-items:center;justify-content:center;padding:22px;
+  background:rgba(4,4,9,.72);backdrop-filter:blur(14px);
+}
+.reader.on{display:flex;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0}}
+.reader-panel{
+  width:min(960px,100%);height:min(88vh,900px);
+  border-radius:28px;overflow:hidden;display:flex;flex-direction:column;
+  background:linear-gradient(180deg,rgba(20,20,32,.96),rgba(12,12,20,.98));
+  border:1px solid var(--border-strong);
+  box-shadow:0 50px 120px -30px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,255,255,.1);
+  animation:pop .38s cubic-bezier(.22,1,.36,1);
+}
+@keyframes pop{from{transform:scale(.93) translateY(18px);opacity:0}}
+.reader-head{
+  display:flex;align-items:center;gap:12px;padding:14px 18px;flex:none;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  background:linear-gradient(180deg,rgba(255,255,255,.03),transparent);
+}
+.r-icon{
+  width:40px;height:40px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-size:11px;font-weight:800;font-family:ui-monospace,monospace;
+  background:linear-gradient(140deg,var(--c),color-mix(in srgb,var(--c) 40%,#000));
+  color:#000;box-shadow:0 8px 24px color-mix(in srgb,var(--c) 45%,transparent);
+}
+.reader-head .t{flex:1;min-width:0}
+.reader-head h2{font-size:14.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reader-head p{font-size:11px;color:var(--muted);margin-top:2px}
+.r-actions{display:flex;gap:6px;flex:none}
+
+.reader-body{
+  flex:1;overflow-y:auto;overflow-x:hidden;padding:30px 40px 60px;
+  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.16) transparent;
+}
+.reader-body::-webkit-scrollbar{width:9px}
+.reader-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:6px;
+  border:2px solid transparent;background-clip:content-box}
+
+/* Markdown */
+.md{font-size:15px;line-height:1.78;color:#dcdfeb;max-width:760px;margin:0 auto}
+.md h1,.md h2,.md h3,.md h4{color:#fff;font-weight:700;letter-spacing:-.4px;
+  margin:1.6em 0 .6em;line-height:1.3}
+.md h1{font-size:28px;margin-top:0;
+  background:linear-gradient(120deg,#fff,var(--active));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.md h2{font-size:21px;padding-bottom:.35em;border-bottom:1px solid rgba(255,255,255,.1)}
+.md h3{font-size:17px}
+.md p{margin:.9em 0}
+.md a{color:var(--active);text-decoration:none;
+  border-bottom:1px solid color-mix(in srgb,var(--active) 40%,transparent)}
+.md ul,.md ol{margin:.9em 0;padding-left:1.5em}
+.md li{margin:.35em 0}
+.md li::marker{color:var(--active)}
+.md code{
+  font-family:ui-monospace,'SF Mono',monospace;font-size:.86em;
+  background:color-mix(in srgb,var(--active) 16%,transparent);
+  color:var(--active);padding:2px 7px;border-radius:6px;
+  border:1px solid color-mix(in srgb,var(--active) 25%,transparent);
+}
+.md pre{
+  background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.09);
+  border-radius:14px;padding:18px 20px;overflow-x:auto;margin:1.2em 0;
+  font-size:13px;line-height:1.65;
+}
+.md pre code{background:none;border:none;padding:0;color:#b9e8ff;font-size:13px}
+.md blockquote{
+  border-left:3px solid var(--active);margin:1.2em 0;padding:6px 0 6px 18px;
+  color:#9aa2ba;background:linear-gradient(90deg,color-mix(in srgb,var(--active) 10%,transparent),transparent);
+  border-radius:0 10px 10px 0;
+}
+.md table{border-collapse:collapse;width:100%;font-size:13.5px;margin:1.2em 0}
+.md th,.md td{border:1px solid rgba(255,255,255,.1);padding:9px 14px;text-align:left}
+.md th{background:color-mix(in srgb,var(--active) 14%,transparent);color:#fff}
+.plain{font-family:ui-monospace,'SF Mono',monospace;font-size:13px;line-height:1.75;
+  color:#c8cddd;white-space:pre-wrap;word-break:break-word;max-width:800px;margin:0 auto}
+
+/* PDF */
+.pdf-wrap{display:flex;flex-direction:column;align-items:center;gap:20px}
+.pdf-page{
+  width:100%;max-width:820px;border-radius:12px;overflow:hidden;background:#fff;
+  box-shadow:0 22px 60px -14px rgba(0,0,0,.9);border:1px solid rgba(255,255,255,.1);
+}
+.pdf-page canvas{display:block;width:100%;height:auto}
+.pdf-loading{display:flex;flex-direction:column;align-items:center;gap:14px;
+  padding:70px 0;color:var(--muted);font-size:13px}
+.spinner{width:34px;height:34px;border-radius:50%;
+  border:3px solid rgba(255,255,255,.12);border-top-color:var(--active);
+  animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ============================================================
+   SESSIONS — janelas flutuantes em pílulas
+   ============================================================ */
+.sessions{position:fixed;inset:0;z-index:110;pointer-events:none}
+.session{
+  position:absolute;pointer-events:auto;
+  width:min(440px,88vw);height:min(340px,62vh);
+  border-radius:26px;overflow:hidden;
+  background:var(--panel-strong);
+  border:1px solid var(--border-strong);
+  backdrop-filter:blur(24px) saturate(1.3);
+  -webkit-backdrop-filter:blur(24px) saturate(1.3);
+  box-shadow:0 40px 90px -22px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.08);
+  display:flex;flex-direction:column;
+  animation:pop .35s cubic-bezier(.22,1,.36,1);
+  resize:both;overflow:hidden;min-width:220px;min-height:150px;
+}
+.session-head{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 11px;flex:none;
+  border-bottom:1px solid rgba(255,255,255,.07);
+  cursor:grab;background:linear-gradient(180deg,rgba(255,255,255,.04),transparent);
+}
+.session-head:active{cursor:grabbing}
+.session-title{
+  flex:1;font-size:11.5px;font-weight:700;letter-spacing:.3px;
+  display:flex;align-items:center;gap:8px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.session-title .dot{
+  width:8px;height:8px;border-radius:50%;flex:none;
+  background:var(--active);box-shadow:0 0 10px var(--active-glow);
+}
+.session-ctrls{display:flex;gap:4px;flex:none}
+.ctrl{
+  width:24px;height:24px;border-radius:50%;
+  display:grid;place-items:center;border:none;
+  background:rgba(255,255,255,.08);color:var(--ink);
+  font-size:11px;cursor:pointer;transition:.15s;font-family:inherit;
+}
+.ctrl:hover{background:rgba(255,255,255,.18)}
+.ctrl.close:hover{background:#ff4d6a;color:#fff}
+.session-body{flex:1;padding:0;overflow:auto;display:flex;flex-direction:column}
+.session-body iframe{width:100%;height:100%;border:none;background:transparent}
+.session-body .session-doc{padding:20px 22px;overflow-y:auto;font-size:14px;line-height:1.7}
+.session.min .session-body{display:none}
+.session.min{height:44px!important;resize:none}
+
+/* ============================================================
+   SYMBOL BAR — pílulas flutuantes
+   ============================================================ */
+.symbol-bar{
+  position:fixed;bottom:22px;right:22px;z-index:100;
+  display:flex;flex-direction:column;gap:8px;align-items:flex-end;
+}
+.sb-toggle{
+  width:54px;height:54px;border-radius:50%;
+  background:linear-gradient(140deg,var(--active),var(--active-2));
+  border:none;color:#000;font-size:22px;cursor:pointer;
+  box-shadow:0 12px 32px var(--active-glow),inset 0 1px 0 rgba(255,255,255,.4);
+  transition:.3s;display:grid;place-items:center;font-weight:700;font-family:inherit;
+}
+.sb-toggle:hover{transform:scale(1.08) rotate(90deg)}
+.sb-items{
+  display:flex;flex-direction:column;gap:6px;align-items:flex-end;
+  max-height:0;overflow:hidden;opacity:0;
+  transition:.4s cubic-bezier(.22,1,.36,1);
+}
+.symbol-bar.open .sb-items{max-height:70vh;opacity:1;overflow-y:auto;padding:4px 0}
+.sb-items .pill{justify-content:flex-start;width:100%}
+
+/* ============================================================
+   COCKPIT — drawer lateral (configurações)
+   ============================================================ */
+.cockpit-backdrop{
+  position:fixed;inset:0;z-index:130;display:none;
+  background:rgba(3,3,8,.6);backdrop-filter:blur(6px);
+}
+.cockpit-backdrop.on{display:block;animation:fadeIn .25s ease}
+.cockpit{
+  position:fixed;top:0;right:0;bottom:0;z-index:131;
+  width:min(400px,92vw);display:flex;flex-direction:column;
+  background:var(--panel-strong);
+  border-left:1px solid var(--border-strong);
+  backdrop-filter:blur(24px) saturate(1.3);
+  -webkit-backdrop-filter:blur(24px) saturate(1.3);
+  box-shadow:-40px 0 90px rgba(0,0,0,.7);
+  transform:translateX(100%);transition:transform .4s cubic-bezier(.22,1,.36,1);
+}
+.cockpit.on{transform:translateX(0)}
+.cockpit-head{
+  display:flex;align-items:center;gap:10px;
+  padding:16px 18px;flex:none;
+  border-bottom:1px solid rgba(255,255,255,.07);
+}
+.cockpit-head h3{font-size:14px;font-weight:700;flex:1;letter-spacing:.3px}
+.cockpit-body{flex:1;overflow-y:auto;padding:16px 18px 30px;
+  display:flex;flex-direction:column;gap:20px}
+.cockpit-section{
+  padding:14px 16px;border-radius:18px;
+  background:rgba(255,255,255,.035);border:1px solid var(--border);
+}
+.cockpit-section h4{
+  font-size:10.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;
+  color:var(--active);margin-bottom:12px;
+}
+.cockpit-row{display:flex;gap:8px;flex-wrap:wrap}
+.cockpit-field{
+  display:flex;flex-direction:column;gap:5px;flex:1;min-width:120px;
+}
+.cockpit-field label{font-size:10.5px;color:var(--muted);letter-spacing:.3px}
+.cockpit-field input,
+.cockpit-field select{
+  padding:9px 12px;border-radius:12px;
+  background:rgba(0,0,0,.28);border:1px solid var(--border);
+  color:var(--ink);font:500 13px/1 'Inter';font-family:inherit;
+  outline:none;transition:.2s;
+}
+.cockpit-field input:focus,
+.cockpit-field select:focus{border-color:var(--active);box-shadow:0 0 0 3px var(--active-glow)}
+.cockpit-field input[type=range]{padding:0;background:none;border:none}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast{
+  position:fixed;bottom:96px;left:50%;transform:translate(-50%,20px);
+  z-index:200;padding:12px 20px;border-radius:var(--pill);
+  font-size:13px;font-weight:600;
+  background:var(--panel-strong);border:1px solid var(--border-strong);
+  backdrop-filter:blur(16px);
+  box-shadow:0 18px 44px -12px rgba(0,0,0,.9);
+  opacity:0;pointer-events:none;transition:.35s cubic-bezier(.22,1,.36,1);
+  max-width:90vw;text-align:center;
+}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ============================================================
+   DROP overlay
+   ============================================================ */
+.drop{
+  position:fixed;inset:0;z-index:180;display:none;place-items:center;
+  background:rgba(6,6,11,.82);backdrop-filter:blur(10px);
+}
+.drop.on{display:grid}
+.drop-box{
+  padding:52px 66px;border-radius:28px;border:2px dashed var(--active);
+  background:color-mix(in srgb,var(--active) 9%,transparent);text-align:center;
+  animation:pop .3s cubic-bezier(.22,1,.36,1);
+}
+.drop-box .ic{font-size:44px;margin-bottom:14px}
+.drop-box h3{font-size:18px;margin-bottom:6px}
+.drop-box p{font-size:13px;color:var(--muted)}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:760px){
+  .topbar{padding:10px 12px;gap:8px}
+  .brand-text span{display:none}
+  .brand-text b{font-size:11.5px}
+  .search-pill{max-width:none}
+  .top-actions .lbl{display:none}
+  .arch-bar{top:62px}
+  .stage-wrap{padding-top:96px}
+  .reader{padding:0}
+  .reader-panel{width:100%;height:100%;border-radius:0;border:none}
+  .reader-body{padding:22px 18px 60px}
+  .md{font-size:14.5px}
+  .nav-dock{bottom:14px;gap:8px;padding:7px 10px}
+  .filter-bar{bottom:68px}
+  .card{top:44%}
+  .symbol-bar{bottom:14px;right:14px}
+  .sb-toggle{width:48px;height:48px;font-size:20px}
+  .cockpit{width:100vw}
+}
+</style>
+</head>
+<body class="solar-night">
+
+<!-- ====== FUNDO ====== -->
+<div class="bg">
+  <span class="orb o1"></span><span class="orb o2"></span><span class="orb o3"></span>
+  <div class="noise"></div><div class="vign"></div>
+</div>
+
+<!-- ====== TOPBAR ====== -->
+<header class="topbar">
+  <div class="brand-pill">
+    <div class="brand-mark">◈</div>
+    <div class="brand-text">
+      <b>NEBULA</b><span>unificado</span>
+    </div>
+  </div>
+  <label class="search-pill">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="q" type="text" placeholder="Buscar documentos…">
+  </label>
+  <div class="top-actions">
+    <button class="pill ghost" id="btnSample" title="Exemplos">✨ <span class="lbl">Exemplos</span></button>
+    <button class="pill ghost" id="btnImport" title="Importar arquivos">＋ <span class="lbl">Importar</span></button>
+    <button class="pill ghost" id="btnCockpit" title="Cockpit">⚙ <span class="lbl">Cockpit</span></button>
+  </div>
+</header>
+
+<!-- ====== ARCH BAR ====== -->
+<div class="arch-bar" id="archBar"></div>
+
+<!-- ====== STAGE ====== -->
+<div class="stage-wrap">
+  <div class="stage" id="stage"></div>
+</div>
+
+<!-- ====== EMPTY ====== -->
+<div class="empty" id="empty">
+  <div class="empty-inner">
+    <div class="big">◈</div>
+    <h2>Nenhum documento ainda</h2>
+    <p>Arraste <b>TXT</b>, <b>Markdown</b>, <b>PDF</b> ou <b>HTML</b> para qualquer lugar — ou toque em Importar. Tudo fica no cache local.</p>
+    <button class="pill primary" id="btnImport2" style="width:100%;justify-content:center">＋ Importar documentos</button>
+    <p class="hint">ou toque em ✨ Exemplos para ver o design funcionando</p>
+  </div>
+</div>
+
+<!-- ====== FILTER PILLS ====== -->
+<div class="filter-bar" id="filterBar" style="display:none">
+  <button class="tab-pill on" data-f="all">Todas</button>
+  <button class="tab-pill" data-f="md">MD</button>
+  <button class="tab-pill" data-f="txt">TXT</button>
+  <button class="tab-pill" data-f="pdf">PDF</button>
+  <button class="tab-pill" data-f="html">HTML</button>
+  <button class="tab-pill" data-f="json">JSON</button>
+  <button class="tab-pill" data-f="fav">★ Favoritos</button>
+</div>
+
+<!-- ====== NAV DOCK ====== -->
+<div class="nav-dock" id="navDock" style="display:none">
+  <button id="prev" aria-label="Anterior">‹</button>
+  <div class="dots" id="dots"></div>
+  <button id="next" aria-label="Próximo">›</button>
+</div>
+
+<!-- ====== READER ====== -->
+<div class="reader" id="reader">
+  <div class="reader-panel">
+    <div class="reader-head">
+      <div class="r-icon" id="rIcon">TXT</div>
+      <div class="t">
+        <h2 id="rTitle">—</h2>
+        <p id="rMeta">—</p>
+      </div>
+      <div class="r-actions">
+        <button class="pill xs ghost" id="rFav" title="Favoritar">☆</button>
+        <button class="pill xs ghost" id="rGerardo" title="Analisar (Gerardo 369)">🧠</button>
+        <button class="pill xs ghost" id="rPato" title="Aplicar Pato do Mundo → nova pílula">🦆</button>
+        <button class="pill xs ghost" id="rFundir" title="Marcar/Fundir como Semente (369)">⊕</button>
+        <button class="pill xs ghost" id="rInject" title="Injetar Semente no TTS ao vivo">🎧+</button>
+        <button class="pill xs ghost" id="rSpeech" title="Ouvir com arquétipo">🎙️</button>
+        <button class="pill xs ghost" id="rWindow" title="Abrir em janela flutuante">▣</button>
+        <button class="pill xs ghost" id="rDownload" title="Baixar">⤓</button>
+        <button class="pill xs" id="rClose" title="Fechar">✕</button>
+      </div>
+    </div>
+    <div class="reader-body" id="readerBody"></div>
+  </div>
+</div>
+
+<!-- ====== SESSIONS ====== -->
+<div class="sessions" id="sessions"></div>
+
+<!-- ====== SYMBOL BAR ====== -->
+<div class="symbol-bar" id="symbolBar">
+  <div class="sb-items" id="sbItems"></div>
+  <button class="sb-toggle" id="sbToggle" title="Ações rápidas">≡</button>
+</div>
+
+<!-- ====== COCKPIT ====== -->
+<div class="cockpit-backdrop" id="cockpitBackdrop"></div>
+<aside class="cockpit" id="cockpit">
+  <div class="cockpit-head">
+    <h3>⚙ Cockpit</h3>
+    <button class="pill xs" id="cockpitClose">✕</button>
+  </div>
+  <div class="cockpit-body">
+    <div class="cockpit-section">
+      <h4>Arquétipo ativo</h4>
+      <div class="cockpit-field">
+        <label id="archLabel">—</label>
+        <select id="archSelect"></select>
+      </div>
+    </div>
+
+    <div class="cockpit-section">
+      <h4>Ciclo Solar</h4>
+      <div class="cockpit-row">
+        <button class="pill sm ghost" id="solarCycle">☀ Ciclar</button>
+        <button class="pill sm ghost" id="solarAuto">🕒 Auto</button>
+      </div>
+      <div class="cockpit-field" style="margin-top:12px">
+        <label id="solarLabel">night</label>
+      </div>
+    </div>
+
+    <div class="cockpit-section">
+      <h4>Identidade</h4>
+      <div class="cockpit-row">
+        <div class="cockpit-field">
+          <label>Usuário</label>
+          <input id="userName" type="text" placeholder="Viajante" autocomplete="off">
+        </div>
+        <div class="cockpit-field">
+          <label>Modelo IA</label>
+          <input id="userModel" type="text" placeholder="nvidia/nemotron-3-nano" autocomplete="off">
+        </div>
+      </div>
+    </div>
+
+    <div class="cockpit-section">
+      <h4>Motores 369</h4>
+      <div class="cockpit-field">
+        <label>Preset do Pato do Mundo</label>
+        <select id="patoPresetSelect">
+          <option value="pato">Pato do Mundo</option>
+          <option value="basico">Básico</option>
+          <option value="kblx">KBLX glifos</option>
+        </select>
+      </div>
+      <div class="cockpit-field" style="margin-top:10px">
+        <label id="seedLabel">Semente: nenhuma marcada</label>
+      </div>
+    </div>
+
+    <div class="cockpit-section">
+      <h4>Background</h4>
+      <div class="cockpit-row">
+        <label class="pill sm ghost" style="flex:1;justify-content:center;cursor:pointer">
+          <input type="file" id="bgUpload" accept="image/*" style="display:none">
+          ⤒ Enviar imagem
+        </label>
+        <button class="pill sm ghost" id="bgClear" style="flex:1;justify-content:center">🗑 Limpar</button>
+      </div>
+      <div class="cockpit-field" style="margin-top:12px">
+        <label>Opacidade <span id="bgOpacityVal">15%</span></label>
+        <input type="range" id="bgOpacity" min="0" max="100" value="15">
+      </div>
+    </div>
+
+    <div class="cockpit-section">
+      <h4>Backup</h4>
+      <div class="cockpit-row">
+        <button class="pill sm ghost" id="exportState" style="flex:1;justify-content:center">⬇ Exportar</button>
+        <button class="pill sm ghost" id="importState" style="flex:1;justify-content:center">⬆ Importar</button>
+      </div>
+      <button class="pill sm ghost" id="resetState" style="width:100%;justify-content:center;margin-top:8px;color:#ff6b6b;border-color:rgba(255,80,100,.35)">⌦ Resetar tudo</button>
+    </div>
+  </div>
+</aside>
+
+<!-- ====== TOAST ====== -->
+<div class="toast" id="toast"></div>
+
+<!-- ====== DROP ====== -->
+<div class="drop" id="drop">
+  <div class="drop-box">
+    <div class="ic">📥</div>
+    <h3>Solte os arquivos aqui</h3>
+    <p>TXT · Markdown · PDF · JSON · CSV · HTML</p>
+  </div>
+</div>
+
+<input type="file" id="fileInput" multiple hidden
+  accept=".txt,.md,.markdown,.pdf,.json,.csv,.html,.htm,.log,.js,.css,.xml,.yml,.yaml">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<script>
+/* ============================================================
+   NEBULA UNIFICADO
+   Documentos ↔ Reader ↔ TTS ↔ Arquétipos ↔ Sessions ↔ Cockpit
+   ============================================================ */
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+/* ============================================================
+   1 · ARQUÉTIPOS
+   ============================================================ */
+const ARCHS = {
+  KOBLLUX:{c1:'#00d8d8', c2:'#d800d8', pitch:.94, rate:.94,  langs:['pt-BR']},
+  ATLAS:  {c1:'#6CCFF6', c2:'#1B4965', pitch:.78, rate:.94,  langs:['pt-BR']},
+  NOVA:   {c1:'#FF6FB5', c2:'#FFD6E8', pitch:1.22,rate:1.05, langs:['pt-BR']},
+  VITALIS:{c1:'#00F5A0', c2:'#00D9F5', pitch:1.08,rate:1.18, langs:['pt-BR']},
+  PULSE:  {c1:'#A259FF', c2:'#2D1B69', pitch:1.18,rate:1.06, langs:['pt-BR']},
+  KAOS:   {c1:'#FF5C8A', c2:'#3D000F', pitch:1.42,rate:1.18, langs:['pt-BR']},
+  SERENA: {c1:'#7AD3A8', c2:'#154734', pitch:1.06,rate:.90,  langs:['pt-BR']},
+  LUMINE: {c1:'#FFE066', c2:'#FF9F1C', pitch:1.32,rate:1.10, langs:['pt-BR']},
+  KODUX:  {c1:'#F97316', c2:'#431407', pitch:.86, rate:1.02, langs:['pt-BR']},
+  JESUS:  {c1:'#FFD700', c2:'#7c5c00', pitch:1.00,rate:.92,  langs:['pt-PT','pt']}
+};
+let currentArch = 'KOBLLUX';
+
+function hex2rgb(h, a){
+  h = h.replace('#','');
+  const n = parseInt(h.length === 3 ? h.split('').map(c=>c+c).join('') : h, 16);
+  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+}
+
+function applyArch(key){
+  const a = ARCHS[key] || ARCHS.KOBLLUX;
+  currentArch = key;
+  const root = document.documentElement;
+  root.style.setProperty('--active', a.c1);
+  root.style.setProperty('--active-2', a.c2);
+  root.style.setProperty('--active-glow', hex2rgb(a.c1, .45));
+  document.body.dataset.arch = key.toLowerCase();
+  $$('.arch-chip').forEach(c => c.classList.toggle('on', c.dataset.k === key));
+  const sel = $('#archSelect'); if(sel) sel.value = key;
+  const lbl = $('#archLabel'); if(lbl) lbl.textContent = key + ' · ' + a.c1;
+  localStorage.setItem('nebula.arch', key);
+  // Aplica também aos orbes (background already uses var)
+}
+
+function buildArchBar(){
+  const bar = $('#archBar');
+  bar.innerHTML = Object.keys(ARCHS).map(k => {
+    const a = ARCHS[k];
+    return `<button class="arch-chip" data-k="${k}"
+      style="--chip-c1:${a.c1};--chip-c2:${a.c2};--chip-glow:${hex2rgb(a.c1,.45)}">
+      <span class="swatch"></span>${k}
+    </button>`;
+  }).join('');
+  bar.addEventListener('click', e => {
+    const c = e.target.closest('.arch-chip'); if(!c) return;
+    applyArch(c.dataset.k);
+    speak(ARCHS[c.dataset.k] ? c.dataset.k + ' ativo' : '');
+  });
+  // Popular select do cockpit
+  const sel = $('#archSelect');
+  if(sel){
+    sel.innerHTML = Object.keys(ARCHS).map(k=>`<option value="${k}">${k}</option>`).join('');
+    sel.addEventListener('change', ()=>applyArch(sel.value));
+  }
+}
+
+/* ============================================================
+   2 · TTS
+   ============================================================ */
+let voices = [];
+function loadVoices(){ voices = window.speechSynthesis ? speechSynthesis.getVoices() : []; }
+if('speechSynthesis' in window){
+  loadVoices();
+  speechSynthesis.onvoiceschanged = loadVoices;
+  setTimeout(loadVoices, 400); setTimeout(loadVoices, 1200);
+}
+function pickVoice(langs){
+  if(!voices.length) return null;
+  for(const l of langs){
+    const v = voices.find(x => x.lang === l) || voices.find(x => x.lang.startsWith(l.slice(0,2)));
+    if(v) return v;
+  }
+  return voices.find(v => v.lang.startsWith('pt')) || voices[0];
+}
+function speak(text, opts={}){
+  if(!('speechSynthesis' in window) || !text) return;
+  speechSynthesis.cancel();
+  const a = ARCHS[currentArch] || ARCHS.KOBLLUX;
+  const u = new SpeechSynthesisUtterance(text);
+  u.pitch = a.pitch; u.rate = a.rate;
+  const v = pickVoice(a.langs);
+  if(v){ u.voice = v; u.lang = v.lang; }
+  ttsLastText = text; ttsCharIndex = 0; ttsPlaying = true;
+  u.onboundary = (ev)=>{ if(typeof ev.charIndex==='number') ttsCharIndex = ev.charIndex; };
+  u.onend = ()=>{ ttsPlaying=false; ttsCharIndex=0; if(opts.onend) opts.onend(); };
+  u.onerror = ()=>{ ttsPlaying=false; };
+  speechSynthesis.speak(u);
+}
+function stopSpeak(){
+  if('speechSynthesis' in window) speechSynthesis.cancel();
+  ttsPlaying = false; ttsCharIndex = 0;
+}
+
+/* ============================================================
+   3 · UTILIDADES
+   ============================================================ */
+const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtSize = b => !b && b!==0 ? '—' :
+  b<1024 ? b+' B' : b<1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(1)+' MB';
+const fmtTime = ts => {
+  if(!ts) return 'agora';
+  const s = (Date.now()-ts)/1000;
+  return s<60?'agora':s<3600?`há ${Math.floor(s/60)}min`:s<86400?`há ${Math.floor(s/3600)}h`:
+    new Date(ts).toLocaleDateString('pt-BR');
+};
+let toastT;
+function toast(msg){
+  const el = $('#toast');
+  el.textContent = msg; el.classList.add('on');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('on'), 2400);
+}
+function b64ToUint8(dataUrl){
+  const b64 = dataUrl.split(',')[1] || '';
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
+
+/* ============================================================
+   4 · TIPOS DE ARQUIVO
+   ============================================================ */
+const TYPES = {
+  md:      {label:'MD',  c:'#7c5cff', g:'#'},
+  markdown:{label:'MD',  c:'#7c5cff', g:'#'},
+  txt:     {label:'TXT', c:'#19d3c5', g:'¶'},
+  pdf:     {label:'PDF', c:'#ff5c6c', g:'PDF'},
+  json:    {label:'JSON',c:'#ffb020', g:'{ }'},
+  csv:     {label:'CSV', c:'#35d07f', g:'⊞'},
+  html:    {label:'HTML',c:'#ff7a45', g:'</>'},
+  htm:     {label:'HTML',c:'#ff7a45', g:'</>'},
+  log:     {label:'LOG', c:'#8b93a7', g:'≡'},
+  js:      {label:'JS',  c:'#f7df1e', g:'JS'},
+  css:     {label:'CSS', c:'#3b9dff', g:'{ }'},
+  xml:     {label:'XML', c:'#9aa2ba', g:'</>'}
+};
+const typeOf = e => TYPES[(e||'').toLowerCase()] ||
+  {label:(e||'DOC').toUpperCase().slice(0,4), c:'#8b93a7', g:'◆'};
+
+/* ============================================================
+   4b · MOTORES PORTADOS DO FRACTAL 369
+   (Pato do Mundo · AIOR · Gerardo 369 · Fusão 369 · TTS c/ injeção)
+   Sem UI própria — plugados no Symbol Bar, no Reader e no Cockpit.
+   ============================================================ */
+const escapeRegex = s => String(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+
+/* --- Pato do Mundo (léxico de glifos) --- */
+const PATO_PRESETS = {
+  pato:[
+    {from:'de',to:'ðŸ¦†',wholeWord:true},{from:'do',to:'ðö¦†',wholeWord:true},
+    {from:'não',to:'NÃ£o†',wholeWord:true},{from:'mundo',to:'möndö¦†',wholeWord:true},
+    {from:'pato',to:'🦆 Pato',wholeWord:true}
+  ],
+  basico:[
+    {from:'de',to:'ðŸ¦†',wholeWord:true},{from:'do',to:'ðö¦†',wholeWord:true},
+    {from:'da',to:'ðŸ¦†A',wholeWord:true}
+  ],
+  kblx:[
+    {from:'de',to:'ðŸ¦†',wholeWord:true},{from:'do',to:'ðö¦†',wholeWord:true},
+    {from:'mundo',to:'MöNdö¦†',wholeWord:true}
+  ]
+};
+let patoPreset = localStorage.getItem('nebula.pato.preset') || 'pato';
+function applyPato(text, presetKey){
+  const rules = PATO_PRESETS[presetKey||patoPreset] || [];
+  let out = String(text||'');
+  rules.forEach(r=>{
+    const escd = escapeRegex(r.from);
+    let regex;
+    try{ regex = r.wholeWord ? new RegExp(`(?<![\\p{L}\\p{N}_])${escd}(?![\\p{L}\\p{N}_])`,'giu') : new RegExp(escd,'giu'); }
+    catch(e){ regex = new RegExp(escd,'gi'); }
+    out = out.replace(regex, r.to);
+  });
+  return out;
+}
+
+/* --- Formatador AIOR (títulos + parágrafos) --- */
+function isHeadingLine(l){
+  if(/^(texto|cap[ií]tulo|parte|se[cç][aã]o|etapa|fase|bloco|fragmento)\s*[:·\-]?\s*[0-9ivxlcdm]/i.test(l))return 1;
+  if(/^[A-ZÀ-Ý0-9][A-ZÀ-Ý0-9\s]{3,}$/.test(l)&&l.length<=34)return 1;
+  if(l.length<=44&&!/[.!?…:;,\-]$/.test(l)&&l.length>3)return 2;
+  return 0;
+}
+function formatAIOR(raw){
+  if(!raw||!raw.trim())return raw||'';
+  let t = raw.replace(/\r\n?/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+  const out = [];
+  if(/\n/.test(t)){
+    t.split(/\n{2,}/).forEach(bloco=>{
+      bloco.split('\n').map(l=>l.trim()).filter(Boolean).forEach(l=>{
+        const h = isHeadingLine(l);
+        if(h) out.push(h===1?`◆ ${l.toUpperCase()}`:`◇ ${l}`);
+        else out.push(l);
+      });
+      out.push('');
+    });
+  } else {
+    const sents = t.match(/[^.!?…]+[.!?…]+["'”)]*\s*/g) || [t];
+    let para=[];
+    sents.forEach(s=>{
+      para.push(s.trim());
+      if(para.length>=4){ out.push(para.join(' ')); out.push(''); para=[]; }
+    });
+    if(para.length){ out.push(para.join(' ')); out.push(''); }
+  }
+  return out.join('\n').replace(/\n{3,}/g,'\n\n').trim();
+}
+
+/* --- Fusão fractal 369 --- */
+function merge369(a,b){
+  const s1=a.split(/[.!?]+/).filter(s=>s.trim());
+  const s2=b.split(/[.!?]+/).filter(s=>s.trim());
+  const max=Math.max(s1.length,s2.length);
+  let res='';
+  for(let i=0;i<max;i++){
+    const p=i%3;
+    if(p===0&&s1[i])res+=s1[i].trim()+'. ';
+    else if(p===1&&s2[i])res+=s2[i].trim()+'. ';
+    else if(p===2&&s1[i])res+=s1[i].trim()+'. ';
+    else if(s2[i])res+=s2[i].trim()+'. ';
+  }
+  return res.trim();
+}
+
+/* --- Gerardo 369 · classificação Meta / Contexto / Ruído --- */
+const G_STOP = new Set(('a o e de do da dos das um uma em no na nos nas para por com sem que se ao aos as os é foi são ser como mais muito já eu você isso esse essa').split(' '));
+const G_META_RX = /\b(princ[íi]pio|padr[ãa]o|sempre|universal|estrutura|arquétipo|arqu[eé]tipo|metacamada|atemporal|transversal)\b/i;
+const G_NOISE_RX = /\b(hahah+|kkk+|aff+|nem vem|tipo assim|n[ée]\?|entendeu\?|tá ligado|tipo|saca|enfim)\b/i;
+function splitIntoSentences(text){
+  return String(text||'').replace(/\s+/g,' ').split(/(?<=[.!?…])\s+/).map(s=>s.trim()).filter(Boolean);
+}
+function classifyGerardo(s){
+  const low=s.toLowerCase(); const wc=s.split(/\s+/).length;
+  if(G_NOISE_RX.test(low))return'noise';
+  if(G_META_RX.test(low))return'meta';
+  if(/\b(aconteceu|descobri|percebi|resultado|dados|estudo|mudou|novo|nova|hoje|agora|criou)\b/.test(low))return'fact';
+  if(/\b(significa|importante|essencial|ponto|n[úu]cleo|impacto|por isso|sentido)\b/.test(low))return'meaning';
+  if(wc<=5)return'noise';
+  if(/\d/.test(s))return'fact';
+  return'ctx';
+}
+function analyzeGerardo(text){
+  const sents=splitIntoSentences(text);
+  const all=sents.map((s,i)=>({i,s,type:classifyGerardo(s)}));
+  const meta=all.filter(x=>x.type==='meta');
+  const noise=all.filter(x=>x.type==='noise');
+  const ctx=all.filter(x=>x.type==='ctx'||x.type==='fact'||x.type==='meaning');
+  return {meta,ctx,noise,all};
+}
+function gerardoHTML(a){
+  const block=(label,items,color)=>{
+    if(!items.length) return `<h3 style="color:${color}">${label} · 0</h3>`;
+    return `<h3 style="color:${color}">${label} · ${items.length}</h3>` +
+      items.map(it=>`<blockquote style="border-left-color:${color}">${esc(it.s)}</blockquote>`).join('');
+  };
+  return `<div class="md">` +
+    block('🦆 Metacamada', a.meta, '#a29bfe') +
+    block('🐆 Contexto', a.ctx, '#f7d774') +
+    block('🦭 Ruído', a.noise, '#ff6b6b') +
+    `</div>`;
+}
+
+/* --- TTS com rastreio de posição (pra injeção ao vivo) --- */
+let ttsPlaying = false;
+let ttsCharIndex = 0;
+let ttsLastText = '';
+let pendingSeedId = null; /* doc marcado como "Semente" pra fundir/injetar */
+
+function pushDerivedDoc(name, content, extra){
+  const d = {id:uid(), name, ext:'md', size:content.length, addedAt:Date.now(), content, ...extra};
+  docs.unshift(d); persistDocs(); rebuild();
+  return d;
+}
+function updateSeedLabel(){
+  const el = document.getElementById('seedLabel'); if(!el) return;
+  const d = pendingSeedId ? docs.find(x=>x.id===pendingSeedId) : null;
+  el.textContent = d ? `Semente: ${d.name}` : 'Semente: nenhuma marcada';
+}
+function markSeed(doc){
+  if(!doc) return;
+  if(pendingSeedId === doc.id){ pendingSeedId=null; toast('Semente desmarcada'); updateSeedLabel(); return; }
+  pendingSeedId = doc.id;
+  toast('💊 "'+doc.name+'" marcado como Semente — abra outro doc e funda');
+  updateSeedLabel();
+}
+function fundirComSemente(doc){
+  if(!doc) return;
+  if(!pendingSeedId){ markSeed(doc); return; }
+  if(pendingSeedId === doc.id){ toast('Escolhe um segundo documento diferente'); return; }
+  const seed = docs.find(d=>d.id===pendingSeedId);
+  if(!seed){ pendingSeedId=null; updateSeedLabel(); toast('Semente perdida — marca de novo'); return; }
+  let fused = merge369(seed.content||seed.name, doc.content||doc.name);
+  fused = formatAIOR(fused);
+  fused = applyPato(fused);
+  pushDerivedDoc(`Fusão 369 · ${seed.name} + ${doc.name}`, fused, {fused:true});
+  pendingSeedId = null;
+  updateSeedLabel();
+  toast('⊕ Fundido — novo documento criado');
+}
+function injectIntoLiveTTS(pillDoc){
+  if(!ttsPlaying || !ttsLastText){ toast('Ative o 🎙️ primeiro pra injetar ao vivo'); return; }
+  const idx = Math.min(ttsCharIndex, ttsLastText.length);
+  let cut = ttsLastText.lastIndexOf('.', idx);
+  if(cut < 0) cut = idx;
+  const before = ttsLastText.slice(0, cut+1);
+  const after = ttsLastText.slice(cut+1);
+  const fused = `${before}\n\n${(pillDoc.content||pillDoc.name).trim()}\n\n${after}`.trim();
+  pushDerivedDoc(`Fusão ao vivo · ${pillDoc.name}`, fused, {fused:true});
+  toast('🎧+ Contexto injetado — nova pílula criada');
+  speak(`${(pillDoc.content||pillDoc.name).trim()} ${after}`.trim());
+}
+
+/* ============================================================
+   5 · ESTADO
+   ============================================================ */
+const DOC_KEY = 'nebula.docs.v1';
+let docs = [], view = [], cards = [], index = 0, filter = 'all';
+let dragX = 0, dragging = false, startX = 0, moved = false;
+const pdfCache = new Map();
+
+function persistDocs(){
+  try{
+    const slim = docs.map(d => {
+      if(d.dataUrl && d.dataUrl.length > 1_200_000){
+        const {dataUrl, ...r} = d; return {...r, offline:true};
+      }
+      return d;
+    });
+    localStorage.setItem(DOC_KEY, JSON.stringify(slim));
+  }catch(e){ toast('⚠️ Cache cheio'); }
+}
+function restoreDocs(){
+  try{ const r = localStorage.getItem(DOC_KEY); if(r) docs = JSON.parse(r).filter(d=>d&&d.name); }
+  catch{ docs = []; }
+}
+
+/* ============================================================
+   6 · MARKDOWN PARSER (leve, sem deps)
+   ============================================================ */
+function mdToHtml(src){
+  const lines = String(src).replace(/\r\n?/g,'\n').split('\n');
+  const out = []; let i = 0;
+  const inline = t => t
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/(^|[^*])\*([^*\n]+)\*/g,'$1<em>$2</em>')
+    .replace(/~~(.+?)~~/g,'<del>$1</del>')
+    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  while(i < lines.length){
+    const l = lines[i];
+    if(/^\s*$/.test(l)){i++; continue;}
+    if(/^\s*```/.test(l)){
+      const lang = l.trim().slice(3).trim(); i++;
+      const buf = [];
+      while(i<lines.length && !/^\s*```/.test(lines[i])){ buf.push(lines[i]); i++; }
+      i++;
+      out.push(`<pre data-lang="${esc(lang)}"><code>${esc(buf.join('\n'))}</code></pre>`);
+      continue;
+    }
+    const h = l.match(/^(#{1,6})\s+(.*)$/);
+    if(h){ const lv=h[1].length; out.push(`<h${lv}>${inline(h[2])}</h${lv}>`); i++; continue; }
+    if(/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(l)){ out.push('<hr>'); i++; continue; }
+    if(/^\s*>/.test(l)){
+      const buf = [];
+      while(i<lines.length && /^\s*>/.test(lines[i])){ buf.push(lines[i].replace(/^\s*>\s?/,'')); i++; }
+      out.push('<blockquote>'+mdToHtml(buf.join('\n'))+'</blockquote>'); continue;
+    }
+    if(/^\s*\|/.test(l) && i+1<lines.length && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i+1])){
+      const split = r => r.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(s=>s.trim());
+      const head = split(l); i += 2; const rows = [];
+      while(i<lines.length && /^\s*\|/.test(lines[i])){ rows.push(split(lines[i])); i++; }
+      out.push('<table><thead><tr>'+head.map(c=>`<th>${inline(c)}</th>`).join('')+'</tr></thead><tbody>'+
+        rows.map(r=>'<tr>'+r.map(c=>`<td>${inline(c)}</td>`).join('')+'</tr>').join('')+'</tbody></table>');
+      continue;
+    }
+    if(/^\s*([-*+]|\d+\.)\s+/.test(l)){
+      const ord = /^\s*\d+\./.test(l); const items = [];
+      while(i<lines.length && /^\s*([-*+]|\d+\.)\s+/.test(lines[i])){
+        items.push(lines[i].replace(/^\s*([-*+]|\d+\.)\s+/,'')); i++;
+      }
+      const tag = ord ? 'ol' : 'ul';
+      out.push(`<${tag}>`+items.map(t=>`<li>${inline(t)}</li>`).join('')+`</${tag}>`); continue;
+    }
+    const buf = [];
+    while(i<lines.length && !/^\s*$/.test(lines[i]) &&
+          !/^(#{1,6}\s|>\s*|```|\s*([-*+]|\d+\.)\s)/.test(lines[i])){ buf.push(lines[i]); i++; }
+    if(!buf.length){ buf.push(lines[i]); i++; }
+    out.push('<p>'+inline(buf.join(' '))+'</p>');
+  }
+  return out.join('\n');
+}
+
+/* ============================================================
+   7 · DOCUMENTOS · carregar
+   ============================================================ */
+function handleFiles(files){
+  const list = Array.from(files || []);
+  if(!list.length) return;
+  list.forEach(file => {
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    if(ext === 'pdf'){
+      const r = new FileReader();
+      r.onload = () => {
+        const d = {id:uid(), name:file.name, ext:'pdf', size:file.size,
+          addedAt:Date.now(), dataUrl:r.result};
+        docs.unshift(d); persistDocs(); rebuild(); makePdfThumb(d);
+        toast('📄 '+file.name);
+      };
+      r.readAsDataURL(file);
+    } else {
+      const r = new FileReader();
+      r.onload = () => {
+        let content = r.result;
+        if(ext === 'json'){ try{ content = JSON.stringify(JSON.parse(content), null, 2); }catch{} }
+        docs.unshift({id:uid(), name:file.name, ext:ext||'txt',
+          size:file.size, addedAt:Date.now(), content});
+        persistDocs(); rebuild();
+      };
+      r.readAsText(file);
+    }
+  });
+  if(list.length > 1) toast('📚 '+list.length+' arquivos');
+}
+
+async function makePdfThumb(d){
+  if(!window.pdfjsLib || !d.dataUrl) return;
+  try{
+    const pdf = await pdfjsLib.getDocument({data:b64ToUint8(d.dataUrl)}).promise;
+    d.pages = pdf.numPages;
+    const page = await pdf.getPage(1);
+    const vp = page.getViewport({scale:.45});
+    const c = document.createElement('canvas'); c.width=vp.width; c.height=vp.height;
+    await page.render({canvasContext:c.getContext('2d'), viewport:vp}).promise;
+    d.thumb = c.toDataURL('image/jpeg', .72);
+    const img = $('#stage').querySelector(`[data-id="${d.id}"] .thumb-img`);
+    if(img){ img.style.backgroundImage = `url(${d.thumb})`; img.classList.add('on'); }
+    const gl = $('#stage').querySelector(`[data-id="${d.id}"] .glyph`);
+    if(gl) gl.style.opacity = 0;
+    persistDocs();
+  }catch{}
+}
+
+/* ============================================================
+   8 · CARROSSEL
+   ============================================================ */
+const stage = $('#stage');
+function rebuild(){
+  const q = ($('#q').value || '').trim().toLowerCase();
+  view = docs.filter(d => {
+    if(filter !== 'all'){
+      if(filter === 'fav' && !d.fav) return false;
+      if(filter !== 'fav' && (d.ext||'').toLowerCase() !== filter) return false;
+    }
+    if(!q) return true;
+    return d.name.toLowerCase().includes(q) ||
+           (d.content && d.content.toLowerCase().includes(q));
+  });
+
+  stage.innerHTML = ''; cards = [];
+  view.forEach((d, i) => {
+    const t = typeOf(d.ext);
+    const card = document.createElement('article');
+    card.className = 'card';
+    card.dataset.id = d.id; card.dataset.index = i;
+    card.style.setProperty('--c', t.c);
+    card.style.setProperty('--glow', hex2rgb(t.c, .30));
+
+    const snippet = d.content
+      ? d.content.replace(/[#*`>_~\-]/g,' ').replace(/\s+/g,' ').trim().slice(0,220)
+      : (d.ext === 'pdf' ? 'PDF · '+(d.pages?d.pages+' página(s)':'toque para abrir') : 'Documento');
+
+    card.innerHTML =
+      `<button class="del" title="Remover">✕</button>
+      <div class="thumb">
+        <div class="thumb-img"${d.thumb?` style="background-image:url(${d.thumb})"`:''}></div>
+        <div class="glyph"${d.thumb?' style="opacity:0"':''}>${esc(t.g)}</div>
+      </div>
+      <div class="card-body">
+        <span class="badge">${t.label}${d.fav?' ★':''}</span>
+        <h3>${esc(d.name)}</h3>
+        <p class="snippet">${esc(snippet)}</p>
+        <div class="card-foot"><span>${fmtSize(d.size)}</span><span>${fmtTime(d.addedAt)}</span></div>
+      </div>`;
+
+    card.addEventListener('click', e => {
+      if(e.target.closest('.del')) return;
+      if(moved) return;
+      if(card.classList.contains('is-active')) openReader(d);
+      else { index = i; layout(); }
+    });
+    card.querySelector('.del').addEventListener('click', e => {
+      e.stopPropagation();
+      docs = docs.filter(x => x.id !== d.id);
+      persistDocs(); rebuild(); toast('🗑️ Removido');
+    });
+    stage.appendChild(card); cards.push(card);
+  });
+
+  if(index >= view.length) index = Math.max(0, view.length-1);
+  if(index < 0) index = 0;
+
+  const dotsEl = $('#dots'); dotsEl.innerHTML = '';
+  view.forEach((_, i) => {
+    const dot = document.createElement('span'); dot.className = 'dot';
+    dot.addEventListener('click', () => { index = i; layout(); });
+    dotsEl.appendChild(dot);
+  });
+
+  const has = view.length > 0;
+  $('#empty').classList.toggle('on', !has);
+  $('#navDock').style.display = has ? 'flex' : 'none';
+  $('#filterBar').style.display = has ? 'flex' : 'none';
+  layout();
+}
+
+function spacing(){
+  const w = window.innerWidth;
+  return w < 520 ? Math.min(150, w*.42) : w < 860 ? 170 : 205;
+}
+function layout(){
+  if(!cards.length) return;
+  const SP = spacing();
+  cards.forEach((el, i) => {
+    const off = i - index, abs = Math.abs(off);
+    if(abs > 4){
+      el.style.opacity = 0; el.style.pointerEvents = 'none';
+      el.style.transform = `translate(-50%,-50%) translate3d(${off*SP}px,0,-1000px)`;
+      el.style.zIndex = 0; return;
+    }
+    const x = off*SP + dragX, y = abs*14, z = -abs*210;
+    const ry = off*-30 + (dragX*-.035), sc = 1 - Math.min(abs,4)*.055;
+    el.style.transform =
+      `translate(-50%,-50%) translate3d(${x}px,${y}px,${z}px) rotateY(${ry}deg) scale(${sc})`;
+    el.style.opacity = 1 - Math.min(abs,4)*.20;
+    el.style.zIndex = 100 - abs;
+    el.style.pointerEvents = 'auto';
+    el.classList.toggle('is-active', off === 0 && Math.abs(dragX) < 55);
+  });
+  $$('.dot').forEach((d,i) => d.classList.toggle('on', i === index));
+}
+function go(delta){
+  if(!view.length) return;
+  index = Math.max(0, Math.min(view.length-1, index+delta));
+  layout();
+}
+
+/* Drag */
+stage.addEventListener('pointerdown', e => {
+  if(e.target.closest('.del')) return;
+  dragging = true; moved = false; startX = e.clientX; dragX = 0;
+  stage.classList.add('dragging');
+  try{ stage.setPointerCapture(e.pointerId); }catch{}
+});
+stage.addEventListener('pointermove', e => {
+  if(!dragging) return;
+  dragX = e.clientX - startX;
+  if(Math.abs(dragX) > 8) moved = true;
+  layout();
+});
+function endDrag(){
+  if(!dragging) return;
+  dragging = false; stage.classList.remove('dragging');
+  const dx = dragX; dragX = 0;
+  if(dx < -55) go(1); else if(dx > 55) go(-1); else layout();
+  setTimeout(() => { moved = false; }, 60);
+}
+stage.addEventListener('pointerup', endDrag);
+stage.addEventListener('pointercancel', endDrag);
+stage.addEventListener('wheel', e => {
+  if(Math.abs(e.deltaX) > Math.abs(e.deltaY)){
+    e.preventDefault();
+    if(Math.abs(e.deltaX) > 18) go(e.deltaX > 0 ? 1 : -1);
+  }
+}, {passive:false});
+
+document.addEventListener('keydown', e => {
+  if($('#reader').classList.contains('on')){
+    if(e.key === 'Escape') closeReader();
+    return;
+  }
+  if(e.key === 'ArrowRight') go(1);
+  if(e.key === 'ArrowLeft') go(-1);
+  if(e.key === 'Enter' && view[index]) openReader(view[index]);
+});
+
+$('#prev').addEventListener('click', ()=>go(-1));
+$('#next').addEventListener('click', ()=>go(1));
+
+/* ============================================================
+   9 · READER
+   ============================================================ */
+let currentDoc = null;
+async function openReader(doc){
+  currentDoc = doc;
+  const t = typeOf(doc.ext);
+  $('#rIcon').textContent = t.label;
+  $('#rIcon').style.setProperty('--c', t.c);
+  $('#rTitle').textContent = doc.name;
+  $('#rMeta').textContent =
+    `${t.label} · ${fmtSize(doc.size)} · ${fmtTime(doc.addedAt)}` +
+    (doc.pages ? ` · ${doc.pages} página(s)` : '');
+  $('#rFav').textContent = doc.fav ? '★' : '☆';
+  $('#readerBody').innerHTML =
+    '<div class="pdf-loading"><div class="spinner"></div><span>Carregando…</span></div>';
+  $('#reader').classList.add('on');
+  $('#readerBody').scrollTop = 0;
+
+  const ext = (doc.ext || '').toLowerCase();
+  if(ext === 'pdf') await renderPdf(doc);
+  else if(ext === 'md' || ext === 'markdown')
+    $('#readerBody').innerHTML = '<div class="md">'+mdToHtml(doc.content||'')+'</div>';
+  else
+    $('#readerBody').innerHTML = '<pre class="plain">'+esc(doc.content||'(vazio)')+'</pre>';
+}
+function closeReader(){
+  $('#reader').classList.remove('on');
+  $('#readerBody').innerHTML = '';
+  currentDoc = null;
+  if('speechSynthesis' in window) speechSynthesis.cancel();
+}
+$('#rClose').addEventListener('click', closeReader);
+$('#reader').addEventListener('click', e => { if(e.target === $('#reader')) closeReader(); });
+
+$('#rFav').addEventListener('click', () => {
+  if(!currentDoc) return;
+  currentDoc.fav = !currentDoc.fav;
+  $('#rFav').textContent = currentDoc.fav ? '★' : '☆';
+  persistDocs(); rebuild();
+});
+$('#rGerardo').addEventListener('click', () => {
+  if(!currentDoc || !currentDoc.content){ toast('Sem texto pra analisar'); return; }
+  const a = analyzeGerardo(currentDoc.content);
+  $('#readerBody').innerHTML = gerardoHTML(a) +
+    '<p style="text-align:center;margin-top:20px"><button class="pill sm ghost" id="rGerardoBack">← Voltar ao documento</button></p>';
+  $('#rGerardoBack').addEventListener('click', () => openReader(currentDoc));
+  toast(`Meta:${a.meta.length} · Ctx:${a.ctx.length} · Ruído:${a.noise.length}`);
+});
+$('#rPato').addEventListener('click', () => {
+  if(!currentDoc || !currentDoc.content){ toast('Sem texto pra transformar'); return; }
+  const out = applyPato(currentDoc.content);
+  pushDerivedDoc(`${currentDoc.name} · Pato`, out, {fromId:currentDoc.id});
+  toast('🦆 Pato aplicado — nova pílula criada');
+});
+$('#rFundir').addEventListener('click', () => fundirComSemente(currentDoc));
+$('#rInject').addEventListener('click', () => {
+  if(!pendingSeedId){ toast('Marca uma Semente primeiro (⊕)'); return; }
+  const seed = docs.find(d=>d.id===pendingSeedId);
+  if(!seed){ toast('Semente perdida'); return; }
+  injectIntoLiveTTS(seed);
+});
+$('#rSpeech').addEventListener('click', () => {
+  if(!currentDoc) return;
+  const text = (currentDoc.content || currentDoc.name || '').slice(0, 5000);
+  if(text){
+    speak(text);
+    toast('🎙️ Lendo com '+currentArch);
+  } else if(currentDoc.ext === 'pdf'){
+    speak('PDF '+currentDoc.name);
+    toast('PDF não tem texto extraído — lendo apenas o nome');
+  }
+});
+$('#rWindow').addEventListener('click', () => {
+  if(!currentDoc) return;
+  const d = currentDoc;
+  const t = typeOf(d.ext);
+  let bodyHtml = '';
+  if(d.content){
+    if((d.ext||'').toLowerCase().includes('md') || d.ext === 'markdown')
+      bodyHtml = '<div class="md">'+mdToHtml(d.content)+'</div>';
+    else bodyHtml = '<pre class="plain">'+esc(d.content)+'</pre>';
+  } else if(d.dataUrl && d.ext === 'pdf'){
+    bodyHtml = '<iframe src="'+d.dataUrl+'"></iframe>';
+  }
+  makeSession({ title:t.label+' · '+d.name, contentHtml:bodyHtml });
+  closeReader();
+});
+$('#rDownload').addEventListener('click', () => {
+  if(!currentDoc) return;
+  let url;
+  if(currentDoc.dataUrl) url = currentDoc.dataUrl;
+  else url = URL.createObjectURL(new Blob([currentDoc.content||''], {type:'text/plain;charset=utf-8'}));
+  const a = document.createElement('a'); a.href = url; a.download = currentDoc.name;
+  document.body.appendChild(a); a.click(); a.remove();
+});
+
+/* PDF */
+async function renderPdf(doc){
+  if(!doc.dataUrl){
+    $('#readerBody').innerHTML = '<div class="pdf-loading">📄 PDF grande — reimporte para visualizar.</div>';
+    return;
+  }
+  if(!window.pdfjsLib){
+    $('#readerBody').innerHTML = '<div class="pdf-loading">⚠️ pdf.js ausente. <a style="color:var(--active)" href="'+doc.dataUrl+'" target="_blank">Abrir em nova aba</a></div>';
+    return;
+  }
+  try{
+    let pdf = pdfCache.get(doc.id);
+    if(!pdf){
+      pdf = await pdfjsLib.getDocument({data:b64ToUint8(doc.dataUrl)}).promise;
+      pdfCache.set(doc.id, pdf);
+    }
+    doc.pages = pdf.numPages;
+    $('#readerBody').innerHTML = '';
+    const wrap = document.createElement('div'); wrap.className = 'pdf-wrap';
+    $('#readerBody').appendChild(wrap);
+    const maxPages = Math.min(pdf.numPages, 40);
+    for(let p = 1; p <= maxPages; p++){
+      const page = await pdf.getPage(p);
+      const vp = page.getViewport({scale:1.6});
+      const box = document.createElement('div'); box.className = 'pdf-page';
+      const c = document.createElement('canvas'); c.width=vp.width; c.height=vp.height;
+      box.appendChild(c); wrap.appendChild(box);
+      await page.render({canvasContext:c.getContext('2d'), viewport:vp}).promise;
+      await new Promise(r => setTimeout(r, 0));
+    }
+    if(pdf.numPages > maxPages){
+      const note = document.createElement('div'); note.className = 'pdf-loading';
+      note.textContent = 'Mostrando '+maxPages+' de '+pdf.numPages+' páginas.';
+      wrap.appendChild(note);
+    }
+  }catch(err){
+    $('#readerBody').innerHTML = '<div class="pdf-loading">❌ '+esc(err.message || 'Erro')+'</div>';
+  }
+}
+
+/* ============================================================
+   10 · SESSIONS — janelas flutuantes
+   ============================================================ */
+const sessionsLayer = $('#sessions');
+let sessionCount = 0;
+function makeSession({title, src, contentHtml}){
+  const el = document.createElement('div');
+  el.className = 'session';
+  const W = Math.min(window.innerWidth - 32, 440);
+  const H = Math.min(window.innerHeight - 120, 340);
+  const col = sessionCount % 4;
+  el.style.width = W+'px'; el.style.height = H+'px';
+  el.style.left = Math.max(16, (window.innerWidth - W)/2 + col*24 - 36)+'px';
+  el.style.top  = Math.max(90, 120 + sessionCount*22)+'px';
+  sessionCount++;
+
+  el.innerHTML = `
+    <div class="session-head">
+      <span class="session-title"><span class="dot"></span>${esc(title||'Sessão')}</span>
+      <div class="session-ctrls">
+        <button class="ctrl" data-a="min" title="Recolher">—</button>
+        <button class="ctrl close" data-a="close" title="Fechar">✕</button>
+      </div>
+    </div>
+    <div class="session-body"></div>`;
+
+  const body = el.querySelector('.session-body');
+  if(src){
+    const f = document.createElement('iframe');
+    f.src = src;
+    f.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media';
+    body.appendChild(f);
+  } else if(contentHtml){
+    const d = document.createElement('div'); d.className = 'session-doc';
+    d.innerHTML = contentHtml;
+    body.appendChild(d);
+  } else {
+    body.innerHTML = '<div style="padding:20px;color:var(--muted);font-size:12px">Sessão vazia.</div>';
+  }
+
+  // Drag por header
+  const head = el.querySelector('.session-head');
+  let drag = false, sx, sy, ox, oy;
+  head.addEventListener('pointerdown', e => {
+    if(e.target.closest('.ctrl')) return;
+    drag = true; sx = e.clientX; sy = e.clientY;
+    ox = el.offsetLeft; oy = el.offsetTop;
+    try{ head.setPointerCapture(e.pointerId); }catch{}
+  });
+  head.addEventListener('pointermove', e => {
+    if(!drag) return;
+    el.style.left = Math.max(0, ox + e.clientX - sx)+'px';
+    el.style.top  = Math.max(60, oy + e.clientY - sy)+'px';
+  });
+  const end = () => { drag = false; };
+  head.addEventListener('pointerup', end);
+  head.addEventListener('pointercancel', end);
+
+  el.querySelector('[data-a="close"]').addEventListener('click', () => el.remove());
+  el.querySelector('[data-a="min"]').addEventListener('click', () => el.classList.toggle('min'));
+
+  sessionsLayer.appendChild(el);
+  return el;
+}
+
+/* ============================================================
+   11 · SYMBOL BAR — pílulas de ações rápidas
+   ============================================================ */
+const SB_ACTIONS = [
+  { icon:'📥', label:'Importar',           act: () => $('#fileInput').click() },
+  { icon:'✨', label:'Exemplos',           act: () => loadSamples() },
+  { icon:'▣',  label:'Nova janela',        act: () => makeSession({ title:'Nova sessão · '+currentArch }) },
+  { icon:'🌐', label:'Splash Infodose',    act: () => makeSession({ title:'Splash', src:'https://www.infodose.com.br/splash' }) },
+  { icon:'🎙️', label:'Ler doc ativo',      act: () => {
+      if(!view[index]) return toast('Nenhum doc ativo');
+      openReader(view[index]).then(() => setTimeout(() => $('#rSpeech').click(), 500));
+  }},
+  { icon:'🎨', label:'Trocar arquétipo',   act: () => {
+      const keys = Object.keys(ARCHS);
+      const nx = keys[(keys.indexOf(currentArch)+1) % keys.length];
+      applyArch(nx); toast('◈ '+nx);
+  }},
+  { icon:'⚙',  label:'Cockpit',            act: () => openCockpit() },
+  { icon:'🧠', label:'Analisar (Gerardo)',  act: () => {
+      if(!view[index]) return toast('Nenhum doc ativo');
+      openReader(view[index]).then(() => setTimeout(() => $('#rGerardo').click(), 400));
+  }},
+  { icon:'🦆', label:'Pato → nova pílula',  act: () => {
+      const d = view[index]; if(!d||!d.content) return toast('Nenhum doc ativo com texto');
+      pushDerivedDoc(`${d.name} · Pato`, applyPato(d.content), {fromId:d.id});
+      toast('🦆 Pato aplicado — nova pílula criada');
+  }},
+  { icon:'⊕',  label:'Marcar/Fundir Semente', act: () => {
+      const d = view[index]; if(!d) return toast('Nenhum doc ativo');
+      fundirComSemente(d);
+  }},
+  { icon:'🎧+', label:'Injetar Semente no TTS', act: () => {
+      if(!pendingSeedId) return toast('Marca uma Semente primeiro (⊕)');
+      const seed = docs.find(x=>x.id===pendingSeedId);
+      if(!seed) return toast('Semente perdida');
+      injectIntoLiveTTS(seed);
+  }},
+  { icon:'🗑️', label:'Limpar tudo',        act: () => {
+      if(!confirm('Apagar todos os documentos?')) return;
+      docs = []; persistDocs(); rebuild(); toast('Limpo');
+  }}
+];
+function buildSymbolBar(){
+  const box = $('#sbItems');
+  box.innerHTML = SB_ACTIONS.map((a,i) =>
+    `<button class="pill sm" data-i="${i}">${a.icon} ${a.label}</button>`).join('');
+  box.addEventListener('click', e => {
+    const b = e.target.closest('button[data-i]'); if(!b) return;
+    const a = SB_ACTIONS[+b.dataset.i];
+    if(a && a.act) a.act();
+    $('#symbolBar').classList.remove('open');
+  });
+}
+$('#sbToggle').addEventListener('click', () => $('#symbolBar').classList.toggle('open'));
+
+/* ============================================================
+   12 · COCKPIT — drawer de configurações
+   ============================================================ */
+function openCockpit(){
+  $('#cockpit').classList.add('on');
+  $('#cockpitBackdrop').classList.add('on');
+}
+function closeCockpit(){
+  $('#cockpit').classList.remove('on');
+  $('#cockpitBackdrop').classList.remove('on');
+}
+$('#btnCockpit').addEventListener('click', openCockpit);
+$('#cockpitClose').addEventListener('click', closeCockpit);
+$('#cockpitBackdrop').addEventListener('click', closeCockpit);
+
+/* Solar */
+const SOLAR_MODES = ['day','sunset','night'];
+let solarAuto = localStorage.getItem('nebula.solar.auto') === '1';
+function setSolar(mode, auto){
+  solarAuto = !!auto;
+  document.body.classList.remove('solar-day','solar-sunset','solar-night');
+  document.body.classList.add('solar-'+mode);
+  localStorage.setItem('nebula.solar', mode);
+  localStorage.setItem('nebula.solar.auto', solarAuto ? '1':'0');
+  const l = $('#solarLabel'); if(l) l.textContent = mode.toUpperCase() + (solarAuto?' · auto':'');
+}
+function solarByTime(){
+  const h = new Date().getHours();
+  return (h>=6 && h<17) ? 'day' : (h>=17 && h<19) ? 'sunset' : 'night';
+}
+$('#solarCycle').addEventListener('click', () => {
+  const cur = SOLAR_MODES.find(m => document.body.classList.contains('solar-'+m)) || 'night';
+  const nx = SOLAR_MODES[(SOLAR_MODES.indexOf(cur)+1) % 3];
+  setSolar(nx, false);
+});
+$('#solarAuto').addEventListener('click', () => { setSolar(solarByTime(), true); toast('Solar auto'); });
+setInterval(() => { if(solarAuto) setSolar(solarByTime(), true); }, 600000);
+
+/* Identidade */
+const userNameInput = $('#userName'), userModelInput = $('#userModel');
+const savedU = localStorage.getItem('nebula.user'), savedM = localStorage.getItem('nebula.model');
+if(savedU) userNameInput.value = savedU;
+if(savedM) userModelInput.value = savedM;
+userNameInput.addEventListener('change', () => localStorage.setItem('nebula.user', userNameInput.value));
+userModelInput.addEventListener('change', () => localStorage.setItem('nebula.model', userModelInput.value));
+
+/* Motores 369 · preset do Pato */
+const patoSelect = $('#patoPresetSelect');
+if(patoSelect){
+  patoSelect.value = patoPreset;
+  patoSelect.addEventListener('change', () => {
+    patoPreset = patoSelect.value;
+    localStorage.setItem('nebula.pato.preset', patoPreset);
+    toast('Preset do Pato: '+patoPreset);
+  });
+}
+updateSeedLabel();
+
+/* Background */
+const bgEl = document.createElement('div');
+bgEl.style.cssText = 'position:fixed;inset:0;z-index:1;pointer-events:none;background-size:cover;background-position:center;transition:opacity .5s';
+document.body.appendChild(bgEl);
+
+let bgData = localStorage.getItem('nebula.bg') || '';
+function applyBg(){
+  if(bgData){
+    bgEl.style.backgroundImage = `url(${bgData})`;
+    const op = +$('#bgOpacity').value / 100;
+    bgEl.style.opacity = op;
+    $('#bgOpacityVal').textContent = Math.round(op*100)+'%';
+  } else {
+    bgEl.style.backgroundImage = '';
+    bgEl.style.opacity = '0';
+  }
+}
+applyBg();
+
+$('#bgUpload').addEventListener('change', e => {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    bgData = r.result;
+    try{ localStorage.setItem('nebula.bg', bgData); }
+    catch{ toast('Imagem muito grande para o cache'); }
+    applyBg();
+  };
+  r.readAsDataURL(f);
+});
+$('#bgClear').addEventListener('click', () => {
+  bgData = ''; localStorage.removeItem('nebula.bg'); applyBg();
+});
+$('#bgOpacity').addEventListener('input', () => {
+  const op = +$('#bgOpacity').value / 100;
+  bgEl.style.opacity = op;
+  $('#bgOpacityVal').textContent = Math.round(op*100)+'%';
+  localStorage.setItem('nebula.bg.op', String(op));
+});
+const savedOp = localStorage.getItem('nebula.bg.op');
+if(savedOp) $('#bgOpacity').value = Math.round(+savedOp * 100);
+applyBg();
+
+/* Backup */
+$('#exportState').addEventListener('click', () => {
+  const payload = {
+    app:'NEBULA', v:1, ts:new Date().toISOString(),
+    docs: docs.filter(d => !d.dataUrl || d.dataUrl.length < 500000),
+    arch: currentArch,
+    solar: SOLAR_MODES.find(m => document.body.classList.contains('solar-'+m)) || 'night',
+    user: userNameInput.value, model: userModelInput.value
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'nebula-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  toast('Backup exportado');
+});
+$('#importState').addEventListener('click', () => {
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json';
+  inp.addEventListener('change', async () => {
+    const f = inp.files[0]; if(!f) return;
+    try{
+      const d = JSON.parse(await f.text());
+      if(!d || d.app !== 'NEBULA') throw new Error('formato');
+      if(!confirm('Importar backup? Isso substitui os docs atuais.')) return;
+      docs = d.docs || []; persistDocs();
+      if(d.arch && ARCHS[d.arch]) applyArch(d.arch);
+      if(d.solar) setSolar(d.solar, false);
+      if(d.user) { userNameInput.value = d.user; localStorage.setItem('nebula.user', d.user); }
+      if(d.model){ userModelInput.value = d.model; localStorage.setItem('nebula.model', d.model); }
+      rebuild(); toast('Backup importado');
+    }catch{ toast('Backup inválido'); }
+  });
+  inp.click();
+});
+$('#resetState').addEventListener('click', () => {
+  if(!confirm('Resetar TUDO? Documentos, arquétipo, background — tudo será apagado.')) return;
+  ['nebula.docs.v1','nebula.arch','nebula.solar','nebula.solar.auto',
+   'nebula.user','nebula.model','nebula.bg','nebula.bg.op'].forEach(k => localStorage.removeItem(k));
+  location.reload();
+});
+
+/* ============================================================
+   13 · FILTROS + SEARCH
+   ============================================================ */
+$('#q').addEventListener('input', () => { index = 0; rebuild(); });
+$('#filterBar').addEventListener('click', e => {
+  const b = e.target.closest('.tab-pill'); if(!b) return;
+  filter = b.dataset.f;
+  $$('.tab-pill').forEach(x => x.classList.toggle('on', x === b));
+  index = 0; rebuild();
+});
+
+/* ============================================================
+   14 · IMPORT / DRAG-DROP
+   ============================================================ */
+$('#btnImport').addEventListener('click', () => $('#fileInput').click());
+$('#btnImport2').addEventListener('click', () => $('#fileInput').click());
+$('#fileInput').addEventListener('change', e => {
+  handleFiles(e.target.files); e.target.value = '';
+});
+
+let dragDepth = 0;
+window.addEventListener('dragenter', e => {
+  e.preventDefault(); dragDepth++; $('#drop').classList.add('on');
+});
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('dragleave', e => {
+  e.preventDefault(); dragDepth = Math.max(0, dragDepth-1);
+  if(!dragDepth) $('#drop').classList.remove('on');
+});
+window.addEventListener('drop', e => {
+  e.preventDefault(); dragDepth = 0; $('#drop').classList.remove('on');
+  if(e.dataTransfer && e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+});
+
+/* ============================================================
+   15 · EXEMPLOS
+   ============================================================ */
+const SAMPLES = [
+  {name:'README.md', ext:'md', size:2140, content:`# NEBULA · Unificado
+
+Visualizador **local** de documentos com carrossel 3D, sessões flutuantes e arquétipos vocais.
+
+## O que ele lê
+| Formato | Suporte |
+|---|---|
+| \`.md\` | Markdown completo |
+| \`.txt\` | Texto puro |
+| \`.pdf\` | Canvas página por página |
+| \`.json\` | Pretty-print |
+
+## Sistemas conectados
+- Clique no **card central** para abrir o leitor
+- No leitor, use **🎙️** para ouvir com o arquétipo atual
+- Use **▣** para abrir em **janela flutuante**
+- Troque o **arquétipo** no topo — todas as cores mudam
+- O **symbol bar** (≡) tem ações rápidas
+- O **cockpit** (⚙) controla solar, background e backup
+
+> Nenhum arquivo sai do navegador. Tudo offline.`},
+  {name:'anotacoes.txt', ext:'txt', size:812, content:`ANOTAÇÕES
+=========
+
+- Revisar pílulas no mobile
+- Integrar TTS com arquétipos
+- Exportar sessões como HTML
+
+Ideias soltas
+-------------
+> Modo foco que escurece ao redor do card.
+> Atalhos customizáveis por arquétipo.
+
+Lembrete: cache do navegador aguenta ~5MB.`},
+  {name:'config.json', ext:'json', size:486, content:JSON.stringify({
+    app:'NEBULA', versao:'1.0.0',
+    arquetipos:['KOBLLUX','ATLAS','NOVA','KODUX','JESUS'],
+    sistemas:{ docs:true, sessions:true, tts:true, cockpit:true }
+  }, null, 2)},
+  {name:'metricas.csv', ext:'csv', size:340, content:`data,visualizacoes,tempo_medio
+2024-05-01,1820,3m42s
+2024-05-02,2140,4m10s
+2024-05-03,1975,3m55s
+2024-05-04,2410,4m33s`}
+];
+function loadSamples(){
+  const base = Date.now();
+  SAMPLES.forEach((s,i) => {
+    if(docs.some(d => d.name === s.name)) return;
+    docs.push({...s, id:uid(), addedAt:base - i*1000*60*17});
+  });
+  persistDocs(); index = 0; rebuild(); toast('✨ Exemplos carregados');
+}
+$('#btnSample').addEventListener('click', loadSamples);
+
+/* ============================================================
+   16 · INIT
+   ============================================================ */
+window.addEventListener('resize', layout);
+buildArchBar();
+buildSymbolBar();
+applyArch(localStorage.getItem('nebula.arch') || 'KOBLLUX');
+const savedSolar = localStorage.getItem('nebula.solar');
+if(savedSolar && SOLAR_MODES.includes(savedSolar)) setSolar(savedSolar, solarAuto);
+else setSolar(solarByTime(), solarAuto);
+
+restoreDocs();
+rebuild();
+
+if(!docs.length){
+  setTimeout(() => {
+    loadSamples();
+    toast('✨ Exemplos carregados — arraste arquivos para adicionar os seus');
+  }, 700);
+}
+
+/* Registra API global pra integrações externas */
+window.Nebula = {
+  version:'unified-1',
+  applyArch, speak, makeSession, openReader, openCockpit,
+  applyPato, formatAIOR, merge369, analyzeGerardo, markSeed, fundirComSemente, injectIntoLiveTTS,
+  get docs(){ return docs; },
+  get currentDoc(){ return currentDoc; },
+  get arch(){ return currentArch; },
+  get seedId(){ return pendingSeedId; }
+};
+</script>
+</body>
+</html>
