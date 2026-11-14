@@ -1,0 +1,3021 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Dual.Infodose · KOBLLUX FINAL v2 (modular)</title>
+  <meta name="theme-color" content="#050811" />
+  <link rel="manifest" href="https://infodose.com.br/KXT-pack/modular/manifest.json">
+  <link rel="apple-touch-icon" href="https://infodose.com.br/KXT-pack/modular/icon-192.png">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap"></noscript>
+  <style id="custom-styles"></style>
+  <style data-k-id="SI_0">
+/* =========================================================
+   ALMASLIBER / iFSw — UNIFIED CORE  (u-base / clamp edition)
+   HEADER + SESSION + DOCK + MAXIMIZE/MINIMIZE + TABS
+   Conversão: 1u ≈ 10px no caso base (--u-base ≈ 10px)
+   ========================================================= */
+:root {
+  /* ── UNIDADE-BASE FLUIDA (portada da FULL) ── */
+  --u-base: clamp(3px, calc(100vw / 44), 20px);
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  /* ── Tokens convertidos px → calc(var(--u-base) * N/10) ── */
+  --topbar-h:          calc(var(--u-base) * 5.8);
+  --header-h:          calc(var(--u-base) * 5.2);
+  --session-radius:    calc(var(--u-base) * 2.9);
+  --session-gap:       calc(var(--u-base) * 2.0);
+  --collapsed-h:       calc(var(--u-base) * 5.2);
+  --peek-h:            calc(var(--u-base) * 17.8);
+  --resize-hit:        0px;
+  --resize-corner:     calc(var(--u-base) * 5.4);
+  --dock-bottom-gap:   calc(var(--u-base) * 8.0);
+  --dock-offset-x:     calc(var(--u-base) * -1.2);
+
+  /* z-index permanece abstrato — não escala */
+  --z-base: 0;
+  --z-content: 100;
+  --z-header-system: 900;
+  --z-header-main: 910;
+  --z-session: 1000;
+  --z-session-header: 1010;
+  --z-session-controls: 1020;
+  --z-maximized: 94000;
+  --z-maximized-header: 94010;
+  --z-maximized-controls: 94020;
+  --z-resize: 94030;
+  --z-dock: 97000;
+  --z-tab-switcher: 98000;
+}
+* { box-sizing: border-box; }
+html, body {
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+html { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+body {
+  min-height: 100dvh;
+  background: radial-gradient(circle at 50% 0%, #2a2a35 0%, #0f0f15 100%);
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+body.ui-safe-vertical {
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+}
+body.ui-immersive { padding: 0; overflow: hidden !important; }
+#kxtsk-shell {
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  overflow: visible;
+  z-index: var(--z-base);
+}
+.almasliber, .almasliber .shell, #main-content {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+.almasliber { min-height: 100dvh; }
+/* HEADER SYSTEM */
+.topbar {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  height: var(--topbar-h);
+  min-height: var(--topbar-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--u-base) * 1.2);
+  padding: 0 calc(var(--u-base) * 1.2);
+  z-index: var(--z-header-system);
+  isolation: isolate;
+}
+#system-topbar { z-index: var(--z-header-system); }
+#main-header { z-index: var(--z-header-main); }
+#main-header.header-visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+#main-header.header-hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+#main-header { transition: transform .25s ease, opacity .2s ease; }
+.brand, .brandX, .os-brand {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  font-weight: 800;
+}
+.brandX { gap: calc(var(--u-base) * 0.7); font-size: calc(var(--u-base) * 1.3); letter-spacing: 1.3px; }
+.badgeX { font-size: calc(var(--u-base) * 0.9); opacity: .55; }
+.top-actions {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: calc(var(--u-base) * 0.8);
+}
+.icon-btn, .soft-btn, .launcher-btn, .win-go-btn {
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: calc(var(--u-base) * 1.2);
+  min-height: calc(var(--u-base) * 3.0);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.icon-btn { width: calc(var(--u-base) * 3.4); height: calc(var(--u-base) * 3.4); padding: 0; background: rgba(255,255,255,.08); }
+.soft-btn { padding: calc(var(--u-base) * 1.0) calc(var(--u-base) * 1.2); background: rgba(255,255,255,.08); }
+.launcher-btn { padding: calc(var(--u-base) * 1.0) calc(var(--u-base) * 1.2); background: rgba(0,242,255,.12); border: 1px solid rgba(0,242,255,.3); }
+.win-go-btn { padding: calc(var(--u-base) * 1.0) calc(var(--u-base) * 1.2); background: rgba(0,242,255,.12); }
+.icon-btn:active, .win-controls button:active, .dock-bubble:active { transform: scale(.94); }
+.win-navrow {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u-base) * 0.8);
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: calc(var(--u-base) * 34);
+  padding: 0 calc(var(--u-base) * 1.6) calc(var(--u-base) * 1.0);
+}
+.win-urlbar {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: calc(var(--u-base) * 1.1) calc(var(--u-base) * 1.3);
+  border-radius: calc(var(--u-base) * 1.3);
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  outline: none;
+  font-size: calc(var(--u-base) * 1.0);
+}
+.win-urlbar::placeholder { color: rgba(255,255,255,.45); }
+.win-urlbar:focus {
+  border-color: rgba(0,242,255,.45);
+  background: rgba(255,255,255,.09);
+  box-shadow: 0 0 0 calc(var(--u-base) * 0.3) rgba(0,242,255,.08);
+}
+main, #main-content { position: relative; z-index: var(--z-content); }
+#stackWrap {
+  position: relative;
+  width: 100%;
+  max-width: calc(var(--u-base) * 80);
+  min-height: calc(100dvh - var(--topbar-h));
+  margin: 0 auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--session-gap);
+  overflow: visible;
+  z-index: var(--z-content);
+  isolation: isolate;
+}
+/* SESSION WINDOW */
+.session-window {
+  position: relative;
+  width: 100%;
+  height: calc(100dvh - var(--topbar-h));
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: rgba(30,30,35,.40);
+  backdrop-filter: blur(calc(var(--u-base) * 2.0));
+  -webkit-backdrop-filter: blur(calc(var(--u-base) * 2.0));
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--session-radius);
+  z-index: var(--z-session);
+  transition: height .28s cubic-bezier(.16,1,.3,1), width .28s cubic-bezier(.16,1,.3,1), transform .28s ease, opacity .28s ease;
+}
+.session-window .win-hdr {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: var(--header-h);
+  min-height: var(--header-h);
+  display: flex;
+  align-items: center;
+  padding: calc(var(--u-base) * 1.0) calc(var(--u-base) * 1.4);
+  z-index: var(--z-session-header);
+  background: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+  touch-action: manipulation;
+  isolation: isolate;
+}
+.win-controls {
+  position: relative;
+  z-index: var(--z-session-controls);
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u-base) * 0.7);
+  pointer-events: auto;
+}
+.win-controls button {
+  width: calc(var(--u-base) * 3.0);
+  height: calc(var(--u-base) * 3.0);
+  min-width: calc(var(--u-base) * 3.0);
+  min-height: calc(var(--u-base) * 3.0);
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,.10);
+  color: #fff;
+  cursor: pointer;
+  font-family: "Noto Sans Symbols 2", "Noto Sans Symbols", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: calc(var(--u-base) * 1.7);
+  font-weight: 300;
+  line-height: 1;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.win-controls button:hover { background: rgba(255,255,255,.17); }
+/* Tab counter button */
+.win-controls .tab-counter {
+  width: auto;
+  min-width: calc(var(--u-base) * 3.0);
+  padding: 0 calc(var(--u-base) * 1.0);
+  border-radius: calc(var(--u-base) * 2.0);
+  background: rgba(0,242,255,.15);
+  font-size: calc(var(--u-base) * 1.2);
+  font-weight: 600;
+  color: #7af;
+  letter-spacing: 0.3px;
+}
+.session-window .win-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  z-index: 1;
+  display: block;
+}
+.session-window.collapsed {
+  height: var(--collapsed-h) !important;
+  min-height: var(--collapsed-h) !important;
+  overflow: hidden !important;
+}
+.session-window.collapsed .win-frame { visibility: hidden; pointer-events: none; }
+.session-window.peeked {
+  height: var(--peek-h) !important;
+  min-height: var(--peek-h) !important;
+}
+.session-window.peeked .win-frame { visibility: visible; pointer-events: auto; }
+.session-window.minimized {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-width: 1px !important;
+  min-height: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: scale(.90) translateY(50px);
+  overflow: hidden !important;
+}
+.session-window.maximized {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  overflow: hidden !important;
+  z-index: var(--z-maximized) !important;
+  transition: none !important;
+}
+.session-window.maximized .win-hdr {
+  position: absolute !important;
+  inset: 0 0 auto 0 !important;
+  width: 100% !important;
+  height: var(--header-h) !important;
+  z-index: var(--z-maximized-header) !important;
+  pointer-events: none !important;
+}
+.session-window.maximized .win-controls { pointer-events: auto !important; z-index: var(--z-maximized-controls) !important; }
+.session-window.maximized .win-frame {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 1 !important;
+}
+body.has-maximized { overflow: hidden !important; }
+body.has-maximized .topbar { pointer-events: none; }
+body.has-maximized .session-window.maximized .win-controls,
+body.has-maximized .session-window.maximized .win-hdr { pointer-events: auto; }
+/* Resize handles */
+.session-window .resize-handle {
+  position: absolute;
+  z-index: var(--z-resize);
+  background: transparent;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.session-window .resize-y { left: 0; right: 0; bottom: 0; height: var(--resize-hit); cursor: ns-resize; }
+.session-window .resize-x { top: var(--header-h); right: 0; bottom: 0; width: var(--resize-hit); cursor: ew-resize; }
+.session-window .resize-corner { right: 0; bottom: 0; width: var(--resize-corner); height: var(--resize-corner); cursor: nwse-resize; }
+.session-window .resize-corner::before {
+  content: "";
+  position: absolute;
+  right: calc(var(--u-base) * 1.0);
+  bottom: calc(var(--u-base) * 1.0);
+  width: calc(var(--u-base) * 1.6);
+  height: calc(var(--u-base) * 1.6);
+  border-radius: 50%;
+  background: rgba(255,255,255,.18);
+  border: 1px solid rgba(255,255,255,.25);
+  box-shadow: 0 0 calc(var(--u-base) * 1.4) rgba(0,242,255,.18);
+  pointer-events: none;
+}
+.session-window.maximized .resize-handle { display: none !important; }
+.session-window.suspended .win-frame { display: none; }
+.session-window.suspended::after {
+  content: "⏸";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: calc(var(--u-base) * 2.0);
+  opacity: .3;
+  pointer-events: none;
+}
+/* SESSION LIFECYCLE — indicador visual de estado */
+.session-window.state-idle { filter: saturate(.82); }
+.session-window.state-idle .win-hdr::before {
+  content: "";
+  position: absolute;
+  top: calc(var(--u-base) * 0.8);
+  right: calc(var(--u-base) * 0.8);
+  width: calc(var(--u-base) * 0.6);
+  height: calc(var(--u-base) * 0.6);
+  border-radius: 50%;
+  background: rgba(255, 200, 60, .75);
+  pointer-events: none;
+}
+.session-window.state-loading .win-hdr::before {
+  content: "";
+  position: absolute;
+  top: calc(var(--u-base) * 0.8);
+  right: calc(var(--u-base) * 0.8);
+  width: calc(var(--u-base) * 0.6);
+  height: calc(var(--u-base) * 0.6);
+  border-radius: 50%;
+  background: rgba(0, 242, 255, .8);
+  animation: session-loading-pulse 1s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes session-loading-pulse {
+  0%, 100% { opacity: .3; }
+  50% { opacity: 1; }
+}
+/* DOCK */
+#dock {
+  position: fixed;
+  left: var(--dock-offset-x);
+  bottom: calc(var(--dock-bottom-gap) + var(--safe-bottom));
+  z-index: var(--z-dock);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u-base) * 1.0);
+  padding: calc(var(--u-base) * 1.2) calc(var(--u-base) * 1.0);
+  border-radius: calc(var(--u-base) * 2.4);
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(calc(var(--u-base) * 1.5));
+  -webkit-backdrop-filter: blur(calc(var(--u-base) * 1.5));
+  border: 1px solid rgba(255,255,255,.1);
+}
+#dock:empty { opacity: 0; pointer-events: none; }
+.dock-bubble {
+  width: calc(var(--u-base) * 4.2);
+  height: calc(var(--u-base) * 4.2);
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.20);
+  color: #fff;
+  cursor: pointer;
+  font-family: "Noto Sans Symbols 2", "Noto Sans Symbols", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: calc(var(--u-base) * 1.9);
+  line-height: 1;
+  touch-action: manipulation;
+}
+/* TAB SWITCHER OVERLAY */
+.tab-switcher-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-tab-switcher);
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(calc(var(--u-base) * 1.0));
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--u-base) * 2.0);
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+.tab-switcher-overlay.open {
+  display: flex;
+  opacity: 1;
+}
+.tab-switcher-panel {
+  background: rgba(30,30,40,0.95);
+  backdrop-filter: blur(calc(var(--u-base) * 2.0));
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: calc(var(--u-base) * 3.2);
+  max-width: calc(var(--u-base) * 64);
+  width: 100%;
+  max-height: 80vh;
+  padding: calc(var(--u-base) * 2.4) calc(var(--u-base) * 2.0) calc(var(--u-base) * 2.0);
+  box-shadow: 0 calc(var(--u-base) * 2.0) calc(var(--u-base) * 6.0) rgba(0,0,0,0.7);
+  overflow-y: auto;
+}
+.tab-switcher-panel .panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: calc(var(--u-base) * 1.8);
+}
+.tab-switcher-panel .panel-header h2 {
+  font-size: calc(var(--u-base) * 1.8);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.tab-switcher-panel .panel-actions {
+  display: flex;
+  gap: calc(var(--u-base) * 1.0);
+}
+.tab-switcher-panel .panel-actions button {
+  background: rgba(255,255,255,0.08);
+  border: 0;
+  border-radius: calc(var(--u-base) * 3.0);
+  padding: calc(var(--u-base) * 0.8) calc(var(--u-base) * 1.6);
+  color: #fff;
+  font-size: calc(var(--u-base) * 1.3);
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u-base) * 0.6);
+}
+.tab-switcher-panel .panel-actions button:hover { background: rgba(255,255,255,0.15); }
+.tab-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(calc(var(--u-base) * 18), 1fr));
+  gap: calc(var(--u-base) * 1.2);
+}
+.tab-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: calc(var(--u-base) * 1.8);
+  padding: calc(var(--u-base) * 1.4) calc(var(--u-base) * 1.2);
+  cursor: pointer;
+  transition: background .15s, transform .15s;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u-base) * 0.6);
+  position: relative;
+}
+.tab-card:hover { background: rgba(255,255,255,0.10); transform: scale(1.01); }
+.tab-card.active { border-color: #4af; background: rgba(0,150,255,0.12); }
+.tab-card .tab-title {
+  font-size: calc(var(--u-base) * 1.3);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tab-card .tab-url {
+  font-size: calc(var(--u-base) * 1.0);
+  opacity: 0.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tab-card .tab-close {
+  position: absolute;
+  top: calc(var(--u-base) * 0.6);
+  right: calc(var(--u-base) * 0.6);
+  width: calc(var(--u-base) * 2.4);
+  height: calc(var(--u-base) * 2.4);
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255,0,0,0.2);
+  color: #f66;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .15s;
+  font-size: calc(var(--u-base) * 1.4);
+}
+.tab-card:hover .tab-close { opacity: 1; }
+.tab-card .tab-close:hover { background: rgba(255,0,0,0.4); }
+.tab-card .tab-fav {
+  position: absolute;
+  top: calc(var(--u-base) * 0.6);
+  left: calc(var(--u-base) * 0.6);
+  width: calc(var(--u-base) * 2.4);
+  height: calc(var(--u-base) * 2.4);
+  border-radius: 50%;
+  border: 0;
+  background: transparent;
+  color: #fa0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: calc(var(--u-base) * 1.4);
+  opacity: 0.4;
+  transition: opacity .15s;
+}
+.tab-card .tab-fav.active { opacity: 1; }
+.tab-card .tab-fav:hover { opacity: 1; }
+/* Responsive */
+@media (max-width: 600px) {
+  :root { --session-radius: calc(var(--u-base) * 2.2); --session-gap: calc(var(--u-base) * 1.0); }
+  .session-window { width: 100%; }
+  .tab-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (hover:none) and (pointer:coarse) {
+  .session-window .resize-corner { width: calc(var(--u-base) * 5.8); height: calc(var(--u-base) * 5.8); }
+  .tab-card .tab-close { opacity: 1; }
+}
+/* @import "https://infodose.com.br/oiDual/KODUX/78K/APPS/78header/dual-header-app/css/main.css"; */
+/* style  */
+/* ═══════════════════════════════════════════════════════
+   DUAL CORE · GLOBAL TOKENS
+═══════════════════════════════════════════════════════ */
+:root {
+    color-scheme: dark;
+    --bg: #050507;
+    --panel:
+        rgba(18, 18, 22, .82);
+    --panel-solid:
+        #121216;
+    --border:
+        rgba(255, 255, 255, .10);
+    --text:
+        #f5f5f7;
+    --muted:
+        rgba(255, 255, 255, .52);
+    --cyan:
+        #00e5ff;
+    --purple:
+        #bf5af2;
+    --gold:
+        #ffd60a;
+    --input-bg:
+        rgba(255, 255, 255, .055);
+    --button-bg:
+        rgba(255, 255, 255, .07);
+    --topbar-bg:
+        rgba(5, 5, 7, .82);
+    --dock-bg:
+        rgba(10, 10, 13, .92);
+    --shadow:
+        0 calc(var(--u-base) * 1.0) calc(var(--u-base) * 4.0)
+        rgba(0, 0, 0, .35);
+    --radius:
+        calc(var(--u-base) * 1.8);
+    --transition:
+        .25s ease;
+}
+/* ═══════════════════════════════════════════════════════
+   LIGHT
+═══════════════════════════════════════════════════════ */
+html[data-theme="light"] {
+    color-scheme: light;
+    --bg:
+        #f5f5f7;
+    --panel:
+        rgba(255, 255, 255, .85);
+    --panel-solid:
+        #ffffff;
+    --border:
+        rgba(0, 0, 0, .08);
+    --text:
+        #1a1a1e;
+    --muted:
+        rgba(0, 0, 0, .50);
+    --cyan:
+        #007aff;
+    --purple:
+        #af52de;
+    --gold:
+        #d4a017;
+    --input-bg:
+        rgba(0, 0, 0, .035);
+    --button-bg:
+        rgba(0, 0, 0, .045);
+    --topbar-bg:
+        rgba(255, 255, 255, .82);
+    --dock-bg:
+        rgba(255, 255, 255, .92);
+    --shadow:
+        0 calc(var(--u-base) * 1.0) calc(var(--u-base) * 4.0)
+        rgba(0, 0, 0, .10);
+}
+/* ═══════════════════════════════════════════════════════
+   RESET
+═══════════════════════════════════════════════════════ */
+* {
+    box-sizing:
+        border-box;
+    -webkit-tap-highlight-color:
+        transparent;
+}
+html,
+body {
+    margin:
+        0;
+    padding:
+        0;
+    width:
+        100%;
+    min-height:
+        100%;
+    background:
+        var(--bg);
+    color:
+        var(--text);
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "SF Pro Display",
+        "SF Pro Text",
+        Inter,
+        system-ui,
+        sans-serif;
+    transition:
+        background-color
+        var(--transition),
+        color
+        var(--transition);
+}
+/* ═══════════════════════════════════════════════════════
+   APP
+═══════════════════════════════════════════════════════ */
+.dual-app {
+    min-height:
+        100vh;
+    background:
+        var(--bg);
+    color:
+        var(--text);
+}
+/* ═══════════════════════════════════════════════════════
+   HEADER FLUTUANTE
+═══════════════════════════════════════════════════════ */
+.topbar {
+    position:
+        fixed;
+    top:
+        0;
+    left:
+        0;
+    right:
+        0;
+    z-index:
+        1000;
+    display:
+        flex;
+    align-items:
+        center;
+    justify-content:
+        space-between;
+    min-height:
+        calc(var(--u-base) * 5.6);
+    padding:
+        calc(var(--u-base) * 1.0) calc(var(--u-base) * 1.6);
+    background:
+        var(--topbar-bg);
+    border-bottom:
+        1px solid
+        var(--border);
+    backdrop-filter:
+        blur(calc(var(--u-base) * 2.4));
+    -webkit-backdrop-filter:
+        blur(calc(var(--u-base) * 2.4));
+    transform:
+        translateY(0);
+    transition:
+        transform
+        .32s
+        cubic-bezier(.22, 1, .36, 1),
+        opacity
+        .25s
+        ease,
+        background
+        var(--transition),
+        border-color
+        var(--transition);
+}
+/* ═══════════════════════════════════════════════════════
+   HEADER ESCONDIDO DURANTE SCROLL DOWN
+═══════════════════════════════════════════════════════ */
+.topbar.header-hidden {
+    transform:
+        translateY(
+            calc(-100% - calc(var(--u-base) * 1.2))
+        );
+    opacity:
+        .15;
+    pointer-events:
+        none;
+}
+/* ═══════════════════════════════════════════════════════
+   HEADER VISÍVEL
+═══════════════════════════════════════════════════════ */
+.topbar.header-visible {
+    transform:
+        translateY(0);
+    opacity:
+        1;
+    pointer-events:
+        auto;
+}
+/* ═══════════════════════════════════════════════════════
+   BRAND
+═══════════════════════════════════════════════════════ */
+.brandX {
+    display:
+        flex;
+    align-items:
+        center;
+    gap:
+        calc(var(--u-base) * 1.0);
+    font-weight:
+        700;
+    letter-spacing:
+        .08em;
+}
+.badgeX {
+    padding:
+        calc(var(--u-base) * 0.5) calc(var(--u-base) * 0.9);
+    border-radius:
+        999px;
+    background:
+        var(--button-bg);
+    color:
+        var(--muted);
+    font-size:
+        calc(var(--u-base) * 1.0);
+    letter-spacing:
+        .08em;
+}
+/* ═══════════════════════════════════════════════════════
+   THEME DOT
+   UMA ÚNICA BOLINHA
+═══════════════════════════════════════════════════════ */
+.theme-dot {
+    position:
+        relative;
+    width:
+        calc(var(--u-base) * 3.0);
+    height:
+        calc(var(--u-base) * 3.0);
+    padding:
+        0;
+    border:
+        1px solid
+        var(--border);
+    border-radius:
+        50%;
+    background:
+        var(--button-bg);
+    color:
+        var(--text);
+    cursor:
+        pointer;
+    display:
+        grid;
+    place-items:
+        center;
+    transition:
+        transform
+        .2s ease,
+        background
+        var(--transition),
+        border-color
+        var(--transition),
+        box-shadow
+        var(--transition);
+}
+.theme-dot::before {
+    content:
+        "";
+    width:
+        calc(var(--u-base) * 1.0);
+    height:
+        calc(var(--u-base) * 1.0);
+    border-radius:
+        50%;
+    background:
+        var(--cyan);
+    box-shadow:
+        0 0 calc(var(--u-base) * 1.2)
+        var(--cyan);
+    transition:
+        all
+        var(--transition);
+}
+.theme-dot:hover {
+    transform:
+        scale(1.08);
+    border-color:
+        var(--cyan);
+    box-shadow:
+        0 0 calc(var(--u-base) * 2.0)
+        color-mix(
+            in srgb,
+            var(--cyan) 20%,
+            transparent
+        );
+}
+/* ═══════════════════════════════════════════════════════
+   CONTENT
+═══════════════════════════════════════════════════════ */
+#main-content {
+    padding-top:
+        calc(var(--u-base) * 5.6);
+    opacity:
+        1;
+    visibility:
+        visible;
+    pointer-events:
+        auto;
+    max-height:
+        calc(var(--u-base) * 5000);
+    overflow:
+        hidden;
+    transition:
+        opacity
+        .35s
+        ease,
+        max-height
+        .35s
+        ease,
+        visibility
+        .35s
+        ease,
+        padding
+        .35s
+        ease;
+}
+/* ═══════════════════════════════════════════════════════
+   HEADER COLLAPSE
+   CLIQUE NO HEADER
+═══════════════════════════════════════════════════════ */
+#main-content.hidden {
+    opacity:
+        0;
+    visibility:
+        hidden;
+    pointer-events:
+        none;
+    max-height:
+        0;
+    padding-top:
+        0;
+    padding-bottom:
+        0;
+}
+/* ═══════════════════════════════════════════════════════
+   CONTENT
+═══════════════════════════════════════════════════════ */
+.content {
+    width:
+        min(
+            calc(var(--u-base) * 90),
+            100%
+        );
+    margin:
+        0 auto;
+    padding:
+        calc(var(--u-base) * 2.8) calc(var(--u-base) * 1.8) calc(var(--u-base) * 12.0);
+}
+/* ═══════════════════════════════════════════════════════
+   PANELS
+═══════════════════════════════════════════════════════ */
+.panel,
+.card,
+.modal,
+.drawer,
+.sidebar,
+.sheet,
+.deck,
+.overlay-panel,
+.fractal-block,
+.preview-card {
+    background:
+        var(--panel);
+    color:
+        var(--text);
+    border:
+        1px solid
+        var(--border);
+    border-radius:
+        var(--radius);
+    box-shadow:
+        var(--shadow);
+    backdrop-filter:
+        blur(calc(var(--u-base) * 2.0));
+    -webkit-backdrop-filter:
+        blur(calc(var(--u-base) * 2.0));
+    transition:
+        background
+        var(--transition),
+        border-color
+        var(--transition),
+        color
+        var(--transition),
+        box-shadow
+        var(--transition);
+}
+/* ═══════════════════════════════════════════════════════
+   FIELD
+═══════════════════════════════════════════════════════ */
+.field {
+    display:
+        grid;
+    gap:
+        calc(var(--u-base) * 0.8);
+    margin-bottom:
+        calc(var(--u-base) * 1.8);
+}
+.field label {
+    color:
+        var(--muted);
+    font-size:
+        calc(var(--u-base) * 1.2);
+    font-weight:
+        600;
+}
+textarea,
+input,
+select {
+    width:
+        100%;
+    padding:
+        calc(var(--u-base) * 1.4);
+    border:
+        1px solid
+        var(--border);
+    border-radius:
+        calc(var(--u-base) * 1.4);
+    outline:
+        none;
+    background:
+        var(--input-bg);
+    color:
+        var(--text);
+    font:
+        inherit;
+}
+/* ═══════════════════════════════════════════════════════
+   DEMO
+═══════════════════════════════════════════════════════ */
+.demo {
+    min-height:
+        calc(var(--u-base) * 120);
+    padding:
+        calc(var(--u-base) * 2.4);
+}
+    .session-window.suspended .win-frame { display: none; }
+    .session-window.suspended::after {
+      content: '🌐';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: calc(var(--u-base) * 2.0);
+      opacity: 0.3;
+      pointer-events: none;
+    }
+    .session-window.minimized { display: none; }
+    .dock-bubble { cursor: pointer; }
+    * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+}
+*::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+/* ═══════════════════════════════════════════════════════
+   SCALE SLIDER (controle manual de --u-base)
+═══════════════════════════════════════════════════════ */
+.ui-scale-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: calc(var(--u-base) * 0.4);
+  border-radius: 50%;
+ 
+  backdrop-filter: blur(calc(var(--u-base) * 0.8));
+  -webkit-backdrop-filter: blur(calc(var(--u-base) * 0.8));
+  border: none;
+}
+.scale-slider {
+  width: 42px;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  opacity: .72;
+  transform: scale(.72);
+  transform-origin: center;
+  transition: transform .18s ease, opacity .18s ease, filter .18s ease;
+}
+.scale-slider:hover,
+.scale-slider:focus,
+.scale-slider:active {
+  transform: scale(1.65);
+  opacity: 1;
+  filter: brightness(1.15);
+  z-index: 9999;
+}
+.scale-slider::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.22);
+}
+.scale-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  margin-top: -3.5px;
+  border-radius: 50%;
+  background: currentColor;
+  cursor: grab;
+}
+.scale-slider:active::-webkit-slider-thumb { cursor: grabbing; }
+.scale-slider::-moz-range-track {
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.22);
+}
+.scale-slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border: 0;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ============================================================
+   TAB SWITCHER · compact cards / quick links / theme-aware
+   ============================================================ */
+.tab-switcher-overlay{background:rgba(12,18,28,.48);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}
+.tab-switcher-panel{background:var(--panel-solid,rgba(22,29,40,.88));color:var(--text);border:1px solid var(--border,rgba(255,255,255,.14));box-shadow:0 24px 70px rgba(0,0,0,.24);max-width:min(94vw,680px);max-height:min(82dvh,760px);padding:clamp(14px,3vw,22px);border-radius:28px}
+.tab-switcher-panel .panel-header{align-items:center;margin-bottom:14px;gap:12px}
+.tab-switcher-panel .panel-header h2{font-size:clamp(14px,3.5vw,18px);letter-spacing:.01em}
+.tab-switcher-panel .panel-actions button{min-height:36px;padding:0 13px;background:var(--button-bg,rgba(255,255,255,.08));color:var(--text);border:1px solid var(--border,rgba(255,255,255,.12));border-radius:999px;font-size:12px}
+.tab-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr));gap:9px}
+.tab-card{min-width:0;padding:12px 11px 10px;background:var(--button-bg,rgba(255,255,255,.045));border-color:var(--border,rgba(255,255,255,.1));border-radius:17px;gap:7px;transition:transform .18s ease,border-color .18s ease,background .18s ease}
+.tab-card:hover{transform:translateY(-2px);background:var(--panel,rgba(255,255,255,.08));border-color:var(--cyan,rgba(0,150,255,.4))}
+.tab-card.active{background:color-mix(in srgb,var(--cyan,#00aaff) 10%,var(--panel-solid,#fff));border-color:var(--cyan,#00aaff)}
+.tab-card .tab-card-inner{display:flex;align-items:flex-start;gap:8px;min-width:0}
+.tab-card .tab-card-main{flex:1;min-width:0;overflow:hidden}
+.tab-card .tab-card-head{display:flex;align-items:center;gap:8px;min-width:0;padding:0 52px 0 0}
+.tab-card .tab-favicon{width:27px;height:27px;flex:0 0 27px;display:grid;place-items:center;border-radius:9px;background:var(--input-bg,rgba(128,128,128,.12));color:var(--cyan,#00aaff);font-size:13px}
+.tab-card .tab-card-info{min-width:0;flex:1;overflow:hidden}
+.tab-card .tab-title{display:block;max-width:100%;font-size:12px;line-height:1.28;font-weight:700;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere;padding:0;margin:0}
+.tab-card .tab-url{display:block;margin-top:3px;font-size:10px;line-height:1.3;color:var(--muted);opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tab-card .tab-status{font-size:10px;color:var(--muted);margin-top:7px}
+.tab-card .tab-card-actions{position:absolute;top:8px;right:8px;display:flex;gap:4px}
+.tab-card .tab-action{position:static;width:29px;height:29px;min-height:29px;display:grid;place-items:center;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:50%;background:var(--panel-solid,rgba(0,0,0,.12));color:var(--text);font-size:13px;opacity:.82;cursor:pointer}
+.tab-card .tab-action:hover,.tab-card .tab-action:focus-visible{opacity:1;transform:scale(1.06)}
+.tab-card .tab-fav{color:#d89a16}.tab-card .tab-fav.active{color:#d89a16;background:rgba(245,180,35,.13);opacity:1}
+.tab-card .tab-copy{color:var(--cyan,#168bd1)}
+.tab-card .tab-close{color:var(--muted);background:var(--panel-solid,rgba(0,0,0,.12));opacity:.82}
+.tab-new-composer{display:none;margin:0 0 14px;padding:13px;border:1px solid var(--border,rgba(128,128,128,.18));border-radius:18px;background:var(--input-bg,rgba(128,128,128,.06))}
+.tab-new-composer.open{display:block;animation:tabComposerIn .2s ease both}
+@keyframes tabComposerIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.tab-new-label{font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.tab-new-row{display:flex;gap:7px;align-items:center}
+.tab-new-row input{min-width:0;flex:1;height:42px;padding:0 12px;border-radius:12px;background:var(--panel-solid,#fff);color:var(--text);border:1px solid var(--border,rgba(128,128,128,.22));font-size:12px}
+.tab-new-row button{min-height:42px;padding:0 14px;border-radius:12px;background:var(--cyan,#168bd1);color:#fff;font-size:12px;font-weight:800}
+.tab-quick-links{display:flex;gap:7px;overflow-x:auto;padding:10px 1px 2px;scrollbar-width:none}
+.tab-quick-link{flex:0 0 auto;max-width:190px;min-height:34px;padding:0 11px;border-radius:999px;background:var(--button-bg,rgba(128,128,128,.1));border:1px solid var(--border,rgba(128,128,128,.18));color:var(--text);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tab-quick-link.is-fav{border-color:rgba(218,160,25,.4)}
+.tab-quick-empty{font-size:10px;color:var(--muted);padding:8px 2px}
+html[data-theme="light"] .tab-switcher-overlay,body[data-mode="light"] .tab-switcher-overlay{background:rgba(235,241,248,.58)}
+html[data-theme="light"] .tab-switcher-panel,body[data-mode="light"] .tab-switcher-panel{background:rgba(255,255,255,.94);color:#17202b;border-color:rgba(20,35,55,.12);box-shadow:0 24px 70px rgba(28,48,72,.18)}
+html[data-theme="light"] .tab-card,body[data-mode="light"] .tab-card{background:rgba(245,248,252,.9);border-color:rgba(20,35,55,.1)}
+html[data-theme="light"] .tab-card.active,body[data-mode="light"] .tab-card.active{background:rgba(0,122,255,.08)}
+html[data-theme="light"] .tab-card .tab-action,body[data-mode="light"] .tab-card .tab-action{background:rgba(255,255,255,.94);color:#243448;border-color:rgba(20,35,55,.12)}
+html[data-theme="light"] .tab-new-row input,body[data-mode="light"] .tab-new-row input{background:#fff;color:#17202b}
+/* Slider thumb: small glass-orb with luminous fragment */
+.ui-scale-control{background:transparent}
+.scale-slider{width:58px;height:22px;opacity:.95;transform:scale(.9)}
+.scale-slider::-webkit-slider-runnable-track{height:4px;background:linear-gradient(90deg,var(--cyan,#00aaff),var(--purple,#af52de),rgba(128,128,128,.22));border-radius:99px}
+.scale-slider::-webkit-slider-thumb{width:17px;height:17px;margin-top:-6.5px;border:1px solid rgba(255,255,255,.78);background:radial-gradient(circle at 30% 25%,#fff 0 12%,#d9f8ff 18%,#7edfff 38%,#9678ff 68%,#44316f 100%);box-shadow:inset -3px -3px 6px rgba(20,18,65,.45),inset 2px 2px 4px rgba(255,255,255,.8),0 2px 9px rgba(0,150,255,.4);}
+.scale-slider::-moz-range-track{height:4px;background:linear-gradient(90deg,var(--cyan,#00aaff),var(--purple,#af52de),rgba(128,128,128,.22));border-radius:99px}
+.scale-slider::-moz-range-thumb{width:17px;height:17px;border:1px solid rgba(255,255,255,.78);background:radial-gradient(circle at 30% 25%,#fff 0 12%,#d9f8ff 18%,#7edfff 38%,#9678ff 68%,#44316f 100%);box-shadow:inset -3px -3px 6px rgba(20,18,65,.45),inset 2px 2px 4px rgba(255,255,255,.8),0 2px 9px rgba(0,150,255,.4)}
+
+</style>
+<style data-k-id="SI_1">
+/* ============================================================
+   APLICAÇÃO DINÂMICA (Fallback para cores via JS)
+   Se as variáveis forem injetadas via style inline pela engine,
+   o CSS abaixo garante a aplicação correta.
+   ============================================================ */
+:root {
+  /* Default Kodux */
+  --kob-voice-primary: #FF00FF;
+  --kob-voice-secondary: #00FFFF;
+}
+#orb, .voice-orb, .orb, .orb-cores {
+  background: radial-gradient(circle at 30% 30%, var(--kob-voice-primary), var(--kob-voice-secondary));
+  box-shadow: 0 0 calc(var(--u-base) * 2.4) color-mix(in srgb, var(--kob-voice-primary) 55%, transparent);
+  transition: all 0.4s ease;
+}
+.orb {
+  border:none;
+ background: radial-gradient(circle at 30% 30%, var(--orb-accent, #78e7ff), transparent 78%),
+                  radial-gradient(circle at 70% 70%, var(--kob-voice-secondary, #00f2ff), var(--orb-secondary, #3b82f6));
+      box-shadow: 0 0 calc(var(--u-base) * 1.8) var(--kob-voice-primary), 0 0 calc(var(--u-base) * 3.6) rgba(120,227,255,0.4);
+      width: 100%; height: 100%; border-radius: 50%;
+display: grid; place-items: center;
+    }
+    .orb-core {
+      border:none;
+      min-width: 100%; min-height: 100%;
+border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, var(--orb-accent, #78e7ff), transparent 78%),
+                  radial-gradient(circle at 70% 70%, var(--kob-voice-primary, #00f2ff), var(--orb-secondary, #3b82f6));
+      box-shadow: 0 0 calc(var(--u-base) * 1.8) var(--kob-voice-secondary), 0 0 calc(var(--u-base) * 3.6) rgba(120,227,255,0.4);
+    }
+.drawer {border-radius:calc(var(--u-base) * 3.9);}
+body[data-arch],
+body[data-voice-arch]{
+  --kob-voice-bg-soft:
+    color-mix(in srgb,
+      var(--kob-voice-primary) 12%,
+      transparent);
+  --kob-voice-glow:
+    0 0 calc(var(--u-base) * 1.8) color-mix(
+      in srgb,
+      var(--kob-voice-primary) 60%,
+      transparent
+    );
+}
+/* Overlay */
+#drawerProfile,
+ .drawer{
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%, -50%);
+  width:min(90vw, calc(var(--u-base) * 70));
+  max-height:90vh;
+  overflow:auto;
+}
+.symbol-bar,
+#main-toggle,
+[class*="orb-"]{
+box-shadow:none !important;
+transition:.32s !important;
+}
+button,
+[class*="btn-"],
+#orbBtn
+{
+  border-color:     color-mix(in srgb,
+      var(--kob-voice-secondary) 18%,
+      transparent) !important;
+  background:
+    color-mix(in srgb,
+      var(--kob-voice-primary) 8%,
+      transparent) !important;
+  color:var(--kob-voice-primary) !important;
+  box-shadow:
+    color-mix(in srgb,
+      var(--kob-voice-primary) 3%,
+      transparent),
+    color-mix(in srgb,
+      var(--kob-voice-primary) 87%,
+      transparent) !important;
+}
+#btn-arch{   border:1px solid var(--kob-voice-primary) !important;}
+.blob-1{
+  background:
+    color-mix(in srgb,
+      var(--kob-voice-primary) 87%,
+      transparent) !important;
+}
+.blob-2{
+  background:
+    color-mix(in srgb,
+      var(--kob-voice-secondary) 98%,
+      transparent) !important;
+}
+button:hover,
+[class*="btn-"]:hover,
+#orbBtnn:hover{
+  border-color:var(--kob-voice-primary) !important;
+  color:#fff !important;
+  box-shadow:
+    /*0 0 18px var(--kob-voice-primary),
+    inset 0 0 10px color-mix(in srgb,
+      var(--kob-voice-secondary) 35%,
+      transparent) !*/
+      none !important;
+}
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none !important;
+}
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+</style>
+<style id="kobllux-state-color-cockpit">
+:root{
+  --kob-copy-primary:var(--kob-voice-primary,#78e3ff);
+  --kob-copy-secondary:var(--kob-voice-secondary,#b978ff);
+  --kob-copy-active:var(--active-color,var(--kob-copy-primary));
+  --kob-copy-voice-active:var(--active-secondary,var(--kob-copy-secondary));
+  --kob-copy-ink:var(--text-main,#f3f6fb);
+}
+/* Primary = identidade; Secondary = arquétipo ativo; Active = ação; Voice Active = fala */
+#favBtn{border-color:color-mix(in srgb,var(--kob-copy-secondary) 35%,transparent)!important;color:var(--kob-copy-secondary)!important;background:color-mix(in srgb,var(--kob-copy-secondary) 12%,transparent)!important}
+#orbToggle.cockpit-trigger{width:38px;min-width:38px;padding:0;display:inline-grid;place-items:center;border:1px solid color-mix(in srgb,var(--kob-copy-primary) 42%,transparent);border-radius:12px;background:color-mix(in srgb,var(--kob-copy-primary) 13%,transparent);color:var(--kob-copy-primary);}
+#orbToggle svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
+#orbToggle[aria-expanded="true"]{color:var(--kob-copy-voice-active);border-color:var(--kob-copy-voice-active);box-shadow:0 0 16px color-mix(in srgb,var(--kob-copy-voice-active) 28%,transparent)}
+/* Copy Secondary = cor do arquétipo ativo; Copy Active = ação selecionada. */
+.copy-secondary,[data-copy-role="secondary"]{border-color:color-mix(in srgb,var(--kob-copy-secondary) 48%,transparent);background:color-mix(in srgb,var(--kob-copy-secondary) 14%,transparent);color:var(--kob-copy-secondary)}
+.copy-active,[data-copy-active="true"]{border-color:var(--kob-copy-active)!important;background:color-mix(in srgb,var(--kob-copy-active) 22%,transparent)!important;color:var(--kob-copy-active)!important}
+/* Copy controls inherit the live KOB voice palette instead of hard-coded neon. */
+#copyActBtn,#copyBtn,.copy-code-btn,.copy-primary,[data-copy-role="primary"],.output-control.primary,[data-action="copy-result"],.copy-hint{border-color:color-mix(in srgb,var(--kob-copy-primary) 48%,transparent);background:color-mix(in srgb,var(--kob-copy-primary) 14%,transparent);color:var(--kob-copy-primary)}
+#copyActBtn:active,#copyBtn:active,.copy-code-btn:active,.copy-active,[data-copy-active="true"],.output-control.primary:active,[data-action="copy-result"]:active,.copy-hint:active{border-color:var(--kob-copy-active);background:color-mix(in srgb,var(--kob-copy-active) 24%,transparent);color:var(--kob-copy-active)}
+.tts-btn.active,.voice-active,.copy-voice-active,[data-copy-voice-active="true"],[data-voice-active="true"],.speaking{border-color:var(--kob-copy-voice-active)!important;color:var(--kob-copy-voice-active)!important;background:color-mix(in srgb,var(--kob-copy-voice-active) 17%,transparent)!important;box-shadow:0 0 14px color-mix(in srgb,var(--kob-copy-voice-active) 22%,transparent)}
+/* Drawer */
+.drawer-overlay{position:fixed;inset:0;z-index:95000;background:rgba(2,5,12,.48);backdrop-filter:blur(5px);opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s}
+.drawer-overlay.open{opacity:1;visibility:visible}
+#drawerProfile.drawer{position:fixed;z-index:95001;top:0;right:0;left:auto;bottom:0;width:min(390px,88vw);max-height:100dvh;height:100dvh;overflow:hidden;display:flex;flex-direction:column;transform:translateX(105%);visibility:hidden;opacity:1;border:1px solid color-mix(in srgb,var(--kob-copy-primary) 24%,rgba(255,255,255,.12));border-radius:26px 0 0 26px;background:color-mix(in srgb,#111722 94%,var(--kob-copy-primary) 6%);color:var(--kob-copy-ink);box-shadow:-24px 0 70px rgba(0,0,0,.48);transition:transform .32s cubic-bezier(.2,.8,.2,1),visibility .32s}
+#drawerProfile.drawer.open{transform:translateX(0);visibility:visible}
+#drawerProfile .drawer-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(18px + env(safe-area-inset-top)) 18px 16px;border-bottom:1px solid rgba(255,255,255,.1)}
+#drawerProfile .drawer-heading{display:flex;align-items:center;gap:12px}.drawer-heading strong{display:block;font:800 12px/1.2 ui-monospace,monospace;letter-spacing:.14em}.drawer-heading small{display:block;margin-top:5px;font-size:9px;opacity:.55;letter-spacing:.1em}
+.drawer-orb{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#fff 0 8%,var(--kob-copy-primary) 25%,var(--kob-copy-secondary) 76%);box-shadow:0 0 18px color-mix(in srgb,var(--kob-copy-primary) 45%,transparent),inset -4px -4px 8px rgba(0,0,0,.3)}
+#drawerProfile .drawer-close{width:36px;height:36px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:inherit;font-size:22px}
+#drawerProfile .drawer-body{overflow:auto;overscroll-behavior:contain;padding:16px 18px calc(24px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px}
+#drawerProfile .cockpit-item{padding:15px;border:1px solid color-mix(in srgb,var(--kob-copy-secondary) 20%,rgba(255,255,255,.08));border-radius:18px;background:rgba(255,255,255,.035)}
+.cockpit-label{font:700 9px/1.2 ui-monospace,monospace;letter-spacing:.16em;opacity:.58;margin-bottom:10px}.cockpit-identity strong{display:block;font-size:17px}.cockpit-identity span{display:block;font-size:11px;opacity:.58;margin-top:3px}.solar-status{font:800 15px/1.2 ui-monospace,monospace;color:var(--kob-copy-primary);margin:4px 0 12px}.solar-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.solar-controls button,.solar-auto{min-height:36px;border-radius:11px;border:1px solid color-mix(in srgb,var(--kob-copy-primary) 35%,transparent);background:color-mix(in srgb,var(--kob-copy-primary) 10%,transparent);color:var(--kob-copy-primary);font:700 9px ui-monospace,monospace;letter-spacing:.04em}.solar-controls button.active{background:color-mix(in srgb,var(--kob-copy-voice-active) 20%,transparent);border-color:var(--kob-copy-voice-active);color:var(--kob-copy-voice-active)}.solar-auto{width:100%;margin-top:8px;color:var(--kob-copy-secondary);border-color:color-mix(in srgb,var(--kob-copy-secondary) 35%,transparent);background:color-mix(in srgb,var(--kob-copy-secondary) 10%,transparent)}
+.color-roles{display:grid;gap:9px;font-size:11px}.color-roles span{display:flex;align-items:center;gap:8px}.role-dot{width:9px;height:9px;border-radius:50%;display:inline-block}.role-dot.primary{background:var(--kob-copy-primary);box-shadow:0 0 8px var(--kob-copy-primary)}.role-dot.secondary{background:var(--kob-copy-secondary);box-shadow:0 0 8px var(--kob-copy-secondary)}.role-dot.active{background:var(--kob-copy-active)}.role-dot.voice{background:var(--kob-copy-voice-active)}
+html[data-theme="light"] #drawerProfile,html[data-mode="light"] #drawerProfile,body[data-theme="light"] #drawerProfile,body[data-mode="light"] #drawerProfile{background:rgba(247,249,253,.97);color:#172033;border-color:color-mix(in srgb,var(--kob-copy-primary) 30%,#d7deea)}
+html[data-theme="light"] #drawerProfile .cockpit-item,html[data-mode="light"] #drawerProfile .cockpit-item,body[data-theme="light"] #drawerProfile .cockpit-item,body[data-mode="light"] #drawerProfile .cockpit-item{background:rgba(255,255,255,.82);border-color:rgba(30,50,80,.12)}
+@media(prefers-reduced-motion:reduce){#drawerProfile,.drawer-overlay{transition:none}}
+</style>
+  <style>[data-kxt]{display:contents}</style>
+  <script async src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script async src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+  <script src="https://infodose.com.br/KXT-pack/modular/boot.js"></script>
+</head>
+<body class="field-closed">
+<div><div class="almasliber" data-app="almasliber">
+  <div class="shell">
+    <!-- TOPBAR SISTEMA -->
+    <header style="z-index:0" class="topbar" id="system-topbar">
+      <button class="icon-btn" id="menuBtn" aria-label="Abrir menu">☰</button>
+      <div class="brand">
+        A.<span>INFODOSE</span>
+        <span class="mini-orb-wrap" id="topbarMiniOrb"></span>
+      </div>
+      <div style="display:flex;gap:calc(var(--u-base) * 0.8);">
+        <button class="icon-btn theme-dot" id="themeToggle" aria-label="Alternar tema">🌙</button>
+        <button class="icon-btn" id="notifBtn" aria-label="Notificações">♧</button>
+      </div>
+    </header>
+    <!-- HEADER GLOBAL (barra de navegação unificada) -->
+    <header class="topbar header-visible" id="main-header">
+      <div class="brandX">
+        <span class="badgeX">GLOBAL</span>
+      </div>
+      <div class="win-navrow" onclick="event.stopPropagation()">
+        <input class="win-urlbar" type="text" id="urlInputNav" placeholder="Digite uma URL..." spellcheck="false" autocomplete="off">
+        <button class="win-go-btn" type="button" id="goNavBtn">Go</button>
+        <button class="win-go-btn" type="button" id="favBtn" title="Favoritos" style="background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.3);">★</button>
+      </div>
+      <button id="theme-dot-canon" class="theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:calc(var(--u-base) * 1.4);height:calc(var(--u-base) * 1.4);">
+          <circle cx="12" cy="12" r="5"></circle>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+        </svg>
+      </button>
+    </header>
+    <!-- MAIN -->
+    <main>
+      <div id="main-content">
+        <div id="kxtsk-shell">
+          <div id="inject-here"></div>
+          <div id="dock"></div>
+          <div id="stackWrap">
+            <!-- Sessão inicial (será gerenciada) -->
+            <div class="session-window peeked" id="session-iframe">
+              <div class="win-hdr">
+                <div class="win-controls">
+                  <button type="button" data-action="collapse" title="Colapsar" aria-label="Colapsar">−</button>
+                  <button type="button" data-action="tab-switcher" class="tab-counter" id="tabCounterInit">1</button>
+                  <button type="button" data-action="maximize" title="Maximizar" aria-label="Maximizar">⛶</button>
+                  <button type="button" data-action="minimize" title="Minimizar" aria-label="Minimizar">۞</button>
+                  <button id="theme-dot" class="theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:calc(var(--u-base) * 1.4);height:calc(var(--u-base) * 1.4);">
+                      <circle cx="12" cy="12" r="5"></circle>
+                      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+                    </svg>
+                  </button>
+                  <button class="launcher-btn" id="openKobBtn">+</button>
+                </div>
+              </div>
+              <iframe class="win-frame" data-runtime="nav" id="navFrame" src="https://www.infodose.com.br/splash"></iframe>
+            </div>
+          </div><!-- /stackWrap -->
+        </div><!-- /kxtsk-shell -->
+      </div>
+    </main>
+    <nav style="display:none" class="symbol-bar bottom-nav" data-module="navigation" aria-label="Navegação principal">
+      <button class="nav-item active" data-tab="home"><span class="nav-icon">⌂</span><span>Início</span></button>
+      <button class="nav-item" id="navLibraryBtn"><span class="nav-icon">▣</span><span>Library</span></button>
+      <button class="nav-main" id="navCreateBtn">+</button>
+      <button class="nav-item" id="navResultsBtn"><span class="nav-icon">▥</span><span>Resultados</span></button>
+      <button class="nav-item" id="navProfileBtn"><span class="nav-icon">♙</span><span>Perfil</span></button>
+    </nav>
+  </div><!-- /shell -->
+</div><!-- /almasliber -->
+<!-- ===== TAB SWITCHER OVERLAY (global) ===== -->
+<div class="session-window collapsed tab-switcher-overlay" id="tabSwitcherOverlay">
+  <div class="tab-switcher-panel" id="tabSwitcherPanel">
+  <div class="win-hdr">
+                <div class="win-controls">
+                  <div class="panel-header">
+      <div class="panel-actions">
+        <button id="newTabBtn"><span>+</span></button>
+        <button id="closeTabSwitcher">✕</button>
+      </div>
+    </div>
+   <button type="button" data-action="collapse" title="Colapsar" aria-label="Colapsar">−</button>
+                      <small id="tabSwitcherTitle">Abas da janela</small>
+                  <button type="button" data-action="maximize" title="Maximizar" aria-label="Maximizar">⛶</button>
+                  <button type="button" data-action="minimize" title="Minimizar" aria-label="Minimizar">۞</button>
+                </div>
+              </div>
+    <section class="tab-new-composer" id="tabNewComposer" aria-label="Criar nova aba">
+      <div class="tab-new-label">Nova aba · endereço</div>
+      <div class="tab-new-row">
+        <input id="tabNewUrl" type="url" inputmode="url" autocomplete="url" spellcheck="false" placeholder="https://…">
+        <button type="button" id="tabCreateConfirm">Abrir</button>
+      </div>
+      <div class="tab-new-label" style="margin-top:12px">Atalhos disponíveis · abas e favoritos salvos</div>
+      <div class="tab-quick-links" id="tabQuickLinks"></div>
+    </section>
+    <div class="tab-grid" id="tabGrid"></div>
+  </div>
+</div>
+<!-- ===== TOASTER ===== -->
+<div class="toaster-wrap" id="toasterWrap"></div>
+<input type="file" id="nebulaFileInput" multiple="" accept=".txt,.md,.html,.pdf" style="display:none">
+  <!-- ============================================================
+       SCALE SLIDER — controle manual de --u-base (portado da FULL)
+       ============================================================ -->
+<div class="ui-scale-control" style="position:fixed;bottom:calc(var(--u-base) * 1.2);
+ left: 50%; transform: translateX(-50%); 
+ z-index: 9999;"> 
+ <input
+    class="scale-slider"
+    type="range"
+    min="3"
+    max="18"
+    step=".5"
+    value="13"
+    aria-label="Escala da interface"
+    oninput="document.documentElement.style.setProperty('--u-base', this.value + 'px')"
+  >
+</div>
+  <!-- ============================================================
+       SCRIPTS (V10 + Nébula) — INTOCADOS
+       ============================================================ -->
+<script data-kodux-source="https://kodux78k.github.io/a-Infodose/js/modules/iFSw-base-nephesh.js" data-k-id="JSI_0">
+/* SOURCE: https://kodux78k.github.io/a-Infodose/js/modules/iFSw-base-nephesh.js */
+(function () {
+  'use strict';
+  const ROOT = document.documentElement;
+  const THEME_KEY = 'dual-theme';
+  const stackWrap = document.getElementById('stackWrap');
+  const dock = document.getElementById('dock');
+  const timers = new Map();
+  const sessionStore = new Map();
+  const suspendedQueue = [];
+  const MAX_SUSPENDED = 5;
+  let counter = 1;
+  let activeWindow = null;
+  const tabDataMap = new WeakMap();
+  const SessionState = {
+    CREATED:   'created',
+    LOADING:   'loading',
+    ACTIVE:    'active',
+    IDLE:      'idle',
+    SUSPENDED: 'suspended',
+    CLOSED:    'closed'
+  };
+  const Tier = {
+    FREE:    'free',
+    PRO:     'pro',
+    PREMIUM: 'premium'
+  };
+  const TIER_LIMITS = {
+    [Tier.FREE]:    { maxActive: 2, maxSuspended: 3,  maxSessions: 5  },
+    [Tier.PRO]:     { maxActive: 4, maxSuspended: 6,  maxSessions: 12 },
+    [Tier.PREMIUM]: { maxActive: 8, maxSuspended: 12, maxSessions: 30 }
+  };
+  const IDLE_AFTER_MS = 45000;
+  const SUSPEND_AFTER_IDLE_MS = 90000;
+  let currentTier = Tier.FREE;
+  const sessionMeta = new Map();
+  function currentLimits() {
+    return TIER_LIMITS[currentTier] || TIER_LIMITS[Tier.FREE];
+  }
+  function countByStates(...states) {
+    let n = 0;
+    sessionMeta.forEach(meta => { if (states.includes(meta.state)) n++; });
+    return n;
+  }
+  function setSessionState(id, state) {
+    const win = getWin(id);
+    const meta = sessionMeta.get(id) || { createdAt: Date.now() };
+    meta.state = state;
+    if (state === SessionState.ACTIVE || state === SessionState.LOADING) {
+      meta.lastActive = Date.now();
+    }
+    if (state === SessionState.CLOSED) {
+      sessionMeta.delete(id);
+    } else {
+      sessionMeta.set(id, meta);
+    }
+    if (win) {
+      win.dataset.state = state;
+      win.classList.remove(
+        'state-created', 'state-loading', 'state-active',
+        'state-idle', 'state-suspended', 'state-closed'
+      );
+      win.classList.add('state-' + state);
+    }
+    window.dispatchEvent(
+      new CustomEvent('session:state-change', { detail: { id, state } })
+    );
+  }
+  function getSessionState(id) {
+    return sessionMeta.get(id)?.state || null;
+  }
+  function touchSession(id) {
+    const meta = sessionMeta.get(id);
+    if (!meta) return;
+    meta.lastActive = Date.now();
+    if (meta.state === SessionState.IDLE) {
+      setSessionState(id, SessionState.ACTIVE);
+    }
+  }
+  function leastRecentlyActiveSession(excludeId) {
+    let oldestId = null;
+    let oldestTime = Infinity;
+    sessionMeta.forEach((meta, id) => {
+      if (id === excludeId) return;
+      const win = getWin(id);
+      if (win && isMaximized(win)) return;
+      if (meta.state !== SessionState.ACTIVE &&
+          meta.state !== SessionState.IDLE &&
+          meta.state !== SessionState.LOADING) return;
+      const t = meta.lastActive || 0;
+      if (t < oldestTime) {
+        oldestTime = t;
+        oldestId = id;
+      }
+    });
+    return oldestId;
+  }
+  function enforceActiveBudget(excludeId) {
+    const limits = currentLimits();
+    let guard = 0;
+    while (
+      countByStates(SessionState.ACTIVE, SessionState.LOADING, SessionState.IDLE) >= limits.maxActive &&
+      guard++ < 50
+    ) {
+      const victim = leastRecentlyActiveSession(excludeId);
+      if (!victim) break;
+      suspendSession(victim);
+    }
+  }
+  function setTier(tier) {
+    if (!TIER_LIMITS[tier]) return;
+    currentTier = tier;
+    enforceActiveBudget();
+  }
+  setInterval(() => {
+    const now = Date.now();
+    sessionMeta.forEach((meta, id) => {
+      const win = getWin(id);
+      if (!win) return;
+      if (isMaximized(win)) {
+        touchSession(id);
+        return;
+      }
+      if (meta.state === SessionState.ACTIVE &&
+          now - (meta.lastActive || 0) > IDLE_AFTER_MS) {
+        setSessionState(id, SessionState.IDLE);
+      } else if (meta.state === SessionState.IDLE &&
+                 now - (meta.lastActive || 0) > SUSPEND_AFTER_IDLE_MS) {
+        suspendSession(id);
+      }
+    });
+  }, 10000);
+  window.SessionLifecycle = {
+    States: SessionState,
+    Tiers: Tier,
+    getState: getSessionState,
+    listSessions() {
+      return [...sessionMeta.entries()].map(([id, meta]) => ({ id, ...meta }));
+    },
+    setTier,
+    getTier: () => currentTier,
+    touch: touchSession,
+    suspend: id => suspendSession(id),
+    restore: id => restoreSession(id),
+    close: id => destroySession(id),
+    limits: () => currentLimits()
+  };
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+  function getWin(id) { return document.getElementById(id); }
+  function isMaximized(win) { return !!win?.classList.contains('maximized'); }
+  const zStack = [];
+  function bringToFront(win) {
+    if (!win) return;
+    const index = zStack.indexOf(win);
+    if (index !== -1) zStack.splice(index, 1);
+    zStack.push(win);
+    zStack.forEach((item, i) => {
+      if (!item.classList.contains('maximized')) {
+        item.style.zIndex = String(1000 + i * 10);
+      }
+    });
+    setActiveWindow(win);
+  }
+  function setActiveWindow(win) {
+    if (activeWindow === win) return;
+    activeWindow = win;
+    syncGlobalHeader();
+  }
+  function syncGlobalHeader() {
+    const urlInput = document.getElementById('urlInputNav');
+    if (!activeWindow) {
+      urlInput.value = '';
+      return;
+    }
+    const data = tabDataMap.get(activeWindow);
+    if (!data) return;
+    const activeTab = data.tabs.find(t => t.id === data.activeId);
+    if (activeTab) {
+      urlInput.value = activeTab.url || '';
+    } else {
+      urlInput.value = '';
+    }
+  }
+  function getTabData(win) {
+    if (!tabDataMap.has(win)) {
+      const initialUrl = win.querySelector('.win-frame')?.src || 'https://www.infodose.com.br/splash';
+      const tabs = [{ id: 'tab-' + Date.now(), url: initialUrl, title: 'Nova Aba', fav: false }];
+      const activeId = tabs[0].id;
+      tabDataMap.set(win, { tabs, activeId });
+    }
+    return tabDataMap.get(win);
+  }
+  function saveTabs(win) {
+    const data = tabDataMap.get(win);
+    if (!data || !win?.id) return;
+    try {
+      localStorage.setItem('dual_tabs_' + win.id, JSON.stringify(data));
+    } catch (_) {}
+    // Contrato observável: Session Window é dona das abas; State Core
+    // recebe o evento e persiste o snapshot global sem reler cliques da UI.
+    try {
+      window.dispatchEvent(new CustomEvent('ifsw:tabs-change', {
+        detail: {
+          sessionId: win.id,
+          activeId: data.activeId,
+          tabs: data.tabs.map(tab => ({ ...tab }))
+        }
+      }));
+    } catch (_) {}
+  }
+  function loadTabs(win) {
+    try {
+      const raw = localStorage.getItem('dual_tabs_' + win.id);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (data && data.tabs && data.tabs.length) {
+          tabDataMap.set(win, data);
+          return true;
+        }
+      }
+    } catch (_) {}
+    return false;
+  }
+  function getActiveTab(win) {
+    const data = tabDataMap.get(win);
+    if (!data) return null;
+    return data.tabs.find(t => t.id === data.activeId) || data.tabs[0] || null;
+  }
+  function setActiveTab(win, tabId) {
+    const data = tabDataMap.get(win);
+    if (!data) return;
+    const exists = data.tabs.some(t => t.id === tabId);
+    if (!exists) return;
+    data.activeId = tabId;
+    saveTabs(win);
+    renderTabCounter(win);
+    syncGlobalHeader();
+    const frame = win.querySelector('.win-frame');
+    const tab = getActiveTab(win);
+    if (frame && tab) {
+      frame.src = tab.url || 'about:blank';
+    }
+  }
+  function addTab(win, url = '') {
+    const data = tabDataMap.get(win);
+    if (!data) return;
+    const newTab = {
+      id: 'tab-' + Date.now(),
+      url: url || 'https://www.infodose.com.br/splash',
+      title: url ? url.replace(/^https?:\/\//, '').split('/')[0] : 'Nova Aba',
+      fav: false
+    };
+    data.tabs.push(newTab);
+    data.activeId = newTab.id;
+    saveTabs(win);
+    renderTabCounter(win);
+    syncGlobalHeader();
+    const frame = win.querySelector('.win-frame');
+    if (frame) frame.src = newTab.url;
+    closeTabSwitcher();
+  }
+  function removeTab(win, tabId) {
+    const data = tabDataMap.get(win);
+    if (!data || data.tabs.length <= 1) return;
+    const index = data.tabs.findIndex(t => t.id === tabId);
+    if (index === -1) return;
+    data.tabs.splice(index, 1);
+    if (data.activeId === tabId) {
+      data.activeId = data.tabs[Math.min(index, data.tabs.length - 1)].id;
+    }
+    saveTabs(win);
+    renderTabCounter(win);
+    syncGlobalHeader();
+    const frame = win.querySelector('.win-frame');
+    const active = getActiveTab(win);
+    if (frame && active) frame.src = active.url;
+    if (document.getElementById('tabSwitcherOverlay').classList.contains('open')) {
+      renderTabSwitcher(win);
+    }
+  }
+  function updateTabUrl(win, tabId, newUrl) {
+    const data = tabDataMap.get(win);
+    if (!data) return;
+    const tab = data.tabs.find(t => t.id === tabId);
+    if (!tab) return;
+    tab.url = newUrl;
+    tab.title = newUrl.replace(/^https?:\/\//, '').split('/')[0] || 'Nova Aba';
+    saveTabs(win);
+    syncGlobalHeader();
+    if (data.activeId === tabId) {
+      const frame = win.querySelector('.win-frame');
+      if (frame) frame.src = newUrl;
+    }
+    if (document.getElementById('tabSwitcherOverlay').classList.contains('open')) {
+      renderTabSwitcher(win);
+    }
+  }
+  function toggleFav(win, tabId) {
+    const data = tabDataMap.get(win);
+    if (!data) return;
+    const tab = data.tabs.find(t => t.id === tabId);
+    if (!tab) return;
+    tab.fav = !tab.fav;
+    saveTabs(win);
+    if (document.getElementById('tabSwitcherOverlay').classList.contains('open')) {
+      renderTabSwitcher(win);
+    }
+  }
+  function renderTabCounter(win) {
+    const data = tabDataMap.get(win);
+    if (!data) return;
+    const btn = win.querySelector('.tab-counter');
+    if (btn) btn.textContent = data.tabs.length;
+  }
+  let currentSwitcherWin = null;
+  function openTabSwitcher(win) {
+    currentSwitcherWin = win;
+    document.getElementById('tabNewComposer')?.classList.remove('open');
+    const overlay = document.getElementById('tabSwitcherOverlay');
+    const title = document.getElementById('tabSwitcherTitle');
+    title.textContent = 'Abas — ' + (win.querySelector('.win-title')?.textContent || 'janela');
+    renderTabSwitcher(win);
+    overlay.classList.add('open');
+    overlay.onclick = function(e) {
+      if (e.target === overlay) closeTabSwitcher();
+    };
+  }
+  function closeTabSwitcher() {
+    document.getElementById('tabSwitcherOverlay').classList.remove('open');
+    currentSwitcherWin = null;
+  }
+  function renderTabSwitcher(win) {
+    const grid = document.getElementById('tabGrid');
+    const data = tabDataMap.get(win);
+    if (!data) {
+      grid.innerHTML = `<div class="tab-empty"><div class="tab-empty-icon">◌</div><div class="tab-empty-title">Nenhuma aba</div><div class="tab-empty-text">Abra uma nova aba para começar.</div></div>`;
+      return;
+    }
+    grid.innerHTML = '';
+    data.tabs.forEach(tab => {
+      const card = document.createElement('div');
+      card.className = 'tab-card' + (tab.id === data.activeId ? ' active' : '');
+      card.dataset.tabId = tab.id;
+      card.innerHTML = `
+        <div class="tab-card-inner">
+          <div class="tab-card-main">
+            <div class="tab-card-head">
+              <div class="tab-favicon">${tab.favicon || '◉'}</div>
+              <div class="tab-card-info">
+                <div class="tab-title">${tab.title || 'Nova Aba'}</div>
+                <div class="tab-url">${tab.url || ''}</div>
+              </div>
+            </div>
+            <div class="tab-status">${tab.id === data.activeId ? '<span class="tab-active-dot"></span> Ativa' : ''}</div>
+          </div>
+          <div class="tab-card-actions">
+            <button type="button" class="tab-action tab-fav ${tab.fav ? 'active' : ''}" data-tabid="${tab.id}" title="${tab.fav ? 'Remover favorito' : 'Favoritar aba'}" aria-label="${tab.fav ? 'Remover favorito' : 'Favoritar aba'}">${tab.fav ? '★' : '☆'}</button>
+            <button type="button" class="tab-action tab-copy" data-tabid="${tab.id}" title="Copiar link" aria-label="Copiar link">⧉</button>
+            <button type="button" class="tab-action tab-close" data-tabid="${tab.id}" title="Fechar aba" aria-label="Fechar aba">×</button>
+          </div>
+        </div>
+      `;
+      card.addEventListener('click', function(e) {
+        if (e.target.closest('.tab-close') || e.target.closest('.tab-fav') || e.target.closest('.tab-copy')) return;
+        setActiveTab(win, tab.id);
+        closeTabSwitcher();
+      });
+      const closeBtn = card.querySelector('.tab-close');
+      closeBtn.addEventListener('click', function(e) {
+        e.preventDefault(); e.stopPropagation();
+        removeTab(win, tab.id);
+      });
+      const favBtn = card.querySelector('.tab-fav');
+      favBtn.addEventListener('click', function(e) {
+        e.preventDefault(); e.stopPropagation();
+        toggleFav(win, tab.id);
+      });
+      card.querySelector('.tab-copy')?.addEventListener('click', async function(e) {
+        e.preventDefault(); e.stopPropagation();
+        await copyTabUrl(tab.url || '');
+        this.textContent = '✓';
+        setTimeout(() => { if (this.isConnected) this.textContent = '⧉'; }, 900);
+      });
+      grid.appendChild(card);
+    });
+  }
+  async function copyTabUrl(url) {
+    if (!url) return;
+    try {
+      if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(url);
+      else {
+        const area = document.createElement('textarea');
+        area.value = url; area.style.position = 'fixed'; area.style.opacity = '0';
+        document.body.appendChild(area); area.select(); document.execCommand('copy'); area.remove();
+      }
+      window.dispatchEvent(new CustomEvent('dual:toast', { detail: { message: 'Link copiado' } }));
+    } catch (_) {}
+  }
+  function collectQuickLinks(ownerWin) {
+    const map = new Map();
+    document.querySelectorAll('.session-window:not(.tab-switcher-overlay)').forEach(session => {
+      try {
+        const raw = localStorage.getItem('dual_tabs_' + session.id);
+        const saved = raw ? JSON.parse(raw) : null;
+        (saved?.tabs || []).forEach(tab => {
+          if (!tab?.url) return;
+          const key = tab.url.trim();
+          if (!key) return;
+          const old = map.get(key) || {};
+          map.set(key, { url:key, title:tab.title || key.replace(/^https?:\/\//,'').split('/')[0], fav:!!(old.fav || tab.fav), current:session === ownerWin && saved.activeId === tab.id });
+        });
+      } catch (_) {}
+    });
+    return [...map.values()].sort((a,b) => Number(b.fav)-Number(a.fav) || Number(b.current)-Number(a.current));
+  }
+  function renderQuickLinks(win) {
+    const host = document.getElementById('tabQuickLinks');
+    if (!host) return;
+    const links = collectQuickLinks(win);
+    host.innerHTML = '';
+    if (!links.length) {
+      host.innerHTML = '<div class="tab-quick-empty">Ainda não há links salvos em outras abas. Você pode colar um endereço acima.</div>';
+      return;
+    }
+    links.slice(0,18).forEach(item => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'tab-quick-link' + (item.fav ? ' is-fav' : '');
+      b.textContent = (item.fav ? '★ ' : '') + item.title;
+      b.title = item.url;
+      b.addEventListener('click', () => {
+        const input = document.getElementById('tabNewUrl');
+        if (input) input.value = item.url;
+        host.querySelectorAll('.tab-quick-link').forEach(x => x.classList.remove('selected'));
+        b.classList.add('selected');
+      });
+      host.appendChild(b);
+    });
+  }
+  function openNewTabComposer() {
+    if (!currentSwitcherWin) return;
+    const composer = document.getElementById('tabNewComposer');
+    const input = document.getElementById('tabNewUrl');
+    const active = getActiveTab(currentSwitcherWin);
+    if (input) input.value = active?.url || 'https://www.infodose.com.br/splash';
+    composer?.classList.add('open');
+    renderQuickLinks(currentSwitcherWin);
+    setTimeout(() => input?.focus(), 80);
+  }
+  function createTabFromComposer() {
+    if (!currentSwitcherWin) return;
+    const input = document.getElementById('tabNewUrl');
+    let url = (input?.value || '').trim();
+    if (!url) return;
+    if (!/^(https?:|about:|blob:)/i.test(url)) url = 'https://' + url;
+    addTab(currentSwitcherWin, url);
+  }
+
+  function syncShell() {
+    const maximized = !!document.querySelector('.session-window.maximized:not(.minimized)');
+    document.body.classList.toggle('has-maximized', maximized);
+    document.body.classList.toggle('ui-immersive', maximized);
+  }
+  function suspendSession(id) {
+    const win = getWin(id);
+    if (!win) return;
+    const frame = win.querySelector('.win-frame');
+    if (!frame) {
+      setSessionState(id, SessionState.SUSPENDED);
+      return;
+    }
+    let snapshot = null;
+    try {
+      const doc = frame.contentDocument;
+      if (doc) snapshot = doc.documentElement.outerHTML;
+    } catch (_) {}
+    sessionStore.set(id, { url: frame.src, snapshot });
+    frame.remove();
+    win.dataset.suspended = 'true';
+    win.classList.add('suspended');
+    setSessionState(id, SessionState.SUSPENDED);
+    if (!suspendedQueue.includes(id)) suspendedQueue.push(id);
+    while (suspendedQueue.length > MAX_SUSPENDED) {
+      const oldest = suspendedQueue.shift();
+      destroySession(oldest);
+    }
+  }
+  function restoreSession(id) {
+    const win = getWin(id);
+    if (!win) return;
+    const data = sessionStore.get(id);
+    if (!data) {
+      setSessionState(id, SessionState.ACTIVE);
+      return;
+    }
+    enforceActiveBudget(id);
+    setSessionState(id, SessionState.LOADING);
+    const frame = document.createElement('iframe');
+    frame.className = 'win-frame';
+    frame.dataset.runtime = 'nav';
+    if (data.snapshot) {
+      frame.srcdoc = data.snapshot;
+    } else {
+      frame.src = data.url || 'https://www.infodose.com.br/splash';
+    }
+    frame.addEventListener('load', () => setSessionState(id, SessionState.ACTIVE), { once: true });
+    win.appendChild(frame);
+    win.dataset.suspended = 'false';
+    win.classList.remove('suspended');
+    sessionStore.delete(id);
+    const index = suspendedQueue.indexOf(id);
+    if (index !== -1) suspendedQueue.splice(index, 1);
+  }
+  function toggleCollapse(id) {
+    const win = getWin(id); if (!win) return;
+    if (isMaximized(win)) { win.classList.remove('maximized'); win.style.zIndex = ''; syncShell(); }
+    win.classList.toggle('collapsed'); win.classList.remove('peeked');
+    if (win.classList.contains('collapsed') && win.dataset.suspended === 'true') restoreSession(id);
+    bringToFront(win); syncShell();
+  }
+  function togglePeek(id) {
+    const win = getWin(id); if (!win) return;
+    if (isMaximized(win)) { win.classList.remove('maximized'); win.style.zIndex = ''; syncShell(); }
+    win.classList.toggle('peeked');
+    if (win.classList.contains('peeked')) {
+      win.classList.remove('collapsed');
+      if (win.dataset.suspended === 'true') restoreSession(id);
+    }
+    bringToFront(win); syncShell();
+  }
+  function maximizeWindow(id) {
+    const win = getWin(id); if (!win) return;
+    if (isMaximized(win)) {
+      win.classList.remove('maximized'); win.style.zIndex = '';
+      if (win.dataset.suspended === 'true') restoreSession(id);
+      bringToFront(win); syncShell(); return;
+    }
+    win.classList.remove('collapsed','peeked','minimized','header-hidden','resizing');
+    ['top','left','right','bottom','width','height','maxWidth','maxHeight'].forEach(p => win.style[p] = '');
+    if (win.dataset.suspended === 'true') restoreSession(id);
+    win.classList.add('maximized'); win.style.zIndex = '94000';
+    bringToFront(win); syncShell();
+  }
+  function minimizeWindow(id) {
+    const win = getWin(id); if (!win) return;
+    timers.delete(id);
+    win.classList.remove('maximized','collapsed','peeked','header-hidden','resizing');
+    syncShell();
+    suspendSession(id);
+    win.classList.add('minimized');
+    document.getElementById('dock-' + id)?.remove();
+    const bubble = document.createElement('button');
+    bubble.type = 'button'; bubble.className = 'dock-bubble'; bubble.id = 'dock-' + id;
+    bubble.title = 'Restaurar janela'; bubble.setAttribute('aria-label', 'Restaurar janela');
+    bubble.textContent = '۞';
+    bubble.addEventListener('click', function(e) {
+      e.preventDefault(); e.stopPropagation();
+      win.classList.remove('minimized');
+      if (win.dataset.suspended === 'true') restoreSession(id);
+      bringToFront(win);
+      requestAnimationFrame(() => { bringToFront(win); syncShell(); });
+      bubble.remove();
+    });
+    dock?.appendChild(bubble);
+    syncShell();
+  }
+  function closeWindow(id) { destroySession(id); }
+  function destroySession(id) {
+    const win = getWin(id);
+    setSessionState(id, SessionState.CLOSED);
+    document.getElementById('dock-' + id)?.remove();
+    win?.remove();
+    sessionStore.delete(id);
+    const index = suspendedQueue.indexOf(id);
+    if (index !== -1) suspendedQueue.splice(index, 1);
+    tabDataMap.delete(win);
+    syncShell();
+    if (activeWindow === win) setActiveWindow(null);
+  }
+  function handleHeaderClick(e, id) {
+    if (e.target.closest('.win-controls') || e.target.closest('button') || e.target.closest('input') || e.target.closest('.win-navrow')) return;
+    const win = getWin(id); if (!win) return;
+    bringToFront(win);
+    const old = timers.get(id);
+    if (old) { clearTimeout(old); timers.delete(id); maximizeWindow(id); return; }
+    const timer = setTimeout(() => { timers.delete(id); togglePeek(id); }, 250);
+    timers.set(id, timer);
+  }
+  function makeResizeHandles(win) {
+    if (win.dataset.resizeReady === '1') return;
+    win.dataset.resizeReady = '1';
+    const hy = document.createElement('div'); hy.className = 'resize-handle resize-y';
+    const hx = document.createElement('div'); hx.className = 'resize-handle resize-x';
+    const hc = document.createElement('div'); hc.className = 'resize-handle resize-corner';
+    win.append(hy, hx, hc);
+    bindResizeY(win, hy);
+    bindResizeX(win, hx);
+    bindResizeCorner(win, hc);
+  }
+  function freeFromMaximize(win, rect) {
+    if (isMaximized(win)) {
+      win.classList.remove('maximized');
+      win.style.position = 'fixed';
+      win.style.left = Math.max(0, rect.left) + 'px';
+      win.style.top = Math.max(0, rect.top) + 'px';
+      win.style.right = 'auto';
+      win.style.bottom = 'auto';
+      win.style.width = Math.min(rect.width, window.innerWidth) + 'px';
+      win.style.height = Math.min(rect.height, window.innerHeight) + 'px';
+      win.style.maxWidth = 'none'; win.style.maxHeight = 'none';
+      if (win.dataset.suspended === 'true') restoreSession(win.id);
+    }
+    win.classList.remove('collapsed','peeked');
+    win.classList.add('resizing');
+    syncShell();
+  }
+  function finishResize(win) { win.classList.remove('resizing'); syncShell(); }
+  function bindResizeY(win, handle) {
+    let active = false, pointerId = null, startY = 0, startH = 0;
+    handle.addEventListener('pointerdown', function(e) {
+      if (e.button != null && e.button !== 0) return;
+      const rect = win.getBoundingClientRect();
+      active = true; pointerId = e.pointerId;
+      startY = e.clientY; startH = rect.height;
+      freeFromMaximize(win, rect);
+      handle.setPointerCapture?.(pointerId);
+      e.preventDefault();
+      const move = ev => {
+        if (!active || ev.pointerId !== pointerId) return;
+        ev.preventDefault();
+        const next = Math.max(44, Math.min(window.innerHeight, startH + (ev.clientY - startY)));
+        win.style.height = next + 'px';
+      };
+      const up = ev => {
+        if (ev && ev.pointerId !== pointerId) return;
+        active = false;
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        window.removeEventListener('pointercancel', up);
+        finishResize(win);
+      };
+      window.addEventListener('pointermove', move, { passive: false });
+      window.addEventListener('pointerup', up);
+      window.addEventListener('pointercancel', up);
+    }, { passive: false });
+  }
+  function bindResizeX(win, handle) {
+    let active = false, pointerId = null, startX = 0, startW = 0;
+    handle.addEventListener('pointerdown', function(e) {
+      if (e.button != null && e.button !== 0) return;
+      const rect = win.getBoundingClientRect();
+      active = true; pointerId = e.pointerId;
+      startX = e.clientX; startW = rect.width;
+      freeFromMaximize(win, rect);
+      handle.setPointerCapture?.(pointerId);
+      e.preventDefault();
+      const move = ev => {
+        if (!active || ev.pointerId !== pointerId) return;
+        ev.preventDefault();
+        const next = Math.max(280, Math.min(window.innerWidth, startW + (ev.clientX - startX)));
+        win.style.width = next + 'px';
+      };
+      const up = ev => {
+        if (ev && ev.pointerId !== pointerId) return;
+        active = false;
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        window.removeEventListener('pointercancel', up);
+        finishResize(win);
+      };
+      window.addEventListener('pointermove', move, { passive: false });
+      window.addEventListener('pointerup', up);
+      window.addEventListener('pointercancel', up);
+    }, { passive: false });
+  }
+  function bindResizeCorner(win, handle) {
+    let active = false, pointerId = null, startX = 0, startY = 0, startW = 0, startH = 0;
+    handle.addEventListener('pointerdown', function(e) {
+      if (e.button != null && e.button !== 0) return;
+      const rect = win.getBoundingClientRect();
+      active = true; pointerId = e.pointerId;
+      startX = e.clientX; startY = e.clientY;
+      startW = rect.width; startH = rect.height;
+      freeFromMaximize(win, rect);
+      handle.setPointerCapture?.(pointerId);
+      e.preventDefault();
+      const move = ev => {
+        if (!active || ev.pointerId !== pointerId) return;
+        ev.preventDefault();
+        const width = Math.max(280, Math.min(window.innerWidth, startW + (ev.clientX - startX)));
+        const height = Math.max(44, Math.min(window.innerHeight, startH + (ev.clientY - startY)));
+        win.style.width = width + 'px'; win.style.height = height + 'px';
+      };
+      const up = ev => {
+        if (ev && ev.pointerId !== pointerId) return;
+        active = false;
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        window.removeEventListener('pointercancel', up);
+        finishResize(win);
+      };
+      window.addEventListener('pointermove', move, { passive: false });
+      window.addEventListener('pointerup', up);
+      window.addEventListener('pointercancel', up);
+    }, { passive: false });
+  }
+  function wireSession(win) {
+    if (!win || win.dataset.wired === '1') return;
+    win.dataset.wired = '1';
+    win.addEventListener('pointerdown', () => touchSession(win.id), { passive: true });
+    if (!loadTabs(win)) {
+      const frame = win.querySelector('.win-frame');
+      const src = frame ? frame.src : 'https://www.infodose.com.br/splash';
+      const tabs = [{ id: 'tab-' + Date.now(), url: src, title: src.replace(/^https?:\/\//, '').split('/')[0] || 'Nova Aba', fav: false }];
+      tabDataMap.set(win, { tabs, activeId: tabs[0].id });
+      saveTabs(win);
+    }
+    renderTabCounter(win);
+    makeResizeHandles(win);
+    const header = $('.win-hdr', win);
+    header?.addEventListener('click', e => handleHeaderClick(e, win.id));
+    const controls = $('.win-controls', win);
+    controls?.addEventListener('click', function(e) {
+      e.preventDefault(); e.stopPropagation();
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      if (action === 'collapse') toggleCollapse(win.id);
+      else if (action === 'maximize') maximizeWindow(win.id);
+      else if (action === 'minimize') minimizeWindow(win.id);
+      else if (action === 'close') closeWindow(win.id);
+      else if (action === 'tab-switcher') openTabSwitcher(win);
+    });
+    const input = $('.win-urlbar', win);
+    const go = $('.win-go-btn', win);
+    go?.addEventListener('click', function(e) {
+      e.preventDefault(); e.stopPropagation();
+      if (!input) return;
+      let url = input.value.trim();
+      if (!url) return;
+      if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+      const activeTab = getActiveTab(win);
+      if (activeTab) updateTabUrl(win, activeTab.id, url);
+      input.value = url;
+    });
+    input?.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') { e.stopPropagation(); go?.click(); }
+    });
+    const frame = win.querySelector('.win-frame');
+    frame?.addEventListener('load', function() {
+      try {
+        const doc = this.contentDocument;
+        if (doc && doc.title) {
+          const data = tabDataMap.get(win);
+          const active = getActiveTab(win);
+          if (active) { active.title = doc.title; saveTabs(win); }
+        }
+      } catch (_) {}
+      if (this.src) {
+        const data = tabDataMap.get(win);
+        const active = getActiveTab(win);
+        if (active && active.url !== this.src) { active.url = this.src; saveTabs(win); }
+        const localInput = win.querySelector('.win-urlbar');
+        if (localInput) localInput.value = this.src;
+        syncGlobalHeader();
+      }
+    });
+    frame?.addEventListener('click', function() {
+      if (!win.classList.contains('maximized')) bringToFront(win);
+    });
+    const active = getActiveTab(win);
+    if (frame && active && frame.src !== active.url) frame.src = active.url;
+    if (frame && active) {
+      const localInput = win.querySelector('.win-urlbar');
+      if (localInput) localInput.value = active.url;
+    }
+    if (!activeWindow) setActiveWindow(win);
+    const hdr = win.querySelector('.win-hdr');
+    if (hdr) {
+      const badge = document.createElement('span');
+      badge.className = 'state-badge';
+      badge.textContent = '●';
+      hdr.appendChild(badge);
+      const observer = new MutationObserver(() => {
+        const state = win.dataset.state || 'created';
+        const colors = {
+          active: '#39ffb6',
+          loading: '#00e5ff',
+          idle: '#ffd700',
+          suspended: '#ff6b6b',
+          created: '#aaa',
+          closed: '#555'
+        };
+        const labels = {
+          active: 'ATIVO',
+          loading: 'CARREGANDO',
+          idle: 'OCIOSO',
+          suspended: 'SUSPENSO',
+          created: 'CRIADO',
+          closed: 'FECHADO'
+        };
+        badge.textContent = `●`;
+        badge.style.color = colors[state] || '#aaa';
+        badge.style.background = colors[state] + '33';
+      });
+      observer.observe(win, { attributes: true, attributeFilter: ['data-state'] });
+      observer.takeRecords();
+    }
+  }
+  function createSessionWindow({ title = '//', src = 'https://www.infodose.com.br' } = {}) {
+    const id = 'session-' + Date.now() + '-' + counter++;
+    const win = document.createElement('section');
+    win.className = 'session-window peeked';
+    win.id = id;
+    win.innerHTML = `
+      <div class="win-hdr">
+        <div class="win-controls">
+          <button type="button" data-action="collapse" title="Colapsar" aria-label="Colapsar">−</button>
+          <button type="button" data-action="tab-switcher" class="tab-counter">1</button>
+          <button type="button" data-action="maximize" title="Maximizar" aria-label="Maximizar">⛶</button>
+          <button type="button" data-action="minimize" title="Minimizar" aria-label="Minimizar">۞</button>
+          <button type="button" data-action="close" title="Fechar" aria-label="Fechar">×</button>
+        </div>
+        <div class="win-navrow" style="flex:2;min-width:0;pointer-events:auto;">
+          <input class="win-urlbar" type="text" value="${src}" placeholder="Digite uma URL..." spellcheck="false" autocomplete="off">
+          <button class="win-go-btn" type="button">Go</button>
+        </div>
+      </div>
+      <iframe class="win-frame" data-runtime="nav" src="https://infodose.com.br/KXT-pack/modular/${src}"></iframe>
+    `;
+    stackWrap.appendChild(win);
+    setSessionState(id, SessionState.CREATED);
+    enforceActiveBudget(id);
+    setSessionState(id, SessionState.LOADING);
+    const newFrame = win.querySelector('.win-frame');
+    newFrame?.addEventListener('load', () => setSessionState(id, SessionState.ACTIVE), { once: true });
+    wireSession(win);
+    bringToFront(win);
+    return id;
+  }
+  function applyTheme(theme) {
+    const next = theme === 'light' ? 'light' : 'dark';
+    ROOT.dataset.theme = next;
+    try { localStorage.setItem(THEME_KEY, next); } catch (_) {}
+    $$('.theme-dot').forEach(btn => {
+      if (btn.textContent.includes('☀') || btn.textContent.includes('🌙')) {
+        btn.textContent = next === 'light' ? '☀️' : '🌙';
+      }
+    });
+    window.dispatchEvent(new CustomEvent('dual:theme-change', { detail: { theme: next } }));
+  }
+  function getInitialTheme() {
+    try { const saved = localStorage.getItem(THEME_KEY); if (saved === 'light' || saved === 'dark') return saved; } catch (_) {}
+    return 'dark';
+  }
+  window.DualTheme = {
+    set: applyTheme,
+    toggle() { applyTheme(ROOT.dataset.theme === 'light' ? 'dark' : 'light'); },
+    get() { return ROOT.dataset.theme || 'dark'; }
+  };
+  $$('.theme-dot').forEach(btn => {
+    btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); DualTheme.toggle(); });
+  });
+  applyTheme(getInitialTheme());
+  const navInput = document.getElementById('urlInputNav');
+  const goNavBtn = document.getElementById('goNavBtn');
+  const favBtn = document.getElementById('favBtn');
+  function applyGlobalUrl() {
+    if (!navInput || !activeWindow) return;
+    let url = navInput.value.trim();
+    if (!url) return;
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    const activeTab = getActiveTab(activeWindow);
+    if (activeTab) updateTabUrl(activeWindow, activeTab.id, url);
+    navInput.value = url;
+  }
+  navInput?.addEventListener('keydown', e => { if (e.key === 'Enter') applyGlobalUrl(); });
+  goNavBtn?.addEventListener('click', applyGlobalUrl);
+  favBtn?.addEventListener('click', function() {
+    if (!activeWindow) return;
+    const activeTab = getActiveTab(activeWindow);
+    if (activeTab) toggleFav(activeWindow, activeTab.id);
+  });
+  document.getElementById('newTabBtn')?.addEventListener('click', function() {
+    openNewTabComposer();
+  });
+  document.getElementById('tabCreateConfirm')?.addEventListener('click', createTabFromComposer);
+  document.getElementById('tabNewUrl')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); createTabFromComposer(); }
+  });
+  document.getElementById('closeTabSwitcher')?.addEventListener('click', closeTabSwitcher);
+  document.getElementById('openKobBtn')?.addEventListener('click', () => createSessionWindow());
+  const HEADER = document.getElementById('main-header');
+  const MAIN = document.getElementById('main-content');
+  HEADER?.addEventListener('click', e => {
+    if (e.target.closest('button') || e.target.closest('input') || e.target.closest('.win-navrow') || e.target.closest('.theme-dot')) return;
+    MAIN?.classList.toggle('hidden');
+    const collapsed = MAIN?.classList.contains('hidden');
+    HEADER.classList.toggle('is-collapsed', collapsed);
+    window.dispatchEvent(new CustomEvent('dual:content-collapse', { detail: { collapsed } }));
+  });
+  let lastScrollY = window.scrollY, ticking = false;
+  const SCROLL_THRESHOLD = 8;
+  function updateHeader() {
+    if (!HEADER) return;
+    const current = window.scrollY;
+    if (current <= 10) { HEADER.classList.remove('header-hidden'); HEADER.classList.add('header-visible'); lastScrollY = current; ticking = false; return; }
+    if (current > lastScrollY + SCROLL_THRESHOLD) {
+      HEADER.classList.remove('header-visible'); HEADER.classList.add('header-hidden');
+    } else if (current < lastScrollY - SCROLL_THRESHOLD) {
+      HEADER.classList.remove('header-hidden'); HEADER.classList.add('header-visible');
+    }
+    lastScrollY = current; ticking = false;
+  }
+  window.addEventListener('scroll', () => { if (!ticking) { requestAnimationFrame(updateHeader); ticking = true; } }, { passive: true });
+  $$('.session-window').forEach(win => {
+    wireSession(win);
+    const hasFrame = !!win.querySelector('.win-frame');
+    setSessionState(win.id, hasFrame ? SessionState.ACTIVE : SessionState.CREATED);
+    if (!activeWindow) setActiveWindow(win);
+  });
+  syncGlobalHeader();
+  syncShell();
+  window.createSessionWindow = createSessionWindow;
+  window.togglePeek = togglePeek;
+  window.toggleCollapse = toggleCollapse;
+  window.maximizeWindow = maximizeWindow;
+  window.minimizeWindow = minimizeWindow;
+  window.closeWindow = closeWindow;
+  window.syncShellMode = syncShell;
+
+  // Bridge público para o SW Persist adotar sessões reconstruídas.
+  // Reutiliza wireSession original: carrega dual_tabs_<id> no WeakMap
+  // e mantém cada Tab Switcher associado à sua própria Session Window.
+  window.__wireSessionAdopt = function () {
+    $$('.session-window:not(.tab-switcher-overlay)').forEach(win => {
+      if (!win.id) return;
+      wireSession(win);
+      const hasFrame = !!win.querySelector('.win-frame');
+      if (!sessionMeta.has(win.id)) {
+        setSessionState(win.id, hasFrame ? SessionState.ACTIVE : SessionState.SUSPENDED);
+      }
+      if (!activeWindow && hasFrame) setActiveWindow(win);
+    });
+    syncGlobalHeader();
+    syncShell();
+  };
+  window.IFSWTabs = Object.freeze({
+    version: '1.1.0-tabs-contract',
+    openSwitcher: win => openTabSwitcher(win),
+    closeSwitcher: closeTabSwitcher,
+    getActiveWindow: () => activeWindow,
+    getSnapshot: win => {
+      if (!win) return null;
+      const data = tabDataMap.get(win);
+      return data ? { sessionId: win.id, activeId: data.activeId, tabs: data.tabs.map(tab => ({ ...tab })) } : null;
+    },
+    getActiveTab: win => win ? getActiveTab(win) : (activeWindow ? getActiveTab(activeWindow) : null),
+    setActive: (win, tabId) => setActiveTab(win, tabId),
+    add: (win, url) => addTab(win, url || ''),
+    remove: (win, tabId) => removeTab(win, tabId),
+    toggleFavorite: (win, tabId) => toggleFav(win, tabId),
+    updateUrl: (win, tabId, url) => updateTabUrl(win, tabId, url)
+  });
+
+  console.log('🚀 Almasliber OS — Core com Abas, Snapshot e Badge de Estado (corrigido) carregado. u-base: ' + getComputedStyle(document.documentElement).getPropertyValue('--u-base'));
+})();
+</script>
+<!-- <script type="module" src="https://infodose.com.br/oiDual/KODUX/78K/APPS/78Dual/js/main.js"></script> -->
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   u-base persistence — salva e restaura --u-base no localStorage
+   ─ Colar DEPOIS do core, ANTES de </body>
+   ─ Chave: 'u_base_value'
+   ─ Valor: número em px (ex.: 14, 10.5)
+   ═══════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  const LS_KEY = 'u_base_value';
+  const ROOT = document.documentElement;
+
+  /* ─────────── 1) RESTAURA ANTES DO PRIMEIRO PAINT ───────────
+     Roda o mais cedo possível. Se houver valor salvo, aplica
+     inline (sobrescreve o clamp). Se não, remove inline (clamp age). */
+  function restore() {
+    let v = null;
+    try { v = localStorage.getItem(LS_KEY); } catch (_) {}
+    if (v != null && v !== '' && !Number.isNaN(parseFloat(v))) {
+      ROOT.style.setProperty('--u-base', parseFloat(v) + 'px');
+    } else {
+      ROOT.style.removeProperty('--u-base');
+    }
+  }
+
+  /* ─────────── 2) SALVA O VALOR ATUAL DO SLIDER ─────────── */
+  function save(value) {
+    const v = (value != null ? value : readSlider());
+    if (v == null || Number.isNaN(v)) return;
+    try { localStorage.setItem(LS_KEY, String(v)); } catch (_) {}
+  }
+
+  function readSlider() {
+    const input = document.querySelector('.scale-slider');
+    if (!input) return null;
+    const v = parseFloat(input.value);
+    return Number.isNaN(v) ? null : v;
+  }
+
+  /* ─────────── 3) SINCRONIZA O SLIDER COM O VALOR SALVO ───────────
+     Se restauramos `14px`, o slider precisa mostrar 14 (não 10).
+     Isso roda quando o slider já existe no DOM. */
+  function syncSliderToRestored() {
+    const input = document.querySelector('.scale-slider');
+    if (!input) return;
+    let v = null;
+    try { v = localStorage.getItem(LS_KEY); } catch (_) {}
+    if (v != null && v !== '' && !Number.isNaN(parseFloat(v))) {
+      input.value = String(parseFloat(v));
+    }
+    /* liga listeners de salvamento */
+    if (input.dataset.ubaseWired === '1') return;
+    input.dataset.ubaseWired = '1';
+    input.addEventListener('input', function () { save(this.value); });
+    input.addEventListener('change', function () { save(this.value); });
+    /* duplo clique = reset para o clamp */
+    input.addEventListener('dblclick', function () {
+      try { localStorage.removeItem(LS_KEY); } catch (_) {}
+      ROOT.style.removeProperty('--u-base');
+      /* re-sincroniza o slider com o valor efetivo do clamp */
+      requestAnimationFrame(() => {
+        const effective = parseFloat(getComputedStyle(ROOT).getPropertyValue('--u-base'));
+        if (!Number.isNaN(effective)) this.value = String(effective);
+      });
+    });
+  }
+
+  /* ─────────── 4) BOOT ─────────── */
+  /* Restaura IMEDIATAMENTE (o <script> já está no fim do body,
+     então a página está parseada — dá pra aplicar antes do primeiro paint). */
+  restore();
+
+  /* Sincroniza o slider + listeners quando o DOM estiver pronto.
+     Como o <script> está no fim do body, o DOM já existe; mas
+     garantimos via rAF para evitar corrida com o core. */
+  requestAnimationFrame(() => {
+    syncSliderToRestored();
+    save(); // se estiver vazio e o slider estiver em 10, salva 10 (opcional, idempotente)
+  });
+
+  /* Rede de segurança: salva no unload / aba escondida */
+  window.addEventListener('beforeunload', () => save());
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') save();
+  });
+
+  /* API mínima (opcional, útil no console) */
+  window.UBaseStore = {
+    get() { try { return parseFloat(localStorage.getItem(LS_KEY)); } catch (_) { return NaN; } },
+    set(v) { save(v); ROOT.style.setProperty('--u-base', parseFloat(v) + 'px'); syncSliderToRestored(); },
+    clear() {
+      try { localStorage.removeItem(LS_KEY); } catch (_) {}
+      ROOT.style.removeProperty('--u-base');
+    }
+  };
+})();
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   iFSw — PERSIST + AUDIO-GUARD  (override de fechamento)
+   ─ Colar DEPOIS do core e do u-base-store, ANTES de </body>
+   ─
+   FUNÇÕES:
+   1) Persiste session-window (URL, tabs, classe, posição, audio-state)
+      em localStorage['dual_sessions_v1']
+   2) Restaura no load (recria as que faltam, re-aquece o core)
+   3) Detecta áudio tocando (postMessage + mediaSession + atributo)
+   4) Impede idle/suspend/minimize-dock de matar áudio ativo
+   ═══════════════════════════════════════════════════════════════════ */
+(function (global) {
+  'use strict';
+  if (global.__IFSW_PERSIST_AUDIO__) return;
+  global.__IFSW_PERSIST_AUDIO__ = true;
+
+  /* ─────────── CONFIG ─────────── */
+  const LS_SESSIONS   = 'dual_sessions_v1';
+  const LS_TABS_PFX   = 'dual_tabs_';
+  const SESSION_SEL   = '.session-window:not(.tab-switcher-overlay)';
+  const INITIAL_ID    = 'session-iframe';
+  const SAVE_DEBOUNCE = 250;
+  const AUDIO_POLL_MS = 2000;   // fallback de poll (mediaSession)
+  const AUDIO_STALE_MS = 8000;  // se não receber update por 8s, considera parado (evita "grudar" true)
+
+  /* ─────────── ESTADO ─────────── */
+  // Mapa: id → { playing: bool, source: 'postMessage'|'mediaSession'|'attr', at: ts }
+  const audioState = new Map();
+  const stack = document.getElementById('stackWrap');
+
+  /* ═══════════════════════════════════════════════════════════
+     1) AUDIO DETECTION
+     ═══════════════════════════════════════════════════════════ */
+
+  /* 1a) postMessage bridge (recomendado — o app do iframe reporta)
+     O iframe manda: window.parent.postMessage({type:'ifsw:media', playing:true}, '*')
+     Aqui só associamos ao iframe mais próximo via event.source */
+  window.addEventListener('message', function (ev) {
+    const d = ev.data;
+    if (!d || d.type !== 'ifsw:media') return;
+    // identifica a session dona desse iframe
+    const iframe = [...document.querySelectorAll('iframe.win-frame')].find(f => f.contentWindow === ev.source);
+    if (!iframe) return;
+    const win = iframe.closest('.session-window');
+    if (!win) return;
+    setAudio(win.id, !!d.playing, 'postMessage');
+    win.dataset.audio = d.playing ? '1' : '0';
+  }, false);
+
+  /* 1b) atributo data-audio="1" — você pode setar manualmente (ex.: via devtools ou se injetar script no app) */
+  function readAttr() {
+    document.querySelectorAll(SESSION_SEL).forEach(win => {
+      if (win.dataset.audio === '1') setAudio(win.id, true, 'attr');
+    });
+  }
+
+  /* 1c) mediaSession heurístico — o browser expõe metadata global.
+     Não sabemos de qual iframe veio, mas se estiver tocando, marcamos
+     a session *ativa* (focused/última com pointerdown) como "com áudio".
+     É fallback, não confiável sozinho. */
+  function readMediaSession() {
+    try {
+      if (!('mediaSession' in navigator)) return;
+      const st = navigator.mediaSession.playbackState; // 'playing' | 'paused' | 'none'
+      if (st === 'playing' && global.__lastActiveSessionId) {
+        setAudio(global.__lastActiveSessionId, true, 'mediaSession');
+      }
+    } catch (_) {}
+  }
+
+  /* 1d) Áudio do próprio parent (AudioContext global) — cobre se o parent
+     também tocar (ex.: TTS do próprio OS via speechSynthesis) */
+  function readParentSpeech() {
+    try {
+      if (typeof speechSynthesis !== 'undefined' && speechSynthesis.speaking) {
+        // marca o parent como "tocando" — não é session, mas impede o idle global
+        global.__parentSpeaking = true;
+      } else {
+        global.__parentSpeaking = false;
+      }
+    } catch (_) {}
+  }
+
+  /* setter central */
+  function setAudio(id, playing, source) {
+    if (!id) return;
+    const prev = audioState.get(id);
+    audioState.set(id, { playing: !!playing, source: source || (prev && prev.source) || 'unknown', at: Date.now() });
+    // reflete no DOM pra CSS/inspeção
+    const win = document.getElementById(id);
+    if (win) win.dataset.audio = playing ? '1' : '0';
+    // se voltou a tocar, "acorda" a sessão (sai de idle)
+    if (playing && win) {
+      const st = win.dataset.state;
+      if (st === 'idle' && global.SessionLifecycle) global.SessionLifecycle.touch(id);
+    }
+  }
+
+  function isPlaying(id) {
+    const s = audioState.get(id);
+    if (!s || !s.playing) return false;
+    // stale check — evita "grudar" true se o iframe parou de reportar
+    if (Date.now() - s.at > AUDIO_STALE_MS) {
+      audioState.set(id, { ...s, playing: false });
+      return false;
+    }
+    return true;
+  }
+
+  /* limpa audioState quando a session sai do DOM */
+  function pruneAudioState() {
+    const alive = new Set([...document.querySelectorAll(SESSION_SEL)].map(w => w.id));
+    [...audioState.keys()].forEach(id => { if (!alive.has(id)) audioState.delete(id); });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     2) HOOK NO SessionLifecycle DO CORE
+     Impede que sessões com áudio virem IDLE/SUSPENDED.
+     O core atual NÃO tem callback público pra isso, mas o
+     setInterval dele chama setSessionState(..., 'idle') e
+     suspendSession(id). Vamos interceptar via monkey-patch.
+     ═══════════════════════════════════════════════════════════ */
+  function installAudioGuard() {
+    if (!global.SessionLifecycle) return;
+
+    /* 2a) patch em suspend: se tocar áudio, NÃO suspende */
+    const _suspend = global.SessionLifecycle.suspend;
+    if (typeof _suspend === 'function') {
+      global.SessionLifecycle.suspend = function (id) {
+        if (isPlaying(id)) {
+          console.debug('[audio-guard] suspend bloqueado para', id, '(áudio tocando)');
+          return;
+        }
+        return _suspend.call(this, id);
+      };
+    }
+
+    /* 2b) patch em touch — sempre permitido (acorda), sem mudança */
+
+    /* 2c) patch no minimizeWindow global (que chama suspendSession) */
+    if (typeof global.minimizeWindow === 'function' && !global.minimizeWindow.__audioGuarded) {
+      const _min = global.minimizeWindow;
+      global.minimizeWindow = function (id) {
+        if (isPlaying(id)) {
+          // NÃO suspende — só esconde com CSS e joga no dock
+          const win = document.getElementById(id);
+          if (win) {
+            win.classList.add('minimized', 'audio-minimized');
+            // esconde mas NÃO remove o iframe — áudio continua
+            win.style.position = 'absolute';
+            win.style.width = '1px';
+            win.style.height = '1px';
+            win.style.opacity = '0';
+            win.style.pointerEvents = 'none';
+            win.style.overflow = 'hidden';
+            // registra no dock
+            addDockBubble(id);
+          }
+          return;
+        }
+        return _min.call(this, id);
+      };
+      global.minimizeWindow.__audioGuarded = true;
+    }
+
+    /* 2d) patch no destroy: mantém o padrão */
+  }
+
+  /* bubble de dock "manual" (o core cria um ao minimizar; aqui replicamos
+     pra quando o áudio-guard bloqueia o suspend) */
+  function addDockBubble(id) {
+    const dock = document.getElementById('dock');
+    if (!dock) return;
+    if (document.getElementById('dock-' + id)) return;
+    const bubble = document.createElement('button');
+    bubble.type = 'button';
+    bubble.className = 'dock-bubble audio-dot';
+    bubble.id = 'dock-' + id;
+    bubble.title = 'Restaurar janela (áudio ativo)';
+    bubble.setAttribute('aria-label', 'Restaurar janela');
+    bubble.textContent = '🎵';
+    bubble.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      const win = document.getElementById(id);
+      if (win) {
+        win.classList.remove('minimized', 'audio-minimized');
+        win.style.position = '';
+        win.style.width = '';
+        win.style.height = '';
+        win.style.opacity = '';
+        win.style.pointerEvents = '';
+        win.style.overflow = '';
+      }
+      bubble.remove();
+    });
+    dock.appendChild(bubble);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     3) PERSISTÊNCIA DE SESSÕES
+     ═══════════════════════════════════════════════════════════ */
+
+  function serialize(win) {
+    if (!win || win.id === 'tabSwitcherOverlay') return null;
+    const frame = win.querySelector('.win-frame');
+    let url = null, srcdoc = null;
+    if (frame) {
+      if (frame.src && !frame.src.startsWith('about:') && !frame.src.startsWith('blob:')) url = frame.src;
+      else if (frame.srcdoc) srcdoc = frame.srcdoc.slice(0, 50000);
+    }
+    let tabs = null;
+    // Prefer the live Session Window API; localStorage remains the
+    // compatibility fallback for legacy/restored windows.
+    try {
+      const live = global.IFSWTabs?.getSnapshot?.(win);
+      if (live && Array.isArray(live.tabs) && live.tabs.length) {
+        tabs = { tabs: live.tabs, activeId: live.activeId };
+      }
+    } catch (_) {}
+    if (!tabs) {
+      try {
+        const raw = localStorage.getItem(LS_TABS_PFX + win.id);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.tabs) && parsed.tabs.length) tabs = parsed;
+        }
+      } catch (_) {}
+    }
+    if (!tabs) {
+      const fallbackUrl = url || 'https://www.infodose.com.br/splash';
+      const fallbackTab = {
+        id: 'tab-restored-' + win.id,
+        url: fallbackUrl,
+        title: fallbackUrl.replace(/^https?:\/\//, '').split('/')[0] || 'Nova Aba',
+        fav: false
+      };
+      tabs = { tabs: [fallbackTab], activeId: fallbackTab.id };
+      try { localStorage.setItem(LS_TABS_PFX + win.id, JSON.stringify(tabs)); } catch (_) {}
+    }
+    const cls = [...win.classList].filter(c =>
+      ['peeked','collapsed','maximized','minimized','suspended','audio-minimized'].includes(c)
+    );
+    const stylePos = {};
+    ['left','top','right','bottom','width','height','position','opacity','pointerEvents'].forEach(p => {
+      if (win.style[p]) stylePos[p] = win.style[p];
+    });
+    const a = audioState.get(win.id);
+    return {
+      id: win.id,
+      isInitial: win.id === INITIAL_ID,
+      url, srcdoc,
+      tabs,
+      cls,
+      state: win.dataset.state || null,
+      audio: a ? { playing: a.playing, source: a.source } : null,
+      stylePos,
+      order: [...stack.children].indexOf(win)
+    };
+  }
+
+  function saveSessions() {
+    if (!stack) return;
+    const list = [];
+    stack.querySelectorAll(SESSION_SEL).forEach(win => {
+      const s = serialize(win);
+      if (s) list.push(s);
+    });
+    try {
+      localStorage.setItem(LS_SESSIONS, JSON.stringify(list));
+    } catch (e) {
+      try {
+        const light = list.map(({ srcdoc, ...rest }) => rest);
+        localStorage.setItem(LS_SESSIONS, JSON.stringify(light));
+        console.warn('[persist] quota — salvando sem srcdoc');
+      } catch (_) {}
+    }
+  }
+
+  let saveTimer = null;
+  function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveSessions, SAVE_DEBOUNCE); }
+
+  /* reconstrói o HTML de uma session a partir do registro salvo */
+  function buildSession(s) {
+    const win = document.createElement('section');
+    win.className = ['session-window', ...(s.cls || [])].join(' ');
+    win.id = s.id;
+    if (s.state) win.dataset.state = s.state;
+    if (s.audio && s.audio.playing) win.dataset.audio = '1';
+    // restaura posição inline (se houver)
+    Object.entries(s.stylePos || {}).forEach(([k, v]) => { win.style[k] = v; });
+
+    // tabs (o core lê de localStorage no wire)
+    if (s.tabs) {
+      try { localStorage.setItem(LS_TABS_PFX + s.id, JSON.stringify(s.tabs)); } catch (_) {}
+    }
+    const tabsCount = s.tabs && s.tabs.tabs ? s.tabs.tabs.length : 1;
+    const activeTab = s.tabs && s.tabs.tabs ? (s.tabs.tabs.find(t => t.id === s.tabs.activeId) || s.tabs.tabs[0]) : null;
+    const src = (activeTab && activeTab.url) || s.url || 'https://www.infodose.com.br/splash';
+
+    win.innerHTML = `
+      <div class="win-hdr">
+        <div class="win-controls">
+          <button type="button" data-action="collapse" title="Colapsar" aria-label="Colapsar">−</button>
+          <button type="button" data-action="tab-switcher" class="tab-counter">${tabsCount}</button>
+          <button type="button" data-action="maximize" title="Maximizar" aria-label="Maximizar">⛶</button>
+          <button type="button" data-action="minimize" title="Minimizar" aria-label="Minimizar">۞</button>
+          <button type="button" data-action="close" title="Fechar" aria-label="Fechar">×</button>
+        </div>
+        <div class="win-navrow" style="flex:2;min-width:0;pointer-events:auto;">
+          <input class="win-urlbar" type="text" value="${(src || '').replace(/"/g,'&quot;')}" placeholder="Digite uma URL..." spellcheck="false" autocomplete="off">
+          <button class="win-go-btn" type="button">Go</button>
+        </div>
+      </div>
+      ${s.srcdoc
+        ? `<iframe class="win-frame" data-runtime="nav" srcdoc="${s.srcdoc.replace(/"/g,'&quot;')}"></iframe>`
+        : `<iframe class="win-frame" data-runtime="nav" src="https://infodose.com.br/KXT-pack/modular/${(src ||'about:blank').replace(/"/g,'&quot;')}"></iframe>`}
+    `;
+    // mantém audioState sincronizado
+    if (s.audio && s.audio.playing) {
+      setAudio(s.id, true, s.audio.source || 'restored');
+    }
+    return win;
+  }
+
+  function restoreSessions() {
+    if (!stack) return;
+    let list = [];
+    try { list = JSON.parse(localStorage.getItem(LS_SESSIONS) || '[]'); } catch (_) {}
+    if (!Array.isArray(list) || !list.length) return;
+    list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+    let created = 0;
+    list.forEach(s => {
+      if (!s || !s.id) return;
+      if (s.id === INITIAL_ID) return; // já está no HTML
+      if (document.getElementById(s.id)) return;
+      const node = buildSession(s);
+      stack.appendChild(node);
+      created++;
+    });
+
+    // Também adota a janela inicial e as reconstruídas. O bridge chama
+    // wireSession original, que hidrata o WeakMap por ID de janela.
+    adoptSessions();
+    scheduleSave();
+  }
+
+  /* wire mínimo em sessions restauradas (mesmo contrato do core) */
+  function adoptSessions() {
+    if (typeof global.__wireSessionAdopt === 'function') return global.__wireSessionAdopt();
+    // fallback: liga controles manualmente
+    document.querySelectorAll(SESSION_SEL).forEach(win => {
+      if (win.dataset.adopted === '1') return;
+      if (win.dataset.wired === '1') return;
+      win.dataset.adopted = '1';
+      wireRestoredSession(win);
+    });
+  }
+
+  function wireRestoredSession(win) {
+    // controles
+    win.querySelector('.win-controls')?.addEventListener('click', function (e) {
+      const btn = e.target.closest('button'); if (!btn) return;
+      const a = btn.dataset.action;
+      if (a === 'collapse' && global.toggleCollapse) global.toggleCollapse(win.id);
+      else if (a === 'maximize' && global.maximizeWindow) global.maximizeWindow(win.id);
+      else if (a === 'minimize' && global.minimizeWindow) global.minimizeWindow(win.id);
+      else if (a === 'close' && global.closeWindow) global.closeWindow(win.id);
+      else if (a === 'tab-switcher') {
+        // Abre o switcher ligado exatamente a esta janela.
+        if (global.IFSWTabs?.openSwitcher) global.IFSWTabs.openSwitcher(win);
+      }
+    });
+    // urlbar + go
+    const input = win.querySelector('.win-urlbar');
+    const go = win.querySelector('.win-go-btn');
+    go?.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      if (!input) return;
+      let url = input.value.trim(); if (!url) return;
+      if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+      const frame = win.querySelector('.win-frame');
+      if (frame) frame.src = url;
+      input.value = url;
+      // atualiza tab salva
+      try {
+        const raw = localStorage.getItem(LS_TABS_PFX + win.id);
+        if (raw) {
+          const d = JSON.parse(raw);
+          const idx = d.tabs.findIndex(t => t.id === d.activeId);
+          if (idx >= 0) { d.tabs[idx].url = url; d.tabs[idx].title = url.replace(/^https?:\/\//,'').split('/')[0]; localStorage.setItem(LS_TABS_PFX + win.id, JSON.stringify(d)); }
+        }
+      } catch (_) {}
+      scheduleSave();
+    });
+    input?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.stopPropagation(); go?.click(); } });
+    // touch no pointerdown
+    win.addEventListener('pointerdown', () => {
+      if (global.SessionLifecycle) global.SessionLifecycle.touch(win.id);
+    }, { passive: true });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     4) OBSERVERS / HOOKS
+     ═══════════════════════════════════════════════════════════ */
+
+  function observeStack() {
+    if (!stack) return;
+    const mo = new MutationObserver(() => { scheduleSave(); pruneAudioState(); });
+    mo.observe(stack, { childList: true, subtree: true, attributes: true, attributeFilter: ['class','id','data-state','data-audio'] });
+  }
+
+  function hookCreateButton() {
+    const btn = document.getElementById('openKobBtn');
+    if (!btn || btn.dataset.persistHook === '1') return;
+    btn.dataset.persistHook = '1';
+    btn.addEventListener('click', () => {
+      setTimeout(scheduleSave, 300);
+      setTimeout(() => { adoptSessions(); readAttr(); }, 400);
+    }, { passive: true });
+  }
+
+  function hookLastActiveSession() {
+    document.addEventListener('pointerdown', function (e) {
+      const win = e.target.closest && e.target.closest('.session-window:not(.tab-switcher-overlay)');
+      if (win) global.__lastActiveSessionId = win.id;
+    }, { passive: true, capture: true });
+
+    // Contrato explícito: o core de abas emite mudança semântica;
+    // a persistência global apenas captura o snapshot da Session Window.
+    global.addEventListener('ifsw:tabs-change', function (event) {
+      const id = event.detail && event.detail.sessionId;
+      if (!id || !document.getElementById(id)) return;
+      scheduleSave();
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     5) BOOT
+     ═══════════════════════════════════════════════════════════ */
+
+  function boot() {
+    // 1) restaura sessions (após core ter rodado)
+    setTimeout(() => {
+      restoreSessions();
+      adoptSessions();
+      setTimeout(saveSessions, 120);
+    }, 60);
+
+    // 2) instala guard de áudio (depois do core — pra monkey-patch pegar as refs certas)
+    setTimeout(installAudioGuard, 100);
+
+    // 3) observers + hooks
+    observeStack();
+    hookCreateButton();
+    hookLastActiveSession();
+    readAttr();
+
+    // 4) poll de fallback (mediaSession + speech + attr)
+    setInterval(() => {
+      readMediaSession();
+      readParentSpeech();
+      readAttr();
+    }, AUDIO_POLL_MS);
+
+    // 5) salva no unload
+    window.addEventListener('beforeunload', saveSessions);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') saveSessions();
+    });
+
+    console.log('%c[persist+audio] override instalado', 'background:#0f0;color:#000;padding:2px 6px;border-radius:4px;font-weight:700');
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  /* ═══════════════════════════════════════════════════════════
+     6) API PÚBLICA (pra debug/manual)
+     ═══════════════════════════════════════════════════════════ */
+  global.IFSWPersist = {
+    save: saveSessions,
+    restore: restoreSessions,
+    clear() { try { localStorage.removeItem(LS_SESSIONS); } catch (_) {} },
+    dump() { try { return JSON.parse(localStorage.getItem(LS_SESSIONS) || '[]'); } catch (_) { return []; } },
+    /* áudio */
+    setAudio(id, playing, source) { setAudio(id, playing, source || 'manual'); },
+    isPlaying,
+    listAudio() { return [...audioState.entries()].map(([id, v]) => ({ id, ...v })); }
+  };
+})(window);
+</script>
+</div>
+
+  <!-- Cada div abaixo é só o NOME do módulo. O bootloader cria o HTML e injeta o CSS dele. -->
+  <div data-kxt="icons"></div>     <!-- sprite de ícones SVG -->
+  <div data-kxt="ambient"></div>   <!-- background fake, partículas, sky e os 2 blobs -->
+  <div data-kxt="card"></div>      <!-- card + cofre de chaves + toaster -->
+  <div data-kxt="solarbtn"></div>  <!-- o botãozinho do sol (cockpit) -->
+  <div data-kxt="topbar"></div>    <!-- engrenagem, deck, cristalizar, nome -->
+  <div data-kxt="chat"></div>      <!-- conversa + campo de envio + deck -->
+  <div data-kxt="cockpit"></div>   <!-- cockpit: solar · neural · uso · identidade · background · sistema -->
+
+</body>
+</html>
