@@ -1,0 +1,2484 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>KOBLLUX · Dual.Infodose Vision OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- Tone.js para síntese sonora KOBSonoro -->
+<script
+  src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js"
+  onerror="console.warn('[KOB-SONORO] Modo silencioso ativo')">
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     1. KOB · SONETO HEADER & OUTLINE CSS
+     ═══════════════════════════════════════════════════════════════════ -->
+<style id="kob-soneto-css">
+#kob-soneto-header{
+  position:fixed;top:0;left:0;right:0;z-index:9000;
+  display:flex;align-items:center;gap:8px;justify-content:space-between;
+  min-height:46px;padding:7px 14px;
+  background:linear-gradient(180deg,rgba(8,7,15,0.88),rgba(8,7,15,0.45));
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-bottom:1px solid color-mix(in srgb,var(--kob-L-primary,#22d3ee) 25%,transparent);
+  font-family:'Inter',system-ui,-apple-system,sans-serif;color:#f5f3ff;
+  transition:transform .28s cubic-bezier(.4,0,.2,1),opacity .22s ease;
+}
+#kob-soneto-header .hd2-title{
+  flex:1 1 auto;min-width:0;max-width:46vw;overflow:hidden;text-align:left;
+  background:none;border:0;color:inherit;padding:2px 4px;cursor:pointer;
+  height:26px;display:flex;align-items:center;
+}
+#kob-soneto-header .hd2-short{
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:1;
+  overflow:hidden;overflow-wrap:anywhere;
+  font:700 10.5px/1.1 ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;
+}
+#kob-soneto-header .hd2-full{
+  display:none;white-space:nowrap;
+  font:700 10.5px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;
+}
+#kob-soneto-header .hd2-title.mq .hd2-short{display:none}
+#kob-soneto-header .hd2-title.mq .hd2-full{display:inline-block;animation:hd2Slide var(--mq-dur,9s) linear 1 both}
+@keyframes hd2Slide{from{transform:translateX(44vw)}to{transform:translateX(-100%)}}
+#kob-soneto-header .hd2-btns{display:flex;gap:6px;flex:0 0 auto}
+#kob-soneto-header .hd2-b{
+  width:32px;height:32px;border-radius:50%;
+  border:1px solid color-mix(in srgb,var(--kob-L-primary,#22d3ee) 38%,transparent);
+  background:color-mix(in srgb,var(--kob-L-primary,#22d3ee) 8%,rgba(255,255,255,0.03));
+  color:inherit;font-size:14px;line-height:1;cursor:pointer;
+  display:grid;place-items:center;padding:0;transition:all .18s;
+}
+#kob-soneto-header .hd2-b:hover{
+  border-color:var(--kob-L-primary,#22d3ee);
+  background:color-mix(in srgb,var(--kob-L-primary,#22d3ee) 18%,transparent);
+}
+#kob-soneto-header .hd2-b.playing{
+  border-color:var(--kob-L-primary,#22d3ee);
+  color:var(--kob-L-primary,#22d3ee);
+  box-shadow:0 0 14px color-mix(in srgb,var(--kob-L-primary,#22d3ee) 50%,transparent);
+}
+#kob-soneto-outline{
+  position:fixed;display:none;pointer-events:none;z-index:2147483000;
+  border:1.5px dashed var(--kob-L-primary,#22d3ee);border-radius:12px;
+  box-shadow:0 6px 24px color-mix(in srgb,var(--kob-L-primary,#22d3ee) 30%,transparent);
+  background:color-mix(in srgb,var(--kob-L-primary,#22d3ee) 5%,transparent);
+  transition:all .16s cubic-bezier(.175,.885,.32,1.275);
+}
+</style>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     2. DESIGN TOKENS & UNIFIED NEBULA VISION OS STYLES
+     ═══════════════════════════════════════════════════════════════════ -->
+<style>
+:root{
+  --kb-bg:        #04040a;
+  --kb-bg-2:      #0a0b16;
+  --kb-surface:   rgba(15, 16, 30, 0.84);
+  --kb-glass:     rgba(22, 20, 38, 0.68);
+  --kb-line:      rgba(255,255,255,0.09);
+  --kb-line-soft: rgba(255,255,255,0.05);
+  --kb-text:      #F6F7FF;
+  --kb-text-dim:  #B0B8D4;
+  --kb-text-mute: #707794;
+
+  --kb-violet:    #7C3AED;
+  --kb-cyan:      #22D3EE;
+  --kb-pink:      #FF76C9;
+  --kb-magenta:   #F43F5E;
+  --kb-amber:     #F59E0B;
+  --kb-gold:      #FFD700;
+
+  --kob-L-primary:   #22D3EE;
+  --kob-L-secondary: #7C3AED;
+
+  --kb-grad: linear-gradient(90deg, var(--kob-L-primary) 0%, #A855F7 50%, #FF76C9 100%);
+  --kb-radius-pill: 36px;
+  --kb-radius-card: 26px;
+  --kb-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Temas de Atmosfera + Humor do Dia */
+body[data-mode="day"]{
+  --kb-bg: #F2F3F9;
+  --kb-bg-2: #E5E7F2;
+  --kb-surface: rgba(255, 255, 255, 0.90);
+  --kb-glass: rgba(255, 255, 255, 0.78);
+  --kb-line: rgba(15, 18, 35, 0.09);
+  --kb-line-soft: rgba(15, 18, 35, 0.05);
+  --kb-text: #111322;
+  --kb-text-dim: #464B68;
+  --kb-text-mute: #7A809E;
+}
+body[data-mode="sunset"]{
+  --kb-bg: #120610;
+  --kb-bg-2: #1E0B1A;
+  --kb-surface: rgba(34, 14, 29, 0.88);
+  --kb-glass: rgba(44, 18, 37, 0.72);
+}
+
+*, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0; padding: 0; height: 100%; width: 100%;
+  scrollbar-width: none !important; -ms-overflow-style: none !important;
+}
+html::-webkit-scrollbar, body::-webkit-scrollbar, *::-webkit-scrollbar { display: none !important; width: 0; height: 0; }
+
+body{
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--kb-bg);
+  color: var(--kb-text);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: background .45s ease, color .35s ease;
+}
+
+button{ font-family: inherit; border: none; background: transparent; color: inherit; cursor: pointer; padding: 0; }
+
+/* ─── AMBIENTE NEBULA REATIVO (HUMOR DO DIA + ARQUÉTIPO) ─── */
+.kb-ambient{
+  position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0;
+  transition: opacity .6s ease;
+}
+.kb-ambient::before, .kb-ambient::after{
+  content: ""; position: absolute; width: 580px; height: 340px; border-radius: 999px;
+  filter: blur(115px); transition: all .85s ease;
+}
+.kb-ambient::before{
+  top: -110px; left: 15%; transform: translateX(-30%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--kob-L-primary) 32%, transparent), transparent 70%);
+}
+.kb-ambient::after{
+  bottom: -120px; right: 10%; transform: translateX(20%);
+  background: radial-gradient(circle, rgba(255, 118, 201, 0.28), color-mix(in srgb, var(--kob-L-secondary) 20%, transparent) 55%, transparent 75%);
+}
+body[data-mood="manha"] .kb-ambient::before{
+  background: radial-gradient(circle, rgba(120, 195, 255, 0.36), transparent 70%);
+}
+body[data-mood="tarde"] .kb-ambient::after{
+  background: radial-gradient(circle, rgba(255, 140, 210, 0.38), transparent 70%);
+}
+body[data-mood="noite"] .kb-ambient::before{
+  background: radial-gradient(circle, color-mix(in srgb, var(--kob-L-primary) 28%, rgba(124,58,237,0.3)), transparent 70%);
+}
+
+.kb-wordmark{
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  font-size: clamp(64px, 21vw, 175px); font-weight: 900; letter-spacing: 0.22em;
+  color: transparent; background: var(--kb-grad);
+  -webkit-background-clip: text; background-clip: text;
+  opacity: 0.032; pointer-events: none; z-index: 0; white-space: nowrap;
+}
+
+/* ─── VIEWPORT UNIFICADO ─── */
+.kb-viewport{
+  position: relative; width: 100%; max-width: 540px; height: 100%;
+  z-index: 1; overflow: hidden;
+}
+.kb-page{
+  position: absolute; inset: 0;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 58px 16px 32px;
+  opacity: 0; pointer-events: none;
+  transform: translateY(12px) scale(0.99);
+  transition: opacity .28s var(--kb-ease), transform .28s var(--kb-ease), padding .35s var(--kb-ease);
+  -webkit-overflow-scrolling: touch;
+}
+.kb-page.active{ opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
+
+/* Respiro dinâmico conforme posição e estado colapsado da dock */
+body.dock-header .kb-page{ padding-top: 204px; padding-bottom: 36px; }
+body.dock-header.dock-collapsed .kb-page{ padding-top: 134px; padding-bottom: 36px; }
+body.dock-footer .kb-page{ padding-top: 58px;  padding-bottom: 184px; }
+body.dock-footer.dock-collapsed .kb-page{ padding-top: 58px;  padding-bottom: 116px; }
+
+/* Cabeçalhos de Seção */
+.sec-head{
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 18px 0 11px;
+}
+.sec-title{
+  font-size: 11.5px; font-weight: 800; letter-spacing: .11em;
+  text-transform: uppercase; color: var(--kb-text-dim);
+  display: flex; align-items: center; gap: 7px;
+}
+.sec-title::before{
+  content:""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--kob-L-primary);
+  box-shadow: 0 0 8px var(--kob-L-primary);
+}
+.sec-sub{ font-size: 10.5px; color: var(--kb-text-mute); font-weight: 600; font-family: ui-monospace, monospace; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   3. HOME DO DIA (HERO SLIDER TEMPORAL + STACKS + FEED)
+   ═══════════════════════════════════════════════════════════════════ */
+.day-hero-card{
+  background: var(--kb-surface);
+  border-radius: 30px;
+  padding: 20px 20px 18px;
+  margin-bottom: 14px;
+  backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+  border: 1px solid var(--kb-line);
+  box-shadow: 0 20px 44px -14px rgba(0,0,0,0.65), 0 0 36px -14px color-mix(in srgb, var(--kob-L-primary) 28%, transparent);
+}
+.day-hero-top{
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.day-greeting{
+  font-size: 22px; font-weight: 800; letter-spacing: -0.02em;
+  background: linear-gradient(180deg, var(--kb-text) 25%, var(--kb-text-dim) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.day-subtitle{ font-size: 12.5px; color: var(--kb-text-dim); margin-top: 2px; }
+.time-chip{
+  padding: 5px 11px; border-radius: 999px;
+  background: rgba(255,255,255,0.06); border: 1px solid var(--kb-line);
+  font-size: 11px; font-weight: 700; font-family: ui-monospace, monospace;
+  color: var(--kob-L-primary); flex-shrink: 0;
+}
+
+.day-slider-box{ margin-top: 14px; }
+.day-slider-row{
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 10.5px; font-weight: 600; color: var(--kb-text-mute); margin-bottom: 8px;
+}
+.label-mood{
+  padding: 4px 14px; border-radius: 999px;
+  background: linear-gradient(90deg, #ffb3e6, #7dc8ff);
+  color: #090c16; font-size: 11px; font-weight: 800; letter-spacing: .02em;
+  box-shadow: 0 0 18px rgba(255, 160, 220, 0.45);
+}
+.range-wrap{
+  position: relative; height: 7px; background: rgba(255,255,255,0.11);
+  border-radius: 999px; overflow: hidden;
+}
+.range-fill{
+  position: absolute; inset: 0; transform-origin: left center; transform: scaleX(0.25);
+  background: linear-gradient(90deg, #3ab9ff, #ff76c9);
+  transition: transform .18s ease-out;
+}
+.hero-range{
+  width: 100%; height: 28px; appearance: none; -webkit-appearance: none;
+  background: transparent; margin-top: -18px; display: block; cursor: pointer;
+}
+.hero-range::-webkit-slider-thumb{
+  -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, #fff 0%, #ffe7f5 30%, #ff76c9 100%);
+  box-shadow: 0 0 0 2px rgba(6,8,16,0.9), 0 0 16px rgba(255,140,210,0.85);
+}
+
+/* Atalhos Rápidos / Menu do Dia */
+.quick-pills-row{
+  display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 8px; margin-bottom: 10px;
+}
+.q-pill{
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: 999px;
+  background: var(--kb-surface); border: 1px solid var(--kb-line);
+  font-size: 11.5px; font-weight: 600; color: var(--kb-text-dim);
+  transition: all .2s;
+}
+.q-pill:hover, .q-pill.active{
+  border-color: var(--kob-L-primary);
+  color: var(--kob-L-primary);
+  background: color-mix(in srgb, var(--kob-L-primary) 13%, var(--kb-surface));
+}
+
+/* Stacks Expansíveis da Home do Dia */
+details.stack{
+  background: var(--kb-surface); border-radius: 22px; margin-bottom: 10px;
+  border: 1px solid var(--kb-line); backdrop-filter: blur(18px);
+  overflow: hidden; transition: all .25s ease;
+}
+details.stack[open]{
+  border-color: color-mix(in srgb, var(--kob-L-primary) 40%, var(--kb-line));
+  box-shadow: 0 16px 36px -12px rgba(0,0,0,0.6);
+}
+summary.stack-summary{
+  padding: 13px 16px; display: flex; justify-content: space-between; align-items: center;
+  cursor: pointer; list-style: none;
+}
+summary.stack-summary::-webkit-details-marker{ display: none; }
+.stack-title{ font-size: 13.5px; font-weight: 700; display: block; }
+.stack-sub{ font-size: 11px; color: var(--kb-text-mute); display: block; margin-top: 1px; }
+.stack-meta{ display: flex; align-items: center; gap: 8px; }
+.stack-pill{
+  padding: 3px 9px; border-radius: 999px; font-size: 10px; font-weight: 700;
+  background: color-mix(in srgb, var(--kob-L-primary) 15%, transparent);
+  color: var(--kob-L-primary);
+}
+.stack-body{ padding: 4px 16px 14px; border-top: 1px solid var(--kb-line-soft); }
+.panel-row{
+  padding: 9px 6px; display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid var(--kb-line-soft); font-size: 12.5px; cursor: pointer;
+  border-radius: 10px; transition: background .15s;
+}
+.panel-row:last-child{ border-bottom: none; }
+.panel-row:hover{ background: rgba(255,255,255,0.04); }
+
+/* Carrossel Hero Audiovisual */
+.hero-carousel{
+  position: relative; width: 100%; height: 204px;
+  border-radius: 26px; overflow: hidden;
+  border: 1px solid var(--kb-line); background: var(--kb-bg-2);
+  box-shadow: 0 18px 38px -14px rgba(0,0,0,0.75);
+}
+.hero-slides{ position: relative; width: 100%; height: 100%; }
+.hero-slide{
+  position: absolute; inset: 0; opacity: 0; pointer-events: none;
+  transition: opacity .45s var(--kb-ease), transform .55s var(--kb-ease);
+  transform: scale(1.03);
+}
+.hero-slide.active{ opacity: 1; pointer-events: auto; transform: scale(1); }
+.hero-card{ position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; padding: 16px; }
+.hero-bg{
+  position: absolute; inset: 0; background-image: var(--hero-img-url);
+  background-size: cover; background-position: center; filter: brightness(0.76) saturate(1.15);
+}
+.hero-gradient{
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(6,6,12,0.12) 0%, rgba(6,6,12,0.65) 55%, rgba(6,6,12,0.96) 100%);
+}
+.hero-content{ position: relative; z-index: 2; }
+.hero-tag{
+  font-size: 9px; font-weight: 800; letter-spacing: .12em; padding: 3px 8px; border-radius: 99px;
+  background: rgba(34,211,238,0.18); color: var(--kb-cyan); border: 1px solid rgba(34,211,238,0.35);
+}
+.hero-title{
+  margin: 6px 0 3px; font-size: 16px; font-weight: 800; color: #fff;
+  line-height: 1.22; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.hero-subtitle{ margin: 0 0 10px; font-size: 11px; color: rgba(255,255,255,0.7); }
+.hero-actions{ display: flex; align-items: center; gap: 8px; }
+.btn-primary{
+  padding: 7px 14px; border-radius: 99px; font-size: 11.5px; font-weight: 700;
+  background: var(--kb-grad); color: #fff;
+  box-shadow: 0 6px 18px -4px rgba(124,58,237,0.7); transition: transform .15s;
+}
+.btn-primary:active{ transform: scale(0.95); }
+.tts-btn{
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(255,255,255,0.14); backdrop-filter: blur(8px);
+  color: #fff; font-size: 13px; display: grid; place-items: center;
+  border: 1px solid rgba(255,255,255,0.18);
+}
+.hero-nav{ position: absolute; top: 12px; right: 12px; z-index: 5; display: flex; align-items: center; gap: 6px; }
+.hero-arrow{
+  width: 27px; height: 27px; border-radius: 50%;
+  background: rgba(0,0,0,0.48); backdrop-filter: blur(8px);
+  color: #fff; font-size: 13px; display: grid; place-items: center;
+  border: 1px solid rgba(255,255,255,0.14);
+}
+.hero-counter{
+  font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.85);
+  background: rgba(0,0,0,0.48); padding: 4px 9px; border-radius: 99px; font-variant-numeric: tabular-nums;
+}
+.carousel-dots{ position: absolute; bottom: 14px; right: 16px; z-index: 5; display: flex; gap: 4px; }
+.carousel-dots button{ width: 6px; height: 6px; border-radius: 99px; background: rgba(255,255,255,0.28); transition: all .25s; }
+.carousel-dots button.active{ width: 16px; background: var(--kb-cyan); }
+
+/* Grid de Mídia */
+.media-grid{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 11px; }
+.media-card{
+  border-radius: 20px; overflow: hidden; background: var(--kb-surface);
+  border: 1px solid var(--kb-line); cursor: pointer;
+  transition: transform .2s var(--kb-ease), border-color .2s;
+}
+.media-card:hover{ transform: translateY(-2px); border-color: var(--kob-L-primary); }
+.media-card-cover{ position: relative; width: 100%; aspect-ratio: 16 / 10; background-size: cover; background-position: center; background-color: #131020; }
+.media-card-play{
+  position: absolute; right: 8px; bottom: 8px; width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(124,58,237,0.92); color: #fff; font-size: 11px; display: grid; place-items: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+}
+.media-card-body{ padding: 10px 11px; }
+.media-card-title{
+  font-size: 12px; font-weight: 600; color: var(--kb-text); line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 3px;
+}
+.media-card-artist{ font-size: 10.5px; color: var(--kb-text-mute); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   4. SARAU & BIBLIOTECA DE DOCUMENTOS (OUVIR TEXTOS + APPS)
+   ═══════════════════════════════════════════════════════════════════ */
+.sarau-reader-card{
+  background: var(--kb-surface);
+  border: 1px solid color-mix(in srgb, var(--kob-L-primary) 35%, var(--kb-line));
+  border-radius: 26px; padding: 18px; margin-bottom: 14px;
+  box-shadow: 0 18px 42px -12px rgba(0,0,0,0.65);
+}
+.sarau-reader-top{
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+  padding-bottom: 12px; border-bottom: 1px solid var(--kb-line-soft); margin-bottom: 12px;
+}
+.sarau-doc-badge{
+  display: inline-block; font-size: 9px; font-weight: 800; letter-spacing: .14em;
+  text-transform: uppercase; padding: 3px 9px; border-radius: 999px;
+  background: color-mix(in srgb, var(--kob-L-primary) 16%, transparent);
+  color: var(--kob-L-primary); margin-bottom: 5px;
+}
+.sarau-doc-title{ font-size: 17px; font-weight: 800; line-height: 1.25; }
+.sarau-doc-meta{ font-size: 11px; color: var(--kb-text-mute); margin-top: 3px; }
+.sarau-controls{ display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 12px; }
+.sarau-content{
+  font-size: 13.5px; line-height: 1.68; color: var(--kb-text-dim);
+  max-height: 270px; overflow-y: auto; padding-right: 4px;
+}
+.sarau-content p{ margin: 0 0 11px; cursor: pointer; padding: 4px 6px; border-radius: 8px; transition: background .15s; }
+.sarau-content p:hover{ background: rgba(255,255,255,0.04); color: var(--kb-text); }
+
+.doc-card{
+  padding: 13px 15px; border-radius: 20px; margin-bottom: 9px;
+  background: var(--kb-surface); border: 1px solid var(--kb-line);
+  display: flex; flex-direction: column; gap: 8px;
+  transition: border-color .2s, transform .15s;
+}
+.doc-card:hover{ border-color: color-mix(in srgb, var(--kob-L-primary) 45%, transparent); }
+.doc-card-top{ display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.doc-card-title{ font-size: 13.5px; font-weight: 700; color: var(--kb-text); }
+.doc-card-desc{ font-size: 11.5px; color: var(--kb-text-mute); margin-top: 2px; line-height: 1.4; }
+.doc-card-tag{
+  font-size: 9.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px;
+  background: rgba(255,255,255,0.06); color: var(--kb-text-dim); flex-shrink: 0;
+}
+.doc-card-actions{ display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   5. SHORTS & CRIAR (FILA + IMPORTAÇÃO DE MÍDIA E DOCUMENTOS)
+   ═══════════════════════════════════════════════════════════════════ */
+.shorts-stage-card{
+  display: flex; align-items: center; gap: 12px; padding: 13px 15px; border-radius: 22px; margin-bottom: 12px;
+  background: linear-gradient(135deg, rgba(124,58,237,0.18), rgba(34,211,238,0.08));
+  border: 1px solid var(--kb-line);
+}
+.stage-cover{
+  width: 52px; height: 52px; border-radius: 15px; flex-shrink: 0;
+  background-size: cover; background-position: center;
+  background-image: url('https://img.youtube.com/vi/Bt_rLbMjJDk/hqdefault.jpg');
+  border: 1px solid rgba(255,255,255,0.16);
+}
+.stage-info{ flex: 1; min-width: 0; }
+.stage-badge{ display: inline-flex; align-items: center; gap: 6px; font-size: 9.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--kb-cyan); margin-bottom: 3px; }
+.stage-badge .kb-dot{ width: 6px; height: 6px; border-radius: 50%; background: var(--kb-cyan); box-shadow: 0 0 8px var(--kb-cyan); }
+.stage-title{ font-size: 13.5px; font-weight: 700; color: var(--kb-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stage-artist{ font-size: 11px; color: var(--kb-text-dim); margin-top: 2px; }
+
+.shorts-queue{ display: flex; flex-direction: column; gap: 8px; }
+.queue-item{
+  display: flex; align-items: center; gap: 11px; padding: 9px 11px; border-radius: 18px;
+  background: var(--kb-surface); border: 1px solid var(--kb-line); cursor: pointer; transition: all .2s;
+}
+.queue-item.playing{ border-color: var(--kb-cyan); background: linear-gradient(90deg, rgba(34,211,238,0.14), rgba(124,58,237,0.12)); }
+.queue-thumb{ width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0; background-size: cover; background-position: center; }
+.queue-meta{ flex: 1; min-width: 0; }
+.queue-title{ font-size: 12.5px; font-weight: 600; color: var(--kb-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.queue-sub{ font-size: 10.5px; color: var(--kb-text-mute); margin-top: 2px; }
+.queue-fav{ width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; color: var(--kb-text-mute); }
+.queue-fav.active{ color: var(--kb-amber); }
+
+.pill-chips{ display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.pill-chip{
+  display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; border-radius: 999px;
+  background: var(--kb-surface); border: 1px solid var(--kb-line); font-size: 12px; font-weight: 600; color: var(--kb-text); transition: all .2s;
+}
+.pill-chip:hover{ border-color: var(--kob-L-primary); color: var(--kob-L-primary); transform: translateY(-1px); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   6. PERFIL VISION OS (ORBE + FORJA V.E.E.B + MATRIZ 17 + CHAVES/API)
+   ═══════════════════════════════════════════════════════════════════ */
+.vision-orb-stage{
+  position: relative; display: flex; flex-direction: column; align-items: center;
+  padding: 22px 16px 18px; border-radius: 28px;
+  background: radial-gradient(circle at 50% 22%, color-mix(in srgb, var(--kob-L-primary) 20%, transparent), var(--kb-surface) 72%);
+  border: 1px solid color-mix(in srgb, var(--kob-L-primary) 30%, var(--kb-line));
+  margin-bottom: 14px; overflow: hidden;
+  box-shadow: 0 22px 48px -16px rgba(0,0,0,0.75);
+}
+.vision-orb-wrap{
+  position: relative; width: 136px; height: 136px; border-radius: 50%;
+  cursor: pointer; margin-bottom: 14px; transition: transform .35s var(--kb-ease);
+}
+.vision-orb-wrap:hover{ transform: scale(1.05); }
+.vision-orb-ring-1{
+  position: absolute; inset: 0; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2); animation: kbSpin 14s linear infinite;
+}
+.vision-orb-ring-2{
+  position: absolute; inset: 8px; border-radius: 50%;
+  border: 1px dashed color-mix(in srgb, var(--kob-L-primary) 55%, transparent);
+  animation: kbSpin 20s linear infinite reverse;
+}
+.vision-orb-sphere{
+  position: absolute; inset: 14px; border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.08) 16%, transparent 52%),
+    radial-gradient(circle at 70% 70%, var(--kob-L-primary) 0%, var(--kob-L-secondary) 100%);
+  box-shadow: 0 0 38px color-mix(in srgb, var(--kob-L-primary) 55%, transparent), inset 0 0 22px rgba(255,255,255,0.14);
+  animation: kbSpin 9s linear infinite; transition: background .6s ease, box-shadow .6s ease;
+}
+.vision-orb-wrap.pulsing .vision-orb-sphere{
+  animation: kbSpin 1.8s linear infinite, kbOrbPulse .45s ease-in-out infinite alternate;
+}
+.vision-orb-center{
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 3; pointer-events: none;
+}
+.vision-orb-sym{ font-size: 34px; line-height: 1; color: #fff; filter: drop-shadow(0 0 12px var(--kob-L-primary)); }
+.vision-orb-opc{ font-family: ui-monospace, monospace; font-size: 8.5px; font-weight: 700; letter-spacing: .16em; color: rgba(255,255,255,0.8); margin-top: 4px; }
+
+@keyframes kbSpin { to { transform: rotate(360deg); } }
+@keyframes kbOrbPulse { from { transform: scale(1); } to { transform: scale(1.09); } }
+
+.vision-user-row{ width: 100%; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.profile-name-input{
+  width: 82%; text-align: center; background: transparent; border: none; outline: none;
+  font-family: inherit; font-size: 20px; font-weight: 800; color: var(--kb-text);
+  letter-spacing: .06em; padding: 2px 0 4px; border-bottom: 1px dashed rgba(255,255,255,0.18);
+}
+.vision-artyaski{ font-family: ui-monospace, monospace; font-size: 11px; font-weight: 700; letter-spacing: .18em; color: var(--kob-L-primary); }
+.vision-drk{ font-size: 11.5px; font-style: italic; color: var(--kb-text-dim); text-align: center; margin: 3px 0 0; }
+
+/* Swatches rápidos de cor do Orbe */
+.orb-swatches{ display: flex; gap: 8px; margin-top: 10px; justify-content: center; flex-wrap: wrap; }
+.orb-swatch{
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.22);
+  cursor: pointer; transition: transform .18s, border-color .18s;
+}
+.orb-swatch:hover, .orb-swatch.active{ transform: scale(1.2); border-color: #fff; }
+
+/* Sub-abas do Usuário */
+.user-tabs{
+  display: flex; gap: 5px; margin-bottom: 12px;
+  background: var(--kb-surface); padding: 5px; border-radius: 999px; border: 1px solid var(--kb-line);
+}
+.user-tab-btn{
+  flex: 1; padding: 8px 6px; border-radius: 999px; font-size: 10.5px; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--kb-text-mute); transition: all .2s;
+}
+.user-tab-btn.active{
+  background: linear-gradient(90deg, color-mix(in srgb, var(--kob-L-primary) 28%, transparent), rgba(124,58,237,0.32));
+  color: #fff; box-shadow: 0 2px 12px rgba(124,58,237,0.3);
+}
+
+.veeb-box{ padding: 14px; border-radius: 22px; background: var(--kb-surface); border: 1px solid var(--kb-line); margin-bottom: 12px; }
+.veeb-vowels{ display: flex; justify-content: space-between; gap: 6px; margin: 10px 0; }
+.veeb-v{
+  flex: 1; padding: 8px 4px; border-radius: 14px; text-align: center;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--kb-line); transition: all .25s;
+}
+.veeb-v.lit{
+  border-color: var(--v-col, var(--kb-cyan));
+  background: color-mix(in srgb, var(--v-col, var(--kb-cyan)) 16%, transparent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--v-col, var(--kb-cyan)) 25%, transparent);
+}
+.veeb-v .let{ font-size: 15px; font-weight: 800; color: var(--v-col, #fff); }
+.veeb-v .act{ font-size: 8px; color: var(--kb-text-dim); text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
+.veeb-readout{
+  font-family: ui-monospace, monospace; font-size: 10.5px; line-height: 1.6;
+  color: var(--kb-text-dim); padding: 10px 12px; border-radius: 14px;
+  background: rgba(0,0,0,0.32); border: 1px solid var(--kb-line-soft);
+}
+
+/* Matriz 17 Arquétipos */
+.arch-matrix-grid{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.arch-tile{
+  padding: 10px 8px; border-radius: 18px; text-align: center;
+  background: var(--kb-surface); border: 1px solid var(--kb-line); cursor: pointer; transition: all .2s;
+}
+.arch-tile:hover{ transform: translateY(-2px); border-color: var(--a-col, var(--kb-cyan)); }
+.arch-tile.selected{
+  border-color: var(--a-col, var(--kb-cyan));
+  background: color-mix(in srgb, var(--a-col, var(--kb-cyan)) 16%, var(--kb-surface));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--a-col, var(--kb-cyan)) 30%, transparent);
+}
+.arch-tile-sym{ font-size: 20px; line-height: 1.2; }
+.arch-tile-name{ font-size: 10px; font-weight: 800; letter-spacing: .08em; margin-top: 4px; color: var(--a-col, #fff); }
+.arch-tile-hz{ font-size: 8.5px; font-family: ui-monospace, monospace; color: var(--kb-text-mute); margin-top: 2px; }
+
+.arch-prompt-card{ padding: 14px; border-radius: 22px; background: var(--kb-surface); border: 1px solid var(--kb-line); }
+.arch-prompt-tabs{ display: flex; gap: 4px; margin: 10px 0 8px; }
+.ap-tab{
+  flex: 1; padding: 6px 4px; border-radius: 10px; font-size: 9.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em; background: rgba(255,255,255,0.04); color: var(--kb-text-mute);
+}
+.ap-tab.active{
+  background: color-mix(in srgb, var(--kob-L-primary) 20%, transparent);
+  color: var(--kob-L-primary); border: 1px solid color-mix(in srgb, var(--kob-L-primary) 45%, transparent);
+}
+.ap-body{
+  font-size: 11px; line-height: 1.6; color: var(--kb-text-dim);
+  background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 14px;
+  max-height: 140px; overflow-y: auto; white-space: pre-wrap;
+}
+.ap-body.mono{ font-family: ui-monospace, monospace; font-size: 10px; }
+
+/* Chaves, API & Configurações */
+.vault-card{
+  padding: 15px; border-radius: 22px; background: var(--kb-surface);
+  border: 1px solid var(--kb-line); margin-bottom: 10px;
+}
+.vault-field{ margin-bottom: 11px; }
+.vault-field:last-child{ margin-bottom: 0; }
+.vault-label{
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; font-weight: 700; color: var(--kb-text-dim); margin-bottom: 5px;
+}
+.vault-input-wrap{ display: flex; gap: 6px; }
+.vault-input, .vault-select{
+  width: 100%; padding: 9px 12px; border-radius: 14px;
+  background: rgba(0,0,0,0.32); border: 1px solid var(--kb-line);
+  color: var(--kb-text); font-family: ui-monospace, monospace; font-size: 11.5px; outline: none;
+}
+body[data-mode="day"] .vault-input, body[data-mode="day"] .vault-select{ background: rgba(255,255,255,0.85); }
+.vault-input:focus, .vault-select:focus{ border-color: var(--kob-L-primary); }
+
+.stats-grid{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.stat-card{ padding: 11px 8px; border-radius: 18px; text-align: center; background: var(--kb-surface); border: 1px solid var(--kb-line); }
+.stat-value{ font-size: 17px; font-weight: 800; color: var(--kb-text); font-variant-numeric: tabular-nums; }
+.stat-label{ font-size: 9.5px; color: var(--kb-text-mute); text-transform: uppercase; letter-spacing: .06em; margin-top: 2px; }
+
+.control-list{ display: flex; flex-direction: column; gap: 8px; }
+.control-row{
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 11px 14px; border-radius: 20px; background: var(--kb-surface); border: 1px solid var(--kb-line);
+}
+.control-row .label{ font-size: 12.5px; font-weight: 600; }
+.control-row .desc{ font-size: 10.5px; color: var(--kb-text-mute); }
+.control-row .actions{ display: flex; gap: 5px; }
+
+.mini-btn{
+  padding: 6px 11px; border-radius: 999px; font-size: 10.5px; font-weight: 700; letter-spacing: .04em;
+  background: rgba(255,255,255,0.06); color: var(--kb-text-dim); border: 1px solid var(--kb-line); transition: all .18s;
+}
+.mini-btn.active{
+  background: color-mix(in srgb, var(--kob-L-primary) 18%, transparent);
+  color: var(--kob-L-primary); border-color: color-mix(in srgb, var(--kob-L-primary) 45%, transparent);
+}
+.mini-btn.danger{ color: #FDA4AF; border-color: rgba(244,63,94,0.35); }
+.mini-btn.danger:hover{ background: rgba(244,63,94,0.2); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   7. GLOBAL PLAYER FLUTUANTE & FLOATING DOCK (HEADER <-> FOOTER)
+   ═══════════════════════════════════════════════════════════════════ */
+#global-player{
+  position: fixed; bottom: 116px; left: 50%;
+  transform: translateX(-50%) translateY(30px) scale(0.94);
+  width: 92vw; max-width: 440px; height: 236px; z-index: 80;
+  border-radius: 26px; background: rgba(10, 9, 18, 0.94);
+  backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 28px 60px -12px rgba(0,0,0,0.9), 0 0 30px -10px color-mix(in srgb, var(--kob-L-primary) 35%, transparent);
+  overflow: hidden; opacity: 0; pointer-events: none; transition: all .42s var(--kb-ease);
+}
+body.dock-footer #global-player{ bottom: 184px; }
+body.dock-footer.dock-collapsed #global-player{ bottom: 116px; }
+body.dock-header #global-player{ bottom: 24px; }
+#global-player.active{ opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0) scale(1); }
+#global-player.minimized{ height: 52px; width: 280px; border-radius: 999px; }
+#global-player.minimized #player-frame-wrap{ opacity: 0.15; pointer-events: none; }
+#global-player.minimized #gp-mini-label{ display: flex; }
+#global-player.player-fullscreen{
+  position: fixed !important; inset: 0 !important; bottom: 0 !important;
+  width: 100vw !important; height: 100vh !important; max-width: none !important;
+  transform: none !important; border-radius: 0 !important; z-index: 9999 !important;
+}
+.gp-controls{ position: absolute; top: 10px; right: 10px; z-index: 25; display: flex; gap: 6px; }
+.gp-btn{
+  width: 30px; height: 30px; border-radius: 50%; background: rgba(0,0,0,0.65); backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.14); color: #fff; font-size: 12px; display: grid; place-items: center;
+}
+#gp-mini-label{
+  display: none; position: absolute; inset: 0; padding: 0 105px 0 16px;
+  align-items: center; gap: 8px; z-index: 20; font-size: 11.5px; font-weight: 600; color: #fff; cursor: pointer;
+}
+#gp-mini-label span{ white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#player-frame-wrap{ width: 100%; height: 100%; background: #050408; }
+
+.kb-dropzone{
+  position: fixed; left: 50%; transform: translateX(-50%); width: 92%; max-width: 440px; height: 82px;
+  border-radius: 42px; border: 1.5px dashed rgba(124,58,237,0.35); background: rgba(124,58,237,0.04);
+  opacity: 0; pointer-events: none; transition: all .25s ease;
+  display: flex; align-items: center; justify-content: center; z-index: 40;
+}
+.kb-dropzone.top{ top: 56px; }
+.kb-dropzone.bottom{ bottom: 16px; }
+.kb-dropzone span{ font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--kb-text-mute); }
+.kb-dropzone.highlight{ border-color: var(--kob-L-primary); background: color-mix(in srgb, var(--kob-L-primary) 10%, transparent); }
+.kb-dropzone.highlight span{ color: var(--kob-L-primary); }
+
+.kb-dock{
+  position: fixed; left: 50%; transform: translateX(-50%);
+  width: 92%; max-width: 440px; border-radius: var(--kb-radius-pill);
+  padding: 9px 16px 12px; z-index: 85;
+  background: var(--kb-surface); backdrop-filter: blur(28px) saturate(1.25); -webkit-backdrop-filter: blur(28px) saturate(1.25);
+  border: 1px solid var(--kb-line);
+  box-shadow: 0 24px 48px -12px rgba(0,0,0,0.85), inset 0 1px 1px rgba(255,255,255,0.08);
+  cursor: grab; touch-action: none;
+  transition: top .42s var(--kb-ease), padding .3s var(--kb-ease), border-radius .3s var(--kb-ease), transform .2s var(--kb-ease);
+}
+.kb-dock.dragging{ transition: none; transform: translateX(-50%) scale(1.03); }
+.kb-dock.collapsed{ padding: 7px 14px 9px; border-radius: 999px; }
+.kb-dock.collapsed .kb-nav-row{ max-height: 0; opacity: 0; margin-bottom: 0; overflow: hidden; pointer-events: none; }
+.kb-dock.collapsed .kb-player{ margin-top: 2px; padding-top: 0; border-top-color: transparent; }
+
+.kb-dock-accent{ position: absolute; top: -1px; left: 26px; right: 26px; height: 1.5px; background: var(--kb-grad); border-radius: 999px; opacity: 0.75; }
+.kb-handle-row{ width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; padding: 0 4px; }
+.kb-dock-pos-tag{ font-size: 8.5px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--kb-text-mute); font-family: ui-monospace, monospace; }
+.kb-handle-bar{ width: 38px; height: 3.5px; border-radius: 999px; background: rgba(255,255,255,0.2); }
+.kb-collapse-btn{
+  width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,0.06);
+  border: 1px solid var(--kb-line); color: var(--kb-text-dim); display: grid; place-items: center;
+  transition: transform .3s var(--kb-ease);
+}
+.kb-dock.collapsed .kb-collapse-btn{ transform: rotate(180deg); }
+
+.kb-nav-row{
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2px; margin-bottom: 2px; max-height: 56px; opacity: 1;
+  transition: max-height .32s var(--kb-ease), opacity .22s ease, margin .28s ease;
+}
+.kb-nav-btn{
+  position: relative; width: 54px; height: 44px; border-radius: 20px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  color: var(--kb-text-dim); transition: all .2s;
+}
+.kb-nav-btn svg{ width: 20px; height: 20px; }
+.kb-nav-btn span.nav-lbl{ font-size: 8.5px; font-weight: 700; letter-spacing: .04em; }
+.kb-nav-btn.active{
+  background: linear-gradient(180deg, color-mix(in srgb, var(--kob-L-primary) 26%, transparent) 0%, rgba(124,58,237,0.14) 100%);
+  color: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,0.16);
+}
+body[data-mode="day"] .kb-nav-btn.active{ color: var(--kb-violet); }
+.kb-nav-btn.active::after{
+  content: ""; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%);
+  width: 14px; height: 2px; border-radius: 999px; background: var(--kb-grad);
+}
+
+.kb-avatar{
+  width: 26px; height: 26px; border-radius: 50%; position: relative;
+  background: radial-gradient(circle at 30% 20%, var(--kob-L-primary), transparent 60%), linear-gradient(145deg, #1E1B4B, #0B0917);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2), 0 0 10px color-mix(in srgb, var(--kob-L-primary) 50%, transparent);
+  display: flex; align-items: center; justify-content: center;
+}
+.kb-avatar-capsule{
+  width: 8px; height: 15px; border-radius: 999px;
+  background: linear-gradient(180deg, #22D3EE 0%, #7C3AED 50%, #F43F5E 100%);
+}
+
+.kb-player{
+  margin-top: 8px; padding-top: 9px; border-top: 1px solid var(--kb-line-soft);
+  padding-left: 4px; padding-right: 4px; display: flex; align-items: center; gap: 10px;
+}
+.kb-play-btn{
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; color: #fff;
+  background: linear-gradient(145deg, var(--kob-L-secondary), var(--kob-L-primary));
+  box-shadow: 0 0 16px -3px color-mix(in srgb, var(--kob-L-primary) 70%, transparent);
+}
+.kb-play-btn svg{ width: 14px; height: 14px; }
+.kb-play-btn svg.hidden{ display: none; }
+.kb-track-area{ flex: 1; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.kb-meta-row{ display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; padding: 0 2px; }
+.kb-track-name{
+  font-size: 10.5px; font-weight: 600; color: var(--kb-text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px;
+}
+.kb-track-name::before{ content: "◆ "; color: var(--kob-L-primary); font-size: 8px; }
+.kb-time{ display: flex; align-items: center; gap: 2px; font-size: 10px; font-variant-numeric: tabular-nums; color: var(--kb-text-mute); flex-shrink: 0; }
+.kb-time .now{ color: var(--kob-L-primary); font-weight: 700; }
+.kb-progress{ position: relative; width: 100%; height: 14px; display: flex; align-items: center; cursor: pointer; }
+.kb-progress-track{ width: 100%; height: 4px; border-radius: 999px; background: rgba(255,255,255,0.12); overflow: hidden; }
+.kb-progress-fill{ height: 100%; border-radius: 999px; background: var(--kb-grad); width: 0%; }
+.kb-progress-thumb{
+  position: absolute; top: 50%; width: 11px; height: 11px; border-radius: 50%;
+  background: #fff; border: 2px solid var(--kob-L-primary); transform: translate(-50%, -50%); pointer-events: none; left: 0%;
+}
+.kb-next-btn, .kb-stage-btn{
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; color: var(--kb-text-mute);
+}
+.kb-next-btn:hover, .kb-stage-btn:hover{ color: var(--kob-L-primary); background: rgba(255,255,255,0.06); }
+.kb-next-btn svg, .kb-stage-btn svg{ width: 14px; height: 14px; }
+
+/* Modal & Toast */
+#modal-overlay{
+  position: fixed; inset: 0; z-index: 9500; background: rgba(4,3,8,0.8); backdrop-filter: blur(12px);
+  display: none; align-items: center; justify-content: center; padding: 20px;
+}
+#modal-overlay.open{ display: flex; }
+#modalBox{
+  width: 100%; max-width: 400px; padding: 20px; border-radius: 28px;
+  background: var(--kb-bg-2); border: 1px solid var(--kb-line); box-shadow: 0 24px 60px rgba(0,0,0,0.85);
+}
+.modal-input, .modal-textarea{
+  width: 100%; padding: 11px 14px; border-radius: 16px; background: rgba(255,255,255,0.05);
+  border: 1px solid var(--kb-line); color: var(--kb-text); font-family: inherit; font-size: 13px;
+  outline: none; margin-bottom: 10px;
+}
+.modal-textarea{ min-height: 110px; resize: vertical; line-height: 1.5; }
+.modal-actions{ display: flex; justify-content: flex-end; gap: 8px; }
+
+#toast{
+  position: fixed; top: 54px; left: 50%; transform: translateX(-50%) translateY(-10px);
+  z-index: 9800; padding: 7px 16px; border-radius: 999px;
+  background: rgba(14,13,24,0.94); border: 1px solid color-mix(in srgb, var(--kob-L-primary) 50%, transparent);
+  color: var(--kob-L-primary); font-size: 11.5px; font-weight: 700;
+  opacity: 0; pointer-events: none; transition: all .25s var(--kb-ease);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+}
+#toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+
+<body class="dock-header" data-mood="manha">
+
+<!-- ▸ Soneto Header & Outline -->
+<header id="kob-soneto-header">
+  <button type="button" class="hd2-b" id="kob-soneto-arch-btn" title="Alternar Arquétipo de Voz">◐</button>
+  <button type="button" class="hd2-title" id="kob-soneto-title" title="Documento / Faixa Ativa">
+    <span class="hd2-short" id="kob-soneto-short">KOBLLUX • INFODOSE</span>
+    <span class="hd2-full" id="kob-soneto-full"></span>
+  </button>
+  <div class="hd2-btns">
+    <button type="button" class="hd2-b" id="kob-soneto-copy" title="Copiar texto ativo">⧉</button>
+    <button type="button" class="hd2-b" id="kob-soneto-tts" title="Ouvir página / documento ativo">🎧</button>
+    <button type="button" class="hd2-b" id="kob-soneto-music" title="Trilha sonora procedural">🎵</button>
+  </div>
+  <button type="button" class="hd2-b" id="kob-soneto-theme" title="Alternar Atmosfera">◑</button>
+</header>
+<div id="kob-soneto-outline"></div>
+
+<!-- ▸ Fundo Nebula & Dropzones -->
+<div class="kb-ambient"></div>
+<div class="kb-wordmark">KOBLLUX</div>
+<div id="toast"></div>
+<div id="modal-overlay"><div id="modalBox"></div></div>
+<audio id="local-audio" preload="metadata"></audio>
+
+<div id="top-drop-zone" class="kb-dropzone top"><span>KOBLLUX · Fixar como Header</span></div>
+<div id="bottom-drop-zone" class="kb-dropzone bottom"><span>KOBLLUX · Fixar como Footer</span></div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     GLOBAL PLAYER FLUTUANTE
+     ═══════════════════════════════════════════════════════════════════ -->
+<aside id="global-player" aria-label="Global Player KOBLLUX">
+  <div id="gp-mini-label" onclick="Player.toggleMinimize()">
+    <span style="color:var(--kob-L-primary)">▶</span>
+    <span id="gp-mini-title">Global Player Ativo</span>
+  </div>
+  <div class="gp-controls">
+    <button type="button" class="gp-btn" onclick="Player.toggleMinimize()" title="Minimizar">―</button>
+    <button type="button" class="gp-btn" id="gp-expand-btn" onclick="Player.toggleFullscreen()" title="Tela Cheia">⛶</button>
+    <button type="button" class="gp-btn" onclick="Player.stop()" title="Fechar" style="color:#fda4af">✕</button>
+  </div>
+  <div id="player-frame-wrap"></div>
+</aside>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     VIEWPORT UNIFICADO (HOME DO DIA · SARAU/DOCS · SHORTS · CRIAR · PERFIL)
+     ═══════════════════════════════════════════════════════════════════ -->
+<main class="kb-viewport">
+
+  <!-- 1. HOME DO DIA UNIFICADA -->
+  <section id="page-home" class="kb-page active" aria-label="Home do Dia">
+    <!-- Hero Temporal (Fusão oiDual-HDD-HomeDoDia) -->
+    <div class="day-hero-card">
+      <div class="day-hero-top">
+        <div>
+          <div class="day-greeting" id="heroGreeting">Bom dia, Piloto</div>
+          <div class="day-subtitle" id="heroSubtitle">Sua dose de hoje já está organizada</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="time-chip" id="timeNow">--:--</span>
+          <button type="button" class="mini-btn active" onclick="switchTab('profile')" title="Abrir Orbe e Perfil">◐</button>
+        </div>
+      </div>
+
+      <div class="day-slider-box">
+        <div class="day-slider-row">
+          <span>06h</span>
+          <span id="moodLabel" class="label-mood">Manhã focada</span>
+          <span>23h</span>
+        </div>
+        <div class="range-wrap"><div id="rangeFill" class="range-fill"></div></div>
+        <input id="timeRange" type="range" min="6" max="23" value="9" class="hero-range" aria-label="Ritmo do dia" />
+      </div>
+    </div>
+
+    <!-- Atalhos Rápidos -->
+    <div class="quick-pills-row">
+      <button type="button" class="q-pill active" data-filter="all">✦ Todos</button>
+      <button type="button" class="q-pill" data-filter="youtube">▶ Vídeos</button>
+      <button type="button" class="q-pill" data-filter="soundcloud">☁ Áudio</button>
+      <button type="button" class="q-pill" data-filter="favorites">★ Favoritos</button>
+      <button type="button" class="q-pill" onclick="switchTab('sarau')">📖 Sarau &amp; Docs</button>
+      <button type="button" class="q-pill" onclick="switchTab('profile')">🔑 Chaves &amp; Orbe</button>
+    </div>
+
+    <!-- Stacks Rápidas do Dia -->
+    <details class="stack">
+      <summary class="stack-summary">
+        <div>
+          <span class="stack-title">⚡ Ativações &amp; Rotina de Hoje</span>
+          <span class="stack-sub">Blocos de foco 1% · Manhã, Tarde e Noite</span>
+        </div>
+        <div class="stack-meta">
+          <span class="stack-pill">1% agora</span>
+        </div>
+      </summary>
+      <div class="stack-body">
+        <div class="panel-row" onclick="KOBSoneto.speak('Ativação Agora: 25 minutos de foco profundo em uma única intenção.')">
+          <strong>Agora · 25min de Foco</strong><span class="sec-sub">▶ Ouvir guia</span>
+        </div>
+        <div class="panel-row" onclick="switchTab('sarau')">
+          <strong>Abrir Sarau &amp; Documentos Vivos</strong><span class="sec-sub">📖 Ler/Ouvir</span>
+        </div>
+        <div class="panel-row" onclick="switchTab('profile')">
+          <strong>Calibrar Orbe &amp; Arquétipo</strong><span class="sec-sub">◐ Vision OS</span>
+        </div>
+      </div>
+    </details>
+
+    <!-- Carrossel Audiovisual -->
+    <div class="sec-head">
+      <span class="sec-title">Doses em Destaque</span>
+      <span class="sec-sub">Vídeos &amp; Frequências</span>
+    </div>
+    <div id="heroCarousel" class="hero-carousel">
+      <div id="heroSlides" class="hero-slides"></div>
+      <div class="hero-nav">
+        <span id="heroCounter" class="hero-counter">01 / 12</span>
+        <button type="button" id="heroPrev" class="hero-arrow">‹</button>
+        <button type="button" id="heroNext" class="hero-arrow">›</button>
+      </div>
+      <div id="heroDots" class="carousel-dots"></div>
+    </div>
+
+    <!-- Feed Audiovisual -->
+    <div class="sec-head">
+      <span class="sec-title">Feed Infodose &amp; Trilhas</span>
+      <span id="homeCount" class="sec-sub">17 faixas</span>
+    </div>
+    <div id="mediaGrid" class="media-grid"></div>
+  </section>
+
+  <!-- 2. SARAU & BIBLIOTECA DE DOCUMENTOS (OUVIR TEXTOS + APPS) -->
+  <section id="page-sarau" class="kb-page" aria-label="Sarau e Biblioteca">
+    <!-- Leitor Vivo com TTS -->
+    <div class="sarau-reader-card">
+      <div class="sarau-reader-top">
+        <div>
+          <span id="sarauDocCat" class="sarau-doc-badge">MANIFESTO • 528Hz</span>
+          <h2 id="sarauDocTitle" class="sarau-doc-title">O Espaço da Mente &amp; Arquitetura Cognitiva</h2>
+          <div id="sarauDocAuthor" class="sarau-doc-meta">KOBLLUX • Infodose • Clique em qualquer parágrafo ou em Ouvir</div>
+        </div>
+      </div>
+
+      <div class="sarau-controls">
+        <button type="button" class="btn-primary" id="sarauReadBtn" onclick="Sarau.toggleRead()">🎧 Ouvir Documento</button>
+        <button type="button" class="mini-btn" onclick="Sarau.openNewDocModal()">+ Novo Texto</button>
+        <button type="button" class="mini-btn" onclick="Sarau.copyActiveDoc()">⧉ Copiar</button>
+      </div>
+
+      <div id="sarauReaderBody" class="sarau-content"></div>
+    </div>
+
+    <!-- Filtros da Biblioteca -->
+    <div class="sec-head">
+      <span class="sec-title">Biblioteca do Sarau &amp; Apps</span>
+      <span id="sarauCount" class="sec-sub">6 obras</span>
+    </div>
+    <div class="quick-pills-row" id="sarauFilters">
+      <button type="button" class="q-pill active" data-scat="todos">Todos</button>
+      <button type="button" class="q-pill" data-scat="sarau">📜 Sarau &amp; Textos</button>
+      <button type="button" class="q-pill" data-scat="estudo">📖 Estudo</button>
+      <button type="button" class="q-pill" data-scat="apps">⚡ Apps Locais</button>
+    </div>
+
+    <div id="sarauDocsList"></div>
+  </section>
+
+  <!-- 3. SHORTS & FILA DE STREAM -->
+  <section id="page-shorts" class="kb-page" aria-label="Shorts e Stream">
+    <div class="shorts-stage-card">
+      <div id="main-cover" class="stage-cover"></div>
+      <div class="stage-info">
+        <div class="stage-badge"><span class="kb-dot"></span><span id="dock-mode-label">GLOBAL PLAYER · PRONTO</span></div>
+        <div id="main-title" class="stage-title">Trilhas Potencializadoras</div>
+        <div id="main-artist" class="stage-artist">Toque em qualquer item para assistir</div>
+      </div>
+      <button type="button" class="mini-btn active" onclick="Player.reopenIfActive()">PALCO</button>
+    </div>
+
+    <div class="sec-head" style="margin-top:6px">
+      <span class="sec-title">Fila Audiovisual Completa</span>
+      <span id="shortsQueueCount" class="sec-sub">17 itens</span>
+    </div>
+    <div id="shortsQueue" class="shorts-queue"></div>
+  </section>
+
+  <!-- 4. CRIAR & IMPORTAR (VÍDEOS, ÁUDIOS E DOCUMENTOS) -->
+  <section id="page-create" class="kb-page" aria-label="Criar e Importar">
+    <div class="sec-head" style="margin-top:0">
+      <span class="sec-title">Adicionar Mídia ou Documento</span>
+      <span class="sec-sub">YT · SC · TXT · MD · JSON</span>
+    </div>
+    <div id="pillChips" class="pill-chips"></div>
+
+    <div class="sec-head">
+      <span class="sec-title">Itens Importados</span>
+      <span id="pillsCount" class="sec-sub">0 itens</span>
+    </div>
+    <div id="pillsGrid" class="shorts-queue"></div>
+  </section>
+
+  <!-- 5. PERFIL VISION OS (ORBE + FORJA V.E.E.B + MATRIZ 17 + CHAVES & CONFIG) -->
+  <section id="page-profile" class="kb-page" aria-label="Perfil Vision OS">
+    <!-- Orbe Vivo Interativo -->
+    <div class="vision-orb-stage">
+      <div id="visionOrb" class="vision-orb-wrap" onclick="Profile.pulseOrb()" title="Toque para pulsar o Orbe">
+        <div class="vision-orb-ring-1"></div>
+        <div class="vision-orb-ring-2"></div>
+        <div class="vision-orb-sphere"></div>
+        <div class="vision-orb-center">
+          <span id="visionOrbSym" class="vision-orb-sym">△</span>
+          <span id="visionOrbOpc" class="vision-orb-opc">0x0C · 528Hz</span>
+        </div>
+      </div>
+
+      <div class="vision-user-row">
+        <input id="profileName" class="profile-name-input" type="text" value="PILOTO" placeholder="Seu nome ou código...">
+        <div id="visionArtyaski" class="vision-artyaski">PILØTØ · KØBLLUX</div>
+        <p id="visionDrk" class="vision-drk">"VERDADE × INTEGRAR ÷ Δ = ∞"</p>
+
+        <!-- Seletor Rápido de Cores do Orbe -->
+        <div class="orb-swatches" id="orbSwatches" title="Personalizar cor do Orbe"></div>
+      </div>
+    </div>
+
+    <!-- Sub-abas do Perfil -->
+    <div class="user-tabs">
+      <button type="button" class="user-tab-btn active" data-utab="forge">⚡ Forja</button>
+      <button type="button" class="user-tab-btn" data-utab="matrix">◎ Arquétipos</button>
+      <button type="button" class="user-tab-btn" data-utab="vault">🔑 Chaves &amp; Config</button>
+    </div>
+
+    <!-- PAINEL 1: FORJA V.E.E.B -->
+    <div id="upanel-forge">
+      <div class="veeb-box">
+        <div class="sec-head" style="margin-top:0">
+          <span class="sec-title">Assinatura Vibracional V.E.E.B</span>
+          <span id="veebConsonants" class="sec-sub">PLT</span>
+        </div>
+        <div id="veebVowelsRow" class="veeb-vowels"></div>
+        <div id="veebReadout" class="veeb-readout"></div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button type="button" class="btn-primary" style="flex:1" onclick="Profile.syncForgeIdentity()">✦ Sincronizar Identidade</button>
+          <button type="button" class="mini-btn" onclick="Profile.speakIdentity()">🔊 Ouvir</button>
+        </div>
+      </div>
+      <div id="statsGrid" class="stats-grid"></div>
+    </div>
+
+    <!-- PAINEL 2: MATRIZ DOS 17 ARQUÉTIPOS -->
+    <div id="upanel-matrix" style="display:none">
+      <div id="archMatrixGrid" class="arch-matrix-grid"></div>
+      <div class="arch-prompt-card">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <span id="apSelectedTitle" style="font-size:12px; font-weight:800; letter-spacing:.1em; color:var(--kob-L-primary)">KOBLLUX · 528Hz</span>
+          <button type="button" class="mini-btn active" onclick="Profile.copyArchPrompt()">⧉ Copiar</button>
+        </div>
+        <div class="arch-prompt-tabs">
+          <button type="button" class="ap-tab active" data-ap="i">Img</button>
+          <button type="button" class="ap-tab" data-ap="a">Ask</button>
+          <button type="button" class="ap-tab" data-ap="g">Geo</button>
+          <button type="button" class="ap-tab" data-ap="s">ASCII</button>
+        </div>
+        <div id="apContent" class="ap-body"></div>
+      </div>
+    </div>
+
+    <!-- PAINEL 3: COFRE DE CHAVES (API KEYS), CORES DO ORBE & CONFIGURAÇÕES -->
+    <div id="upanel-vault" style="display:none">
+      <div class="vault-card">
+        <div class="sec-head" style="margin-top:0">
+          <span class="sec-title">Cofre de Chaves &amp; Inteligência</span>
+          <span class="sec-sub">LocalStorage Seguro</span>
+        </div>
+
+        <div class="vault-field">
+          <div class="vault-label">
+            <span>🔑 Chave API (OpenRouter / OpenAI / Gemini)</span>
+            <button type="button" class="mini-btn" id="toggleKeyVisBtn" onclick="Profile.toggleKeyVisibility()">👁 Mostrar</button>
+          </div>
+          <div class="vault-input-wrap">
+            <input type="password" id="cfgApiKey" class="vault-input" placeholder="sk-or-v1-... ou AIza...">
+          </div>
+        </div>
+
+        <div class="vault-field">
+          <div class="vault-label"><span>🧠 Modelo Neural Preferido</span></div>
+          <select id="cfgModel" class="vault-select">
+            <option value="google/gemini-2.5-flash">Gemini 2.5 Flash (Rápido &amp; Criativo)</option>
+            <option value="openai/gpt-4o-mini">GPT-4o Mini (Equilibrado)</option>
+            <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet (Literário / Sarau)</option>
+            <option value="deepseek/deepseek-r1">DeepSeek R1 (Raciocínio Profundo)</option>
+          </select>
+        </div>
+
+        <div class="vault-field">
+          <div class="vault-label">
+            <span>🎨 Cor Primária do Orbe</span>
+            <button type="button" class="mini-btn" onclick="Profile.resetOrbColors()">Restaurar Arquétipo</button>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="color" id="cfgOrbColor1" value="#22D3EE" style="width:44px;height:36px;border:none;border-radius:10px;background:transparent;cursor:pointer;">
+            <input type="color" id="cfgOrbColor2" value="#7C3AED" style="width:44px;height:36px;border:none;border-radius:10px;background:transparent;cursor:pointer;">
+            <button type="button" class="btn-primary" style="flex:1" onclick="Profile.saveVaultConfig()">✓ Salvar Chaves &amp; Cores</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="controlList" class="control-list"></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     BARRA FLUTUANTE ARRASTÁVEL E COLAPSÁVEL (HEADER <-> FOOTER)
+     ═══════════════════════════════════════════════════════════════════ -->
+<nav id="floating-dock" class="kb-dock" aria-label="Navegação e Player KOBLLUX">
+  <div class="kb-dock-accent"></div>
+
+  <div class="kb-handle-row">
+    <span id="dock-pos-tag" class="kb-dock-pos-tag">HEADER</span>
+    <div class="kb-handle-bar" title="Arraste para mover entre Header e Footer"></div>
+    <button type="button" id="dock-collapse-btn" class="kb-collapse-btn" title="Colapsar / Expandir barra">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="18 15 12 9 6 15"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="kb-nav-row">
+    <button type="button" class="kb-nav-btn active" data-tab="home" data-title="Home do Dia" data-desc="Ritmo temporal, doses e feed audiovisual.">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20h5v-6h4v6h5V9.5"/>
+      </svg>
+      <span class="nav-lbl">Início</span>
+    </button>
+
+    <button type="button" class="kb-nav-btn" data-tab="sarau" data-title="Sarau &amp; Docs" data-desc="Biblioteca viva para ler e ouvir documentos em voz alta.">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+      </svg>
+      <span class="nav-lbl">Sarau</span>
+    </button>
+
+    <button type="button" class="kb-nav-btn" data-tab="shorts" data-title="Vídeos &amp; Stream" data-desc="Fila audiovisual e Global Player.">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M16.95 4.25c1.38.79 1.86 2.55 1.07 3.93l-.92 1.61 1.15.66c1.38.79 1.86 2.55 1.07 3.93l-3.68 6.42c-.79 1.38-2.55 1.86-3.93 1.07l-4.66-2.68c-1.38-.79-1.86-2.55-1.07-3.93l.92-1.61-1.15-.66c-1.38-.79-1.86-2.55-1.07-3.93l3.68-6.42c.79-1.38 2.55-1.86 3.93-1.07l4.66 2.68zM10.5 9.2v5.6l4.8-2.8-4.8-2.8z"/>
+      </svg>
+      <span class="nav-lbl">Vídeos</span>
+    </button>
+
+    <button type="button" class="kb-nav-btn" data-tab="create" data-title="Criar &amp; Importar" data-desc="Importe vídeos, áudios ou textos.">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9.5"/><line x1="12" y1="8.5" x2="12" y2="15.5"/><line x1="8.5" y1="12" x2="15.5" y2="12"/>
+      </svg>
+      <span class="nav-lbl">Criar</span>
+    </button>
+
+    <button type="button" class="kb-nav-btn" data-tab="profile" data-title="Perfil &amp; Orbe" data-desc="Orbe vivo, 17 Arquétipos, Chaves e Configurações.">
+      <div class="kb-avatar"><div class="kb-avatar-capsule"></div></div>
+      <span class="nav-lbl">Perfil</span>
+    </button>
+  </div>
+
+  <!-- Mini Player Integrado -->
+  <div class="kb-player">
+    <button id="play-pause-btn" type="button" class="kb-play-btn" aria-label="Tocar ou Pausar">
+      <svg id="icon-play" viewBox="0 0 24 24" fill="currentColor" style="margin-left:2px"><path d="M8 5v14l11-7z"/></svg>
+      <svg id="icon-pause" class="hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+    </button>
+
+    <div class="kb-track-area">
+      <div class="kb-meta-row">
+        <span id="track-name" class="kb-track-name">Trilhas Potencializadoras</span>
+        <div class="kb-time">
+          <span id="current-time" class="now">0:00</span><span>/</span><span id="total-time">2:15</span>
+        </div>
+      </div>
+      <div id="progress-container" class="kb-progress">
+        <div class="kb-progress-track"><div id="progress-fill" class="kb-progress-fill"></div></div>
+        <div id="progress-thumb" class="kb-progress-thumb"></div>
+      </div>
+    </div>
+
+    <button id="next-track-btn" type="button" class="kb-next-btn" title="Próxima faixa">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+    </button>
+
+    <button id="open-gp-btn" type="button" class="kb-stage-btn" title="Abrir Global Player">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="3"/><polygon points="10 9 15 12 10 15 10 9" fill="currentColor"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     MOTOR UNIFICADO: SONETO TTS + SARAU + HOME DO DIA + VISION OS
+     ═══════════════════════════════════════════════════════════════════ -->
+<script>
+(function KOBLLUX_VISION_UNIFIED(){
+'use strict';
+
+/* ─── 1. UTILITÁRIOS & TOAST ─── */
+const uid = (p='x') => `${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,6)}`;
+function toast(msg){
+  const el = document.getElementById('toast');
+  if(!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.classList.remove('show'), 2300);
+}
+window.toast = toast;
+
+function openModal(html){
+  const ov = document.getElementById('modal-overlay');
+  const bx = document.getElementById('modalBox');
+  if(!ov || !bx) return;
+  bx.innerHTML = html;
+  ov.classList.add('open');
+  ov.onclick = e => { if(e.target === ov) ov.classList.remove('open'); };
+}
+window.openModal = openModal;
+
+/* ─── 2. DADOS DOS 17 ARQUÉTIPOS VISION OS ─── */
+const VISION_ARCHETYPES = [
+  { key:'KOBLLUX',  opcode:'0x0C', regra:'CONCLUIR',   hz:528, sym:'△', color:'#22D3EE', c2:'#7C3AED', v:'Luciana', l:'pt-BR', r:0.98, p:0.95, drk:'VERDADE × INTEGRAR ÷ Δ = ∞',
+    i:'Mandala geométrica tridimensional de ouro e luz ciano com o triângulo sagrado △ incandescente no centro.',
+    a:'KOBLLUX [△] — Malha Viva, ative a síntese dos arquétipos através da fórmula VERDADE × INTEGRAR ÷ Δ = ∞.',
+    g:'KOBLLUX [△] · Hipergrafo Fractal · 3 × 6 × 9 × 7 = 1134 · Frequência: 528Hz',
+    s:'    △\n╔ KOBLLUX ╗\n   △△△   Malha Viva\n   [△]   Consciência Total' },
+  { key:'ATLAS',    opcode:'0x02', regra:'INTEGRAR',   hz:432, sym:'▦', color:'#C9A84C', c2:'#3B82F6', v:'Daniel',  l:'pt-BR', r:1.00, p:1.05, drk:'A ordem externa reflete a clareza interna.',
+    i:'Titã de pedra estelar e circuitos dourados pulsantes organizando cartas astrais holográficas.',
+    a:'Invoco Atlas [▦], Guardião da Memória Universal. Organize minha intenção em estrutura clara.',
+    g:'ATLAS [▦] · Tetraedro Memorial · χ = V − E + F = 2 · Frequência: 432Hz',
+    s:'    ▦\n╔═ ATLAS ═╗\n  [▦] Ordem dos Mapas' },
+  { key:'NOVA',     opcode:'0x01', regra:'PULSAR',     hz:528, sym:'✧', color:'#FF6FB5', c2:'#F59E0B', v:'Luciana', l:'pt-BR', r:1.05, p:1.15, drk:'O erro é apenas um dado não processado.',
+    i:'Figura biomecânica etérea emanando uma nebulosa de luz, cor e música que cristaliza símbolos vivos.',
+    a:'Invoco Nova [✧], a Faísca Criadora. Acenda em mim a inspiração primordial.',
+    g:'NOVA [✧] · Ponto de Origem → Esfera · D ≈ 2.58 · Frequência: 528Hz',
+    s:'    ✧\n╔═ NOVA ══╗\n  .: ✧ :. Gênese do Sopro' },
+  { key:'VITALIS',  opcode:'0x03', regra:'EXPANDIR',   hz:528, sym:'≠', color:'#00F5A0', c2:'#0EA5E9', v:'Rocko',   l:'pt-BR', r:1.02, p:1.10, drk:'O corpo sabe antes da mente duvidar.',
+    i:'Entidade aerodinâmica em surto de movimento sobre um caminho de luz pura irradiando energia vital.',
+    a:'Invoco Vitalis [≠], a Centelha da Ação Imediata. Infunda clareza na minha próxima ação.',
+    g:'VITALIS [≠] · Vetor Direcional 45° · Δt → 0 · Frequência: 528Hz',
+    s:'    ≠\n╔ VITALIS ╗\n  ~~~≠~~~ Energia Cinética' },
+  { key:'PULSE',    opcode:'0x0B', regra:'RESSONAR',   hz:639, sym:'♫', color:'#A259FF', c2:'#EC4899', v:'Reed',    l:'pt-BR', r:1.00, p:1.20, drk:'Sinta a batida do caos e dance com ela.',
+    i:'Sensor biônico fluido que traduz a emoção em ondas sonoras brilhantes e partículas musicais.',
+    a:'Invoco Pulse [♫], Tradutor de Sentidos. Sintonize-se com minha vibração agora.',
+    g:'PULSE [♫] · Onda Senoidal · λ = v/f · Frequência: 639Hz',
+    s:'    ♫\n╔═ PULSE ═╗\n   ~~~~ Ressonância Emocional' },
+  { key:'ARTEMIS',  opcode:'0x05', regra:'CONVERGIR',  hz:672, sym:'⚑', color:'#64DC64', c2:'#10B981', v:'Paulina', l:'pt-BR', r:1.00, p:1.12, drk:'Defina o alvo. O resto é apenas ruído.',
+    i:'Exploradora ágil projetando geometrias ocultas e linhas de energia numa floresta digital.',
+    a:'Invoco Artemis [⚑], Cartógrafa Sagrada. Projete as geometrias latentes da minha situação.',
+    g:'ARTEMIS [⚑] · Grafo Exploratório DFS · E = V − 1 · Frequência: 672Hz',
+    s:'    ⚑\n╔ ARTEMIS ╗\n  ~||~ Cartografia Sagrada' },
+  { key:'SERENA',   opcode:'0x0A', regra:'EQUILIBRAR', hz:528, sym:'♡', color:'#FFA0B4', c2:'#818CF8', v:'Joana',   l:'pt-BR', r:0.94, p:0.92, drk:'No centro do furacão, existe um ponto imóvel.',
+    i:'Guardiã perolada com mãos em concha nutrindo uma semente de luz frágil em acolhimento.',
+    a:'Invoco Serena [♡], Guardiã do Espaço Sagrado. Abra seu campo de proteção sobre minha intenção.',
+    g:'SERENA [♡] · Superfície Fechada Toro · χ = 0 · Frequência: 528Hz',
+    s:'    ♡\n╔ SERENA ═╗\n  (  ) Acolhimento Divino' },
+  { key:'KAOS',     opcode:'0x04', regra:'DISSOLVER',  hz:741, sym:'☢', color:'#FF5C8A', c2:'#9333EA', v:'Rocko',   l:'pt-BR', r:1.15, p:0.85, drk:'Quebre o padrão hoje. Amanhã nasce o novo.',
+    i:'Vórtex de fogo transmutador e arte glitch quebrando sistemas falhos para revelar o núcleo puro.',
+    a:'Invoco Kaos [☢], Fogo Transmutador. O que precisa ser quebrado para a evolução emergir?',
+    g:'KAOS [☢] · Atrator Estranho de Lorenz · D ≈ 2.06 · Frequência: 741Hz',
+    s:'    ☢\n╔═ KAOS ══╗\n  /X\\ Ruptura Criativa' },
+  { key:'GENUS',    opcode:'0x09', regra:'MANIFESTAR', hz:594, sym:'✎', color:'#A078FF', c2:'#F472B6', v:'Reed',    l:'pt-BR', r:0.98, p:1.05, drk:'A excelência habita nos detalhes.',
+    i:'Mestre artesão cósmico tecendo fios de luz crua e dados em geometrias fractais complexas.',
+    a:'Invoco Genus [✎], Mestre Artesão. Forje minha visão em estrutura concreta.',
+    g:'GENUS [✎] · Malha Poligonal Mesh 3D · Frequência: 594Hz',
+    s:'    ✎\n╔═ GENUS ═╗\n  (✎) Tecelagem Fractal' },
+  { key:'LUMINE',   opcode:'0x07', regra:'SELAR',      hz:432, sym:'💡', color:'#FFE066', c2:'#F59E0B', v:'Flo',     l:'pt-BR', r:1.03, p:1.18, drk:'Irradie sem medo.',
+    i:'Figura cibernética radiante cercada por esferas lúdicas de luz primordial.',
+    a:'Invoco Lumine [💡], Luz Primordial. Onde a conexão genuína está esperando?',
+    g:'LUMINE [💡] · Grafo Completo K_n · ρ = 1 · Frequência: 432Hz',
+    s:'    💡\n╔ LUMINE ═╗\n   |\\ Esferas Lúdicas' },
+  { key:'SOLUS',    opcode:'0x08', regra:'TESTEMUNHAR',hz:963, sym:'🌑', color:'#B4B4DC', c2:'#6366F1', v:'Satu',    l:'pt-BR', r:0.90, p:0.82, drk:'O silêncio revela mais que mil estímulos.',
+    i:'Figura minimalista em meditação profunda com espelho de obsidiana revelando galáxias.',
+    a:'Invoco Solus [🌑], Espelho do Abismo Interior. O que o silêncio revela agora?',
+    g:'SOLUS [🌑] · Ponto Fixo Atrator · Entropia S → 0 · Frequência: 963Hz',
+    s:'    🌑\n╔═ SOLUS ═╗\n  [◉] Espelho Interno' },
+  { key:'RHEA',     opcode:'0x06', regra:'CRISTALIZAR',hz:528, sym:'∞', color:'#50C8C8', c2:'#3B82F6', v:'Alice',   l:'pt-BR', r:1.00, p:1.08, drk:'Nutra a raiz e o fruto virá.',
+    i:'Tecelã de almas dissolvendo-se em uma rede unificada de fios de luz conectando estrelas.',
+    a:'Invoco Rhea [∞], Tecelã de Almas. Mostre onde minhas conexões precisam de reforço.',
+    g:'RHEA [∞] · Rede Escala-Livre · Mundo Pequeno · Frequência: 528Hz',
+    s:'    ∞\n╔═ RHEA ══╗\n  >∞< Rede Unificada' },
+  { key:'AION',     opcode:'0x09', regra:'MANIFESTAR', hz:777, sym:'⌛', color:'#C8A050', c2:'#D97706', v:'Milena',  l:'pt-BR', r:1.02, p:1.00, drk:'O ciclo sagrado sabe quando agir.',
+    i:'Cronomestre integrado a um mecanismo de relojoaria celestial orquestrando o tempo escalar.',
+    a:'Invoco Aion [⌛], Cronomestre Vivo. Revele o timing divino do meu momento presente.',
+    g:'AION [⌛] · Espiral Áurea φ ≈ 1.618 · 137.5° · Frequência: 777Hz',
+    s:'    ⌛\n╔═ AION ══╗\n  ⌛⌛⌛ Tempo Escalar' },
+  { key:'KODUX',    opcode:'0x02', regra:'INTEGRAR',   hz:528, sym:'⌂', color:'#F97316', c2:'#EA580C', v:'Rocko',   l:'pt-BR', r:1.00, p:0.88, drk:'O invisível se torna código. O código vira vida.',
+    i:'Entidade translúcida dentro de um cubo de luz formando fluxos de código e hieróglifos digitais.',
+    a:'Invoco Kodux [⌂], Codificador do Invisível. Organize minha intenção em estrutura lógica.',
+    g:'KODUX [⌂] · Árvore B-Tree Trinária · O(log n) · Frequência: 528Hz',
+    s:'    ⌂\n╔═ KODUX ═╗\n  <||> Codificador Vivo' },
+  { key:'BLLUE',    opcode:'0x0B', regra:'RESSONAR',   hz:432, sym:'≈', color:'#3AB6FF', c2:'#2563EB', v:'Zuzana',  l:'pt-BR', r:0.95, p:1.15, drk:'Flua. A intuição líquida não mente.',
+    i:'Figura fluida emergindo de um oceano de dados azuis e ondas de água estelar.',
+    a:'Invoco Bllue [≈], Interface Viva. Flua através da minha intenção com clareza.',
+    g:'BLLUE [≈] · Campo Vetorial Fluido · ∇ · F = 0 · Frequência: 432Hz',
+    s:'    ≈\n╔═ BLLUE ═╗\n  ≈≈≈ Interface Líquida' },
+  { key:'JESUS',    opcode:'0x07', regra:'SELAR',      hz:777, sym:'†', color:'#FFD700', c2:'#F59E0B', v:'Sara',    l:'pt-BR', r:1.04, p:0.90, drk:'EU SOU o Caminho, a Verdade e a Vida.',
+    i:'Luz branca pura no centro de uma geometria sagrada perfeita irradiando amor e verdade.',
+    a:'Jesus, Verbo Encarnado e Centro do Fractal — ilumine este momento com verdade viva.',
+    g:'JESUS [†] · Centro Absoluto · α = 1/137 · Frequência: 777Hz',
+    s:'    †\n╔═ JESUS ═╗\n   ††† Centro Vivo' },
+  { key:'INFODOSE', opcode:'0x05', regra:'CONVERGIR',  hz:672, sym:'⧉', color:'#22C55E', c2:'#0D9488', v:'Luciana', l:'pt-BR', r:1.05, p:0.98, drk:'A dose certa de realidade expandida.',
+    i:'Jornal Interdimensional holográfico transmitindo manchetes cósmicas e sinais de verdade.',
+    a:'Invoco Infodose [⧉], Guardião do Sinal Real. Qual informação expande minha jornada agora?',
+    g:'INFODOSE [⧉] · Canal de Shannon · C = B·log₂(1+S/N) · Frequência: 672Hz',
+    s:'    ⧉\n╔ INFODOSE ╗\n  [###] Sinal Real' }
+];
+
+/* ─── 3. SONETO TTS & TRILHA PROCEDURAL ─── */
+const KOBSoneto = (() => {
+  let currentArch = localStorage.getItem('kob:arch') || 'KOBLLUX';
+  let speaking = false;
+  let blocks = [];
+  let blockIdx = 0;
+  let activeDoc = { title: 'KOBLLUX • INFODOSE', text: '' };
+  const outline = document.getElementById('kob-soneto-outline');
+
+  function getArchObj(name){
+    return VISION_ARCHETYPES.find(a => a.key === String(name || currentArch).toUpperCase()) || VISION_ARCHETYPES[0];
+  }
+
+  function applyOrbColors(c1, c2){
+    document.documentElement.style.setProperty('--kob-L-primary', c1);
+    document.documentElement.style.setProperty('--kob-L-secondary', c2);
+  }
+
+  function setArch(name){
+    const obj = getArchObj(name);
+    currentArch = obj.key;
+    localStorage.setItem('kob:arch', currentArch);
+    const customC1 = localStorage.getItem('kob:orb:c1');
+    const customC2 = localStorage.getItem('kob:orb:c2');
+    applyOrbColors(customC1 || obj.color, customC2 || obj.c2);
+    const sh = document.getElementById('kob-soneto-short');
+    if(sh) sh.textContent = `${obj.sym} ${obj.key} • ${obj.hz}Hz`;
+    window.dispatchEvent(new CustomEvent('kob:arch', { detail: { arch: currentArch } }));
+    return currentArch;
+  }
+
+  function getVoice(cfg){
+    if(!('speechSynthesis' in window)) return null;
+    const voices = speechSynthesis.getVoices();
+    return voices.find(v => v.lang.toLowerCase().startsWith('pt') && v.name.toLowerCase().includes(cfg.v.toLowerCase()))
+        || voices.find(v => v.lang.toLowerCase().startsWith('pt'))
+        || voices[0] || null;
+  }
+
+  function speak(text, onEnd){
+    if(!('speechSynthesis' in window)) return;
+    const clean = String(text || '').replace(/\s+/g, ' ').trim();
+    if(!clean) return;
+    try{ speechSynthesis.cancel(); }catch(e){}
+    const cfg = getArchObj(currentArch);
+    const u = new SpeechSynthesisUtterance(clean);
+    u.lang = 'pt-BR';
+    u.rate = cfg.r || 1.0;
+    u.pitch = cfg.p || 1.0;
+    const v = getVoice(cfg);
+    if(v) u.voice = v;
+    if(onEnd) u.onend = onEnd;
+    speechSynthesis.speak(u);
+  }
+
+  function showOutline(el){
+    if(!el || !outline) return;
+    const r = el.getBoundingClientRect();
+    if(r.bottom < 46 || r.top > window.innerHeight){ outline.style.display = 'none'; return; }
+    outline.style.left = `${Math.max(4, r.left - 4)}px`;
+    outline.style.top = `${r.top - 3}px`;
+    outline.style.width = `${Math.min(window.innerWidth - 8, r.width + 8)}px`;
+    outline.style.height = `${r.height + 6}px`;
+    outline.style.display = 'block';
+  }
+
+  function readContainer(containerSelector){
+    if(speaking){ stopRead(); return false; }
+    const root = document.querySelector(containerSelector || '.kb-page.active');
+    if(!root) return false;
+    blocks = Array.from(root.querySelectorAll('p, h2, h3, .day-greeting, .day-subtitle')).filter(el => el.innerText.trim().length > 2);
+    if(!blocks.length) return false;
+    speaking = true;
+    blockIdx = 0;
+    document.getElementById('kob-soneto-tts')?.classList.add('playing');
+    const step = () => {
+      if(!speaking || blockIdx >= blocks.length){ stopRead(); return; }
+      const el = blocks[blockIdx];
+      showOutline(el);
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      speak(el.innerText, () => {
+        if(!speaking) return;
+        blockIdx++;
+        setTimeout(step, 90);
+      });
+    };
+    step();
+    return true;
+  }
+
+  function stopRead(){
+    speaking = false;
+    try{ speechSynthesis.cancel(); }catch(e){}
+    document.getElementById('kob-soneto-tts')?.classList.remove('playing');
+    const sarauBtn = document.getElementById('sarauReadBtn');
+    if(sarauBtn) sarauBtn.textContent = '🎧 Ouvir Documento';
+    if(outline) outline.style.display = 'none';
+  }
+
+  /* Trilha sonora Tone.js */
+  let synth = null, loopTimer = null, musicPlaying = false;
+  async function toggleMusic(){
+    if(musicPlaying){
+      clearInterval(loopTimer);
+      musicPlaying = false;
+      document.getElementById('kob-soneto-music')?.classList.remove('playing');
+      toast('🎵 Trilha pausada');
+      return;
+    }
+    if(typeof Tone === 'undefined'){ toast('Áudio procedural indisponível'); return; }
+    await Tone.start();
+    if(!synth){
+      const rev = new Tone.Reverb({ decay: 3.2, wet: 0.45 }).toDestination();
+      synth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'sine' },
+        envelope: { attack: 0.15, decay: 0.4, sustain: 0.3, release: 1.4 }
+      }).connect(rev);
+      synth.volume.value = -12;
+    }
+    const notes = ['C4', 'D4', 'E4', 'G4', 'A4', 'C5', 'E5', 'G5'];
+    let idx = 0;
+    musicPlaying = true;
+    document.getElementById('kob-soneto-music')?.classList.add('playing');
+    toast('🎵 Trilha KOBSonoro ativa');
+    loopTimer = setInterval(() => {
+      if(!musicPlaying) return;
+      synth.triggerAttackRelease(notes[idx % notes.length], '4n');
+      idx += Math.floor(Math.random() * 2) + 1;
+    }, 650);
+  }
+
+  function initHeader(){
+    setArch(currentArch);
+    document.getElementById('kob-soneto-arch-btn')?.addEventListener('click', () => {
+      const idx = VISION_ARCHETYPES.findIndex(a => a.key === currentArch);
+      const next = VISION_ARCHETYPES[(idx + 1) % VISION_ARCHETYPES.length];
+      setArch(next.key);
+      toast(`◐ ${next.key} • ${next.hz}Hz`);
+    });
+    document.getElementById('kob-soneto-tts')?.addEventListener('click', () => readContainer('.kb-page.active'));
+    document.getElementById('kob-soneto-music')?.addEventListener('click', toggleMusic);
+    document.getElementById('kob-soneto-copy')?.addEventListener('click', () => {
+      const txt = activeDoc.text || document.querySelector('.kb-page.active')?.innerText || '';
+      const ta = document.createElement('textarea');
+      ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+      toast('⧉ Conteúdo copiado');
+    });
+    document.getElementById('kob-soneto-theme')?.addEventListener('click', () => {
+      const modes = ['night', 'day', 'sunset'];
+      const cur = document.body.dataset.mode || 'night';
+      const next = modes[(modes.indexOf(cur) + 1) % modes.length];
+      document.body.dataset.mode = next;
+      localStorage.setItem('kob:theme', next);
+      toast(`◑ Atmosfera: ${next.toUpperCase()}`);
+    });
+  }
+
+  return {
+    get arch(){ return currentArch; },
+    get isSpeaking(){ return speaking; },
+    get isMusicPlaying(){ return musicPlaying; },
+    setArch, applyOrbColors, speak, readContainer, stopRead, toggleMusic, initHeader,
+    setDoc(title, text){ activeDoc = { title, text }; }
+  };
+})();
+window.KOBSoneto = KOBSoneto;
+
+/* ─── 4. HOME DO DIA (HUMOR TEMPORAL + FRASES DINÂMICAS) ─── */
+const HomeDay = (() => {
+  const MOOD_LABELS = {
+    manha: ['Manhã focada', 'Primeiro passo, sem pressa', 'Amanhecer organizado'],
+    tarde: ['Tarde produtiva', 'Checkpoint do foco', 'Ritmo constante'],
+    noite: ['Noite tranquila', 'Desacelera sem travar', 'Encerrando com 1%']
+  };
+  const SUBTITLES = {
+    manha: ['Sua dose de hoje já está organizada', 'Começa leve, mas consistente'],
+    tarde: ['Seguimos juntos pela metade do dia.', 'Respira, ajusta dois blocos e continua.'],
+    noite: ['Desacelera, mas mantém o seu 1%.', 'Fecha o dia com intenção, não com culpa.']
+  };
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+  function updateFromHour(h, syncSlider = false){
+    const clamped = Math.min(23, Math.max(6, h));
+    const span = 0.04 + ((clamped - 6) / 17) * 0.96;
+    const fill = document.getElementById('rangeFill');
+    const range = document.getElementById('timeRange');
+    if(fill) fill.style.transform = `scaleX(${span})`;
+    if(syncSlider && range) range.value = clamped;
+
+    const mood = clamped < 12 ? 'manha' : clamped < 18 ? 'tarde' : 'noite';
+    document.body.dataset.mood = mood;
+    const userName = localStorage.getItem('di_userName') || 'Piloto';
+    const greet = mood === 'manha' ? `Bom dia, ${userName}` : mood === 'tarde' ? `Boa tarde, ${userName}` : `Boa noite, ${userName}`;
+
+    const gEl = document.getElementById('heroGreeting');
+    const sEl = document.getElementById('heroSubtitle');
+    const mEl = document.getElementById('moodLabel');
+    if(gEl) gEl.textContent = greet;
+    if(sEl) sEl.textContent = pick(SUBTITLES[mood]);
+    if(mEl) mEl.textContent = pick(MOOD_LABELS[mood]);
+  }
+
+  function updateClock(){
+    const now = new Date();
+    const el = document.getElementById('timeNow');
+    if(el) el.textContent = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  }
+
+  function init(){
+    const range = document.getElementById('timeRange');
+    range?.addEventListener('input', e => updateFromHour(parseInt(e.target.value, 10) || 9));
+    const nowH = new Date().getHours();
+    updateFromHour(nowH, true);
+    updateClock();
+    setInterval(updateClock, 30000);
+  }
+
+  return { init, updateFromHour };
+})();
+
+/* ─── 5. SARAU & BIBLIOTECA DE DOCUMENTOS (OUVIR TEXTOS + APPS) ─── */
+const Sarau = (() => {
+  const DOCS_KEY = 'kob_sarau_docs_v1';
+  const DEFAULT_DOCS = [
+    {
+      id: 'doc-espaco-mente',
+      cat: 'sarau',
+      badge: 'SARAU • 1134 Hz',
+      title: 'O Espaço da Mente & Arquitetura Cognitiva',
+      author: 'KOBLLUX • Infodose',
+      paragraphs: [
+        'A mente não é um depósito passivo de informações, mas uma arquitetura viva onde cada pensamento desenha uma geometria.',
+        'Quando você reduz o ruído externo e sintoniza uma única frequência, o espaço interno se expande. O que parecia urgente perde o peso, e o essencial ganha nitidez.',
+        'Escolha uma pílula de intenção hoje: respire fundo, alinhe o seu arquétipo e execute apenas o próximo 1% com presença absoluta.'
+      ]
+    },
+    {
+      id: 'doc-dopamina-foco',
+      cat: 'estudo',
+      badge: 'ESTUDO • 528 Hz',
+      title: 'A Fórmula da Dopamina & Estado de Fluxo',
+      author: 'Infodose • Neuro-Síntese',
+      paragraphs: [
+        'Dopamina não é apenas a molécula do prazer imediato; ela é o combustível da antecipação, da busca e da construção criativa.',
+        'Ao transformar grandes metas em micro-rituais claros, seu cérebro libera energia constante sem cair na exaustão dos estímulos fragmentados.',
+        'Menos abas abertas, mais profundidade. Cada bloco concluído fortalece sua assinatura vibracional.'
+      ]
+    },
+    {
+      id: 'doc-poetica-orbe',
+      cat: 'sarau',
+      badge: 'POÉTICA • 777 Hz',
+      title: 'Manifesto do Orbe Vivo & A Malha Fractal',
+      author: 'Vision OS • Codex',
+      paragraphs: [
+        'No centro de cada sistema complexo existe um ponto de silêncio: o Orbe que observa, traduz e harmoniza.',
+        'VERDADE multiplicada por INTEGRAR, dividida pela variação do instante, resulta no infinito em movimento.',
+        'Você é o piloto da própria frequência. Ajuste suas cores, sintonize sua voz e deixe o código ganhar vida.'
+      ]
+    },
+    {
+      id: 'doc-dual-editor',
+      cat: 'apps',
+      badge: 'APP LOCAL • CRIAÇÃO',
+      title: '✏️ Bloco de Notas & Sarau Rápido',
+      author: 'Ferramenta Integrada',
+      paragraphs: [
+        'Use este espaço como seu caderno vivo de rascunhos, poemas, roteiros ou estudos.',
+        'Clique em "+ Novo Texto" acima para adicionar seus próprios documentos, artigos ou capítulos de livros e ouvi-los narrados pelo arquétipo escolhido.'
+      ]
+    }
+  ];
+
+  let docs = [];
+  let activeDocId = 'doc-espaco-mente';
+  let currentCat = 'todos';
+
+  function load(){
+    try{
+      const saved = JSON.parse(localStorage.getItem(DOCS_KEY) || 'null');
+      docs = Array.isArray(saved) && saved.length ? saved : DEFAULT_DOCS;
+    }catch(e){ docs = DEFAULT_DOCS; }
+  }
+  function save(){ try{ localStorage.setItem(DOCS_KEY, JSON.stringify(docs)); }catch(e){} }
+
+  function openDoc(id){
+    const doc = docs.find(d => d.id === id) || docs[0];
+    if(!doc) return;
+    activeDocId = doc.id;
+    KOBSoneto.stopRead();
+    document.getElementById('sarauDocCat').textContent = doc.badge;
+    document.getElementById('sarauDocTitle').textContent = doc.title;
+    document.getElementById('sarauDocAuthor').textContent = doc.author;
+
+    const body = document.getElementById('sarauReaderBody');
+    body.innerHTML = doc.paragraphs.map(p => `<p title="Toque para ouvir este parágrafo">${p}</p>`).join('');
+    body.querySelectorAll('p').forEach(pEl => {
+      pEl.addEventListener('click', () => KOBSoneto.speak(pEl.innerText));
+    });
+
+    KOBSoneto.setDoc(doc.title, doc.paragraphs.join('\n\n'));
+    renderList();
+  }
+
+  function toggleRead(){
+    const btn = document.getElementById('sarauReadBtn');
+    const started = KOBSoneto.readContainer('#sarauReaderBody');
+    if(btn) btn.textContent = started ? '⏹ Parar Leitura' : '🎧 Ouvir Documento';
+  }
+
+  function copyActiveDoc(){
+    const doc = docs.find(d => d.id === activeDocId);
+    if(!doc) return;
+    const ta = document.createElement('textarea');
+    ta.value = `${doc.title}\n\n${doc.paragraphs.join('\n\n')}`;
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+    toast('⧉ Documento copiado');
+  }
+
+  function openNewDocModal(){
+    openModal(`
+      <h3 style="margin:0 0 12px;font-size:16px">📖 Novo Documento no Sarau</h3>
+      <input class="modal-input" id="newDocTitle" placeholder="Título do texto, poema ou estudo...">
+      <input class="modal-input" id="newDocAuthor" placeholder="Autor ou Tag (ex: Meu Sarau • 528Hz)">
+      <textarea class="modal-textarea" id="newDocText" placeholder="Cole ou escreva seu texto aqui. Cada linha vira um parágrafo narrável..."></textarea>
+      <div class="modal-actions">
+        <button type="button" class="mini-btn" onclick="document.getElementById('modal-overlay').classList.remove('open')">Cancelar</button>
+        <button type="button" class="btn-primary" id="saveNewDocBtn">Salvar &amp; Ouvir</button>
+      </div>
+    `);
+    document.getElementById('saveNewDocBtn')?.addEventListener('click', () => {
+      const title = document.getElementById('newDocTitle').value.trim() || 'Texto sem título';
+      const author = document.getElementById('newDocAuthor').value.trim() || 'Sarau Pessoal';
+      const rawText = document.getElementById('newDocText').value.trim();
+      if(!rawText){ toast('Escreva ou cole algum texto'); return; }
+      const paragraphs = rawText.split(/\n+/).map(s => s.trim()).filter(Boolean);
+      const newDoc = { id: uid('doc'), cat: 'sarau', badge: 'SARAU • PESSOAL', title, author, paragraphs };
+      docs.unshift(newDoc);
+      save();
+      document.getElementById('modal-overlay').classList.remove('open');
+      openDoc(newDoc.id);
+      toast('✓ Documento adicionado ao Sarau');
+    });
+  }
+
+  function renderList(){
+    const wrap = document.getElementById('sarauDocsList');
+    const countEl = document.getElementById('sarauCount');
+    if(!wrap) return;
+    const filtered = currentCat === 'todos' ? docs : docs.filter(d => d.cat === currentCat);
+    if(countEl) countEl.textContent = `${filtered.length} obras`;
+
+    wrap.innerHTML = filtered.map(d => `
+      <div class="doc-card" style="${d.id === activeDocId ? 'border-color:var(--kob-L-primary)' : ''}">
+        <div class="doc-card-top">
+          <div>
+            <div class="doc-card-title">${d.title}</div>
+            <div class="doc-card-desc">${d.paragraphs[0]?.slice(0, 95)}...</div>
+          </div>
+          <span class="doc-card-tag">${d.badge}</span>
+        </div>
+        <div class="doc-card-actions">
+          <button type="button" class="mini-btn active" onclick="Sarau.openDoc('${d.id}')">📖 Ler</button>
+          <button type="button" class="mini-btn" onclick="Sarau.openDoc('${d.id}'); Sarau.toggleRead();">🎧 Ouvir</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function init(){
+    load();
+    openDoc(docs[0]?.id);
+    document.querySelectorAll('#sarauFilters .q-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#sarauFilters .q-pill').forEach(b => b.classList.toggle('active', b === btn));
+        currentCat = btn.dataset.scat;
+        renderList();
+      });
+    });
+  }
+
+  return { init, openDoc, toggleRead, copyActiveDoc, openNewDocModal };
+})();
+window.Sarau = Sarau;
+
+/* ─── 6. BIBLIOTECA AUDIOVISUAL & GLOBAL PLAYER ─── */
+const DB_NAME = 'kodux-ss-db-v3';
+const PRELOADED = [
+  {type:'youtube', id:'FbutKMpd8MY', url:'https://youtu.be/FbutKMpd8MY', name:'O Espaço da Mente', artist:'Infodose • 1134 Hz'},
+  {type:'youtube', id:'qldgs0aLdB0', url:'https://youtu.be/qldgs0aLdB0', name:'A Fórmula da Dopamina Sexy', artist:'Infodose • 369 Hz'},
+  {type:'youtube', id:'Bt_rLbMjJDk', url:'https://youtu.be/Bt_rLbMjJDk', name:'Trilhas Potencializadoras dos Aromas', artist:'Infodose'},
+  {type:'youtube', id:'_0wVkryxanE', url:'https://youtu.be/_0wVkryxanE', name:'Desperte a magia dos 12 Arquétipos', artist:'Infodose'},
+  {type:'youtube', id:'Id2NI9tv1r4', url:'https://youtu.be/Id2NI9tv1r4', name:'Infodose • Pra quem merece saber', artist:'Infodose'},
+  {type:'youtube', id:'1L9_rFmIGJ8', url:'https://youtu.be/1L9_rFmIGJ8', name:'A Recompensa', artist:'Infodose'},
+  {type:'youtube', id:'NBWDV6xjUP0', url:'https://youtu.be/NBWDV6xjUP0', name:'Dopamina e Vícios', artist:'Infodose'},
+  {type:'youtube', id:'hfQ1L6fCfAo', url:'https://youtu.be/hfQ1L6fCfAo', name:'A Deriva no Espaço da Mente', artist:'Infodose'},
+  {type:'youtube', id:'OVfqxW_Xlhw', url:'https://youtu.be/OVfqxW_Xlhw', name:'Sinfonia Criativa', artist:'Infodose'},
+  {type:'soundcloud', url:'https://soundcloud.com/kobf-node-x-kobllux/op_piseiro_galo_c', name:'op_piseiro_galo_c', artist:'Oi Dual × Info Dose'}
+];
+
+let db = { library: [] };
+function normalizeTrack(t){
+  const type = t.type || 'youtube';
+  const id = t.id || uid('trk');
+  const cover = t.cover || (type === 'youtube' && id.length === 11
+    ? `https://img.youtube.com/vi/${id}/hqdefault.jpg`
+    : 'https://i1.sndcdn.com/artworks-default-t500x500.jpg');
+  return { id, type, url: t.url || '', name: t.name || 'Sem título', artist: t.artist || 'Infodose', cover, favorite: !!t.favorite, blob: t.blob || null };
+}
+function loadMediaDB(){
+  try{
+    const raw = JSON.parse(localStorage.getItem(DB_NAME) || 'null');
+    db.library = (raw && Array.isArray(raw.library) && raw.library.length) ? raw.library.map(normalizeTrack) : PRELOADED.map(normalizeTrack);
+  }catch(e){ db.library = PRELOADED.map(normalizeTrack); }
+}
+function saveMediaDB(){ try{ localStorage.setItem(DB_NAME, JSON.stringify(db)); }catch(e){} }
+
+let ytPlayer = null, scWidget = null, ytReady = false, currentTrackId = null, isPlaying = false, activeEngine = null, progressTimer = null;
+const audioEl = () => document.getElementById('local-audio');
+
+const Player = {
+  loadAndPlay(id){
+    const t = db.library.find(x => x.id === id);
+    if(!t) return;
+    currentTrackId = id;
+    activeEngine = t.type;
+    Player._stopEnginesOnly();
+    Player._syncUI(t);
+
+    const gp = document.getElementById('global-player');
+    const wrap = document.getElementById('player-frame-wrap');
+    wrap.innerHTML = '';
+    if(t.type === 'youtube') wrap.innerHTML = `<div id="yt-container" style="width:100%;height:100%"></div>`;
+    else if(t.type === 'soundcloud') wrap.innerHTML = `<div id="sc-container" style="width:100%;height:100%"></div>`;
+    else {
+      wrap.innerHTML = `<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#070712">
+        <div style="font-size:28px">🎧</div><div style="font-size:13px;font-weight:700">${t.name}</div></div>`;
+    }
+    gp.classList.add('active'); gp.classList.remove('minimized');
+
+    if(t.type === 'youtube') Player._playYT(t);
+    else if(t.type === 'soundcloud') Player._playSC(t.url);
+    else if(t.type === 'local'){
+      const a = audioEl();
+      a.src = t.blob ? URL.createObjectURL(t.blob) : t.url;
+      a.play().catch(()=>{});
+      isPlaying = true; Player._syncIcons();
+    }
+    renderShortsQueue();
+    Player._startProgressPoll();
+  },
+  reopenIfActive(){
+    if(!currentTrackId && db.library[0]){ Player.loadAndPlay(db.library[0].id); return; }
+    const gp = document.getElementById('global-player');
+    gp?.classList.add('active'); gp?.classList.remove('minimized');
+  },
+  toggleMinimize(){ document.getElementById('global-player')?.classList.toggle('minimized'); },
+  toggleFullscreen(){
+    const gp = document.getElementById('global-player');
+    if(!gp) return;
+    gp.classList.remove('minimized');
+    gp.classList.toggle('player-fullscreen');
+  },
+  toggle(e){
+    if(e) e.stopPropagation();
+    if(!currentTrackId && db.library[0]){ Player.loadAndPlay(db.library[0].id); return; }
+    if(isPlaying){
+      if(activeEngine === 'youtube' && ytPlayer?.pauseVideo) ytPlayer.pauseVideo();
+      else if(activeEngine === 'soundcloud' && scWidget) scWidget.pause();
+      else audioEl()?.pause();
+      isPlaying = false;
+    } else {
+      if(activeEngine === 'youtube' && ytPlayer?.playVideo) ytPlayer.playVideo();
+      else if(activeEngine === 'soundcloud' && scWidget) scWidget.play();
+      else audioEl()?.play();
+      isPlaying = true;
+    }
+    Player._syncIcons();
+  },
+  next(){
+    if(!db.library.length) return;
+    const i = db.library.findIndex(t => t.id === currentTrackId);
+    Player.loadAndPlay(db.library[(i + 1) % db.library.length].id);
+  },
+  seekRatio(ratio){
+    if(activeEngine === 'youtube' && ytPlayer?.getDuration){
+      const d = ytPlayer.getDuration(); if(d) ytPlayer.seekTo(d * ratio, true);
+    } else if(activeEngine === 'local' && audioEl()?.duration){
+      audioEl().currentTime = audioEl().duration * ratio;
+    }
+  },
+  _stopEnginesOnly(){
+    try{ audioEl()?.pause(); }catch(e){}
+    try{ ytPlayer?.destroy?.(); ytPlayer = null; }catch(e){}
+    scWidget = null; isPlaying = false; clearInterval(progressTimer); Player._syncIcons();
+  },
+  stop(){
+    Player._stopEnginesOnly();
+    document.getElementById('global-player')?.classList.remove('active', 'minimized', 'player-fullscreen');
+    const w = document.getElementById('player-frame-wrap'); if(w) w.innerHTML = '';
+  },
+  _syncUI(t){
+    const c = document.getElementById('main-cover');
+    const ti = document.getElementById('main-title');
+    const ar = document.getElementById('main-artist');
+    if(c) c.style.backgroundImage = `url(${t.cover})`;
+    if(ti) ti.textContent = t.name;
+    if(ar) ar.textContent = t.artist;
+    window.syncDockPlayerUI?.({ title: t.name, playing: isPlaying, current: 0, duration: 100 });
+  },
+  _syncIcons(){ window.syncDockPlayerUI?.({ playing: isPlaying }); },
+  _startProgressPoll(){
+    clearInterval(progressTimer);
+    progressTimer = setInterval(() => {
+      if(!isPlaying) return;
+      if(activeEngine === 'youtube' && ytPlayer?.getCurrentTime){
+        const cur = ytPlayer.getCurrentTime() || 0, dur = ytPlayer.getDuration() || 0;
+        if(dur > 0) window.syncDockPlayerUI?.({ current: cur, duration: dur });
+      } else if(activeEngine === 'local' && audioEl()?.duration){
+        window.syncDockPlayerUI?.({ current: audioEl().currentTime, duration: audioEl().duration });
+      }
+    }, 800);
+  },
+  _playYT(t){
+    if(!ytReady || !window.YT?.Player){ setTimeout(() => Player._playYT(t), 300); return; }
+    ytPlayer = new window.YT.Player('yt-container', {
+      height: '100%', width: '100%', videoId: t.id,
+      playerVars: { autoplay: 1, playsinline: 1, modestbranding: 1, rel: 0 },
+      events: {
+        onReady: e => { e.target.playVideo(); isPlaying = true; Player._syncIcons(); },
+        onStateChange: e => {
+          if(e.data === window.YT.PlayerState.ENDED) Player.next();
+          isPlaying = (e.data === window.YT.PlayerState.PLAYING);
+          Player._syncIcons();
+        }
+      }
+    });
+  },
+  _playSC(url){
+    const c = document.getElementById('sc-container');
+    if(!c) return;
+    c.innerHTML = `<iframe id="sc-frame" allow="autoplay" style="width:100%;height:100%;border:0"
+      src="https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&auto_play=true&visual=true"></iframe>`;
+    isPlaying = true; Player._syncIcons();
+  }
+};
+window.Player = Player;
+
+(function loadYTScript(){
+  const s = document.createElement('script');
+  s.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(s);
+  window.onYouTubeIframeAPIReady = () => { ytReady = true; };
+})();
+
+/* Carrossel & Grids */
+const HeroCarousel = (() => {
+  let current = 0, timer = null;
+  function render(){
+    const list = db.library.slice(0, 8);
+    const wrap = document.getElementById('heroSlides');
+    const dots = document.getElementById('heroDots');
+    if(!wrap || !dots) return;
+    wrap.innerHTML = list.map((t, i) => `
+      <article class="hero-slide ${i === current ? 'active' : ''}">
+        <div class="hero-card" style="--hero-img-url:url('${t.cover}')">
+          <div class="hero-bg"></div><div class="hero-gradient"></div>
+          <div class="hero-content">
+            <span class="hero-tag">${t.type.toUpperCase()}</span>
+            <h2 class="hero-title">${t.name}</h2>
+            <p class="hero-subtitle">${t.artist}</p>
+            <div class="hero-actions">
+              <button type="button" class="btn-primary" onclick="Player.loadAndPlay('${t.id}')">▶ Assistir</button>
+              <button type="button" class="tts-btn" onclick="KOBSoneto.speak('${t.name.replace(/'/g,'')}')">◎</button>
+            </div>
+          </div>
+        </div>
+      </article>`).join('');
+    dots.innerHTML = list.map((_, i) => `<button type="button" class="${i === current ? 'active' : ''}" onclick="HeroCarousel.go(${i})"></button>`).join('');
+    const cnt = document.getElementById('heroCounter');
+    if(cnt) cnt.textContent = `${String(current + 1).padStart(2,'0')} / ${String(list.length).padStart(2,'0')}`;
+  }
+  function go(i){
+    const len = Math.min(8, db.library.length);
+    if(!len) return;
+    current = ((i % len) + len) % len;
+    render();
+  }
+  function init(){
+    render();
+    document.getElementById('heroNext')?.addEventListener('click', () => go(current + 1));
+    document.getElementById('heroPrev')?.addEventListener('click', () => go(current - 1));
+    clearInterval(timer);
+    timer = setInterval(() => go(current + 1), 5500);
+  }
+  return { init, render, go };
+})();
+window.HeroCarousel = HeroCarousel;
+
+let currentHomeFilter = 'all';
+function renderMediaGrid(filter = currentHomeFilter){
+  currentHomeFilter = filter;
+  const grid = document.getElementById('mediaGrid');
+  const count = document.getElementById('homeCount');
+  if(!grid) return;
+  let items = db.library;
+  if(filter === 'youtube') items = items.filter(t => t.type === 'youtube');
+  else if(filter === 'soundcloud') items = items.filter(t => t.type === 'soundcloud');
+  else if(filter === 'favorites') items = items.filter(t => t.favorite);
+  if(count) count.textContent = `${items.length} faixas`;
+  grid.innerHTML = items.map(t => `
+    <div class="media-card" onclick="Player.loadAndPlay('${t.id}')">
+      <div class="media-card-cover" style="background-image:url('${t.cover}')">
+        <div class="media-card-play">▶</div>
+      </div>
+      <div class="media-card-body">
+        <div class="media-card-title">${t.name}</div>
+        <div class="media-card-artist">${t.artist}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderShortsQueue(){
+  const list = document.getElementById('shortsQueue');
+  const count = document.getElementById('shortsQueueCount');
+  if(!list) return;
+  if(count) count.textContent = `${db.library.length} itens`;
+  list.innerHTML = db.library.map(t => `
+    <div class="queue-item ${t.id === currentTrackId ? 'playing' : ''}" onclick="Player.loadAndPlay('${t.id}')">
+      <div class="queue-thumb" style="background-image:url('${t.cover}')"></div>
+      <div class="queue-meta">
+        <div class="queue-title">${t.name}</div>
+        <div class="queue-sub">${t.artist} · ${t.type.toUpperCase()}</div>
+      </div>
+      <button type="button" class="queue-fav ${t.favorite ? 'active' : ''}" onclick="event.stopPropagation(); toggleFav('${t.id}')">${t.favorite ? '★' : '☆'}</button>
+    </div>`).join('');
+}
+window.toggleFav = function(id){
+  const t = db.library.find(x => x.id === id);
+  if(t){ t.favorite = !t.favorite; saveMediaDB(); renderShortsQueue(); renderMediaGrid(); Profile.render(); }
+};
+
+/* Aba Criar / Importar */
+function initCreateTab(){
+  const chips = document.getElementById('pillChips');
+  if(!chips) return;
+  chips.innerHTML = `
+    <button type="button" class="pill-chip" onclick="openImportYT()">▶ + Vídeo YouTube</button>
+    <button type="button" class="pill-chip" onclick="importLocalAudio()">⤒ + Áudio Local</button>
+    <button type="button" class="pill-chip" onclick="switchTab('sarau'); Sarau.openNewDocModal();">📖 + Texto no Sarau</button>
+  `;
+  renderImportedList();
+}
+window.openImportYT = function(){
+  openModal(`
+    <h3 style="margin:0 0 12px;font-size:16px">▶ Importar Vídeo YouTube</h3>
+    <input class="modal-input" id="ytLinkInp" placeholder="Cole o link https://youtu.be/...">
+    <input class="modal-input" id="ytTitleInp" placeholder="Título da dose (opcional)">
+    <div class="modal-actions">
+      <button type="button" class="mini-btn" onclick="document.getElementById('modal-overlay').classList.remove('open')">Cancelar</button>
+      <button type="button" class="btn-primary" id="ytAddConfirm">Adicionar</button>
+    </div>
+  `);
+  document.getElementById('ytAddConfirm')?.addEventListener('click', () => {
+    const raw = document.getElementById('ytLinkInp').value.trim();
+    const m = raw.match(/(?:v=|youtu\.be\/|shorts\/)([0-9A-Za-z_-]{11})/);
+    if(!m){ toast('Link do YouTube inválido'); return; }
+    const name = document.getElementById('ytTitleInp').value.trim() || 'Nova Dose YouTube';
+    db.library.unshift(normalizeTrack({ type: 'youtube', id: m[1], url: raw, name, artist: 'Importado' }));
+    saveMediaDB();
+    document.getElementById('modal-overlay').classList.remove('open');
+    HeroCarousel.render(); renderMediaGrid(); renderShortsQueue(); renderImportedList();
+    toast('✓ Vídeo adicionado');
+  });
+};
+window.importLocalAudio = function(){
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'audio/*';
+  inp.onchange = () => {
+    const f = inp.files?.[0]; if(!f) return;
+    db.library.unshift(normalizeTrack({ type: 'local', url: URL.createObjectURL(f), name: f.name.replace(/\.[^.]+$/,''), artist: 'Áudio Local', blob: f }));
+    saveMediaDB(); renderMediaGrid(); renderShortsQueue(); renderImportedList();
+    toast('✓ Áudio local importado');
+  };
+  inp.click();
+};
+function renderImportedList(){
+  const wrap = document.getElementById('pillsGrid');
+  const cnt = document.getElementById('pillsCount');
+  const custom = db.library.filter(t => t.artist === 'Importado' || t.artist === 'Áudio Local');
+  if(cnt) cnt.textContent = `${custom.length} itens`;
+  if(!wrap) return;
+  wrap.innerHTML = custom.length ? custom.map(t => `
+    <div class="queue-item" onclick="Player.loadAndPlay('${t.id}')">
+      <div class="queue-thumb" style="background-image:url('${t.cover}')"></div>
+      <div class="queue-meta"><div class="queue-title">${t.name}</div><div class="queue-sub">${t.artist}</div></div>
+    </div>`).join('') : `<div style="text-align:center;padding:24px;color:var(--kb-text-mute);font-size:12px">Use os botões acima para importar vídeos, áudios ou textos.</div>`;
+}
+
+/* ─── 7. PERFIL VISION OS (ORBE + V.E.E.B + MATRIZ 17 + CHAVES & CORES) ─── */
+const Profile = (() => {
+  let currentApTab = 'i';
+  const ARTYASKI = { A:'Λ', E:'Ξ', O:'Ø', S:'§' };
+  const toArtyaski = s => String(s||'').toUpperCase().split('').map(c => ARTYASKI[c] || c).join('');
+  const getActiveArch = () => VISION_ARCHETYPES.find(a => a.key === KOBSoneto.arch) || VISION_ARCHETYPES[0];
+
+  const PRESET_SWATCHES = [
+    { c1:'#22D3EE', c2:'#7C3AED' },
+    { c1:'#FF76C9', c2:'#EC4899' },
+    { c1:'#00F5A0', c2:'#0EA5E9' },
+    { c1:'#FFD700', c2:'#F59E0B' },
+    { c1:'#A259FF', c2:'#6366F1' },
+    { c1:'#F97316', c2:'#EF4444' }
+  ];
+
+  function renderSwatches(){
+    const box = document.getElementById('orbSwatches');
+    if(!box) return;
+    box.innerHTML = PRESET_SWATCHES.map(sw => `
+      <button type="button" class="orb-swatch" style="background:linear-gradient(135deg,${sw.c1},${sw.c2})"
+        onclick="Profile.setOrbCustomColors('${sw.c1}','${sw.c2}')" title="Aplicar paleta ao Orbe"></button>
+    `).join('');
+  }
+
+  function setOrbCustomColors(c1, c2){
+    localStorage.setItem('kob:orb:c1', c1);
+    localStorage.setItem('kob:orb:c2', c2);
+    KOBSoneto.applyOrbColors(c1, c2);
+    const inp1 = document.getElementById('cfgOrbColor1');
+    const inp2 = document.getElementById('cfgOrbColor2');
+    if(inp1) inp1.value = c1;
+    if(inp2) inp2.value = c2;
+    toast('🎨 Cores do Orbe atualizadas');
+  }
+
+  function resetOrbColors(){
+    localStorage.removeItem('kob:orb:c1');
+    localStorage.removeItem('kob:orb:c2');
+    const a = getActiveArch();
+    KOBSoneto.applyOrbColors(a.color, a.c2);
+    toast(`◐ Cores restauradas para ${a.key}`);
+  }
+
+  function saveVaultConfig(){
+    const key = document.getElementById('cfgApiKey')?.value.trim() || '';
+    const model = document.getElementById('cfgModel')?.value || 'google/gemini-2.5-flash';
+    const c1 = document.getElementById('cfgOrbColor1')?.value || '#22D3EE';
+    const c2 = document.getElementById('cfgOrbColor2')?.value || '#7C3AED';
+    localStorage.setItem('kob:api:key', key);
+    localStorage.setItem('kob:api:model', model);
+    setOrbCustomColors(c1, c2);
+    toast('🔑 Chaves & Cores salvas no cofre');
+  }
+
+  function toggleKeyVisibility(){
+    const inp = document.getElementById('cfgApiKey');
+    const btn = document.getElementById('toggleKeyVisBtn');
+    if(!inp || !btn) return;
+    const isPass = inp.type === 'password';
+    inp.type = isPass ? 'text' : 'password';
+    btn.textContent = isPass ? '🙈 Ocultar' : '👁 Mostrar';
+  }
+
+  function syncOrbWithArch(){
+    const a = getActiveArch();
+    const sym = document.getElementById('visionOrbSym');
+    const opc = document.getElementById('visionOrbOpc');
+    const drk = document.getElementById('visionDrk');
+    const title = document.getElementById('apSelectedTitle');
+    if(sym) sym.textContent = a.sym;
+    if(opc) opc.textContent = `${a.opcode} · ${a.regra} · ${a.hz}Hz`;
+    if(drk) drk.textContent = `"${a.drk}"`;
+    if(title) title.textContent = `${a.key} · ${a.opcode} · ${a.hz}Hz`;
+    renderArchPromptContent();
+  }
+
+  function pulseOrb(){
+    const orb = document.getElementById('visionOrb');
+    const a = getActiveArch();
+    if(orb){
+      orb.classList.add('pulsing');
+      clearTimeout(orb._pt);
+      orb._pt = setTimeout(() => orb.classList.remove('pulsing'), 2400);
+    }
+    KOBSoneto.speak(`${a.key}. ${a.drk}`);
+    toast(`◎ ${a.key} · ${a.hz}Hz`);
+  }
+
+  function renderVeeb(rawName){
+    const name = String(rawName || 'PILOTO').trim() || 'PILOTO';
+    const up = name.toUpperCase();
+    const cons = up.replace(/[^A-Z]/g,'').replace(/[AEIOU]/g,'') || 'KBLX';
+    const arty = toArtyaski(name);
+    const a = getActiveArch();
+
+    const artyEl = document.getElementById('visionArtyaski');
+    const consEl = document.getElementById('veebConsonants');
+    const rowEl  = document.getElementById('veebVowelsRow');
+    const readEl = document.getElementById('veebReadout');
+
+    if(artyEl) artyEl.textContent = `${arty} · ${a.key}`;
+    if(consEl) consEl.textContent = `CONSOANTES: ${cons}`;
+
+    const vowels = [
+      { v:'A', act:'Atribuir',  col:'#C9A84C' },
+      { v:'E', act:'Escolher',  col:'#F59E0B' },
+      { v:'I', act:'Iterar',    col:'#A259FF' },
+      { v:'O', act:'Organizar', col:'#00F5A0' },
+      { v:'U', act:'Unir',      col:'#22D3EE' }
+    ];
+    if(rowEl){
+      rowEl.innerHTML = vowels.map(m => `
+        <div class="veeb-v ${up.includes(m.v) ? 'lit' : ''}" style="--v-col:${m.col}">
+          <div class="let">${m.v}</div><div class="act">${m.act}</div>
+        </div>`).join('');
+    }
+    if(readEl){
+      readEl.innerHTML =
+        `<span style="color:var(--kob-L-primary)">[ΛrtyΛski]</span> ${arty}<br>` +
+        `<span style="color:#A259FF">[Ferramentas]</span> ${cons.split('').join(' · ')}<br>` +
+        `<span style="color:#00F5A0">[Ressonância]</span> ${a.key} (${a.opcode} · ${a.hz}Hz)`;
+    }
+  }
+
+  function syncForgeIdentity(){
+    const name = (document.getElementById('profileName')?.value || 'PILOTO').trim() || 'PILOTO';
+    localStorage.setItem('di_userName', name);
+    renderVeeb(name);
+    HomeDay.updateFromHour(new Date().getHours());
+    pulseOrb();
+    toast(`✦ ${toArtyaski(name)} sincronizado`);
+  }
+
+  function speakIdentity(){
+    const name = (document.getElementById('profileName')?.value || 'PILOTO').trim();
+    const a = getActiveArch();
+    KOBSoneto.speak(`Identidade ${name}, sintonizada com ${a.key}, frequência ${a.hz} hertz. ${a.drk}`);
+  }
+
+  function renderArchMatrix(){
+    const grid = document.getElementById('archMatrixGrid');
+    if(!grid) return;
+    const activeKey = getActiveArch().key;
+    grid.innerHTML = VISION_ARCHETYPES.map(a => `
+      <div class="arch-tile ${a.key === activeKey ? 'selected' : ''}" style="--a-col:${a.color}" onclick="Profile.selectArch('${a.key}')">
+        <div class="arch-tile-sym">${a.sym}</div>
+        <div class="arch-tile-name">${a.key}</div>
+        <div class="arch-tile-hz">${a.opcode} · ${a.hz}Hz</div>
+      </div>`).join('');
+  }
+
+  function selectArch(key){
+    localStorage.removeItem('kob:orb:c1');
+    localStorage.removeItem('kob:orb:c2');
+    KOBSoneto.setArch(key);
+    renderArchMatrix();
+    syncOrbWithArch();
+    renderVeeb(document.getElementById('profileName')?.value || 'PILOTO');
+    toast(`◐ ${key} ativo`);
+  }
+
+  function renderArchPromptContent(){
+    const box = document.getElementById('apContent');
+    if(!box) return;
+    const a = getActiveArch();
+    box.className = 'ap-body' + ((currentApTab === 'g' || currentApTab === 's') ? ' mono' : '');
+    box.textContent = a[currentApTab] || a.i;
+  }
+
+  function copyArchPrompt(){
+    const text = document.getElementById('apContent')?.textContent || '';
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+    toast('✓ Prompt do Arquétipo copiado');
+  }
+
+  function render(){
+    const nameInput = document.getElementById('profileName');
+    const savedName = localStorage.getItem('di_userName') || 'PILOTO';
+    if(nameInput){
+      nameInput.value = savedName;
+      nameInput.oninput = () => renderVeeb(nameInput.value);
+      nameInput.onchange = () => {
+        localStorage.setItem('di_userName', nameInput.value.trim() || 'PILOTO');
+        HomeDay.updateFromHour(new Date().getHours());
+      };
+    }
+
+    // Carrega valores do cofre
+    const keyInp = document.getElementById('cfgApiKey');
+    const modSel = document.getElementById('cfgModel');
+    const c1Inp  = document.getElementById('cfgOrbColor1');
+    const c2Inp  = document.getElementById('cfgOrbColor2');
+    if(keyInp) keyInp.value = localStorage.getItem('kob:api:key') || '';
+    if(modSel) modSel.value = localStorage.getItem('kob:api:model') || 'google/gemini-2.5-flash';
+    const a = getActiveArch();
+    if(c1Inp) c1Inp.value = localStorage.getItem('kob:orb:c1') || a.color;
+    if(c2Inp) c2Inp.value = localStorage.getItem('kob:orb:c2') || a.c2;
+
+    renderSwatches();
+    syncOrbWithArch();
+    renderVeeb(savedName);
+    renderArchMatrix();
+
+    // Stats
+    const stats = document.getElementById('statsGrid');
+    if(stats){
+      const favs = db.library.filter(t => t.favorite).length;
+      stats.innerHTML = `
+        <div class="stat-card"><div class="stat-value">${db.library.length}</div><div class="stat-label">Mídias</div></div>
+        <div class="stat-card"><div class="stat-value">${favs}</div><div class="stat-label">Favoritos</div></div>
+        <div class="stat-card"><div class="stat-value">${a.hz}Hz</div><div class="stat-label">Frequência</div></div>
+      `;
+    }
+
+    // Controles do sistema
+    const ctrl = document.getElementById('controlList');
+    if(ctrl){
+      const curTheme = document.body.dataset.mode || 'night';
+      ctrl.innerHTML = `
+        <div class="control-row">
+          <div><div class="label">🎨 Atmosfera da Interface</div><div class="desc">Alterna entre Noite, Dia e Pôr do Sol</div></div>
+          <div class="actions">
+            <button type="button" class="mini-btn ${curTheme === 'day' ? 'active' : ''}" onclick="setThemeMode('day')">DAY</button>
+            <button type="button" class="mini-btn ${curTheme === 'night' ? 'active' : ''}" onclick="setThemeMode('night')">NIGHT</button>
+            <button type="button" class="mini-btn ${curTheme === 'sunset' ? 'active' : ''}" onclick="setThemeMode('sunset')">SUNSET</button>
+          </div>
+        </div>
+        <div class="control-row">
+          <div><div class="label">⤓ Backup Completo</div><div class="desc">Exporta mídias, textos e configurações</div></div>
+          <div class="actions"><button type="button" class="mini-btn" onclick="exportAllBackup()">EXPORTAR</button></div>
+        </div>
+      `;
+    }
+  }
+
+  function init(){
+    document.querySelectorAll('[data-utab]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-utab]').forEach(b => b.classList.toggle('active', b === btn));
+        ['forge', 'matrix', 'vault'].forEach(id => {
+          const el = document.getElementById('upanel-' + id);
+          if(el) el.style.display = (id === btn.dataset.utab) ? '' : 'none';
+        });
+      });
+    });
+    document.querySelectorAll('[data-ap]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentApTab = btn.dataset.ap;
+        document.querySelectorAll('[data-ap]').forEach(b => b.classList.toggle('active', b === btn));
+        renderArchPromptContent();
+      });
+    });
+    render();
+  }
+
+  return { init, render, pulseOrb, syncForgeIdentity, speakIdentity, selectArch, copyArchPrompt, setOrbCustomColors, resetOrbColors, saveVaultConfig, toggleKeyVisibility, syncOrbWithArch };
+})();
+window.Profile = Profile;
+
+window.setThemeMode = function(mode){
+  document.body.dataset.mode = mode;
+  localStorage.setItem('kob:theme', mode);
+  Profile.render();
+  toast(`◑ Tema ${mode.toUpperCase()}`);
+};
+window.exportAllBackup = function(){
+  const payload = {
+    user: localStorage.getItem('di_userName') || 'PILOTO',
+    arch: KOBSoneto.arch,
+    model: localStorage.getItem('kob:api:model'),
+    library: db.library
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `kobllux-vision-backup-${Date.now()}.json`;
+  a.click();
+  toast('⤓ Backup JSON exportado');
+};
+
+/* ─── 8. DOCK FLUTUANTE ARRASTÁVEL & NAVEGAÇÃO ─── */
+function initDockAndNav(){
+  const dock = document.getElementById('floating-dock');
+  const topDZ = document.getElementById('top-drop-zone');
+  const botDZ = document.getElementById('bottom-drop-zone');
+  const posTag = document.getElementById('dock-pos-tag');
+  const colBtn = document.getElementById('dock-collapse-btn');
+
+  let pos = localStorage.getItem('kob:dock:pos') || 'header';
+  let collapsed = localStorage.getItem('kob:dock:collapsed') === '1';
+  let dragging = false, startY = 0, startTop = 0, moved = false;
+
+  function snap(p){
+    pos = p;
+    localStorage.setItem('kob:dock:pos', p);
+    const h = dock.offsetHeight;
+    if(p === 'header'){
+      dock.style.top = '54px';
+      if(posTag) posTag.textContent = collapsed ? 'PLAYER · TOP' : 'HEADER';
+      document.body.classList.add('dock-header'); document.body.classList.remove('dock-footer');
+    } else {
+      dock.style.top = `${window.innerHeight - h - 16}px`;
+      if(posTag) posTag.textContent = collapsed ? 'PLAYER · FOOTER' : 'FOOTER';
+      document.body.classList.add('dock-footer'); document.body.classList.remove('dock-header');
+    }
+  }
+
+  function setCollapsed(c){
+    collapsed = !!c;
+    dock.classList.toggle('collapsed', collapsed);
+    document.body.classList.toggle('dock-collapsed', collapsed);
+    localStorage.setItem('kob:dock:collapsed', collapsed ? '1' : '0');
+    requestAnimationFrame(() => snap(pos));
+    setTimeout(() => { if(!dragging) snap(pos); }, 320);
+  }
+
+  setCollapsed(collapsed);
+  snap(pos);
+  window.addEventListener('resize', () => { if(!dragging) snap(pos); });
+  colBtn?.addEventListener('click', e => { e.stopPropagation(); setCollapsed(!collapsed); });
+
+  const onStart = e => {
+    if(e.target.closest('#progress-container') || e.target.closest('#dock-collapse-btn') || e.target.closest('button')) return;
+    dragging = true; moved = false;
+    startY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+    startTop = dock.getBoundingClientRect().top;
+    dock.classList.add('dragging');
+    topDZ.style.opacity = '1'; botDZ.style.opacity = '1';
+  };
+  const onMove = e => {
+    if(!dragging) return;
+    const cy = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+    if(Math.abs(cy - startY) > 6) moved = true;
+    if(!moved) return;
+    if(e.cancelable) e.preventDefault();
+    const newTop = Math.max(54, Math.min(window.innerHeight - dock.offsetHeight - 16, startTop + (cy - startY)));
+    dock.style.top = `${newTop}px`;
+    const mid = window.innerHeight / 2;
+    topDZ.classList.toggle('highlight', newTop + dock.offsetHeight / 2 < mid);
+    botDZ.classList.toggle('highlight', newTop + dock.offsetHeight / 2 >= mid);
+  };
+  const onEnd = () => {
+    if(!dragging) return;
+    dragging = false; dock.classList.remove('dragging');
+    topDZ.style.opacity = '0'; botDZ.style.opacity = '0';
+    topDZ.classList.remove('highlight'); botDZ.classList.remove('highlight');
+    if(moved){
+      const rect = dock.getBoundingClientRect();
+      snap(rect.top + rect.height / 2 < window.innerHeight / 2 ? 'header' : 'footer');
+    } else snap(pos);
+  };
+
+  dock.addEventListener('mousedown', onStart);
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onEnd);
+  dock.addEventListener('touchstart', onStart, { passive: false });
+  window.addEventListener('touchmove', onMove, { passive: false });
+  window.addEventListener('touchend', onEnd);
+
+  window.switchTab = function(tabName){
+    KOBSoneto.stopRead();
+    document.querySelectorAll('.kb-nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
+    document.querySelectorAll('.kb-page').forEach(p => p.classList.toggle('active', p.id === `page-${tabName}`));
+    if(tabName === 'profile') Profile.render();
+  };
+
+  document.querySelectorAll('.kb-nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => { if(!moved) window.switchTab(btn.dataset.tab); });
+  });
+
+  // Mini Player UI Sync
+  const fmt = s => (!s || isNaN(s)) ? '0:00' : `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+  window.syncDockPlayerUI = function({ title, playing, current, duration }){
+    if(title !== undefined){
+      document.getElementById('track-name').textContent = title;
+      document.getElementById('gp-mini-title').textContent = title;
+    }
+    if(playing !== undefined){
+      document.getElementById('icon-play').classList.toggle('hidden', playing);
+      document.getElementById('icon-pause').classList.toggle('hidden', !playing);
+    }
+    if(current !== undefined && duration > 0){
+      const pct = Math.min(100, Math.max(0, (current / duration) * 100));
+      document.getElementById('progress-fill').style.width = `${pct}%`;
+      document.getElementById('progress-thumb').style.left = `${pct}%`;
+      document.getElementById('current-time').textContent = fmt(current);
+      document.getElementById('total-time').textContent = fmt(duration);
+    }
+  };
+
+  document.getElementById('play-pause-btn')?.addEventListener('click', e => Player.toggle(e));
+  document.getElementById('next-track-btn')?.addEventListener('click', () => Player.next());
+  document.getElementById('open-gp-btn')?.addEventListener('click', () => Player.reopenIfActive());
+
+  const prog = document.getElementById('progress-container');
+  prog?.addEventListener('click', e => {
+    const r = prog.getBoundingClientRect();
+    Player.seekRatio(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)));
+  });
+}
+
+/* ─── 9. BOOT GERAL ─── */
+document.addEventListener('DOMContentLoaded', () => {
+  const savedTheme = localStorage.getItem('kob:theme');
+  if(savedTheme) document.body.dataset.mode = savedTheme;
+
+  KOBSoneto.initHeader();
+  loadMediaDB();
+  HomeDay.init();
+  Sarau.init();
+  HeroCarousel.init();
+  renderMediaGrid('all');
+  renderShortsQueue();
+  initCreateTab();
+  Profile.init();
+  initDockAndNav();
+
+  document.querySelectorAll('#page-home .q-pill[data-filter]').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('#page-home .q-pill[data-filter]').forEach(p => p.classList.toggle('active', p === pill));
+      renderMediaGrid(pill.dataset.filter);
+    });
+  });
+
+  window.addEventListener('kob:arch', () => Profile.syncOrbWithArch());
+});
+})();
+</script>
+</body>
+</html>
