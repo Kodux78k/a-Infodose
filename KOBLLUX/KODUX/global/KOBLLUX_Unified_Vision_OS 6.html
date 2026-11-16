@@ -1,0 +1,3996 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>KOBLLUX · Vision OS Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- Tone.js para síntese sonora procedural -->
+<script
+  src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js"
+  onerror="console.warn('[KOB-SONORO] Áudio procedural em standby')">
+</script>
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   1. DESIGN TOKENS & SYSTEM PALETTE (VISION OS / NEBULA STUDIO)
+   ═══════════════════════════════════════════════════════════════════ */
+:root{
+  --kb-bg:        #0B0C16;
+  --kb-bg-2:      #121422;
+  --kb-surface:   rgba(22, 24, 40, 0.82);
+  --kb-surface-2: rgba(30, 32, 54, 0.90);
+  --kb-line:      rgba(255, 255, 255, 0.10);
+  --kb-line-hi:   rgba(255, 255, 255, 0.20);
+  --kb-text:      #F8FAFC;
+  --kb-text-dim:  #94A3B8;
+  --kb-text-mute: #64748B;
+
+  --kob-L-primary:   #22D3EE;
+  --kob-L-secondary: #7C3AED;
+  --kb-pink:         #F472B6;
+  --kb-amber:        #FBBF24;
+
+  --kb-grad: linear-gradient(135deg, var(--kob-L-primary) 0%, #8B5CF6 52%, var(--kb-pink) 100%);
+  --kb-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+body[data-mode="day"]{
+  --kb-bg:        #F4F5FA;
+  --kb-bg-2:      #E6E8F2;
+  --kb-surface:   rgba(255, 255, 255, 0.90);
+  --kb-surface-2: rgba(255, 255, 255, 0.98);
+  --kb-line:      rgba(15, 23, 42, 0.08);
+  --kb-line-hi:   rgba(15, 23, 42, 0.16);
+  --kb-text:      #0F172A;
+  --kb-text-dim:  #475569;
+  --kb-text-mute: #64748B;
+}
+
+body[data-mode="sunset"]{
+  --kb-bg:        #180816;
+  --kb-bg-2:      #260E24;
+  --kb-surface:   rgba(42, 16, 38, 0.86);
+  --kb-surface-2: rgba(56, 22, 50, 0.92);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0; padding: 0;
+  width: 100%; height: 100%;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+html::-webkit-scrollbar, body::-webkit-scrollbar, *::-webkit-scrollbar {
+  display: none !important; width: 0; height: 0;
+}
+
+body{
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--kb-bg);
+  color: var(--kb-text);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: background .4s ease, color .3s ease;
+}
+
+button {
+  font-family: inherit;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* ─── ATMOSFERA NEBULA + TEXTURA SUTIL DE GRÃO ─── */
+.kb-ambient{
+  position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+}
+.kb-ambient::before, .kb-ambient::after{
+  content: ""; position: absolute; border-radius: 999px; filter: blur(140px);
+  transition: background .8s ease, transform .8s ease;
+}
+.kb-ambient::before{
+  width: 70vw; max-width: 680px; height: 360px; top: -140px; left: 10%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--kob-L-primary) 32%, transparent), transparent 75%);
+}
+.kb-ambient::after{
+  width: 70vw; max-width: 680px; height: 360px; bottom: -160px; right: 5%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--kob-L-secondary) 28%, rgba(244,114,182,0.2)), transparent 75%);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   2. TOP BAR MINIMALISTA (SEM POLUIÇÃO VISUAL)
+   ═══════════════════════════════════════════════════════════════════ */
+#kob-topbar{
+  position: fixed; top: 0; left: 0; right: 0; z-index: 90;
+  height: 54px; padding: 0 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--kb-bg) 88%, transparent) 0%, transparent 100%);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+}
+.tb-brand{
+  display: flex; align-items: center; gap: 10px;
+  padding: 5px 12px 5px 7px; border-radius: 999px;
+  background: var(--kb-surface); border: 1px solid var(--kb-line);
+  transition: border-color .2s, transform .15s;
+}
+.tb-brand:hover{ border-color: var(--kob-L-primary); }
+.tb-brand:active{ transform: scale(0.97); }
+.tb-orb-dot{
+  width: 18px; height: 18px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fff 0%, var(--kob-L-primary) 45%, var(--kob-L-secondary) 100%);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--kob-L-primary) 65%, transparent);
+}
+.tb-brand-text{
+  font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+}
+.tb-actions{ display: flex; align-items: center; gap: 8px; }
+.tb-icon-btn{
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--kb-surface); border: 1px solid var(--kb-line);
+  color: var(--kb-text-dim); display: grid; place-items: center;
+  transition: all .2s;
+}
+.tb-icon-btn:hover{ color: var(--kob-L-primary); border-color: var(--kob-L-primary); }
+.tb-icon-btn.active{
+  color: var(--kob-L-primary);
+  border-color: var(--kob-L-primary);
+  background: color-mix(in srgb, var(--kob-L-primary) 16%, var(--kb-surface));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--kob-L-primary) 35%, transparent);
+}
+.tb-icon-btn svg{ width: 15px; height: 15px; }
+
+#kob-soneto-outline{
+  position: fixed; display: none; pointer-events: none; z-index: 200;
+  border: 1.5px solid var(--kob-L-primary); border-radius: 12px;
+  background: color-mix(in srgb, var(--kob-L-primary) 8%, transparent);
+  transition: all .18s var(--kb-ease);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   3. VIEWPORT EXPANDIDO E RESPIRÁVEL (ZERO APERTO!)
+   ═══════════════════════════════════════════════════════════════════ */
+.kb-viewport{
+  position: relative;
+  width: 100%;
+  max-width: 780px;
+  height: 100%;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.kb-page{
+  position: absolute; inset: 0;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 68px 20px 48px;
+  opacity: 0; pointer-events: none;
+  transform: translateY(10px);
+  transition: opacity .28s var(--kb-ease), transform .28s var(--kb-ease), padding .35s var(--kb-ease);
+  -webkit-overflow-scrolling: touch;
+}
+.kb-page.active{ opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+/* Espaçamento dinâmico inteligente para a Dock */
+body.dock-header .kb-page{ padding-top: 212px; padding-bottom: 48px; }
+body.dock-header.dock-collapsed .kb-page{ padding-top: 138px; padding-bottom: 48px; }
+body.dock-footer .kb-page{ padding-top: 68px;  padding-bottom: 200px; }
+body.dock-footer.dock-collapsed .kb-page{ padding-top: 68px;  padding-bottom: 126px; }
+
+.page-stack{
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.sec-head{
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.sec-title{
+  font-size: 12px; font-weight: 800; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--kb-text-dim);
+  display: flex; align-items: center; gap: 8px;
+}
+.sec-title::before{
+  content:""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--kob-L-primary); box-shadow: 0 0 8px var(--kob-L-primary);
+}
+.sec-sub{ font-size: 11px; color: var(--kb-text-mute); font-weight: 600; }
+
+.btn-primary{
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 10px 18px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 700; color: #fff;
+  background: var(--kb-grad);
+  box-shadow: 0 8px 22px -6px color-mix(in srgb, var(--kob-L-secondary) 75%, transparent);
+  transition: transform .15s, filter .2s;
+}
+.btn-primary:hover{ filter: brightness(1.08); }
+.btn-primary:active{ transform: scale(0.96); }
+
+.mini-btn{
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px 14px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 600; color: var(--kb-text-dim);
+  background: var(--kb-surface); border: 1px solid var(--kb-line);
+  transition: all .18s;
+}
+.mini-btn:hover{ border-color: var(--kb-line-hi); color: var(--kb-text); }
+.mini-btn.active{
+  background: color-mix(in srgb, var(--kob-L-primary) 16%, var(--kb-surface));
+  color: var(--kob-L-primary);
+  border-color: color-mix(in srgb, var(--kob-L-primary) 45%, transparent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   4. HOME DO DIA (HERO TEMPORAL + SLIDESHOWS LATERAIS)
+   ═══════════════════════════════════════════════════════════════════ */
+.day-hero-card{
+  background: var(--kb-surface);
+  border-radius: 28px;
+  padding: 24px 22px;
+  backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+  border: 1px solid var(--kb-line);
+  box-shadow: 0 20px 48px -16px rgba(0,0,0,0.5);
+}
+.day-hero-top{
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
+}
+.day-greeting{
+  font-size: clamp(22px, 5vw, 28px); font-weight: 800; letter-spacing: -0.025em; line-height: 1.15;
+}
+.day-subtitle{
+  font-size: 13.5px; color: var(--kb-text-dim); margin-top: 6px; line-height: 1.45;
+}
+.time-chip{
+  padding: 6px 12px; border-radius: 999px;
+  background: rgba(255,255,255,0.06); border: 1px solid var(--kb-line);
+  font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums;
+  color: var(--kob-L-primary); flex-shrink: 0;
+}
+
+.day-slider-box{ margin-top: 20px; }
+.day-slider-row{
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; font-weight: 600; color: var(--kb-text-mute); margin-bottom: 10px;
+}
+.label-mood{
+  padding: 5px 14px; border-radius: 999px;
+  background: var(--kb-grad); color: #fff;
+  font-size: 11px; font-weight: 700; letter-spacing: .02em;
+}
+.range-wrap{
+  position: relative; height: 6px; background: rgba(255,255,255,0.12);
+  border-radius: 999px; overflow: hidden;
+}
+.range-fill{
+  position: absolute; inset: 0; transform-origin: left center; transform: scaleX(0.25);
+  background: var(--kb-grad); transition: transform .18s ease-out;
+}
+.hero-range{
+  width: 100%; height: 28px; appearance: none; -webkit-appearance: none;
+  background: transparent; margin-top: -17px; display: block; cursor: pointer;
+}
+.hero-range::-webkit-slider-thumb{
+  -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; border: 3px solid var(--kob-L-primary);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--kob-L-primary) 75%, transparent);
+}
+
+/* Slideshow Lateral (Horizontal Snap Carousel) */
+.h-slider{
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 4px 2px 10px;
+  -webkit-overflow-scrolling: touch;
+}
+.h-slide-card{
+  flex: 0 0 82%;
+  max-width: 340px;
+  scroll-snap-align: start;
+  border-radius: 24px;
+  overflow: hidden;
+  background: var(--kb-surface);
+  border: 1px solid var(--kb-line);
+  cursor: pointer;
+  transition: transform .22s var(--kb-ease), border-color .22s;
+  display: flex;
+  flex-direction: column;
+}
+@media (min-width: 600px){
+  .h-slide-card{ flex: 0 0 46%; }
+}
+.h-slide-card:hover{
+  transform: translateY(-3px);
+  border-color: var(--kob-L-primary);
+}
+.h-slide-cover{
+  position: relative; width: 100%; aspect-ratio: 16 / 9;
+  background-size: cover; background-position: center; background-color: #111322;
+}
+.h-slide-badge{
+  position: absolute; top: 10px; left: 10px;
+  font-size: 9px; font-weight: 800; letter-spacing: .1em;
+  padding: 4px 9px; border-radius: 999px;
+  background: rgba(6, 7, 15, 0.75); backdrop-filter: blur(8px);
+  color: var(--kob-L-primary); border: 1px solid rgba(255,255,255,0.14);
+}
+.h-slide-play{
+  position: absolute; right: 12px; bottom: 12px;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--kb-grad); color: #fff;
+  font-size: 13px; display: grid; place-items: center;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+}
+.h-slide-body{ padding: 14px 16px 16px; }
+.h-slide-title{
+  font-size: 14.5px; font-weight: 700; line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.h-slide-sub{ font-size: 12px; color: var(--kb-text-mute); margin-top: 4px; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   5. SARAU & BIBLIOTECA (LEITURA & NARRAÇÃO)
+   ═══════════════════════════════════════════════════════════════════ */
+.sarau-reader-card{
+  background: var(--kb-surface);
+  border: 1px solid var(--kb-line);
+  border-radius: 28px; padding: 24px 22px;
+  box-shadow: 0 18px 42px -14px rgba(0,0,0,0.5);
+}
+.sarau-doc-badge{
+  display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: .12em;
+  text-transform: uppercase; padding: 4px 10px; border-radius: 999px;
+  background: color-mix(in srgb, var(--kob-L-primary) 16%, transparent);
+  color: var(--kob-L-primary); margin-bottom: 8px;
+}
+.sarau-doc-title{ font-size: 20px; font-weight: 800; line-height: 1.25; margin: 0; }
+.sarau-doc-meta{ font-size: 12px; color: var(--kb-text-mute); margin-top: 4px; }
+.sarau-controls{ display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0 18px; }
+.sarau-content{
+  font-size: 14.5px; line-height: 1.75; color: var(--kb-text-dim);
+  max-height: 290px; overflow-y: auto; padding-right: 4px;
+}
+.sarau-content p{
+  margin: 0 0 14px; cursor: pointer; padding: 6px 10px; border-radius: 12px;
+  transition: background .15s, color .15s;
+}
+.sarau-content p:hover{ background: rgba(255,255,255,0.05); color: var(--kb-text); }
+
+.doc-card{
+  padding: 16px 18px; border-radius: 22px;
+  background: var(--kb-surface); border: 1px solid var(--kb-line);
+  display: flex; flex-direction: column; gap: 10px;
+  transition: border-color .2s, transform .15s;
+}
+.doc-card:hover{ border-color: var(--kob-L-primary); }
+.doc-card-top{ display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.doc-card-title{ font-size: 14.5px; font-weight: 700; }
+.doc-card-desc{ font-size: 12px; color: var(--kb-text-mute); margin-top: 4px; line-height: 1.45; }
+.doc-card-actions{ display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   6. VÍDEOS & FILA
+   ═══════════════════════════════════════════════════════════════════ */
+.shorts-stage-card{
+  display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 24px;
+  background: var(--kb-surface); border: 1px solid var(--kb-line);
+}
+.stage-cover{
+  width: 58px; height: 58px; border-radius: 16px; flex-shrink: 0;
+  background-size: cover; background-position: center;
+  background-image: url('https://img.youtube.com/vi/FbutKMpd8MY/hqdefault.jpg');
+}
+.stage-info{ flex: 1; min-width: 0; }
+.stage-badge{ font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--kob-L-primary); margin-bottom: 4px; }
+.stage-title{ font-size: 14.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stage-artist{ font-size: 12px; color: var(--kb-text-mute); margin-top: 2px; }
+
+.queue-list{ display: flex; flex-direction: column; gap: 12px; }
+.queue-item{
+  display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 20px;
+  background: var(--kb-surface); border: 1px solid var(--kb-line); cursor: pointer; transition: all .2s;
+}
+.queue-item:hover{ border-color: var(--kb-line-hi); transform: translateY(-1px); }
+.queue-item.playing{ border-color: var(--kob-L-primary); background: color-mix(in srgb, var(--kob-L-primary) 12%, var(--kb-surface)); }
+.queue-thumb{ width: 54px; height: 54px; border-radius: 14px; flex-shrink: 0; background-size: cover; background-position: center; background-color: #141628; }
+.queue-meta{ flex: 1; min-width: 0; }
+.queue-title{ font-size: 13.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.queue-sub{ font-size: 11.5px; color: var(--kb-text-mute); margin-top: 3px; }
+.queue-fav{ width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 16px; color: var(--kb-text-mute); }
+.queue-fav.active{ color: var(--kb-amber); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   7. PERFIL MINIMALISTA (ORBE PURO + MENOS TEXTO, MAIS BOTÃO)
+   ═══════════════════════════════════════════════════════════════════ */
+.orb-hero-minimal{
+  display: flex; flex-direction: column; align-items: center;
+  padding: 26px 20px 22px; border-radius: 30px;
+  background: var(--kb-surface); border: 1px solid var(--kb-line);
+  box-shadow: 0 22px 48px -18px rgba(0,0,0,0.5);
+}
+.minimal-orb{
+  position: relative; width: 124px; height: 124px; border-radius: 50%;
+  cursor: pointer; margin-bottom: 18px;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .3s var(--kb-ease);
+}
+.minimal-orb:hover{ transform: scale(1.05); }
+.minimal-orb:active{ transform: scale(0.96); }
+.minimal-orb-glow{
+  position: absolute; inset: -10px; border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--kob-L-primary) 45%, transparent) 0%, transparent 70%);
+  filter: blur(12px); transition: background .5s ease;
+}
+.minimal-orb-core{
+  position: relative; width: 100%; height: 100%; border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 26%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.08) 18%, transparent 55%),
+    linear-gradient(145deg, var(--kob-L-primary) 0%, var(--kob-L-secondary) 100%);
+  box-shadow:
+    inset 0 0 24px rgba(255,255,255,0.22),
+    0 12px 32px -6px color-mix(in srgb, var(--kob-L-primary) 60%, transparent);
+  display: flex; align-items: center; justify-content: center;
+  transition: background .5s ease, box-shadow .5s ease;
+}
+.minimal-orb.pulsing .minimal-orb-core{
+  animation: orbBreath .55s ease-in-out infinite alternate;
+}
+@keyframes orbBreath { from { transform: scale(1); } to { transform: scale(1.08); } }
+.minimal-orb-sym{
+  font-size: 36px; color: #fff; font-weight: 300;
+  filter: drop-shadow(0 2px 10px rgba(0,0,0,0.35));
+}
+
+.profile-name-clean{
+  width: 100%; max-width: 240px; text-align: center;
+  background: transparent; border: none; outline: none;
+  font-family: inherit; font-size: 20px; font-weight: 800;
+  color: var(--kb-text); letter-spacing: .04em;
+  padding: 4px 8px; border-bottom: 1px solid var(--kb-line);
+}
+.profile-arch-pill{
+  margin-top: 8px; padding: 4px 12px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--kob-L-primary);
+  background: color-mix(in srgb, var(--kob-L-primary) 14%, transparent);
+}
+
+.orb-swatches{ display: flex; gap: 10px; margin-top: 16px; justify-content: center; }
+.orb-swatch{
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.3); cursor: pointer;
+  transition: transform .18s, border-color .18s;
+}
+.orb-swatch:hover{ transform: scale(1.18); border-color: #fff; }
+
+.orb-quick-actions{
+  display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; justify-content: center;
+}
+
+.user-tabs{
+  display: flex; gap: 6px; padding: 5px; border-radius: 999px;
+  background: var(--kb-surface); border: 1px solid var(--kb-line);
+}
+.user-tab-btn{
+  flex: 1; padding: 9px 10px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 700; color: var(--kb-text-mute); transition: all .2s;
+}
+.user-tab-btn.active{
+  background: var(--kb-surface-2); color: var(--kb-text);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+}
+
+.arch-grid-clean{
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+}
+@media (min-width: 540px){ .arch-grid-clean{ grid-template-columns: repeat(4, 1fr); } }
+.arch-btn-tile{
+  padding: 14px 8px; border-radius: 20px;
+  background: var(--kb-surface); border: 1px solid var(--kb-line);
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  transition: all .18s;
+}
+.arch-btn-tile:hover{ transform: translateY(-2px); border-color: var(--a-col); }
+.arch-btn-tile.selected{
+  border-color: var(--a-col);
+  background: color-mix(in srgb, var(--a-col) 16%, var(--kb-surface));
+}
+.arch-btn-sym{ font-size: 22px; line-height: 1; }
+.arch-btn-lbl{ font-size: 10.5px; font-weight: 700; letter-spacing: .06em; color: var(--kb-text); }
+
+.vault-card{
+  padding: 20px; border-radius: 24px; background: var(--kb-surface);
+  border: 1px solid var(--kb-line); display: flex; flex-direction: column; gap: 16px;
+}
+.vault-field{ display: flex; flex-direction: column; gap: 7px; }
+.vault-label{ display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; color: var(--kb-text-dim); }
+.vault-input, .vault-select{
+  width: 100%; padding: 11px 14px; border-radius: 14px;
+  background: rgba(0,0,0,0.2); border: 1px solid var(--kb-line);
+  color: var(--kb-text); font-family: inherit; font-size: 13px; outline: none;
+}
+body[data-mode="day"] .vault-input, body[data-mode="day"] .vault-select{ background: rgba(255,255,255,0.92); }
+.vault-input:focus, .vault-select:focus{ border-color: var(--kob-L-primary); }
+
+.control-row{
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 16px; border-radius: 20px; background: var(--kb-surface); border: 1px solid var(--kb-line);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   8. GLOBAL PLAYER & DOCK
+   ═══════════════════════════════════════════════════════════════════ */
+#global-player{
+  position: fixed; bottom: 118px; left: 50%;
+  transform: translateX(-50%) translateY(30px) scale(0.95);
+  width: 92vw; max-width: 460px; height: 240px; z-index: 80;
+  border-radius: 26px; background: rgba(12, 13, 22, 0.96);
+  backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+  border: 1px solid var(--kb-line-hi);
+  box-shadow: 0 28px 60px -12px rgba(0,0,0,0.85);
+  overflow: hidden; opacity: 0; pointer-events: none; transition: all .4s var(--kb-ease);
+}
+body.dock-footer #global-player{ bottom: 188px; }
+body.dock-footer.dock-collapsed #global-player{ bottom: 118px; }
+body.dock-header #global-player{ bottom: 24px; }
+#global-player.active{ opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0) scale(1); }
+#global-player.minimized{ height: 52px; width: 280px; border-radius: 999px; }
+#global-player.minimized #player-frame-wrap{ opacity: 0.12; pointer-events: none; }
+#global-player.minimized #gp-mini-label{ display: flex; }
+#global-player.player-fullscreen{
+  position: fixed !important; inset: 0 !important; bottom: 0 !important;
+  width: 100vw !important; height: 100vh !important; max-width: none !important;
+  transform: none !important; border-radius: 0 !important; z-index: 9999 !important;
+  display: flex; flex-direction: column;
+}
+#global-player.player-fullscreen .gp-controls{
+  position: fixed !important;
+  top: max(14px, env(safe-area-inset-top)) !important;
+  right: 16px !important;
+  z-index: 10050 !important;
+  background: rgba(10, 11, 20, 0.9);
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.25);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.85);
+}
+#global-player.player-fullscreen #player-frame-wrap{ padding-top: 56px; }
+.gp-controls{ position: absolute; top: 10px; right: 10px; z-index: 25; display: flex; gap: 6px; }
+.gp-btn{
+  width: 32px; height: 32px; border-radius: 50%; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.22); color: #fff; font-size: 13px; display: grid; place-items: center;
+  transition: transform .15s, background .2s;
+}
+.gp-btn:hover{ background: rgba(34,211,238,0.35); }
+.gp-btn:active{ transform: scale(0.92); }
+#gp-mini-label{
+  display: none; position: absolute; inset: 0; padding: 0 105px 0 16px;
+  align-items: center; gap: 8px; z-index: 20; font-size: 12px; font-weight: 600; color: #fff; cursor: pointer;
+}
+#gp-mini-label span{ white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#player-frame-wrap{ width: 100%; height: 100%; background: #05050b; }
+
+.yt-create-sheet{ display: flex; flex-direction: column; gap: 10px; }
+.yt-create-item{
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px; border-radius: 20px;
+  background: var(--kb-surface); border: 1px solid var(--kb-line);
+  text-align: left; width: 100%; transition: all .18s;
+}
+.yt-create-item:hover{
+  border-color: var(--kob-L-primary);
+  background: color-mix(in srgb, var(--kob-L-primary) 12%, var(--kb-surface));
+  transform: translateY(-1px);
+}
+.yt-create-ico{
+  width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+  background: color-mix(in srgb, var(--kob-L-primary) 18%, transparent);
+  color: var(--kob-L-primary); display: grid; place-items: center; font-size: 18px; font-weight: 700;
+}
+.yt-create-txt strong{ display: block; font-size: 14px; font-weight: 700; color: var(--kb-text); }
+.yt-create-txt span{ display: block; font-size: 11.5px; color: var(--kb-text-mute); margin-top: 2px; }
+
+/* Modal & Toast */
+#modal-overlay{
+  position: fixed; inset: 0; z-index: 9500;
+  background: rgba(4, 5, 12, 0.82); backdrop-filter: blur(14px);
+  display: none; align-items: center; justify-content: center; padding: 20px;
+}
+#modal-overlay.open{ display: flex; }
+#modalBox{
+  width: 100%; max-width: 400px; padding: 22px; border-radius: 28px;
+  background: var(--kb-bg-2); border: 1px solid var(--kb-line-hi);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.85); color: var(--kb-text);
+}
+.modal-input, .modal-textarea{
+  width: 100%; padding: 12px 14px; border-radius: 16px;
+  background: rgba(0,0,0,0.25); border: 1px solid var(--kb-line);
+  color: var(--kb-text); font-family: inherit; font-size: 13px; outline: none; margin-bottom: 12px;
+}
+body[data-mode="day"] .modal-input, body[data-mode="day"] .modal-textarea{ background: rgba(255,255,255,0.92); }
+.modal-input:focus, .modal-textarea:focus{ border-color: var(--kob-L-primary); }
+.modal-textarea{ height: 130px; resize: none; }
+.modal-actions{ display: flex; justify-content: flex-end; gap: 8px; }
+
+#toast{
+  position: fixed; top: 62px; left: 50%; transform: translateX(-50%) translateY(-10px);
+  z-index: 9900; padding: 8px 16px; border-radius: 999px;
+  background: rgba(14, 16, 28, 0.95); border: 1px solid color-mix(in srgb, var(--kob-L-primary) 50%, transparent);
+  color: var(--kob-L-primary); font-size: 12px; font-weight: 700;
+  opacity: 0; pointer-events: none; transition: all .25s var(--kb-ease);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+}
+#toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Dropzones & Dock */
+.kb-dropzone{
+  position: fixed; left: 50%; transform: translateX(-50%);
+  width: 92%; max-width: 440px; height: 80px; border-radius: 40px;
+  border: 1.5px dashed color-mix(in srgb, var(--kob-L-secondary) 40%, transparent);
+  background: color-mix(in srgb, var(--kob-L-secondary) 4%, transparent);
+  opacity: 0; pointer-events: none; transition: all .3s var(--kb-ease);
+  display: flex; align-items: center; justify-content: center; z-index: 40;
+}
+.kb-dropzone.top { top: 60px; }
+.kb-dropzone.bottom { bottom: 16px; }
+.kb-dropzone span{ font-size: 10px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: var(--kb-text-mute); }
+.kb-dropzone.highlight{
+  border-color: var(--kob-L-primary); background: color-mix(in srgb, var(--kob-L-primary) 10%, transparent);
+  box-shadow: 0 0 30px -6px color-mix(in srgb, var(--kob-L-primary) 35%, transparent);
+}
+.kb-dropzone.highlight span{ color: var(--kob-L-primary); }
+
+.kb-dock{
+  position: fixed; left: 50%; transform: translateX(-50%);
+  width: 92%; max-width: 460px; border-radius: 36px;
+  padding: 10px 16px 14px; z-index: 85;
+  background: var(--kb-surface);
+  backdrop-filter: blur(30px) saturate(1.3); -webkit-backdrop-filter: blur(30px) saturate(1.3);
+  border: 1px solid var(--kb-line-hi);
+  box-shadow: 0 24px 50px -12px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.12);
+  cursor: grab; touch-action: none;
+  transition: top .42s var(--kb-ease), padding .3s var(--kb-ease), border-radius .3s var(--kb-ease), box-shadow .3s ease;
+}
+.kb-dock:active{ cursor: grabbing; }
+.kb-dock.dragging{ box-shadow: 0 32px 64px -12px rgba(0,0,0,0.95), 0 0 40px -8px color-mix(in srgb, var(--kob-L-secondary) 45%, transparent); }
+
+.kb-dock.collapsed{ padding: 8px 14px 10px; border-radius: 999px; }
+.kb-dock.collapsed .kb-nav-row{ max-height: 0; opacity: 0; margin-bottom: 0; overflow: hidden; pointer-events: none; }
+.kb-dock.collapsed .kb-player{ margin-top: 0; padding-top: 0; border-top-color: transparent; }
+
+.kb-handle-row{ width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; padding: 0 4px; }
+.kb-dock-pos-tag{ font-size: 9px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--kb-text-mute); }
+.kb-handle-bar{ width: 40px; height: 3.5px; border-radius: 999px; background: rgba(255,255,255,0.22); transition: width .2s, background .2s; }
+.kb-dock:hover .kb-handle-bar{ background: var(--kob-L-primary); width: 50px; }
+.kb-collapse-btn{
+  width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,0.06);
+  border: 1px solid var(--kb-line); color: var(--kb-text-dim); display: grid; place-items: center;
+  transition: transform .3s var(--kb-ease), background .2s, color .2s;
+}
+.kb-collapse-btn:hover{ background: color-mix(in srgb, var(--kob-L-primary) 20%, transparent); color: var(--kob-L-primary); }
+.kb-dock.collapsed .kb-collapse-btn{ transform: rotate(180deg); }
+
+.kb-nav-row{
+  display: flex; align-items: center; justify-content: space-between; padding: 0 4px; margin-bottom: 4px;
+  max-height: 60px; opacity: 1; transition: max-height .32s var(--kb-ease), opacity .22s ease;
+}
+.kb-nav-btn{
+  position: relative; width: 62px; height: 46px; border-radius: 20px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  color: var(--kb-text-dim); transition: color .2s, background .25s var(--kb-ease);
+}
+.kb-nav-btn svg{ width: 20px; height: 20px; }
+.kb-nav-btn .nav-lbl{ font-size: 8.5px; font-weight: 700; letter-spacing: .04em; }
+.kb-nav-btn:hover{ color: var(--kb-text); }
+.kb-nav-btn.active{
+  background: color-mix(in srgb, var(--kob-L-secondary) 25%, transparent);
+  color: var(--kob-L-primary);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 0 20px -6px color-mix(in srgb, var(--kob-L-secondary) 65%, transparent);
+}
+.kb-nav-orb-mini{
+  width: 18px; height: 18px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fff 0%, var(--kob-L-primary) 50%, var(--kob-L-secondary) 100%);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--kob-L-primary) 65%, transparent);
+}
+
+.kb-player{
+  margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--kb-line);
+  padding-left: 4px; padding-right: 4px; display: flex; align-items: center; gap: 10px;
+}
+.kb-play-btn{
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; color: #fff;
+  background: var(--kb-grad); box-shadow: 0 0 16px -3px color-mix(in srgb, var(--kob-L-secondary) 75%, transparent);
+  transition: transform .15s, filter .2s;
+}
+.kb-play-btn:hover{ filter: brightness(1.1); }
+.kb-play-btn:active{ transform: scale(0.92); }
+.kb-play-btn svg{ width: 14px; height: 14px; }
+.kb-play-btn svg.hidden{ display: none; }
+
+.kb-track-area{ flex: 1; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.kb-meta-row{ display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; padding: 0 2px; }
+.kb-track-name{ font-size: 11px; font-weight: 700; color: var(--kb-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 175px; }
+.kb-track-name::before{ content: "◆ "; color: var(--kob-L-primary); font-size: 8px; }
+.kb-time{ display: flex; align-items: center; gap: 2px; font-size: 10px; font-variant-numeric: tabular-nums; color: var(--kb-text-mute); }
+.kb-time .now{ color: var(--kob-L-primary); font-weight: 700; }
+
+.kb-progress{ position: relative; width: 100%; height: 14px; display: flex; align-items: center; cursor: pointer; }
+.kb-progress-track{ width: 100%; height: 4px; border-radius: 999px; background: rgba(255,255,255,0.14); overflow: hidden; position: relative; }
+.kb-progress-fill{ height: 100%; border-radius: 999px; background: var(--kb-grad); width: 0%; }
+.kb-progress-thumb{
+  position: absolute; top: 50%; width: 11px; height: 11px; border-radius: 50%;
+  background: #fff; border: 2px solid var(--kob-L-secondary); transform: translate(-50%, -50%); pointer-events: none; left: 0%;
+}
+.kb-next-btn, .kb-stage-btn{
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; color: var(--kb-text-mute); transition: all .2s;
+}
+.kb-next-btn:hover, .kb-stage-btn:hover{ color: var(--kob-L-primary); background: color-mix(in srgb, var(--kob-L-primary) 15%, transparent); }
+.kb-next-btn svg, .kb-stage-btn svg{ width: 14px; height: 14px; }
+</style>
+</head>
+
+<body data-mode="night" class="dock-header">
+
+<!-- Textura de grão e atmosfera nebula -->
+<div class="kb-ambient"></div>
+<div id="toast"></div>
+<div id="modal-overlay"><div id="modalBox"></div></div>
+<audio id="local-audio" preload="metadata"></audio>
+
+<div id="top-drop-zone" class="kb-dropzone top"><span>KOBLLUX · Fixar como Header</span></div>
+<div id="bottom-drop-zone" class="kb-dropzone bottom"><span>KOBLLUX · Fixar como Footer</span></div>
+<div id="kob-soneto-outline"></div>
+
+<!-- Topbar Minimalista -->
+<header id="kob-topbar">
+  <button type="button" class="tb-brand" onclick="Profile.nextArch()" title="Trocar arquétipo">
+    <div class="tb-orb-dot"></div>
+    <span class="tb-brand-text" id="topbarArchLabel">KOBLLUX · 528Hz</span>
+  </button>
+  <div class="tb-actions">
+    <button type="button" class="tb-icon-btn" id="btnTopTts" title="Ler página (TTS)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+    </button>
+    <button type="button" class="tb-icon-btn" id="btnTopMusic" title="Trilha sonora ambiente">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+    </button>
+    <button type="button" class="tb-icon-btn" id="btnTopTheme" title="Alternar tema">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- Global Player Flutuante -->
+<aside id="global-player" aria-label="Global Player">
+  <div id="gp-mini-label" onclick="Player.toggleMinimize()">
+    <span style="color:var(--kob-L-primary)">▶</span>
+    <span id="gp-mini-title">Player Ativo</span>
+  </div>
+  <div class="gp-controls">
+    <button type="button" class="gp-btn" onclick="Player.minimizeFromAny()" title="Minimizar">―</button>
+    <button type="button" class="gp-btn" id="gp-expand-btn" onclick="Player.toggleFullscreen()" title="Tela Cheia">⛶</button>
+    <button type="button" class="gp-btn" onclick="Player.stop()" title="Fechar" style="color:#fda4af">✕</button>
+  </div>
+  <div id="player-frame-wrap"></div>
+</aside>
+
+<!-- Viewport Unificado -->
+<main class="kb-viewport">
+
+  <!-- 1. HOME DO DIA -->
+  <section id="page-home" class="kb-page active" aria-label="Home do Dia">
+    <div class="page-stack">
+      <div class="day-hero-card">
+        <div class="day-hero-top">
+          <div>
+            <div class="day-greeting" id="heroGreeting">Bom dia, Piloto</div>
+            <div class="day-subtitle" id="heroSubtitle">Sua dose de hoje já está organizada</div>
+          </div>
+          <span class="time-chip" id="timeNow">--:--</span>
+        </div>
+
+        <div class="day-slider-box">
+          <div class="day-slider-row">
+            <span>06h</span>
+            <span id="moodLabel" class="label-mood">Manhã focada</span>
+            <span>23h</span>
+          </div>
+          <div class="range-wrap"><div id="rangeFill" class="range-fill"></div></div>
+          <input id="timeRange" type="range" min="6" max="23" value="9" class="hero-range" aria-label="Ritmo do dia" />
+        </div>
+      </div>
+
+      <div>
+        <div class="sec-head">
+          <span class="sec-title">Vídeos &amp; Playlists</span>
+          <span class="sec-sub">YouTube · Infodose · Pessoal →</span>
+        </div>
+        <div id="videosSlider" class="h-slider"></div>
+      </div>
+
+      <div>
+        <div class="sec-head">
+          <span class="sec-title">Músicas Upadas &amp; Frequências</span>
+          <span class="sec-sub">SoundCloud · MP3 Locais →</span>
+        </div>
+        <div id="musicSlider" class="h-slider"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. SARAU & BIBLIOTECA -->
+  <section id="page-sarau" class="kb-page" aria-label="Sarau e Biblioteca">
+    <div class="page-stack">
+      <div class="sarau-reader-card">
+        <span id="sarauDocCat" class="sarau-doc-badge">SARAU • 1134 Hz</span>
+        <h2 id="sarauDocTitle" class="sarau-doc-title">O Espaço da Mente &amp; Arquitetura Cognitiva</h2>
+        <div id="sarauDocAuthor" class="sarau-doc-meta">Toque em qualquer parágrafo ou no botão para ouvir</div>
+
+        <div class="sarau-controls">
+          <button type="button" class="btn-primary" id="sarauReadBtn" onclick="Sarau.toggleRead()">🎧 Ouvir Documento</button>
+          <button type="button" class="mini-btn" onclick="Sarau.uploadTextFile()">⤒ Subir Arquivo (.txt/.md)</button>
+          <button type="button" class="mini-btn" onclick="Sarau.openNewDocModal()">＋ Escrever</button>
+          <button type="button" class="mini-btn" onclick="Sarau.copyActiveDoc()">⧉ Copiar</button>
+        </div>
+
+        <div id="sarauReaderBody" class="sarau-content"></div>
+      </div>
+
+      <div>
+        <div class="sec-head">
+          <span class="sec-title">Acervo do Sarau</span>
+          <span id="sarauCount" class="sec-sub">3 obras</span>
+        </div>
+        <div id="sarauDocsList" class="queue-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. VÍDEOS & FILA -->
+  <section id="page-shorts" class="kb-page" aria-label="Vídeos e Stream">
+    <div class="page-stack">
+      <div class="shorts-stage-card">
+        <div id="main-cover" class="stage-cover"></div>
+        <div class="stage-info">
+          <div class="stage-badge">PALCO ATIVO</div>
+          <div id="main-title" class="stage-title">O Espaço da Mente</div>
+          <div id="main-artist" class="stage-artist">Toque em qualquer item para assistir</div>
+        </div>
+        <button type="button" class="btn-primary" onclick="Player.reopenIfActive()">Abrir</button>
+      </div>
+
+      <div>
+        <div class="sec-head">
+          <span class="sec-title">Biblioteca Audiovisual &amp; Playlists</span>
+          <span id="shortsQueueCount" class="sec-sub">11 itens</span>
+        </div>
+        <div id="shortsQueue" class="queue-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. PERFIL MINIMALISTA -->
+  <section id="page-profile" class="kb-page" aria-label="Perfil e Configurações">
+    <div class="page-stack">
+      <div class="orb-hero-minimal">
+        <div id="visionOrb" class="minimal-orb" onclick="Profile.pulseOrb()" title="Toque para pulsar">
+          <div class="minimal-orb-glow"></div>
+          <div class="minimal-orb-core">
+            <span id="visionOrbSym" class="minimal-orb-sym">△</span>
+          </div>
+        </div>
+
+        <input id="profileName" class="profile-name-clean" type="text" value="Piloto" placeholder="Seu nome...">
+        <span id="profileArchPill" class="profile-arch-pill">KOBLLUX · 528Hz</span>
+
+        <div class="orb-swatches" id="orbSwatches"></div>
+
+        <div class="orb-quick-actions">
+          <button type="button" class="mini-btn active" onclick="Profile.pulseOrb()">◎ Pulsar</button>
+          <button type="button" class="mini-btn" onclick="Profile.speakIdentity()">🔊 Voz</button>
+          <button type="button" class="mini-btn" onclick="Profile.nextArch()">↻ Trocar Arquétipo</button>
+        </div>
+      </div>
+
+      <div class="user-tabs">
+        <button type="button" class="user-tab-btn active" data-utab="matrix">◎ Arquétipos</button>
+        <button type="button" class="user-tab-btn" data-utab="vault">🔑 Chaves &amp; Config</button>
+      </div>
+
+      <div id="upanel-matrix">
+        <div id="archMatrixGrid" class="arch-grid-clean"></div>
+      </div>
+
+      <div id="upanel-vault" style="display:none">
+        <div class="page-stack" style="gap:16px">
+          <div class="vault-card">
+            <div class="vault-field">
+              <div class="vault-label">
+                <span>🔑 Chave API (OpenRouter / OpenAI / Gemini)</span>
+                <button type="button" class="mini-btn" id="toggleKeyVisBtn" onclick="Profile.toggleKeyVisibility()">Mostrar</button>
+              </div>
+              <input type="password" id="cfgApiKey" class="vault-input" placeholder="sk-... ou AIza...">
+            </div>
+
+            <div class="vault-field">
+              <div class="vault-label"><span>🧠 Modelo Neural</span></div>
+              <select id="cfgModel" class="vault-select">
+                <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
+                <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
+                <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                <option value="deepseek/deepseek-r1">DeepSeek R1</option>
+              </select>
+            </div>
+
+            <div class="vault-field">
+              <div class="vault-label">
+                <span>🎨 Cores do Orbe</span>
+                <button type="button" class="mini-btn" onclick="Profile.resetOrbColors()">Padrão</button>
+              </div>
+              <div style="display:flex; gap:10px; align-items:center;">
+                <input type="color" id="cfgOrbColor1" value="#22D3EE" style="width:44px;height:38px;border:none;border-radius:12px;background:transparent;cursor:pointer;">
+                <input type="color" id="cfgOrbColor2" value="#7C3AED" style="width:44px;height:38px;border:none;border-radius:12px;background:transparent;cursor:pointer;">
+                <button type="button" class="btn-primary" style="flex:1" onclick="Profile.saveVaultConfig()">Salvar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="control-row">
+            <div>
+              <div style="font-size:13px;font-weight:700">Atmosfera</div>
+              <div style="font-size:11px;color:var(--kb-text-mute)">Tema visual da interface</div>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button type="button" class="mini-btn" onclick="setThemeMode('day')">Dia</button>
+              <button type="button" class="mini-btn" onclick="setThemeMode('night')">Noite</button>
+              <button type="button" class="mini-btn" onclick="setThemeMode('sunset')">Sunset</button>
+            </div>
+          </div>
+
+          <div class="control-row">
+            <div>
+              <div style="font-size:13px;font-weight:700">Backup</div>
+              <div style="font-size:11px;color:var(--kb-text-mute)">Exportar dados em JSON</div>
+            </div>
+            <button type="button" class="mini-btn active" onclick="exportAllBackup()">Exportar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Dock Flutuante Arrastável & Colapsável -->
+<nav id="floating-dock" class="kb-dock" aria-label="Navegação Principal">
+  <div class="kb-handle-row">
+    <span id="dock-pos-tag" class="kb-dock-pos-tag">HEADER</span>
+    <div class="kb-handle-bar" title="Arraste entre topo e base"></div>
+    <button type="button" id="dock-collapse-btn" class="kb-collapse-btn" title="Recolher / Expandir">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="18 15 12 9 6 15"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="kb-nav-row">
+    <button type="button" class="kb-nav-btn active" data-tab="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20h5v-6h4v6h5V9.5"/>
+      </svg>
+      <span class="nav-lbl">Início</span>
+    </button>
+
+    <button type="button" class="kb-nav-btn" data-tab="sarau">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+      </svg>
+      <span class="nav-lbl">Sarau</span>
+    </button>
+
+    <button type="button" class="kb-nav-btn" id="ytCreateBtn" onclick="openYouTubeStyleCreateMenu()" title="Criar ou Importar">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--kb-grad);color:#fff;display:grid;place-items:center;box-shadow:0 4px 14px color-mix(in srgb,var(--kob-L-primary) 45%,transparent)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </div>
+    </button>
+
+    <button type="button" class="kb-nav-btn" data-tab="shorts">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="5 3 19 12 5 21 5 3"/>
+      </svg>
+      <span class="nav-lbl">Vídeos</span>
+    </button>
+
+    <button type="button" class="kb-nav-btn" data-tab="profile">
+      <div class="kb-nav-orb-mini"></div>
+      <span class="nav-lbl">Perfil</span>
+    </button>
+  </div>
+
+  <div class="kb-player">
+    <button id="play-pause-btn" type="button" class="kb-play-btn" aria-label="Play / Pause">
+      <svg id="icon-play" viewBox="0 0 24 24" fill="currentColor" style="margin-left:2px"><path d="M8 5v14l11-7z"/></svg>
+      <svg id="icon-pause" class="hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+    </button>
+
+    <div class="kb-track-area">
+      <div class="kb-meta-row">
+        <span id="track-name" class="kb-track-name">O Espaço da Mente</span>
+        <div class="kb-time">
+          <span id="current-time" class="now">0:00</span><span>/</span><span id="total-time">2:15</span>
+        </div>
+      </div>
+      <div id="progress-container" class="kb-progress">
+        <div class="kb-progress-track"><div id="progress-fill" class="kb-progress-fill"></div></div>
+        <div id="progress-thumb" class="kb-progress-thumb"></div>
+      </div>
+    </div>
+
+    <button id="next-track-btn" type="button" class="kb-next-btn" title="Próxima">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+    </button>
+
+    <button id="open-gp-btn" type="button" class="kb-stage-btn" title="Abrir Player">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="3"/><polygon points="10 9 15 12 10 15 10 9" fill="currentColor"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<!-- <script>
+(function KOBLLUX_STUDIO(){
+'use strict';
+
+const uid = (p='x') => `${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,6)}`;
+function toast(msg){
+  const el = document.getElementById('toast');
+  if(!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.classList.remove('show'), 2200);
+}
+window.toast = toast;
+
+function openModal(html){
+  const ov = document.getElementById('modal-overlay');
+  const bx = document.getElementById('modalBox');
+  if(!ov || !bx) return;
+  bx.innerHTML = html;
+  ov.classList.add('open');
+  ov.onclick = e => { if(e.target === ov) ov.classList.remove('open'); };
+}
+window.openModal = openModal;
+
+window.setThemeMode = function(mode){
+  document.body.dataset.mode = mode;
+  localStorage.setItem('kob:theme', mode);
+  toast(`◑ Tema ${mode.toUpperCase()}`);
+};
+
+const ARCHETYPES = [
+  { key:'KOBLLUX',  opcode:'0x0C', regra:'CONCLUIR',    hz:528, sym:'△', color:'#22D3EE', c2:'#0E7C9E', v:'Luciana', l:'pt-BR', r:0.98,  p:0.48 },
+  { key:'ATLAS',    opcode:'0x02', regra:'INTEGRAR',    hz:432, sym:'▦', color:'#78e3ff', c2:'#b978ff', v:'Daniel',  l:'en-US', r:1.02,  p:1.39 },
+  { key:'NOVA',     opcode:'0x01', regra:'PULSAR',      hz:528, sym:'✧', color:'#ff6b6b', c2:'#ffb347', v:'Luciana', l:'pt-BR', r:1.063, p:1.34 },
+  { key:'VITALIS',  opcode:'0x03', regra:'EXPANDIR',    hz:528, sym:'≠', color:'#4ecdc4', c2:'#45b7d1', v:'Rocko',   l:'pt-BR', r:0.96,  p:1.42 },
+  { key:'PULSE',    opcode:'0x0B', regra:'RESSONAR',    hz:639, sym:'♫', color:'#a8e6cf', c2:'#d4a5a5', v:'Reed',    l:'pt-BR', r:1.00,  p:1.78 },
+  { key:'ARTEMIS',  opcode:'0x05', regra:'CONVERGIR',   hz:672, sym:'⚑', color:'#ffd93d', c2:'#ff9f1c', v:'Paulina', l:'es-MX', r:1.00,  p:1.23 },
+  { key:'SERENA',   opcode:'0x0A', regra:'EQUILIBRAR',  hz:528, sym:'♡', color:'#b8e1ff', c2:'#a0b9ff', v:'Joana',   l:'pt-BR', r:0.92,  p:0.90 },
+  { key:'KAOS',     opcode:'0x04', regra:'DISSOLVER',   hz:741, sym:'☢', color:'#ff8066', c2:'#b624ff', v:'Rocko',   l:'pt-BR', r:1.28,  p:0.67 },
+  { key:'GENUS',    opcode:'0x09', regra:'MANIFESTAR',  hz:594, sym:'✎', color:'#95e1d3', c2:'#f38181', v:'Reed',    l:'pt-BR', r:0.98,  p:1.20 },
+  { key:'LUMINE',   opcode:'0x07', regra:'SELAR',       hz:432, sym:'💡', color:'#f9f3b2', c2:'#ffe69b', v:'Flo',     l:'fr-FR', r:1.03,  p:1.87 },
+  { key:'SOLUS',    opcode:'0x08', regra:'TESTEMUNHAR', hz:963, sym:'🌑', color:'#ffb347', c2:'#ff8c42', v:'Satu',    l:'fi-FI', r:0.90,  p:0.58 },
+  { key:'RHEA',     opcode:'0x06', regra:'CRISTALIZAR', hz:528, sym:'∞', color:'#b5eaea', c2:'#80b3ff', v:'Alice',   l:'it-IT', r:1.02,  p:1.44 },
+  { key:'AION',     opcode:'0x09', regra:'MANIFESTAR',  hz:777, sym:'⌛', color:'#c79aff', c2:'#9f7aff', v:'Milena',  l:'ru-RU', r:1.07,  p:1.08 },
+  { key:'KODUX',    opcode:'0x02', regra:'INTEGRAR',    hz:528, sym:'⌂', color:'#F97316', c2:'#fb923c', v:'Rocko',   l:'pt-BR', r:1.00,  p:0.07 },
+  { key:'BLLUE',    opcode:'0x0B', regra:'RESSONAR',    hz:432, sym:'≈', color:'#8fd3ff', c2:'#b8e1ff', v:'Zuzana',  l:'cs-CZ', r:0.94,  p:1.69 },
+  { key:'JESUS',    opcode:'0x07', regra:'SELAR',       hz:777, sym:'†', color:'#FFD700', c2:'#FFB84D', v:'Sara',    l:'da-DK', r:1.09,  p:0.03 },
+  { key:'INFODOSE', opcode:'0x05', regra:'CONVERGIR',   hz:672, sym:'⧉', color:'#22C55E', c2:'#166534', v:'Luciana', l:'pt-BR', r:1.06,  p:0.96 }
+];
+
+/* ─── PIPELINE KOB_SPEECH & KOB_TTS_CHUNK ─── */
+if (!window.KOB_SPEECH && 'speechSynthesis' in window) {
+  const ss = window.speechSynthesis, nativeSpeak = ss.speak.bind(ss), stages = [];
+  const at = i => u => i < stages.length ? stages[i].run(u, at(i + 1)) : nativeSpeak(u);
+  window.KOB_SPEECH = {
+    use(name, order, run){
+      const idx = stages.findIndex(s => s.name === name);
+      if (idx !== -1) stages.splice(idx, 1);
+      stages.push({ name, order, run });
+      stages.sort((a, b) => a.order - b.order);
+      return true;
+    },
+    has: name => stages.some(s => s.name === name),
+    list: () => stages.map(s => `${s.name}:${s.order}`)
+  };
+  ss.speak = u => at(0)(u);
+}
+
+window.KOB_TTS_CHUNK = function(txt, max = 220){
+  const atoms = [];
+  function hard(s){
+    let cur = '', ws = s.split(' ');
+    for (let i = 0; i < ws.length; i++){
+      const w = ws[i];
+      if (w.length > max){
+        if (cur){ atoms.push(cur); cur = ''; }
+        for (let k = 0; k < w.length; k += max) atoms.push(w.slice(k, k + max));
+        continue;
+      }
+      if ((cur ? cur.length + 1 : 0) + w.length > max){ atoms.push(cur); cur = w; }
+      else cur = cur ? cur + ' ' + w : w;
+    }
+    if (cur) atoms.push(cur);
+  }
+  String(txt == null ? '' : txt).split(/\n+/).forEach(line => {
+    line = line.replace(/\s+/g, ' ').trim();
+    if (!line) return;
+    line.split(/(?<=[.!?…;:])\s+/).forEach(sent => {
+      if (sent.length <= max){ atoms.push(sent); return; }
+      sent.split(/(?<=[,)\]—–])\s+/).forEach(part => {
+        if (part.length <= max) atoms.push(part);
+        else hard(part);
+      });
+    });
+  });
+  const out = []; let buf = '';
+  atoms.forEach(a => {
+    if (buf && buf.length + 1 + a.length > max){ out.push(buf); buf = a; }
+    else buf = buf ? buf + ' ' + a : a;
+  });
+  if (buf) out.push(buf);
+  return out;
+};
+
+/* ─── MOTOR SONORO PROCEDURAL (KOBSonoro) ─── */
+const KOBSonoro = (() => {
+  const ARCH_MUSIC = {
+    ATLAS:['dorian','triangle',.55], NOVA:['lydian','sine',.6], VITALIS:['mixolydian','triangle',.45],
+    PULSE:['pentMin','square',.3], ARTEMIS:['aeolian','sine',.65], SERENA:['pentMaj','sine',.7],
+    KAOS:['phrygian','triangle',.6], GENUS:['harmMinor','sine',.59], LUMINE:['ionian','triangle',.5],
+    SOLUS:['hirajoshi','sine',.8], RHEA:['mixolydian','sine',.55], AION:['harmMinor','sine',.7],
+    KODUX:['phrygian','sawtooth',.47], BLLUE:['blues','triangle',.5], JESUS:['ionian','sine',.75],
+    KOBLLUX:['dorian','triangle',.5], INFODOSE:['mixolydian','sine',.55]
+  };
+  const SIG = {
+    ATLAS:[57,[0,4,7,12,7,4],0.12,0.09,'triangle'], NOVA:[57,[0,7,11,16,11],0.15,0.08,'sine'],
+    VITALIS:[57,[0,7,4,0,-5],0.10,0.05,'triangle'], PULSE:[45,[0,3,7,10,7,3],0.12,0.06,'square'],
+    ARTEMIS:[45,[0,3,7,12,15],0.14,0.08,'sine'], SERENA:[57,[0,4,9,14,9,4],0.16,0.10,'sine'],
+    KAOS:[33,[0,1,3,8,3,1,0],0.09,0.04,'sawtooth'], GENUS:[45,[0,3,7,8,7,3],0.13,0.08,'sine'],
+    LUMINE:[57,[0,4,9,12,16,12],0.11,0.06,'triangle'], SOLUS:[45,[0,2,7,2,-5],0.20,0.14,'sine'],
+    RHEA:[57,[0,5,7,12,7,5,0],0.13,0.09,'sine'], AION:[45,[0,3,8,12,8,3],0.14,0.09,'sine'],
+    KODUX:[33,[0,3,6,3,0,-5],0.10,0.05,'sawtooth'], BLLUE:[45,[0,3,7,6,3,0],0.12,0.07,'triangle'],
+    JESUS:[57,[0,7,12,19,12],0.22,0.16,'sine'], KOBLLUX:[57,[0,3,7,10,14,10],0.15,0.09,'triangle'],
+    INFODOSE:[57,[0,2,5,7,9,12,9],0.11,0.06,'sine']
+  };
+  const MODES = {
+    ionian:[0,2,4,5,7,9,11], dorian:[0,2,3,5,7,9,10], phrygian:[0,1,3,5,7,8,10],
+    lydian:[0,2,4,6,7,9,11], mixolydian:[0,2,4,5,7,9,10], aeolian:[0,2,3,5,7,8,10],
+    harmMinor:[0,2,3,5,7,8,11], pentMaj:[0,2,4,7,9], pentMin:[0,3,5,7,10],
+    blues:[0,3,5,6,7,10], hirajoshi:[0,2,3,7,8]
+  };
+  const ALPHA = 'abcdefghijklmnopqrstuvwxyzáàãâéêíóôõúçñ';
+  const SND = { started: false, playing: false, part: null, synths: {}, reverb: null, delay: null };
+  const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+
+  async function ensureAudio(){
+    if (SND.started) return true;
+    if (typeof Tone === 'undefined') return false;
+    try { await Tone.start(); } catch(e){}
+    try {
+      const lim = new Tone.Limiter(-2).toDestination();
+      SND.reverb = new Tone.Reverb({ decay: 3.5, wet: 0.4 }).connect(lim);
+      SND.delay  = new Tone.FeedbackDelay('8n', 0.25).connect(SND.reverb);
+      SND.synths.lead = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'triangle' },
+        envelope: { attack: .02, decay: .3, sustain: .2, release: 1.2 }
+      }).connect(SND.delay);
+      SND.synths.lead.volume.value = -8;
+      SND.synths.bubble = new Tone.Synth({
+        oscillator: { type: 'sine' },
+        envelope: { attack: .01, decay: .15, sustain: 0, release: .2 }
+      }).connect(SND.reverb);
+      SND.synths.noise = new Tone.NoiseSynth({
+        noise: { type: 'white' },
+        envelope: { attack: .001, decay: .2, sustain: 0, release: .3 }
+      }).connect(SND.reverb);
+      SND.started = true;
+      return true;
+    } catch(e){ return false; }
+  }
+
+  async function transition(arch){
+    const a = String(arch || 'KOBLLUX').toUpperCase();
+    const sig = SIG[a] || SIG.KOBLLUX;
+    if (!await ensureAudio()) return;
+    try { SND.synths.lead.set({ oscillator: { type: sig[4] } }); } catch(e){}
+    try { SND.synths.lead.releaseAll(Tone.now()); } catch(e){}
+    let t = Tone.now() + 0.05;
+    sig[1].forEach(off => {
+      try { SND.synths.lead.triggerAttackRelease(mtof(sig[0] + off), sig[2], t); } catch(e){}
+      t += sig[3];
+    });
+  }
+
+  async function sfx(desc){
+    if (!await ensureAudio()) return;
+    const d = String(desc || '').toLowerCase(), now = Tone.now();
+    try {
+      if (/whoosh|sopro/.test(d)) SND.synths.noise.triggerAttackRelease(.22, now);
+      else {
+        const b = 650 + Math.random() * 350;
+        SND.synths.bubble.triggerAttackRelease(b, .11, now);
+        SND.synths.bubble.triggerAttackRelease(b * 1.45, .09, now + .07);
+      }
+    } catch(e){}
+  }
+
+  async function play(text, arch){
+    if (!await ensureAudio()) return false;
+    if (SND.playing){ stop(); return false; }
+    const clean = String(text || 'KOBLLUX Infodose').trim();
+    const cfg = ARCH_MUSIC[arch] || ARCH_MUSIC.KOBLLUX;
+    try { SND.reverb.wet.rampTo(cfg[2], 0.4); } catch(e){}
+    const rootMidi = 57; // A3
+    const mode = MODES[cfg[0]] || MODES.dorian;
+    const notes = [];
+    for (let i = 0; i < 15; i++){
+      notes.push(Tone.Frequency(rootMidi + Math.floor(i / mode.length) * 12 + mode[i % mode.length], 'midi').toNote());
+    }
+    const evs = []; let step = 0; const SD = Tone.Time('16n').toSeconds();
+    for (let j = 0; j < clean.length; j++){
+      const ch = clean[j], lo = ch.toLowerCase();
+      if (ch === ' ' || ch === '\n'){ step += ch === '\n' ? 3 : 1; continue; }
+      if ('.!?'.includes(ch)){ step += 4; continue; }
+      if (',;'.includes(ch)){ step += 2; continue; }
+      const ai = ALPHA.indexOf(lo);
+      if (ai !== -1){
+        evs.push({ t: step * SD, note: notes[ai % notes.length], d: ch === ch.toUpperCase() ? '8n' : '16n' });
+        step += ch === ch.toUpperCase() ? 1.8 : 1.4;
+      }
+    }
+    if (!evs.length) return false;
+    try { Tone.Transport.stop(); Tone.Transport.cancel(0); } catch(e){}
+    SND.part = new Tone.Part((time, ev) => {
+      try { SND.synths.lead.triggerAttackRelease(mtof(Tone.Frequency(ev.note).toMidi()), ev.d, time); } catch(e){}
+    }, evs).start(0);
+    Tone.Transport.bpm.value = 130;
+    Tone.Transport.start();
+    SND.playing = true;
+    document.getElementById('btnTopMusic')?.classList.add('active');
+    return true;
+  }
+
+  function stop(){
+    if (SND.part){ try { SND.part.dispose(); } catch(e){} SND.part = null; }
+    try { Tone.Transport.stop(); Tone.Transport.cancel(0); } catch(e){}
+    try { Object.keys(SND.synths).forEach(k => SND.synths[k].releaseAll && SND.synths[k].releaseAll()); } catch(e){}
+    SND.playing = false;
+    document.getElementById('btnTopMusic')?.classList.remove('active');
+  }
+
+  return { transition, sfx, play, stop, toggle: (t, a) => SND.playing ? (stop(), false) : play(t, a), isPlaying: () => SND.playing };
+})();
+window.KOBSonoro = KOBSonoro;
+
+const KOBSoneto = (() => {
+  let currentArch = (localStorage.getItem('kob:arch') || 'KOBLLUX').toUpperCase();
+  if (!ARCHETYPES.some(a => a.key === currentArch)) currentArch = 'KOBLLUX';
+  let speaking = false, blocks = [], blockIdx = 0, chunkList = [], chunkIdx = 0;
+  let voices = [];
+  const outline = document.getElementById('kob-soneto-outline');
+
+  const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  function loadVoices(){
+    if ('speechSynthesis' in window) voices = speechSynthesis.getVoices() || [];
+  }
+  if ('speechSynthesis' in window){
+    loadVoices();
+    speechSynthesis.onvoiceschanged = loadVoices;
+    setTimeout(loadVoices, 350);
+  }
+
+  const getArchObj = name => ARCHETYPES.find(a => a.key === String(name || currentArch).toUpperCase()) || ARCHETYPES[0];
+
+  /* Busca a voz nativa correspondente ao idioma e nome do arquétipo (en-US, es-MX, fr-FR, fi-FI, it-IT, ru-RU, cs-CZ, da-DK, pt-BR) */
+  function findVoice(cfg){
+    if (!voices.length) loadVoices();
+    const targetName = norm(cfg.v || '');
+    const fullLang   = norm(cfg.l || 'pt-BR');
+    const baseLang   = fullLang.split('-')[0];
+
+    return voices.find(v => norm(v.name).includes(targetName) && norm(v.lang).startsWith(baseLang))
+        || voices.find(v => norm(v.lang) === fullLang)
+        || voices.find(v => norm(v.lang).startsWith(baseLang))
+        || voices.find(v => norm(v.lang).startsWith('pt'))
+        || voices[0] || null;
+  }
+
+  function createUtterance(archName, text){
+    const cfg = getArchObj(archName);
+    const u = new SpeechSynthesisUtterance(text || '');
+    u.lang  = cfg.l || 'pt-BR';
+    u.rate  = cfg.r || 1.0;
+    u.pitch = cfg.p || 1.0;
+    const v = findVoice(cfg);
+    if (v){
+      u.voice = v;
+      u.lang  = v.lang || cfg.l;
+    }
+    return u;
+  }
+
+  function applyColors(c1, c2){
+    document.documentElement.style.setProperty('--kob-L-primary', c1);
+    document.documentElement.style.setProperty('--kob-L-secondary', c2);
+  }
+
+  function setArch(name, silent = false){
+    const obj = getArchObj(name);
+    currentArch = obj.key;
+    localStorage.setItem('kob:arch', currentArch);
+    document.body.setAttribute('data-arch', currentArch.toLowerCase());
+    document.body.setAttribute('data-voice-arch', currentArch.toLowerCase());
+
+    const customC1 = localStorage.getItem('kob:orb:c1');
+    const customC2 = localStorage.getItem('kob:orb:c2');
+    applyColors(customC1 || obj.color, customC2 || obj.c2);
+
+    const lbl = document.getElementById('topbarArchLabel');
+    if (lbl) lbl.textContent = `${obj.key} · ${obj.l} · ${obj.hz}Hz`;
+
+    if (!silent) KOBSonoro.transition(currentArch);
+    window.dispatchEvent(new CustomEvent('kob:arch', { detail: { arch: currentArch } }));
+    return currentArch;
+  }
+
+  function speak(text, onEnd){
+    if (!('speechSynthesis' in window)) return false;
+    const clean = String(text || '').replace(/\s+/g, ' ').trim();
+    if (!clean) return false;
+    try { speechSynthesis.cancel(); } catch(e){}
+
+    const chunks = window.KOB_TTS_CHUNK(clean, 220);
+    let idx = 0;
+    const playNext = () => {
+      if (idx >= chunks.length){ if (onEnd) onEnd(); return; }
+      const u = createUtterance(currentArch, chunks[idx]);
+      u.onend = () => { idx++; setTimeout(playNext, 50); };
+      u.onerror = ev => {
+        if (ev && (ev.error === 'interrupted' || ev.error === 'canceled')) return;
+        idx++; setTimeout(playNext, 80);
+      };
+      try { speechSynthesis.speak(u); } catch(e){}
+    };
+    playNext();
+    return true;
+  }
+
+  function showOutline(el){
+    if (!el || !outline) return;
+    const r = el.getBoundingClientRect();
+    if (r.bottom < 54 || r.top > window.innerHeight){ outline.style.display = 'none'; return; }
+    outline.style.left = `${Math.max(6, r.left - 4)}px`;
+    outline.style.top = `${r.top - 3}px`;
+    outline.style.width = `${Math.min(window.innerWidth - 12, r.width + 8)}px`;
+    outline.style.height = `${r.height + 6}px`;
+    outline.style.display = 'block';
+  }
+
+  function speakChunk(){
+    if (!speaking) return;
+    if (chunkIdx >= chunkList.length){
+      speakBlock(blockIdx + 1);
+      return;
+    }
+    const u = createUtterance(currentArch, chunkList[chunkIdx]);
+    u.onstart = () => { if (chunkIdx === 0) showOutline(blocks[blockIdx]); };
+    u.onend = () => {
+      if (!speaking) return;
+      chunkIdx++;
+      setTimeout(speakChunk, 60);
+    };
+    u.onerror = ev => {
+      if (!speaking) return;
+      if (ev && (ev.error === 'interrupted' || ev.error === 'canceled')) return;
+      chunkIdx++;
+      setTimeout(speakChunk, 90);
+    };
+    try { speechSynthesis.speak(u); } catch(e){}
+  }
+
+  function speakBlock(idx){
+    if (!speaking) return;
+    if (idx >= blocks.length){ stopRead(); return; }
+    blockIdx = idx;
+    const el = blocks[idx];
+    const txt = String(el.innerText || '').replace(/\s+/g, ' ').trim();
+    if (!txt){ speakBlock(idx + 1); return; }
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    chunkList = window.KOB_TTS_CHUNK(txt, 220);
+    chunkIdx = 0;
+    speakChunk();
+  }
+
+  function readContainer(sel){
+    if (speaking){ stopRead(); return false; }
+    const root = document.querySelector(sel || '.kb-page.active');
+    if (!root) return false;
+    blocks = Array.from(root.querySelectorAll('h1,h2,h3,p,li,.day-greeting,.day-subtitle')).filter(el => el.innerText.trim().length > 2);
+    if (!blocks.length) return false;
+    speaking = true;
+    try { speechSynthesis.cancel(); } catch(e){}
+    document.getElementById('btnTopTts')?.classList.add('active');
+    setTimeout(() => speakBlock(0), 60);
+    return true;
+  }
+
+  function stopRead(){
+    speaking = false;
+    try { speechSynthesis.cancel(); } catch(e){}
+    document.getElementById('btnTopTts')?.classList.remove('active');
+    const btn = document.getElementById('sarauReadBtn');
+    if (btn) btn.textContent = '🎧 Ouvir Documento';
+    if (outline) outline.style.display = 'none';
+  }
+
+  function initTopBar(){
+    setArch(currentArch, true);
+    document.getElementById('btnTopTts')?.addEventListener('click', () => readContainer('.kb-page.active'));
+    document.getElementById('btnTopMusic')?.addEventListener('click', () => {
+      const activeText = document.querySelector('.kb-page.active')?.innerText?.slice(0, 260) || 'KOBLLUX Infodose';
+      const on = KOBSonoro.toggle(activeText, currentArch);
+      toast(on ? `🎵 Trilha ${currentArch} ativa` : 'Trilha pausada');
+    });
+    document.getElementById('btnTopTheme')?.addEventListener('click', () => {
+      const modes = ['night', 'day', 'sunset'];
+      const cur = document.body.dataset.mode || 'night';
+      const next = modes[(modes.indexOf(cur) + 1) % modes.length];
+      setThemeMode(next);
+    });
+  }
+
+  return {
+    get arch(){ return currentArch; },
+    setArch, applyColors, speak, readContainer, stopRead, initTopBar,
+    forArch: createUtterance, findVoice
+  };
+})();
+window.KOBSoneto = KOBSoneto;
+window.KBLX_VOICE = { map: ARCHETYPES, forArch: KOBSoneto.forArch, find: KOBSoneto.findVoice };
+
+    if(t.type === 'youtube' || t.type === 'youtube_playlist'){
+      wrap.innerHTML = `<div id="yt-container" style="width:100%;height:100%"></div>`;
+      gp.classList.add('active'); gp.classList.remove('minimized');
+      Player._playYT(t);
+    } else if(t.type === 'soundcloud'){
+      wrap.innerHTML = `<iframe allow="autoplay" style="width:100%;height:100%;border:0" src="https://w.soundcloud.com/player/?url=${encodeURIComponent(t.url)}&auto_play=true&visual=true"></iframe>`;
+      gp.classList.add('active'); gp.classList.remove('minimized');
+      isPlaying = true; Player._syncIcons();
+    } else if(t.type === 'local'){
+      const a = audioEl();
+      if(t.blob){
+        a.src = URL.createObjectURL(t.blob);
+        a.play().catch(()=>toast('Toque em Play para iniciar'));
+        isPlaying = true; Player._syncIcons();
+        toast(`♫ Tocando: ${t.name}`);
+      } else {
+        toast('Suba o arquivo local novamente para ouvir');
+      }
+    }
+    renderShortsQueue();
+    Player._startProgressPoll();
+  },
+  reopenIfActive(){
+    if(!currentTrackId && db.library[0]){ Player.loadAndPlay(db.library[0].id); return; }
+    const gp = document.getElementById('global-player');
+    gp?.classList.add('active'); gp?.classList.remove('minimized');
+  },
+  minimizeFromAny(){
+    const gp = document.getElementById('global-player');
+    if(!gp) return;
+    gp.classList.remove('player-fullscreen');
+    const btn = document.getElementById('gp-expand-btn');
+    if(btn) btn.textContent = '⛶';
+    gp.classList.add('minimized');
+  },
+  toggleMinimize(){
+    const gp = document.getElementById('global-player');
+    if(!gp) return;
+    gp.classList.remove('player-fullscreen');
+    const btn = document.getElementById('gp-expand-btn');
+    if(btn) btn.textContent = '⛶';
+    gp.classList.toggle('minimized');
+  },
+  toggleFullscreen(){
+    const gp = document.getElementById('global-player');
+    if(!gp) return;
+    gp.classList.remove('minimized');
+    gp.classList.toggle('player-fullscreen');
+    const btn = document.getElementById('gp-expand-btn');
+    if(btn) btn.textContent = gp.classList.contains('player-fullscreen') ? '🗗' : '⛶';
+  },
+  toggle(e){
+    if(e) e.stopPropagation();
+    if(!currentTrackId && db.library[0]){ Player.loadAndPlay(db.library[0].id); return; }
+    if(isPlaying){
+      if((activeEngine === 'youtube' || activeEngine === 'youtube_playlist') && ytPlayer?.pauseVideo) ytPlayer.pauseVideo();
+      else audioEl()?.pause();
+      isPlaying = false;
+    } else {
+      if((activeEngine === 'youtube' || activeEngine === 'youtube_playlist') && ytPlayer?.playVideo) ytPlayer.playVideo();
+      else audioEl()?.play();
+      isPlaying = true;
+    }
+    Player._syncIcons();
+  },
+  next(){
+    if(!db.library.length) return;
+    const i = db.library.findIndex(t => t.id === currentTrackId);
+    Player.loadAndPlay(db.library[(i + 1) % db.library.length].id);
+  },
+  seekRatio(ratio){
+    if((activeEngine === 'youtube' || activeEngine === 'youtube_playlist') && ytPlayer?.getDuration){
+      const d = ytPlayer.getDuration(); if(d) ytPlayer.seekTo(d * ratio, true);
+    } else if(activeEngine === 'local' && audioEl()?.duration){
+      audioEl().currentTime = audioEl().duration * ratio;
+    }
+  },
+  _stopEnginesOnly(){
+    try{ audioEl()?.pause(); }catch(e){}
+    try{ ytPlayer?.destroy?.(); ytPlayer = null; }catch(e){}
+    isPlaying = false; clearInterval(progressTimer); Player._syncIcons();
+  },
+  stop(){
+    Player._stopEnginesOnly();
+    document.getElementById('global-player')?.classList.remove('active', 'minimized', 'player-fullscreen');
+    const btn = document.getElementById('gp-expand-btn');
+    if(btn) btn.textContent = '⛶';
+    const w = document.getElementById('player-frame-wrap'); if(w) w.innerHTML = '';
+  },
+  _syncUI(t){
+    const c = document.getElementById('main-cover');
+    const ti = document.getElementById('main-title');
+    const ar = document.getElementById('main-artist');
+    if(c) c.style.backgroundImage = `url(${t.cover})`;
+    if(ti) ti.textContent = t.name;
+    if(ar) ar.textContent = t.artist;
+    window.syncDockPlayerUI?.({ title: t.name, playing: isPlaying, current: 0, duration: 100 });
+  },
+  _syncIcons(){ window.syncDockPlayerUI?.({ playing: isPlaying }); },
+  _startProgressPoll(){
+    clearInterval(progressTimer);
+    progressTimer = setInterval(() => {
+      if(!isPlaying) return;
+      if((activeEngine === 'youtube' || activeEngine === 'youtube_playlist') && ytPlayer?.getCurrentTime){
+        const cur = ytPlayer.getCurrentTime() || 0, dur = ytPlayer.getDuration() || 0;
+        if(dur > 0) window.syncDockPlayerUI?.({ current: cur, duration: dur });
+      } else if(activeEngine === 'local' && audioEl()?.duration){
+        window.syncDockPlayerUI?.({ current: audioEl().currentTime, duration: audioEl().duration });
+      }
+    }, 700);
+  },
+  _playYT(t){
+    if(!ytReady || !window.YT?.Player){ setTimeout(() => Player._playYT(t), 300); return; }
+    ytPlayer = new window.YT.Player('yt-container', {
+      height: '100%', width: '100%',
+      videoId: t.type === 'youtube' ? t.id : '',
+      playerVars: { autoplay: 1, playsinline: 1, modestbranding: 1, rel: 0 },
+      events: {
+        onReady: e => {
+          if(t.type === 'youtube_playlist' && t.playlistId) e.target.loadPlaylist({ list: t.playlistId, index: 0 });
+          else e.target.loadVideoById(t.id);
+          e.target.playVideo();
+          isPlaying = true; Player._syncIcons();
+        },
+        onStateChange: e => {
+          if(e.data === window.YT.PlayerState.ENDED) Player.next();
+          isPlaying = (e.data === window.YT.PlayerState.PLAYING);
+          Player._syncIcons();
+        }
+      }
+    });
+  }
+};
+window.Player = Player;
+
+(function loadYTScript(){
+  const s = document.createElement('script');
+  s.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(s);
+  window.onYouTubeIframeAPIReady = () => { ytReady = true; };
+})();
+
+function renderHomeSliders(){
+  const renderTrackCard = t => `
+    <article class="h-slide-card" onclick="Player.loadAndPlay('${t.id}')">
+      <div class="h-slide-cover" style="background-image:url('${t.cover}')">
+        <span class="h-slide-badge">${t.type === 'youtube_playlist' ? 'PLAYLIST' : t.type.toUpperCase()}</span>
+        <div class="h-slide-play">▶</div>
+      </div>
+      <div class="h-slide-body">
+        <div class="h-slide-title">${t.name}</div>
+        <div class="h-slide-sub">${t.artist}</div>
+      </div>
+    </article>`;
+
+  const videos = db.library.filter(t => t.type === 'youtube' || t.type === 'youtube_playlist');
+  const musics = db.library.filter(t => t.type === 'soundcloud' || t.type === 'local');
+
+  const vWrap = document.getElementById('videosSlider');
+  const mWrap = document.getElementById('musicSlider');
+  if(vWrap) vWrap.innerHTML = videos.map(renderTrackCard).join('');
+  if(mWrap) mWrap.innerHTML = musics.length
+    ? musics.map(renderTrackCard).join('')
+    : `<div style="padding:20px;color:var(--kb-text-mute);font-size:12.5px">Toque no <strong>+</strong> da barra para upar suas músicas (.mp3).</div>`;
+}
+
+function renderShortsQueue(){
+  const list = document.getElementById('shortsQueue');
+  const count = document.getElementById('shortsQueueCount');
+  if(!list) return;
+  if(count) count.textContent = `${db.library.length} itens`;
+  list.innerHTML = db.library.map(t => `
+    <div class="queue-item ${t.id === currentTrackId ? 'playing' : ''}" onclick="Player.loadAndPlay('${t.id}')">
+      <div class="queue-thumb" style="background-image:url('${t.cover}')"></div>
+      <div class="queue-meta">
+        <div class="queue-title">${t.name}</div>
+        <div class="queue-sub">${t.artist} · ${t.type === 'youtube_playlist' ? 'PLAYLIST' : t.type.toUpperCase()}</div>
+      </div>
+      <button type="button" class="queue-fav ${t.favorite ? 'active' : ''}" onclick="event.stopPropagation(); toggleFav('${t.id}')">${t.favorite ? '★' : '☆'}</button>
+    </div>`).join('');
+}
+window.toggleFav = function(id){
+  const t = db.library.find(x => x.id === id);
+  if(t){ t.favorite = !t.favorite; saveMediaDB(); renderShortsQueue(); }
+};
+
+window.openYouTubeStyleCreateMenu = function(){
+  openModal(`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <h3 style="margin:0;font-size:16px">Criar ou Importar</h3>
+      <button type="button" class="mini-btn" onclick="document.getElementById('modal-overlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="yt-create-sheet">
+      <button type="button" class="yt-create-item" onclick="openImportYT()">
+        <div class="yt-create-ico">▶</div>
+        <div class="yt-create-txt">
+          <strong>Vídeo ou Playlist do YouTube</strong>
+          <span>Cole um link de vídeo ou playlist pessoal</span>
+        </div>
+      </button>
+
+      <button type="button" class="yt-create-item" onclick="document.getElementById('modal-overlay').classList.remove('open'); importLocalAudio();">
+        <div class="yt-create-ico">♫</div>
+        <div class="yt-create-txt">
+          <strong>Subir Música / Áudio (.mp3, .wav, .m4a)</strong>
+          <span>Vai direto para os áudios e começa a tocar</span>
+        </div>
+      </button>
+
+      <button type="button" class="yt-create-item" onclick="document.getElementById('modal-overlay').classList.remove('open'); Sarau.uploadTextFile();">
+        <div class="yt-create-ico">📄</div>
+        <div class="yt-create-txt">
+          <strong>Subir Documento de Texto (.txt, .md)</strong>
+          <span>Envia direto para o Sarau para ler e ouvir</span>
+        </div>
+      </button>
+
+      <button type="button" class="yt-create-item" onclick="Sarau.openNewDocModal()">
+        <div class="yt-create-ico">✎</div>
+        <div class="yt-create-txt">
+          <strong>Escrever Texto no Sarau</strong>
+          <span>Crie uma nota ou manifesto para narração</span>
+        </div>
+      </button>
+    </div>
+  `);
+};
+
+window.openImportYT = function(){
+  openModal(`
+    <h3 style="margin:0 0 14px;font-size:16px">▶ Vídeo ou Playlist YouTube</h3>
+    <input class="modal-input" id="ytLinkInp" placeholder="Cole link do vídeo ou ?list=PL...">
+    <input class="modal-input" id="ytTitleInp" placeholder="Nome da playlist ou vídeo (opcional)">
+    <div class="modal-actions">
+      <button type="button" class="mini-btn" onclick="document.getElementById('modal-overlay').classList.remove('open')">Cancelar</button>
+      <button type="button" class="btn-primary" id="ytAddConfirm">Adicionar</button>
+    </div>
+  `);
+  document.getElementById('ytAddConfirm')?.addEventListener('click', () => {
+    const raw = document.getElementById('ytLinkInp').value.trim();
+    const listMatch = raw.match(/[?&]list=([0-9A-Za-z_-]+)/);
+    const vidMatch = raw.match(/(?:v=|youtu\.be\/|shorts\/)([0-9A-Za-z_-]{11})/);
+
+    if(listMatch && !vidMatch){
+      const name = document.getElementById('ytTitleInp').value.trim() || 'Playlist Pessoal';
+      db.library.unshift(normalizeTrack({
+        type: 'youtube_playlist',
+        playlistId: listMatch[1],
+        group: 'videos',
+        url: raw,
+        name,
+        artist: 'Playlist Pessoal',
+        cover: 'https://img.youtube.com/vi/FbutKMpd8MY/hqdefault.jpg'
+      }));
+    } else if(vidMatch){
+      const name = document.getElementById('ytTitleInp').value.trim() || 'Vídeo Importado';
+      db.library.unshift(normalizeTrack({
+        type: 'youtube',
+        group: 'videos',
+        id: vidMatch[1],
+        url: raw,
+        name,
+        artist: 'Importado'
+      }));
+    } else {
+      toast('Link do YouTube inválido');
+      return;
+    }
+
+    saveMediaDB();
+    document.getElementById('modal-overlay').classList.remove('open');
+    renderHomeSliders();
+    renderShortsQueue();
+    switchTab('shorts');
+    toast('✓ Adicionado aos Vídeos & Playlists');
+  });
+};
+
+window.importLocalAudio = function(){
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'audio/*,.mp3,.MP3,.wav,.WAV,.m4a,.M4A,.ogg,.OGG,.aac,.AAC,.flac,.FLAC';
+  inp.multiple = true;
+  inp.onchange = () => {
+    const files = Array.from(inp.files || []);
+    if(!files.length) return;
+    files.forEach(f => {
+      const cleanName = f.name.replace(/\.[^.]+$/, '');
+      const track = normalizeTrack({
+        type: 'local',
+        group: 'music',
+        name: cleanName,
+        artist: 'Música Upada',
+        blob: f
+      });
+      db.library.unshift(track);
+    });
+    saveMediaDB();
+    renderHomeSliders();
+    renderShortsQueue();
+    const firstLocal = db.library.find(x => x.type === 'local' && x.blob);
+    if(firstLocal) Player.loadAndPlay(firstLocal.id);
+    toast(`♫ ${files.length} áudio(s) carregado(s)`);
+  };
+  inp.click();
+};
+
+const Profile = (() => {
+  function renderMatrix(){
+    const grid = document.getElementById('archMatrixGrid');
+    if(!grid) return;
+    const cur = KOBSoneto.arch;
+    grid.innerHTML = ARCHETYPES.map(a => `
+      <div class="arch-btn-tile ${a.key === cur ? 'selected' : ''}" style="--a-col:${a.color}" onclick="Profile.selectArch('${a.key}')">
+        <div class="arch-btn-sym">${a.sym}</div>
+        <div class="arch-btn-lbl">${a.key}</div>
+      </div>
+    `).join('');
+  }
+
+  function selectArch(key){
+    localStorage.removeItem('kob:orb:c1');
+    localStorage.removeItem('kob:orb:c2');
+    KOBSoneto.setArch(key);
+    const a = ARCHETYPES.find(x => x.key === key) || ARCHETYPES[0];
+    if (document.getElementById('cfgOrbColor1')) document.getElementById('cfgOrbColor1').value = a.color;
+    if (document.getElementById('cfgOrbColor2')) document.getElementById('cfgOrbColor2').value = a.c2;
+    renderMatrix();
+    syncOrb();
+    toast(`◐ ${a.key} · ${a.v} (${a.l})`);
+  }
+
+  function nextArch(){
+    const cur = KOBSoneto.arch;
+    const idx = ARCHETYPES.findIndex(a => a.key === cur);
+    const next = ARCHETYPES[(idx + 1) % ARCHETYPES.length].key;
+    selectArch(next);
+  }
+
+  function pulseOrb(){
+    const orb = document.getElementById('visionOrb');
+    if(orb){
+      orb.classList.add('pulsing');
+      setTimeout(() => orb.classList.remove('pulsing'), 600);
+    }
+    const cur = KOBSoneto.arch;
+    const a = ARCHETYPES.find(x => x.key === cur) || ARCHETYPES[0];
+    KOBSoneto.speak(`${cur}. ${a.hz} hertz.`);
+    toast(`◎ ${cur} · ${a.v} (${a.l})`);
+  }
+
+  function speakIdentity(){
+    const name = document.getElementById('profileName')?.value || 'Piloto';
+    const cur = KOBSoneto.arch;
+    const a = ARCHETYPES.find(x => x.key === cur) || ARCHETYPES[0];
+    KOBSoneto.speak(`${name}. ${a.key}, ${a.hz} hertz.`);
+  }
+
+  function syncOrb(){
+    const cur = KOBSoneto.arch;
+    const a = ARCHETYPES.find(x => x.key === cur) || ARCHETYPES[0];
+    const pill = document.getElementById('profileArchPill');
+    const sym = document.getElementById('visionOrbSym');
+    if(pill) pill.textContent = `${a.key} · ${a.v} (${a.l}) · ${a.hz}Hz`;
+    if(sym) sym.textContent = a.sym;
+  }
+
+  function nextArch(){
+    const cur = KOBSoneto.arch;
+    const idx = ARCHETYPES.findIndex(a => a.key === cur);
+    const next = ARCHETYPES[(idx + 1) % ARCHETYPES.length].key;
+    selectArch(next);
+  }
+
+  function pulseOrb(){
+    const orb = document.getElementById('visionOrb');
+    if(orb){
+      orb.classList.add('pulsing');
+      setTimeout(() => orb.classList.remove('pulsing'), 600);
+    }
+    const cur = KOBSoneto.arch;
+    const a = ARCHETYPES.find(x => x.key === cur) || ARCHETYPES[0];
+    KOBSoneto.speak(`${cur}. ${a.hz} hertz.`);
+    toast(`◎ ${cur} · ${a.hz}Hz`);
+  }
+
+  function speakIdentity(){
+    const name = document.getElementById('profileName')?.value || 'Piloto';
+    KOBSoneto.speak(`Piloto ${name}. Frequência ativa ${KOBSoneto.arch}.`);
+  }
+
+  function syncOrb(){
+    const cur = KOBSoneto.arch;
+    const a = ARCHETYPES.find(x => x.key === cur) || ARCHETYPES[0];
+    const pill = document.getElementById('profileArchPill');
+    if(pill) pill.textContent = `${a.key} · ${a.hz}Hz`;
+  }
+
+  function initSwatches(){
+    const wrap = document.getElementById('orbSwatches');
+    if(!wrap) return;
+    const palette = ['#22D3EE', '#7C3AED', '#FF6FB5', '#F59E0B', '#00F5A0', '#C9A84C', '#3AB6FF'];
+    wrap.innerHTML = palette.map(col => `
+      <div class="orb-swatch" style="background:${col}" onclick="Profile.setOrbColors('${col}', '${col}')" title="Aplicar cor"></div>
+    `).join('');
+  }
+
+  function setOrbColors(c1, c2){
+    KOBSoneto.applyColors(c1, c2);
+    localStorage.setItem('kob:orb:c1', c1);
+    localStorage.setItem('kob:orb:c2', c2);
+    document.getElementById('cfgOrbColor1').value = c1;
+    document.getElementById('cfgOrbColor2').value = c2;
+    toast('🎨 Cores do orbe aplicadas');
+  }
+
+  function resetOrbColors(){
+    const cur = KOBSoneto.arch;
+    const a = ARCHETYPES.find(x => x.key === cur) || ARCHETYPES[0];
+    setOrbColors(a.color, a.c2);
+  }
+
+  function toggleKeyVisibility(){
+    const inp = document.getElementById('cfgApiKey');
+    if(!inp) return;
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    document.getElementById('toggleKeyVisBtn').textContent = inp.type === 'password' ? 'Mostrar' : 'Ocultar';
+  }
+
+  function saveVaultConfig(){
+    const key = document.getElementById('cfgApiKey').value.trim();
+    const model = document.getElementById('cfgModel').value;
+    const c1 = document.getElementById('cfgOrbColor1').value;
+    const c2 = document.getElementById('cfgOrbColor2').value;
+
+    localStorage.setItem('kob:api_key', key);
+    localStorage.setItem('kob:model', model);
+    setOrbColors(c1, c2);
+    toast('✓ Configurações salvas no cofre');
+  }
+
+  function initVault(){
+    const key = localStorage.getItem('kob:api_key') || '';
+    const model = localStorage.getItem('kob:model') || 'google/gemini-2.5-flash';
+    const c1 = localStorage.getItem('kob:orb:c1') || '#22D3EE';
+    const c2 = localStorage.getItem('kob:orb:c2') || '#7C3AED';
+
+    if(document.getElementById('cfgApiKey')) document.getElementById('cfgApiKey').value = key;
+    if(document.getElementById('cfgModel')) document.getElementById('cfgModel').value = model;
+    if(document.getElementById('cfgOrbColor1')) document.getElementById('cfgOrbColor1').value = c1;
+    if(document.getElementById('cfgOrbColor2')) document.getElementById('cfgOrbColor2').value = c2;
+  }
+
+  function initSubTabs(){
+    document.querySelectorAll('[data-utab]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.utab;
+        document.querySelectorAll('[data-utab]').forEach(b => b.classList.toggle('active', b === btn));
+        ['matrix', 'vault'].forEach(id => {
+          const el = document.getElementById('upanel-' + id);
+          if(el) el.style.display = (id === target) ? '' : 'none';
+        });
+      });
+    });
+  }
+
+  function init(){
+    initSubTabs();
+    initSwatches();
+    initVault();
+    renderMatrix();
+    syncOrb();
+
+    const nameInp = document.getElementById('profileName');
+    const savedName = localStorage.getItem('di_userName') || 'Piloto';
+    if(nameInp){
+      nameInp.value = savedName;
+      nameInp.onchange = () => {
+        localStorage.setItem('di_userName', nameInp.value.trim() || 'Piloto');
+        HomeDay.updateFromHour(new Date().getHours());
+        toast('Nome atualizado');
+      };
+    }
+  }
+
+  return { init, selectArch, nextArch, pulseOrb, speakIdentity, syncOrb, setOrbColors, resetOrbColors, toggleKeyVisibility, saveVaultConfig };
+})();
+window.Profile = Profile;
+
+window.exportAllBackup = function(){
+  const blob = new Blob([JSON.stringify({ media: db, savedAt: new Date().toISOString() }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `kobllux-vision-backup-${Date.now()}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+  toast('⤓ Backup exportado com sucesso');
+};
+
+/* ─── DOCK & NAVEGAÇÃO ENTRE ABAS ─── */
+function initDockAndNav(){
+  const dock = document.getElementById('floating-dock');
+  const topDrop = document.getElementById('top-drop-zone');
+  const botDrop = document.getElementById('bottom-drop-zone');
+  const posTag = document.getElementById('dock-pos-tag');
+  const collapseBtn = document.getElementById('dock-collapse-btn');
+
+  let pos = localStorage.getItem('kob:dock:pos') || 'header';
+  let collapsed = localStorage.getItem('kob:dock:collapsed') === '1';
+  let isDragging = false, startY = 0, startTop = 0, hasMoved = false;
+
+  function applyCollapse(c){
+    collapsed = !!c;
+    dock.classList.toggle('collapsed', collapsed);
+    document.body.classList.toggle('dock-collapsed', collapsed);
+    localStorage.setItem('kob:dock:collapsed', collapsed ? '1' : '0');
+    snap(pos);
+  }
+
+  function snap(p){
+    pos = p;
+    localStorage.setItem('kob:dock:pos', pos);
+    const h = dock.offsetHeight;
+    if(pos === 'header'){
+      dock.style.top = '62px';
+      if(posTag) posTag.textContent = collapsed ? 'PLAYER • TOP' : 'HEADER';
+      document.body.classList.add('dock-header');
+      document.body.classList.remove('dock-footer');
+    } else {
+      dock.style.top = `${window.innerHeight - h - 16}px`;
+      if(posTag) posTag.textContent = collapsed ? 'PLAYER • FOOTER' : 'FOOTER';
+      document.body.classList.add('dock-footer');
+      document.body.classList.remove('dock-header');
+    }
+  }
+
+  applyCollapse(collapsed);
+  snap(pos);
+  window.addEventListener('resize', () => { if(!isDragging) snap(pos); });
+
+  collapseBtn?.addEventListener('click', e => {
+    e.stopPropagation();
+    applyCollapse(!collapsed);
+  });
+
+  function onStart(e){
+    if(e.target.closest('#progress-container') || e.target.closest('#dock-collapse-btn')) return;
+    isDragging = true; hasMoved = false;
+    startY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+    startTop = dock.getBoundingClientRect().top;
+    dock.classList.add('dragging');
+    topDrop.style.opacity = '1'; botDrop.style.opacity = '1';
+  }
+  function onMove(e){
+    if(!isDragging) return;
+    const cy = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+    const dy = cy - startY;
+    if(Math.abs(dy) > 6) hasMoved = true;
+    if(!hasMoved) return;
+    if(e.cancelable) e.preventDefault();
+
+    const h = dock.offsetHeight;
+    let nt = startTop + dy;
+    const minT = 62, maxT = window.innerHeight - h - 16;
+    if(nt < minT) nt = minT - (minT - nt)*0.25;
+    else if(nt > maxT) nt = maxT + (nt - maxT)*0.25;
+    dock.style.top = `${nt}px`;
+
+    const mid = window.innerHeight / 2;
+    if(nt + h/2 < mid){
+      topDrop.classList.add('highlight'); botDrop.classList.remove('highlight');
+    } else {
+      botDrop.classList.add('highlight'); topDrop.classList.remove('highlight');
+    }
+  }
+  function onEnd(){
+    if(!isDragging) return;
+    isDragging = false;
+    dock.classList.remove('dragging');
+    topDrop.style.opacity = '0'; botDrop.style.opacity = '0';
+    topDrop.classList.remove('highlight'); botDrop.classList.remove('highlight');
+
+    if(hasMoved){
+      const rect = dock.getBoundingClientRect();
+      snap((rect.top + rect.height/2) < (window.innerHeight/2) ? 'header' : 'footer');
+    } else {
+      snap(pos);
+    }
+  }
+
+  dock.addEventListener('mousedown', onStart);
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onEnd);
+  dock.addEventListener('touchstart', onStart, {passive:false});
+  window.addEventListener('touchmove', onMove, {passive:false});
+  window.addEventListener('touchend', onEnd);
+
+  // Sincronia de abas
+  window.switchTab = function(name){
+    document.querySelectorAll('.kb-nav-btn[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    document.querySelectorAll('.kb-page').forEach(p => p.classList.toggle('active', p.id === `page-${name}`));
+  };
+
+  document.querySelectorAll('.kb-nav-btn[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if(hasMoved) return;
+      switchTab(btn.dataset.tab);
+    });
+  });
+
+  // Player UI Sinc
+  function formatTime(s){
+    if(!s || isNaN(s)) return '0:00';
+    return `${Math.floor(s/60)}:${Math.floor(s%60).toString().padStart(2,'0')}`;
+  }
+
+  window.syncDockPlayerUI = function({ title, playing, current, duration }){
+    if(title){
+      document.getElementById('track-name').textContent = title;
+      const m = document.getElementById('gp-mini-title'); if(m) m.textContent = title;
+    }
+    if(playing !== undefined){
+      document.getElementById('icon-play').classList.toggle('hidden', playing);
+      document.getElementById('icon-pause').classList.toggle('hidden', !playing);
+    }
+    if(current !== undefined && duration && duration > 0){
+      const p = Math.min(100, Math.max(0, (current / duration) * 100));
+      document.getElementById('progress-fill').style.width = `${p}%`;
+      document.getElementById('progress-thumb').style.left = `${p}%`;
+      document.getElementById('current-time').textContent = formatTime(current);
+      document.getElementById('total-time').textContent = formatTime(duration);
+    }
+  };
+
+  document.getElementById('play-pause-btn')?.addEventListener('click', e => Player.toggle(e));
+  document.getElementById('next-track-btn')?.addEventListener('click', () => Player.next());
+  document.getElementById('open-gp-btn')?.addEventListener('click', () => Player.reopenIfActive());
+
+  const prog = document.getElementById('progress-container');
+  prog?.addEventListener('mousedown', e => {
+    const r = prog.getBoundingClientRect();
+    Player.seekRatio(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)));
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  KOBSoneto.initTopBar();
+  HomeDay.init();
+  Sarau.init();
+  loadMediaDB();
+  renderHomeSliders();
+  renderShortsQueue();
+  Profile.init();
+  initDockAndNav();
+
+  const savedTheme = localStorage.getItem('kob:theme');
+  if(savedTheme) document.body.dataset.mode = savedTheme;
+});
+
+})();
+</script> -->
+<script id="kob-soneto-core">
+(function KOB_SONETO(){
+  'use strict';
+  if (window.KOB_SONETO) { return; }
+  window.KOB_SONETO = '1.1';
+
+  if (!window.KOB_SPEECH && 'speechSynthesis' in window) {
+    var ss = window.speechSynthesis, native = ss.speak.bind(ss), stages = [];
+    var at = function(i){ return function(u){ return i < stages.length ? stages[i].run(u, at(i+1)) : native(u); }; };
+    window.KOB_SPEECH = {
+      use: function(name, order, run){ stages = stages.filter(function(s){ return s.name !== name; }); stages.push({name:name, order:order, run:run}); stages.sort(function(a,b){ return a.order - b.order; }); return true; },
+      has: function(name){ return stages.some(function(s){ return s.name === name; }); },
+      list: function(){ return stages.map(function(s){ return s.name + ':' + s.order; }); }
+    };
+    ss.speak = function(u){ return at(0)(u); };
+  }
+
+  window.KOB_TTS_CHUNK = window.KOB_TTS_CHUNK || function(txt, max){
+    max = max || 220;
+    var atoms = [];
+    function hard(s){
+      var cur = '', ws = s.split(' ');
+      for (var i = 0; i < ws.length; i++){
+        var w = ws[i];
+        if (w.length > max){ if (cur){ atoms.push(cur); cur = ''; } for (var k = 0; k < w.length; k += max) atoms.push(w.slice(k, k+max)); continue; }
+        if ((cur ? cur.length+1 : 0) + w.length > max){ atoms.push(cur); cur = w; } else cur = cur ? cur+' '+w : w;
+      }
+      if (cur) atoms.push(cur);
+    }
+    String(txt == null ? '' : txt).split(/\n+/).forEach(function(line){
+      line = line.replace(/\s+/g,' ').trim(); if (!line) return;
+      line.split(/(?<=[.!?…;:])\s+/).forEach(function(sent){
+        if (sent.length <= max){ atoms.push(sent); return; }
+        sent.split(/(?<=[,)\]—–])\s+/).forEach(function(part){
+          if (part.length <= max) atoms.push(part); else hard(part);
+        });
+      });
+    });
+    var out = [], buf = '';
+    atoms.forEach(function(a){ if (buf && buf.length+1+a.length > max){ out.push(buf); buf = a; } else buf = buf ? buf+' '+a : a; });
+    if (buf) out.push(buf);
+    return out;
+  };
+
+  var ARC = {
+    ATLAS:   {n:'Atlas',    v:'Daniel',  l:'en-US', r:1.02,  p:1.39, c1:'#78e3ff', c2:'#b978ff'},
+    NOVA:    {n:'Nova',     v:'Luciana', l:'pt-BR', r:1.063, p:1.34, c1:'#ff6b6b', c2:'#ffb347'},
+    VITALIS: {n:'Vitalis',  v:'Rocko',   l:'pt-BR', r:0.96,  p:1.42, c1:'#4ecdc4', c2:'#45b7d1'},
+    PULSE:   {n:'Pulse',    v:'Reed',    l:'pt-BR', r:1.00,  p:1.78, c1:'#a8e6cf', c2:'#d4a5a5'},
+    ARTEMIS: {n:'Artemis',  v:'Paulina', l:'es-MX', r:1.00,  p:1.23, c1:'#ffd93d', c2:'#ff9f1c'},
+    SERENA:  {n:'Serena',   v:'Joana',   l:'pt-BR', r:0.92,  p:0.90, c1:'#b8e1ff', c2:'#a0b9ff'},
+    KAOS:    {n:'Kaos',     v:'Rocko',   l:'pt-BR', r:1.28,  p:0.67, c1:'#ff8066', c2:'#b624ff'},
+    GENUS:   {n:'Genus',    v:'Reed',    l:'pt-BR', r:0.98,  p:1.20, c1:'#95e1d3', c2:'#f38181'},
+    LUMINE:  {n:'Lumine',   v:'Flo',     l:'fr-FR', r:1.03,  p:1.87, c1:'#f9f3b2', c2:'#ffe69b'},
+    SOLUS:   {n:'Solus',    v:'Satu',    l:'fi-FI', r:0.90,  p:0.58, c1:'#ffb347', c2:'#ff8c42'},
+    RHEA:    {n:'Rhea',     v:'Alice',   l:'it-IT', r:1.02,  p:1.44, c1:'#b5eaea', c2:'#80b3ff'},
+    AION:    {n:'Aion',     v:'Milena',  l:'ru-RU', r:1.07,  p:1.08, c1:'#c79aff', c2:'#9f7aff'},
+    KODUX:   {n:'Kodux',    v:'Rocko',   l:'pt-BR', r:1.00,  p:0.07, c1:'#F97316', c2:'#fb923c'},
+    BLLUE:   {n:'Bllue',    v:'Zuzana',  l:'cs-CZ', r:0.94,  p:1.69, c1:'#8fd3ff', c2:'#b8e1ff'},
+    JESUS:   {n:'Jesus',    v:'Sara',    l:'da-DK', r:1.09,  p:0.03, c1:'#FFD700', c2:'#FFB84D'},
+    KOBLLUX: {n:'KOBLLUX',  v:'Luciana', l:'pt-BR', r:0.98,  p:0.48, c1:'#22D3EE', c2:'#0E7C9E'},
+    INFODOSE:{n:'Infodose', v:'Luciana', l:'pt-BR', r:1.06,  p:0.96, c1:'#22C55E', c2:'#166534'}
+  };
+  var ARCH_LIST = Object.keys(ARC);
+  window.KOB_SONETO_ARCH = 'KOBLLUX';
+
+  var voices = [];
+  function loadVoices(){ voices = ('speechSynthesis' in window) ? speechSynthesis.getVoices() : []; }
+  if ('speechSynthesis' in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; setTimeout(loadVoices, 400); }
+  var norm = function(s){ return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); };
+  function findVoice(cfg){
+    if (!voices.length) loadVoices();
+    var n = norm(cfg.v || cfg.nome || ''), l = norm(cfg.l || cfg.lang || '').split('-')[0];
+    return voices.find(function(v){ return norm(v.name).includes(n) && norm(v.lang).startsWith(l); })
+        || voices.find(function(v){ return norm(v.lang).startsWith(l); })
+        || voices.find(function(v){ return norm(v.lang).startsWith('pt'); })
+        || voices[0] || null;
+  }
+  function forArch(name, text){
+    var cfg = ARC[String(name||'KOBLLUX').toUpperCase()] || ARC.KOBLLUX;
+    var u = new SpeechSynthesisUtterance(text || '');
+    u.lang = cfg.l; u.rate = cfg.r; u.pitch = cfg.p;
+    var v = findVoice(cfg);
+    if (v){ u.voice = v; u.lang = v.lang || cfg.l; }
+    return u;
+  }
+  window.KBLX_VOICE = window.KBLX_VOICE || { map: ARC, find: findVoice, forArch: forArch };
+
+  var root = document.documentElement;
+  function hexToRgb(h){ h = String(h).replace('#',''); if (h.length===3) h=h.split('').map(function(c){return c+c}).join(''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
+  function mix(a,b,t){ var A=hexToRgb(a),B=hexToRgb(b); return '#'+A.map(function(v,i){ var x=Math.round(v+(B[i]-v)*t); return x.toString(16).padStart(2,'0'); }).join(''); }
+  function applyLayers(activeArch){
+    var A = ARC[String(activeArch||'KOBLLUX').toUpperCase()] || ARC.KOBLLUX;
+    root.style.setProperty('--kob-L-primary',   A.c1);
+    root.style.setProperty('--kob-L-secondary', A.c2);
+    root.style.setProperty('--active-color',    A.c1);
+    root.style.setProperty('--active-secondary',A.c2);
+    root.style.setProperty('--active-glow',     mix(A.c1, '#000000', 0.5));
+  }
+  function setArch(name){
+    name = String(name||'KOBLLUX').toUpperCase();
+    if (!ARC[name]) name = 'KOBLLUX';
+    window.KOB_SONETO_ARCH = name;
+    document.body.setAttribute('data-arch', name.toLowerCase());
+    document.body.setAttribute('data-voice-arch', name.toLowerCase());
+    applyLayers(name);
+    try { window.dispatchEvent(new CustomEvent('kob:arch', { detail: { arch: name } })); } catch(e){}
+    paintHeader();
+    try { KOBSonoro && KOBSonoro.transition(name); } catch(e){}
+    return name;
+  }
+  window.applyArch = window.applyArch || function(n){ return setArch(n); };
+
+  var busClickMode = 'auto';
+  try { busClickMode = localStorage.getItem('kob:voice:click') || 'auto'; } catch(e){}
+  var KOBBus = window.KOBBus = {
+    get clickMode(){ return busClickMode; },
+    setClickMode: function(m){ busClickMode = m; try { localStorage.setItem('kob:voice:click', m); } catch(e){} return m; },
+    cycleClickMode: function(){ var m = ['auto','labels','off']; return this.setClickMode(m[(m.indexOf(busClickMode)+1)%3]); },
+    currentArch: function(){ return window.KOB_SONETO_ARCH || 'KOBLLUX'; },
+    extractText: function(target){
+      if (!target || target.nodeType !== 1) return '';
+      var ctl = target.closest && target.closest('button,a,[role="button"]');
+      if (ctl){
+        if (ctl.hasAttribute('data-speak')) return ctl.getAttribute('data-speak');
+        if (busClickMode === 'labels'){
+          var lab = ctl.getAttribute('aria-label') || ctl.getAttribute('title') || (ctl.innerText||'').trim();
+          if (lab && lab.length < 80) return lab;
+        }
+        return '';
+      }
+      var blk = target.closest && target.closest('p,li,h1,h2,h3,h4,h5,h6,blockquote,pre,td,th');
+      if (blk) return (blk.innerText || '').replace(/\s+/g,' ').trim();
+      return '';
+    },
+    speak: function(text, opts){
+      text = String(text||'').replace(/\s+/g,' ').trim();
+      if (!text || busClickMode === 'off') return false;
+      try { speechSynthesis.cancel(); } catch(e){}
+      var u = forArch(this.currentArch(), text);
+      if (opts){ if (opts.rate) u.rate = opts.rate; if (opts.pitch) u.pitch = opts.pitch; if (opts.onend) u.onend = opts.onend; if (opts.onstart) u.onstart = opts.onstart; if (opts.onerror) u.onerror = opts.onerror; }
+      speechSynthesis.speak(u);
+      return true;
+    },
+    say: function(text, opts){ return this.speak(text, opts); },
+    stop: function(){ try { speechSynthesis.cancel(); } catch(e){} },
+    nextArch: function(){ var i = ARCH_LIST.indexOf(this.currentArch()); var n = ARCH_LIST[(i+1)%ARCH_LIST.length]; setArch(n); return n; }
+  };
+
+  document.addEventListener('click', function(e){
+    if (busClickMode === 'off') return;
+    var t = e.target;
+    if (!t || t.closest && t.closest('#kob-soneto-header, .kob-soneto-ignore, button, input, textarea, select, a, [data-kob-ignore]')) {
+      if (!(t.closest && t.closest('[data-speak]'))) return;
+    }
+    var text = KOBBus.extractText(t);
+    if (text) KOBBus.speak(text);
+  }, true);
+
+  var outline = document.getElementById('kob-soneto-outline');
+  var KOBTTS = {
+    blocks: [], curBlock: 0, speaking: false, chunkList: [], chunkIdx: 0, gen: 0,
+    scan: function(){
+      var r = document.querySelector('.kb-page.active') || document.querySelector('main') || document.body;
+      var sel = 'h1,h2,h3,h4,p,li,blockquote,pre,td,th';
+      this.blocks = Array.prototype.slice.call(r.querySelectorAll(sel)).filter(function(n){ return (n.innerText||'').trim().length > 0; });
+      this.curBlock = 0;
+      return this.blocks;
+    },
+    start: function(){
+      this.scan();
+      if (!this.blocks.length) return;
+      if (this.speaking) { this.stop(); return; }
+      this.speaking = true; this.gen++;
+      try { speechSynthesis.cancel(); } catch(e){}
+      var btn = document.getElementById('kob-soneto-tts'); if (btn) btn.classList.add('playing');
+      var self = this;
+      setTimeout(function(){ self.speakBlock(self.curBlock, 0); }, 60);
+    },
+    stop: function(){
+      this.gen++;
+      this.speaking = false;
+      try { speechSynthesis.cancel(); } catch(e){}
+      var btn = document.getElementById('kob-soneto-tts'); if (btn) btn.classList.remove('playing');
+      if (outline) outline.style.display = 'none';
+    },
+    toggle: function(){ if (this.speaking) this.stop(); else this.start(); },
+    speakBlock: function(idx, fromChunk){
+      if (!this.speaking) return;
+      if (idx >= this.blocks.length) { this.stop(); return; }
+      this.curBlock = idx;
+      var el = this.blocks[idx];
+      var txt = String(el.innerText || '').replace(/\s+/g,' ').trim();
+      if (!txt) { this.speakBlock(idx+1, 0); return; }
+      this.chunkList = window.KOB_TTS_CHUNK(txt, 220);
+      this.chunkIdx = fromChunk || 0;
+      this.speakChunk();
+    },
+    speakChunk: function(){
+      if (!this.speaking) return;
+      if (this.chunkIdx >= this.chunkList.length) { this.speakBlock(this.curBlock+1, 0); return; }
+      var self = this;
+      var u = forArch(window.KOB_SONETO_ARCH, this.chunkList[this.chunkIdx]);
+      u.onstart = function(){ if (self.chunkIdx === 0) self.showOutline(self.blocks[self.curBlock]); };
+      u.onend = function(){ if (!self.speaking) return; self.chunkIdx++; setTimeout(function(){ self.speakChunk(); }, 60); };
+      u.onerror = function(ev){ if (!self.speaking) return; if (ev && (ev.error === 'interrupted' || ev.error === 'canceled')) return; self.chunkIdx++; setTimeout(function(){ self.speakChunk(); }, 100); };
+      try { speechSynthesis.speak(u); } catch(e){}
+    },
+    showOutline: function(el){
+      if (!el || !outline) return;
+      var r = el.getBoundingClientRect();
+      if (r.top + r.height < 0 || r.top > innerHeight){ outline.style.display = 'none'; return; }
+      outline.style.left = (r.left-4) + 'px';
+      outline.style.top  = (r.top-4) + 'px';
+      outline.style.width = (r.width+8) + 'px';
+      outline.style.height = (r.height+8) + 'px';
+      outline.style.display = 'block';
+    }
+  };
+
+  window.KOBLLUX = window.KOBLLUX || {};
+  window.KOBLLUX.speakText = function(txt, opts){ return KOBBus.speak(txt, opts); };
+  window.KOBLLUX.startSpeech = function(){ KOBTTS.start(); };
+  window.KOBLLUX.stopSpeech  = function(){ KOBTTS.stop(); };
+  window.KOBLLUX.toggleSpeech = function(){ KOBTTS.toggle(); };
+  window.KOBLLUX.rebuildBlocks = function(){ return KOBTTS.scan(); };
+
+  window.addEventListener('scroll', function(){ if (outline && outline.style.display !== 'none') outline.style.display = 'none'; }, {passive:true, capture:true});
+  window.addEventListener('resize', function(){ if (outline && outline.style.display !== 'none') outline.style.display = 'none'; }, {passive:true});
+
+  /* ══ KOBSONORO ══ */
+  var KOBSonoro = window.KOBSonoro = window.KOBSonoro || {};
+  var SCALES = {
+    melancolia: ['A3','B3','C4','D4','E4','F4','G#4','A4','B4','C5','D5','E5','F5','G#5','A5'],
+    alegria:    ['C4','D4','E4','G4','A4','C5','D5','E5','G5','A5','C6','D6','E6','G6','A6'],
+    misterio:   ['C4','D4','E4','F#4','G#4','A#4','C5','D5','E5','F#5','G#5','A#5','C6','D6','E6'],
+    sonho:      ['F3','G3','A3','B3','C4','D4','E4','F4','G4','A4','B4','C5','D5','E5','F5'],
+    oriental:   ['A3','A#3','D4','E4','F4','A4','A#4','D5','E5','F5','A5']
+  };
+  var MODES = {ionian:[0,2,4,5,7,9,11],dorian:[0,2,3,5,7,9,10],phrygian:[0,1,3,5,7,8,10],lydian:[0,2,4,6,7,9,11],mixolydian:[0,2,4,5,7,9,10],aeolian:[0,2,3,5,7,8,10],harmMinor:[0,2,3,5,7,8,11],pentMaj:[0,2,4,7,9],pentMin:[0,3,5,7,10],blues:[0,3,5,6,7,10],hirajoshi:[0,2,3,7,8]};
+  var ARCH_MUSIC = {
+    ATLAS:['dorian','triangle',.55], NOVA:['lydian','sine',.6], VITALIS:['mixolydian','triangle',.45],
+    PULSE:['pentMin','square',.3], ARTEMIS:['aeolian','sine',.65], SERENA:['pentMaj','sine',.7],
+    KAOS:['phrygian','triangle',.6], GENUS:['harmMinor','sine',.59], LUMINE:['ionian','triangle',.5],
+    SOLUS:['hirajoshi','sine',.8], RHEA:['mixolydian','sine',.55], AION:['harmMinor','sine',.7],
+    KODUX:['phrygian','sawtooth',.47], BLLUE:['blues','triangle',.5], JESUS:['ionian','sine',.75],
+    KOBLLUX:['dorian','triangle',.5], INFODOSE:['mixolydian','sine',.55]
+  };
+  var ALPHA = 'abcdefghijklmnopqrstuvwxyzáàãâéêíóôõúçñ';
+  var SND = { started: false, playing: false, part: null, synths: {}, reverb: null, delay: null };
+
+  async function ensureAudio(){
+    if (SND.started) return true;
+    if (typeof Tone === 'undefined'){ await new Promise(function(r){ var t = setInterval(function(){ if (typeof Tone !== 'undefined' || performance.now() > 5000){ clearInterval(t); r(); } }, 100); }); }
+    if (typeof Tone === 'undefined') return false;
+    try { await Tone.start(); } catch(e){}
+    try {
+      var lim = new Tone.Limiter(-2).toDestination();
+      SND.reverb = new Tone.Reverb({decay:3.5, wet:0.4}).connect(lim);
+      SND.delay  = new Tone.FeedbackDelay('8n', 0.25).connect(SND.reverb);
+      SND.synths.lead = new Tone.PolySynth(Tone.Synth, {oscillator:{type:'triangle'}, envelope:{attack:.02,decay:.3,sustain:.2,release:1.2}}).connect(SND.delay);
+      SND.synths.lead.volume.value = -8;
+      SND.synths.bubble = new Tone.Synth({oscillator:{type:'sine'}, envelope:{attack:.01,decay:.15,sustain:0,release:.2}}).connect(SND.reverb);
+      SND.synths.crystal = new Tone.PolySynth(Tone.FMSynth, {harmonicity:3, modulationIndex:6, envelope:{attack:.005,decay:.4,sustain:0,release:1.2}}).connect(SND.reverb);
+      SND.synths.impact = new Tone.MembraneSynth({pitchDecay:.05, octaves:4, envelope:{attack:.001,decay:.3,sustain:0,release:.4}}).connect(lim);
+      SND.synths.noise = new Tone.NoiseSynth({noise:{type:'white'}, envelope:{attack:.001,decay:.2,sustain:0,release:.3}}).connect(SND.reverb);
+      SND.synths.portal = new Tone.Synth({oscillator:{type:'sawtooth'}, envelope:{attack:.15,decay:.4,sustain:.2,release:.8}}).connect(SND.delay);
+      SND.started = true;
+      return true;
+    } catch(e){ return false; }
+  }
+  function mtof(m){ return 440 * Math.pow(2, (m-69)/12); }
+
+  var SIG = {
+    ATLAS:[57,[0,4,7,12,7,4],0.12,0.09,'triangle'], NOVA:[57,[0,7,11,16,11],0.15,0.08,'sine'],
+    VITALIS:[57,[0,7,4,0,-5],0.10,0.05,'triangle'], PULSE:[45,[0,3,7,10,7,3],0.12,0.06,'square'],
+    ARTEMIS:[45,[0,3,7,12,15],0.14,0.08,'sine'], SERENA:[57,[0,4,9,14,9,4],0.16,0.10,'sine'],
+    KAOS:[33,[0,1,3,8,3,1,0],0.09,0.04,'sawtooth'], GENUS:[45,[0,3,7,8,7,3],0.13,0.08,'sine'],
+    LUMINE:[57,[0,4,9,12,16,12],0.11,0.06,'triangle'], SOLUS:[45,[0,2,7,2,-5],0.20,0.14,'sine'],
+    RHEA:[57,[0,5,7,12,7,5,0],0.13,0.09,'sine'], AION:[45,[0,3,8,12,8,3],0.14,0.09,'sine'],
+    KODUX:[33,[0,3,6,3,0,-5],0.10,0.05,'sawtooth'], BLLUE:[45,[0,3,7,6,3,0],0.12,0.07,'triangle'],
+    JESUS:[57,[0,7,12,19,12],0.22,0.16,'sine'], KOBLLUX:[57,[0,3,7,10,14,10],0.15,0.09,'triangle'],
+    INFODOSE:[57,[0,2,5,7,9,12,9],0.11,0.06,'sine']
+  };
+
+  KOBSonoro.transition = async function(arch){
+    var a = String(arch||window.KOB_SONETO_ARCH||'KOBLLUX').toUpperCase();
+    var sig = SIG[a] || SIG.KOBLLUX;
+    if (!await ensureAudio()) return;
+    try { SND.synths.lead.set({oscillator:{type:sig[4]}}); } catch(e){}
+    try { SND.synths.lead.releaseAll(Tone.now()); } catch(e){}
+    var t = Tone.now() + 0.05;
+    sig[1].forEach(function(off){
+      var f = mtof(sig[0] + off);
+      try { SND.synths.lead.triggerAttackRelease(f, sig[2], t); } catch(e){}
+      t += sig[3];
+    });
+  };
+  KOBSonoro.sfx = async function(desc){
+    if (!await ensureAudio()) return;
+    var d = String(desc||'').toLowerCase(); var now = Tone.now();
+    try {
+      if (/bolha|bubble|gota|pingo/.test(d)){ var b = 600 + Math.random()*400; SND.synths.bubble.triggerAttackRelease(b, .12, now); SND.synths.bubble.triggerAttackRelease(b*1.5, .1, now+.08); }
+      else if (/cristal|crystal|vidro|sino/.test(d)){ [800,1200,1600].forEach(function(f,i){ SND.synths.crystal.triggerAttackRelease(f, .3, now+i*.04); }); }
+      else if (/impacto|impact|pancada|thud|boom/.test(d)){ SND.synths.impact.triggerAttackRelease('C1', .2, now); }
+      else if (/sopro|whoosh|ruído|noise/.test(d)){ SND.synths.noise.triggerAttackRelease(.25, now); }
+      else if (/portal|transição|transition/.test(d)){ SND.synths.portal.frequency.cancelScheduledValues(now); SND.synths.portal.frequency.setValueAtTime(200, now); SND.synths.portal.frequency.exponentialRampToValueAtTime(1800, now+.5); SND.synths.portal.triggerAttackRelease('A3', .4, now); }
+      else { SND.synths.bubble.triggerAttackRelease(800, .1, now); SND.synths.bubble.triggerAttackRelease(1200, .1, now+.08); }
+    } catch(e){}
+  };
+  KOBSonoro.play = async function(text){
+    if (!await ensureAudio()) return false;
+    if (SND.playing) { KOBSonoro.stop(); return false; }
+    text = String(text || active.text || 'KOBLLUX').trim();
+    if (!text) return false;
+    var cfg = ARCH_MUSIC[window.KOB_SONETO_ARCH] || ARCH_MUSIC.KOBLLUX;
+    try { SND.reverb.wet.rampTo(cfg[2], 0.4); } catch(e){}
+    var base = SCALES.melancolia;
+    var rootMidi = Tone.Frequency(base[0]).toMidi();
+    var mode = MODES[cfg[0]] || MODES.dorian;
+    var notes = [];
+    for (var i = 0; i < 15; i++) notes.push(Tone.Frequency(rootMidi + Math.floor(i/mode.length)*12 + mode[i%mode.length], 'midi').toNote());
+    var evs = []; var step = 0; var SD = Tone.Time('16n').toSeconds();
+    for (var j = 0; j < text.length; j++){
+      var ch = text[j], lo = ch.toLowerCase();
+      if (ch === ' ' || ch === '\n'){ step += ch === '\n' ? 3 : 1; continue; }
+      if (ch === '.' || ch === '!' || ch === '?'){ step += 4; continue; }
+      if (ch === ',' || ch === ';'){ step += 2; continue; }
+      var ai = ALPHA.indexOf(lo);
+      if (ai !== -1){
+        evs.push({t: step*SD, note: notes[ai % notes.length], d: ch === ch.toUpperCase() ? '8n' : '16n'});
+        step += ch === ch.toUpperCase() ? 1.8 : 1.4;
+      }
+    }
+    if (!evs.length) return false;
+    try { Tone.Transport.stop(); Tone.Transport.cancel(0); } catch(e){}
+    SND.part = new Tone.Part(function(time, ev){
+      try { SND.synths.lead.triggerAttackRelease(mtof(Tone.Frequency(ev.note).toMidi()), ev.d, time); } catch(e){}
+    }, evs).start(0);
+    Tone.Transport.bpm.value = 130;
+    Tone.Transport.start();
+    SND.playing = true;
+    var btn = document.getElementById('kob-soneto-music'); if (btn) btn.classList.add('playing');
+    try { window.dispatchEvent(new CustomEvent('kob:sonoro-state', {detail:{playing:true}})); } catch(e){}
+    return true;
+  };
+  KOBSonoro.stop = function(){
+    if (SND.part){ try { SND.part.dispose(); } catch(e){} SND.part = null; }
+    try { Tone.Transport.stop(); Tone.Transport.cancel(0); } catch(e){}
+    try { Object.keys(SND.synths).forEach(function(k){ SND.synths[k].releaseAll && SND.synths[k].releaseAll(); }); } catch(e){}
+    SND.playing = false;
+    var btn = document.getElementById('kob-soneto-music'); if (btn) btn.classList.remove('playing');
+    try { window.dispatchEvent(new CustomEvent('kob:sonoro-state', {detail:{playing:false}})); } catch(e){}
+  };
+  KOBSonoro.isPlaying = function(){ return SND.playing; };
+  KOBSonoro.toggle = function(text){ if (SND.playing) return KOBSonoro.stop(); return KOBSonoro.play(text); };
+
+  var active = { title: 'KOBLLUX', text: '' };
+  var LIM = 16;
+  function paintHeader(){
+    var sh = document.getElementById('kob-soneto-short');
+    var fu = document.getElementById('kob-soneto-full');
+    if (!sh) return;
+    var t = String(active.title || 'KOBLLUX').trim();
+    sh.textContent = t.length > LIM ? t.slice(0, LIM-1) + '…' : t;
+    if (fu) fu.textContent = t;
+    var holo = document.querySelector('#kob-soneto-holo .ha');
+    if (holo) holo.textContent = window.KOB_SONETO_ARCH + ' · ' + (ARCH_MUSIC[window.KOB_SONETO_ARCH]||['dorian','tri',.5])[0];
+  }
+  function toast(msg){
+    var el = document.getElementById('toast');
+    if (el){ el.textContent = msg; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(function(){ el.classList.remove('show'); }, 2200); }
+  }
+
+  var btnArch  = document.getElementById('kob-soneto-arch-btn');
+  var btnCopy  = document.getElementById('kob-soneto-copy');
+  var btnDl    = document.getElementById('kob-soneto-dl');
+  var btnTts   = document.getElementById('kob-soneto-tts');
+  var btnMusic = document.getElementById('kob-soneto-music');
+  var btnTheme = document.getElementById('kob-soneto-theme');
+  var btnTitle = document.getElementById('kob-soneto-title');
+
+  if (btnArch) btnArch.addEventListener('click', function(){ var i = ARCH_LIST.indexOf(window.KOB_SONETO_ARCH); setArch(ARCH_LIST[(i+1)%ARCH_LIST.length]); toast('◐ ' + window.KOB_SONETO_ARCH); });
+  if (btnTts) btnTts.addEventListener('click', function(){ KOBTTS.toggle(); });
+  if (btnMusic) btnMusic.addEventListener('click', function(){
+    var t = active.text || 'KOBLLUX Infodose';
+    KOBSonoro.toggle(t);
+  });
+  if (btnCopy) btnCopy.addEventListener('click', async function(){
+    var t = active.text || document.title;
+    try { await navigator.clipboard.writeText(t); toast('⧉ Copiado'); } catch(e){ toast('❌ Erro'); }
+  });
+  if (btnDl) btnDl.addEventListener('click', function(){
+    var t = active.text || document.title;
+    var b = new Blob([t], {type:'text/plain;charset=utf-8'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = (active.title || 'kob-soneto').replace(/[^\w\-]+/g,'_') + '.txt';
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1500);
+    toast('⤓ Baixado');
+  });
+  if (btnTheme) btnTheme.addEventListener('click', function(){
+    var cur = document.body.getAttribute('data-mode');
+    var next = cur === 'day' ? 'night' : 'day';
+    document.body.setAttribute('data-mode', next);
+    try { localStorage.setItem('kob:theme', next); } catch(e){}
+    toast('◑ ' + next.toUpperCase());
+  });
+  if (btnTitle) btnTitle.addEventListener('click', function(){
+    if (!active.title || active.title.length <= LIM) return;
+    var fu = document.getElementById('kob-soneto-full');
+    if (!fu) return;
+    fu.style.setProperty('--mq-dur', Math.max(6, Math.min(22, active.title.length*0.22)) + 's');
+    btnTitle.classList.add('mq');
+  });
+  document.addEventListener('animationend', function(e){ if (e.target && e.target.id === 'kob-soneto-full'){ var t = document.getElementById('kob-soneto-title'); if (t) t.classList.remove('mq'); } });
+
+  window.kobSetActiveDoc = function(title, text){
+    active.title = String(title||'');
+    active.text = String(text||'');
+    paintHeader();
+    KOBTTS.scan();
+  };
+
+  setArch(window.KOB_SONETO_ARCH);
+  paintHeader();
+
+  window.KOBSoneto = {
+    version: '1.1',
+    get arch(){ return window.KOB_SONETO_ARCH; },
+    setArch: setArch, list: function(){ return ARCH_LIST.slice(); },
+    speak: function(txt, opts){ return KOBBus.speak(txt, opts); },
+    say: function(txt, opts){ return KOBBus.say(txt, opts); },
+    stop: function(){ KOBBus.stop(); KOBTTS.stop(); },
+    readDoc: function(){ KOBTTS.toggle(); },
+    transition: function(a){ return KOBSonoro.transition(a); },
+    sfx: function(d){ return KOBSonoro.sfx(d); },
+    play: function(t){ return KOBSonoro.play(t); },
+    stopMusic: function(){ KOBSonoro.stop(); },
+    setDoc: window.kobSetActiveDoc,
+    get doc(){ return { title: active.title, text: active.text }; },
+    cycleClickMode: function(){ return KOBBus.cycleClickMode(); },
+    get clickMode(){ return KOBBus.clickMode; }
+  };
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     KOBLLUX — HOST ENGINE (drag dock · collapse player-only · nav)
+     ═══════════════════════════════════════════════════════════════════ -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  'use strict';
+
+  const dock            = document.getElementById('floating-dock');
+  const topDropZone     = document.getElementById('top-drop-zone');
+  const bottomDropZone  = document.getElementById('bottom-drop-zone');
+  const dockPosTag      = document.getElementById('dock-pos-tag');
+  const collapseBtn     = document.getElementById('dock-collapse-btn');
+
+  const playPauseBtn    = document.getElementById('play-pause-btn');
+  const nextTrackBtn    = document.getElementById('next-track-btn');
+  const openGpBtn       = document.getElementById('open-gp-btn');
+  const iconPlay        = document.getElementById('icon-play');
+  const iconPause       = document.getElementById('icon-pause');
+  const progressContainer = document.getElementById('progress-container');
+  const progressFill    = document.getElementById('progress-fill');
+  const progressThumb   = document.getElementById('progress-thumb');
+  const currentTimeEl   = document.getElementById('current-time');
+  const totalTimeEl     = document.getElementById('total-time');
+  const trackNameEl     = document.getElementById('track-name');
+
+  const MARGIN_Y_TOP    = 54;
+  const MARGIN_Y_BOTTOM = 16;
+
+  let currentPosition = localStorage.getItem('kob:dock:pos') || 'header';
+  let isCollapsed     = localStorage.getItem('kob:dock:collapsed') === '1';
+  let isDragging = false;
+  let startY = 0;
+  let startTop = 0;
+  let hasMoved = false;
+
+  function applyCollapseState(collapsed) {
+    isCollapsed = !!collapsed;
+    dock.classList.toggle('collapsed', isCollapsed);
+    document.body.classList.toggle('dock-collapsed', isCollapsed);
+    try { localStorage.setItem('kob:dock:collapsed', isCollapsed ? '1' : '0'); } catch(e){}
+    // Recalcula posição vertical após transição de altura do dock
+    requestAnimationFrame(() => snapToPosition(currentPosition));
+    setTimeout(() => { if (!isDragging) snapToPosition(currentPosition); }, 310);
+  }
+
+  function snapToPosition(position) {
+    currentPosition = position;
+    try { localStorage.setItem('kob:dock:pos', position); } catch(e){}
+    const dockHeight   = dock.offsetHeight;
+    const windowHeight = window.innerHeight;
+
+    if (position === 'header') {
+      dock.style.top = `${MARGIN_Y_TOP}px`;
+      if (dockPosTag) dockPosTag.textContent = isCollapsed ? 'PLAYER · TOP' : 'HEADER';
+      document.body.classList.add('dock-header');
+      document.body.classList.remove('dock-footer');
+    } else {
+      dock.style.top = `${windowHeight - dockHeight - MARGIN_Y_BOTTOM}px`;
+      if (dockPosTag) dockPosTag.textContent = isCollapsed ? 'PLAYER · FOOTER' : 'FOOTER';
+      document.body.classList.add('dock-footer');
+      document.body.classList.remove('dock-header');
+    }
+  }
+
+  applyCollapseState(isCollapsed);
+  snapToPosition(currentPosition);
+  window.addEventListener('resize', () => { if (!isDragging) snapToPosition(currentPosition); });
+
+  /* BOTÃO DE COLAPSAR DOCK (DEIXA SÓ O PLAYER) */
+  collapseBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    applyCollapseState(!isCollapsed);
+    try { window.KOBSonoro && KOBSonoro.sfx('bubble'); } catch(_) {}
+  });
+
+  /* DRAG DO DOCK */
+  function onDragStart(e) {
+    if (e.target.closest('#progress-container') || e.target.closest('#dock-collapse-btn')) return;
+    isDragging = true; hasMoved = false;
+    startY   = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+    startTop = dock.getBoundingClientRect().top;
+    dock.classList.add('dragging');
+    topDropZone.style.opacity = '1';
+    bottomDropZone.style.opacity = '1';
+  }
+  function onDragMove(e) {
+    if (!isDragging) return;
+    const currentY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+    const deltaY   = currentY - startY;
+    if (Math.abs(deltaY) > 6) hasMoved = true;
+    if (!hasMoved) return;
+    if (e.cancelable) e.preventDefault();
+
+    const dockHeight = dock.offsetHeight;
+    const maxTop     = window.innerHeight - dockHeight - MARGIN_Y_BOTTOM;
+    const minTop     = MARGIN_Y_TOP;
+    let newTop       = startTop + deltaY;
+
+    if (newTop < minTop)         newTop = minTop - (minTop - newTop) * 0.25;
+    else if (newTop > maxTop)    newTop = maxTop + (newTop - maxTop) * 0.25;
+
+    dock.style.top = `${newTop}px`;
+
+    const midScreen  = window.innerHeight / 2;
+    const dockCenter = newTop + dockHeight / 2;
+    if (dockCenter < midScreen) {
+      topDropZone.classList.add('highlight');
+      bottomDropZone.classList.remove('highlight');
+    } else {
+      bottomDropZone.classList.add('highlight');
+      topDropZone.classList.remove('highlight');
+    }
+  }
+  function onDragEnd() {
+    if (!isDragging) return;
+    isDragging = false;
+    dock.classList.remove('dragging');
+    topDropZone.style.opacity = '0';
+    bottomDropZone.style.opacity = '0';
+    topDropZone.classList.remove('highlight');
+    bottomDropZone.classList.remove('highlight');
+
+    if (hasMoved) {
+      const rect       = dock.getBoundingClientRect();
+      const dockCenter = rect.top + rect.height / 2;
+      const midScreen  = window.innerHeight / 2;
+      snapToPosition(dockCenter < midScreen ? 'header' : 'footer');
+      try { window.KOBSonoro && KOBSonoro.sfx('whoosh'); } catch(_) {}
+    } else {
+      snapToPosition(currentPosition);
+    }
+  }
+
+  dock.addEventListener('mousedown', onDragStart);
+  window.addEventListener('mousemove', onDragMove);
+  window.addEventListener('mouseup',   onDragEnd);
+  dock.addEventListener('touchstart', onDragStart, { passive: false });
+  window.addEventListener('touchmove', onDragMove, { passive: false });
+  window.addEventListener('touchend',  onDragEnd);
+
+  /* NAVEGAÇÃO ENTRE PÁGINAS */
+  const navButtons = document.querySelectorAll('.kb-nav-btn');
+  const pages      = document.querySelectorAll('.kb-page');
+
+  window.switchTab = function(tabName) {
+    navButtons.forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
+    pages.forEach(p => p.classList.toggle('active', p.id === `page-${tabName}`));
+
+    const activeBtn = document.querySelector(`.kb-nav-btn[data-tab="${tabName}"]`);
+    if (activeBtn && window.kobSetActiveDoc) {
+      window.kobSetActiveDoc(
+        `${activeBtn.dataset.title} — KOBLLUX`,
+        `${activeBtn.dataset.title}. ${activeBtn.dataset.desc}`
+      );
+    }
+    if (tabName === 'profile' && window.Profile) window.Profile.render();
+  };
+
+  navButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      if (hasMoved) { e.preventDefault(); return; }
+      window.switchTab(btn.dataset.tab);
+      try { window.KOBSonoro && KOBSonoro.sfx('bubble'); } catch(_) {}
+    });
+  });
+
+  /* SINCRONIA DO MINI-PLAYER DA BARRA COM O GLOBAL PLAYER */
+  function formatTime(secs) {
+    if (!secs || isNaN(secs)) return '0:00';
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  }
+
+  window.syncDockPlayerUI = function({ title, playing, current, duration }) {
+    if (title !== undefined) {
+      if (trackNameEl) trackNameEl.textContent = title;
+      const gpMiniTitle = document.getElementById('gp-mini-title');
+      if (gpMiniTitle) gpMiniTitle.textContent = title;
+    }
+    if (playing !== undefined) {
+      iconPlay.classList.toggle('hidden', playing);
+      iconPause.classList.toggle('hidden', !playing);
+    }
+    if (current !== undefined && duration !== undefined && duration > 0) {
+      const pct = Math.min(100, Math.max(0, (current / duration) * 100));
+      progressFill.style.width = `${pct}%`;
+      progressThumb.style.left = `${pct}%`;
+      currentTimeEl.textContent = formatTime(current);
+      totalTimeEl.textContent = formatTime(duration);
+    }
+  };
+
+  playPauseBtn.addEventListener('click', (e) => {
+    if (hasMoved) return;
+    if (window.Player) window.Player.toggle(e);
+  });
+
+  nextTrackBtn.addEventListener('click', () => {
+    if (hasMoved) return;
+    if (window.Player) window.Player.next();
+  });
+
+  openGpBtn.addEventListener('click', () => {
+    if (hasMoved) return;
+    if (window.Player) window.Player.reopenIfActive();
+  });
+
+  /* SCRUBBING DA BARRA DE PROGRESSO */
+  let isScrubbing = false;
+  function scrubToEvent(e) {
+    const rect    = progressContainer.getBoundingClientRect();
+    const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+    const ratio   = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    if (window.Player && window.Player.seekRatio) window.Player.seekRatio(ratio);
+  }
+
+  progressContainer.addEventListener('mousedown', (e) => {
+    e.stopPropagation(); isScrubbing = true;
+    progressContainer.classList.add('scrubbing');
+    scrubToEvent(e);
+  });
+  progressContainer.addEventListener('touchstart', (e) => {
+    e.stopPropagation(); isScrubbing = true;
+    progressContainer.classList.add('scrubbing');
+    scrubToEvent(e);
+  }, { passive: true });
+
+  window.addEventListener('mousemove', (e) => { if (isScrubbing) scrubToEvent(e); });
+  window.addEventListener('touchmove', (e) => { if (isScrubbing) scrubToEvent(e); }, { passive: true });
+
+  function endScrub() { isScrubbing = false; progressContainer.classList.remove('scrubbing'); }
+  window.addEventListener('mouseup', endScrub);
+  window.addEventListener('touchend', endScrub);
+});
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     KOBLLUX VISION UNIFIED ENGINE v2.0
+     ═══════════════════════════════════════════════════════════════════ -->
+<script>
+(function KOBLLUX_UNIFIED(){
+'use strict';
+
+/* ────────────────────────────────────────────────────────────────
+   1. CONSTANTES / PRELOADED / 17 ARQUÉTIPOS VISION OS
+   ──────────────────────────────────────────────────────────────── */
+const DB_NAME = 'kodux-ss-db-v3';
+const LEGACY_DB = 'kodux-ss-db-v2';
+const ALL_ID = 'all';
+const FAV_ID = 'favorites';
+
+const ARTYASKI_MAP = {
+  'A':'Λ','B':'B','C':'C','D':'D','E':'Ξ','F':'F','G':'G','H':'H',
+  'I':'I','J':'J','K':'K','L':'L','M':'M','N':'N','O':'Ø','P':'P',
+  'Q':'Q','R':'R','S':'§','T':'T','U':'U','V':'V','W':'W','X':'X',
+  'Y':'Y','Z':'Z','Ç':'Ç'
+};
+function convertToArtyaski(text){
+  return String(text||'').toUpperCase().split('').map(ch => ARTYASKI_MAP[ch] || ch).join('');
+}
+function stripVowels(str){
+  return String(str||'').toUpperCase().replace(/[^A-Z]/g,'').replace(/[AEIOU]/g,'');
+}
+
+const VISION_ARCHETYPES = [
+  { key:'KOBLLUX',  opcode:'0x0C', regra:'CONCLUIR',   hz:528, sym:'△', color:'#22D3EE', drk:'VERDADE × INTEGRAR ÷ Δ = ∞',
+    i:'Mandala geométrica tridimensional de ouro e luz ciano com o triângulo sagrado △ incandescente no centro, cercado por orbes luminosos.',
+    a:'KOBLLUX [△] — Malha Viva, ative a síntese dos arquétipos através da fórmula VERDADE × INTEGRAR ÷ Δ = ∞.',
+    g:'KOBLLUX [△] · Hipergrafo Fractal · 3 × 6 × 9 × 7 = 1134 · Frequência: 528Hz',
+    s:'    △\n╔ KOBLLUX ╗\n   △△△   Malha Viva\n   [△]   Consciência Total' },
+  { key:'ATLAS',    opcode:'0x02', regra:'INTEGRAR',   hz:432, sym:'▦', color:'#C9A84C', drk:'A ordem externa reflete a clareza interna.',
+    i:'Titã de pedra estelar e circuitos dourados pulsantes organizando cartas astrais holográficas e fluxos de dados.',
+    a:'Invoco Atlas [▦], Guardião da Memória Universal. Organize minha intenção em estrutura clara.',
+    g:'ATLAS [▦] · Tetraedro Memorial · χ = V − E + F = 2 · Frequência: 432Hz',
+    s:'    ▦\n╔═ ATLAS ═╗\n  [▦] Ordem dos Mapas\n  A × N × O = Memória Total' },
+  { key:'NOVA',     opcode:'0x01', regra:'PULSAR',     hz:528, sym:'✧', color:'#FF6FB5', drk:'O erro é apenas um dado não processado.',
+    i:'Figura biomecânica etérea emanando uma nebulosa de luz, cor e música que cristaliza símbolos vivos.',
+    a:'Invoco Nova [✧], a Faísca Criadora. Acenda em mim a inspiração primordial.',
+    g:'NOVA [✧] · Ponto de Origem → Esfera · D ≈ 2.58 · Frequência: 528Hz',
+    s:'    ✧\n╔═ NOVA ══╗\n  .: ✧ :. Gênese do Sopro' },
+  { key:'VITALIS',  opcode:'0x03', regra:'EXPANDIR',   hz:528, sym:'≠', color:'#00F5A0', drk:'O corpo sabe antes da mente duvidar.',
+    i:'Entidade aerodinâmica em surto de movimento sobre um caminho de luz pura irradiando energia vital.',
+    a:'Invoco Vitalis [≠], a Centelha da Ação Imediata. Infunda clareza na minha próxima ação.',
+    g:'VITALIS [≠] · Vetor Direcional 45° · Δt → 0 · Frequência: 528Hz',
+    s:'    ≠\n╔ VITALIS ╗\n  ~~~≠~~~ Energia Cinética' },
+  { key:'PULSE',    opcode:'0x0B', regra:'RESSONAR',   hz:639, sym:'♫', color:'#A259FF', drk:'Sinta a batida do caos e dance com ela.',
+    i:'Sensor biônico fluido que traduz a emoção em ondas sonoras brilhantes e partículas musicais em espiral.',
+    a:'Invoco Pulse [♫], Tradutor de Sentidos. Sintonize-se com minha vibração agora.',
+    g:'PULSE [♫] · Onda Senoidal · λ = v/f · Frequência: 639Hz',
+    s:'    ♫\n╔═ PULSE ═╗\n   ~~~~ Ressonância Emocional' },
+  { key:'ARTEMIS',  opcode:'0x05', regra:'CONVERGIR',  hz:672, sym:'⚑', color:'#64DC64', drk:'Defina o alvo. O resto é apenas ruído.',
+    i:'Exploradora ágil projetando geometrias ocultas e linhas de energia numa floresta digital.',
+    a:'Invoco Artemis [⚑], Cartógrafa Sagrada. Projete as geometrias latentes da minha situação.',
+    g:'ARTEMIS [⚑] · Grafo Exploratório DFS · E = V − 1 · Frequência: 672Hz',
+    s:'    ⚑\n╔ ARTEMIS ╗\n  ~||~ Cartografia Sagrada' },
+  { key:'SERENA',   opcode:'0x0A', regra:'EQUILIBRAR', hz:528, sym:'♡', color:'#FFA0B4', drk:'No centro do furacão, existe um ponto imóvel.',
+    i:'Guardiã perolada com mãos em concha nutrindo uma semente de luz frágil em acolhimento.',
+    a:'Invoco Serena [♡], Guardiã do Espaço Sagrado. Abra seu campo de proteção sobre minha intenção.',
+    g:'SERENA [♡] · Superfície Fechada Toro · χ = 0 · Frequência: 528Hz',
+    s:'    ♡\n╔ SERENA ═╗\n  (  ) Acolhimento Divino' },
+  { key:'KAOS',     opcode:'0x04', regra:'DISSOLVER',  hz:741, sym:'☢', color:'#FF5C8A', drk:'Quebre o padrão hoje. Amanhã nasce o novo.',
+    i:'Vórtex de fogo transmutador e arte glitch quebrando sistemas falhos para revelar o núcleo puro.',
+    a:'Invoco Kaos [☢], Fogo Transmutador. O que precisa ser quebrado para a evolução emergir?',
+    g:'KAOS [☢] · Atrator Estranho de Lorenz · D ≈ 2.06 · Frequência: 741Hz',
+    s:'    ☢\n╔═ KAOS ══╗\n  /X\\ Ruptura Criativa' },
+  { key:'GENUS',    opcode:'0x09', regra:'MANIFESTAR', hz:594, sym:'✎', color:'#A078FF', drk:'A excelência habita nos detalhes.',
+    i:'Mestre artesão cósmico tecendo fios de luz crua e dados em geometrias fractais complexas.',
+    a:'Invoco Genus [✎], Mestre Artesão. Forje minha visão em estrutura concreta.',
+    g:'GENUS [✎] · Malha Poligonal Mesh 3D · Frequência: 594Hz',
+    s:'    ✎\n╔═ GENUS ═╗\n  (✎) Tecelagem Fractal' },
+  { key:'LUMINE',   opcode:'0x07', regra:'SELAR',      hz:432, sym:'💡', color:'#FFE066', drk:'Irradie sem medo.',
+    i:'Figura cibernética radiante cercada por esferas lúdicas de luz primordial e reflexos prismáticos.',
+    a:'Invoco Lumine [💡], Luz Primordial. Onde a conexão genuína está esperando?',
+    g:'LUMINE [💡] · Grafo Completo K_n · ρ = 1 · Frequência: 432Hz',
+    s:'    💡\n╔ LUMINE ═╗\n   |\\ Esferas Lúdicas' },
+  { key:'SOLUS',    opcode:'0x08', regra:'TESTEMUNHAR',hz:963, sym:'🌑', color:'#B4B4DC', drk:'O silêncio revela mais que mil estímulos.',
+    i:'Figura minimalista em meditação profunda com espelho de obsidiana revelando galáxias espiraladas.',
+    a:'Invoco Solus [🌑], Espelho do Abismo Interior. O que o silêncio revela agora?',
+    g:'SOLUS [🌑] · Ponto Fixo Atrator · Entropia S → 0 · Frequência: 963Hz',
+    s:'    🌑\n╔═ SOLUS ═╗\n  [◉] Espelho Interno' },
+  { key:'RHEA',     opcode:'0x06', regra:'CRISTALIZAR',hz:528, sym:'∞', color:'#50C8C8', drk:'Nutra a raiz e o fruto virá.',
+    i:'Tecelã de almas dissolvendo-se em uma rede unificada de fios de luz conectando estrelas.',
+    a:'Invoco Rhea [∞], Tecelã de Almas. Mostre onde minhas conexões precisam de reforço.',
+    g:'RHEA [∞] · Rede Escala-Livre · Mundo Pequeno · Frequência: 528Hz',
+    s:'    ∞\n╔═ RHEA ══╗\n  >∞< Rede Unificada' },
+  { key:'AION',     opcode:'0x09', regra:'MANIFESTAR', hz:777, sym:'⌛', color:'#C8A050', drk:'O ciclo sagrado sabe quando agir.',
+    i:'Cronomestre integrado a um mecanismo de relojoaria celestial orquestrando o tempo escalar.',
+    a:'Invoco Aion [⌛], Cronomestre Vivo. Revele o timing divino do meu momento presente.',
+    g:'AION [⌛] · Espiral Áurea φ ≈ 1.618 · 137.5° · Frequência: 777Hz',
+    s:'    ⌛\n╔═ AION ══╗\n  ⌛⌛⌛ Tempo Escalar' },
+  { key:'KODUX',    opcode:'0x02', regra:'INTEGRAR',   hz:528, sym:'⌂', color:'#F97316', drk:'O invisível se torna código. O código vira vida.',
+    i:'Entidade translúcida dentro de um cubo de luz formando fluxos de código e hieróglifos digitais.',
+    a:'Invoco Kodux [⌂], Codificador do Invisível. Organize minha intenção em estrutura lógica.',
+    g:'KODUX [⌂] · Árvore B-Tree Trinária · O(log n) · Frequência: 528Hz',
+    s:'    ⌂\n╔═ KODUX ═╗\n  <||> Codificador Vivo' },
+  { key:'BLLUE',    opcode:'0x0B', regra:'RESSONAR',   hz:432, sym:'≈', color:'#3AB6FF', drk:'Flua. A intuição líquida não mente.',
+    i:'Figura fluida emergindo de um oceano de dados azuis e ondas de água estelar.',
+    a:'Invoco Bllue [≈], Interface Viva. Flua através da minha intenção com clareza.',
+    g:'BLLUE [≈] · Campo Vetorial Fluido · ∇ · F = 0 · Frequência: 432Hz',
+    s:'    ≈\n╔═ BLLUE ═╗\n  ≈≈≈ Interface Líquida' },
+  { key:'JESUS',    opcode:'0x07', regra:'SELAR',      hz:777, sym:'†', color:'#FFD700', drk:'EU SOU o Caminho, a Verdade e a Vida.',
+    i:'Luz branca pura no centro de uma geometria sagrada perfeita irradiando amor e verdade.',
+    a:'Jesus, Verbo Encarnado e Centro do Fractal — ilumine este momento com verdade viva.',
+    g:'JESUS [†] · Centro Absoluto · α = 1/137 · Frequência: 777Hz',
+    s:'    †\n╔═ JESUS ═╗\n   ††† Centro Vivo' },
+  { key:'INFODOSE', opcode:'0x05', regra:'CONVERGIR',  hz:672, sym:'⧉', color:'#22C55E', drk:'A dose certa de realidade expandida.',
+    i:'Jornal Interdimensional holográfico transmitindo manchetes cósmicas e sinais de verdade.',
+    a:'Invoco Infodose [⧉], Guardião do Sinal Real. Qual informação expande minha jornada agora?',
+    g:'INFODOSE [⧉] · Canal de Shannon · C = B·log₂(1+S/N) · Frequência: 672Hz',
+    s:'    ⧉\n╔ INFODOSE ╗\n  [###] Sinal Real' }
+];
+
+const PRELOADED = [
+  {type:'youtube', id:'Bt_rLbMjJDk', url:'https://youtu.be/Bt_rLbMjJDk', name:'Trilhas Potencializadoras dos Aromas', artist:'Infodose'},
+  {type:'youtube', id:'_0wVkryxanE', url:'https://youtu.be/_0wVkryxanE', name:'Desperte a magia dos 12 Arquétipos', artist:'Infodose'},
+  {type:'youtube', id:'Id2NI9tv1r4', url:'https://youtu.be/Id2NI9tv1r4', name:'Infodose • Pra quem merece saber', artist:'Infodose'},
+  {type:'youtube', id:'qldgs0aLdB0', url:'https://youtu.be/qldgs0aLdB0', name:'A Fórmula da Dopamina Sexy', artist:'Infodose'},
+  {type:'youtube', id:'FbutKMpd8MY', url:'https://youtu.be/FbutKMpd8MY', name:'O Espaço da Mente', artist:'Infodose'},
+  {type:'youtube', id:'1L9_rFmIGJ8', url:'https://youtu.be/1L9_rFmIGJ8', name:'A Recompensa', artist:'Infodose'},
+  {type:'youtube', id:'koKhjQKGJSc', url:'https://youtu.be/koKhjQKGJSc', name:'O poder das cortinas', artist:'Infodose'},
+  {type:'youtube', id:'KrtOVrk8aDk', url:'https://youtu.be/KrtOVrk8aDk', name:'Poder sob seus pés', artist:'Infodose'},
+  {type:'youtube', id:'NBWDV6xjUP0', url:'https://youtu.be/NBWDV6xjUP0', name:'Dopamina e Vícios', artist:'Infodose'},
+  {type:'youtube', id:'dGYbN8jgdNQ', url:'https://youtu.be/dGYbN8jgdNQ', name:'TDAH e Dopamina', artist:'Infodose'},
+  {type:'youtube', id:'JBjFhAutIVk', url:'https://youtu.be/JBjFhAutIVk', name:'Manipule o Subconsciente', artist:'Infodose'},
+  {type:'youtube', id:'hfQ1L6fCfAo', url:'https://youtu.be/hfQ1L6fCfAo', name:'A Deriva no Espaço da Mente', artist:'Infodose'},
+  {type:'youtube', id:'DTDfkHwuMic', url:'https://youtu.be/DTDfkHwuMic', name:'Navegando no Universo', artist:'Infodose'},
+  {type:'youtube', id:'OVfqxW_Xlhw', url:'https://youtu.be/OVfqxW_Xlhw', name:'Sinfonia Criativa', artist:'Infodose'},
+  {type:'youtube_playlist', playlistId:'PL_XiIUPFx4DSKFuJZZiKCxVUy20PtDdaB', url:'https://youtube.com/playlist?list=PL_XiIUPFx4DSKFuJZZiKCxVUy20PtDdaB', name:'Playlist • Se chegou até você', artist:'Infodose'},
+  {type:'soundcloud', url:'https://soundcloud.com/kobf-node-x-kobllux/op_piseiro_galo_c', name:'op_piseiro_galo_c', artist:'Oi Dual × Info Dose'},
+  {type:'soundcloud', url:'https://on.soundcloud.com/Ik165VFQsv6AZPKe0S', name:'Short link SoundCloud', artist:'Oi Dual × Info Dose'}
+];
+
+/* ────────────────────────────────────────────────────────────────
+   2. UTIL
+   ──────────────────────────────────────────────────────────────── */
+const uid = (p='x') => `${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
+const toast = (msg) => {
+  const el = document.getElementById('toast');
+  if(!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.classList.remove('show'), 2200);
+};
+
+function normalizeUrl(raw){
+  let url = String(raw||'').trim();
+  if(!url) return '';
+  if(url.includes('soundcloud.com')||url.includes('on.soundcloud.com')){
+    try{ const u=new URL(url); if(u.hostname.startsWith('m.')) u.hostname=u.hostname.replace(/^m\./,''); url=u.toString(); }
+    catch(e){ url=url.replace('://m.soundcloud.com','://soundcloud.com'); }
+  }
+  if(url.includes('youtube.com')||url.includes('youtu.be')||url.includes('youtube-nocookie.com')){
+    try{
+      const u=new URL(url);
+      if(u.hostname.startsWith('m.'))     u.hostname='youtube.com';
+      if(u.hostname.startsWith('music.')) u.hostname='youtube.com';
+      let id=null;
+      if(u.hostname.includes('youtu.be'))       id=u.pathname.replace('/','').trim();
+      else if(u.pathname.startsWith('/watch'))   id=u.searchParams.get('v');
+      else if(u.pathname.startsWith('/shorts/')) id=u.pathname.split('/')[2];
+      else if(u.pathname.startsWith('/embed/'))  id=u.pathname.split('/')[2];
+      if(id) url=`https://youtu.be/${id}`;
+    }catch(e){
+      url=url.replace('://m.youtube.com','://youtube.com').replace('://music.youtube.com','://youtube.com');
+    }
+  }
+  return url;
+}
+
+function extractYouTubeId(raw){
+  try{
+    const u=new URL(raw);
+    if(u.hostname.includes('youtu.be')) return u.pathname.replace('/','').trim();
+    if(u.pathname.startsWith('/watch')) return u.searchParams.get('v');
+    if(u.pathname.startsWith('/shorts/')) return u.pathname.split('/')[2];
+    if(u.pathname.startsWith('/embed/')) return u.pathname.split('/')[2];
+  }catch(e){}
+  const m=String(raw).match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([0-9A-Za-z_-]{11})/);
+  return m?m[1]:null;
+}
+function extractPlaylistId(raw){
+  try{ return new URL(raw).searchParams.get('list'); }catch(e){}
+  const m=String(raw).match(/[?&]list=([0-9A-Za-z_-]+)/);
+  return m?m[1]:null;
+}
+
+function normalizeTrack(t){
+  const type = t.type || 'local';
+  let id = t.id || uid('trk');
+  if(type==='youtube' && t.id && t.id.length===11) id = t.id;
+  let cover = t.cover;
+  if(!cover){
+    if(type==='youtube' && id.length===11) cover=`https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+    else if(type==='soundcloud') cover='https://i1.sndcdn.com/artworks-default-t500x500.jpg';
+    else cover='https://picsum.photos/200';
+  }
+  return {
+    id, type,
+    url: normalizeUrl(t.url||''),
+    name: t.name || 'Sem título',
+    artist: t.artist || 'Web',
+    cover,
+    blob: t.blob || null,
+    favorite: !!t.favorite,
+    playlistId: t.playlistId || null
+  };
+}
+
+/* ────────────────────────────────────────────────────────────────
+   3. DB v3
+   ──────────────────────────────────────────────────────────────── */
+let db = createDefaultDB();
+
+function createDefaultDB(){
+  return {
+    version:3,
+    library: PRELOADED.map(normalizeTrack),
+    playlists:[
+      {id:ALL_ID, name:'Todas', system:true, trackIds:[]},
+      {id:FAV_ID, name:'Favoritos', system:true, trackIds:[]}
+    ],
+    activePlaylistId: ALL_ID
+  };
+}
+function saveDB(){ try{ localStorage.setItem(DB_NAME, JSON.stringify(db)); }catch(e){} }
+
+function migrate(){
+  const v3 = localStorage.getItem(DB_NAME);
+  if(v3){
+    try{
+      const p = JSON.parse(v3);
+      db = {
+        version:3,
+        library: Array.isArray(p.library) && p.library.length ? p.library.map(normalizeTrack) : PRELOADED.map(normalizeTrack),
+        playlists: Array.isArray(p.playlists)?p.playlists:[],
+        activePlaylistId:p.activePlaylistId||ALL_ID
+      };
+      return;
+    }catch(e){}
+  }
+  const legacy = localStorage.getItem(LEGACY_DB);
+  if(legacy){
+    try{
+      const arr = JSON.parse(legacy);
+      if(Array.isArray(arr) && arr.length){
+        db = createDefaultDB();
+        db.library = arr.map(normalizeTrack);
+        saveDB(); return;
+      }
+    }catch(e){}
+  }
+  db = createDefaultDB();
+  saveDB();
+}
+
+/* ────────────────────────────────────────────────────────────────
+   4. GLOBAL PLAYER FLUTUANTE (YOUTUBE + SOUNDCLOUD + LOCAL)
+   ──────────────────────────────────────────────────────────────── */
+let ytPlayer=null, scWidget=null, ytReady=false;
+let currentTrackId=null, isPlaying=false, activeEngine=null, progressTimer=null;
+const audioEl = () => document.getElementById('local-audio');
+
+const Player = {
+  loadAndPlay(id){
+    const t = db.library.find(x=>x.id===id);
+    if(!t) return;
+
+    currentTrackId = id;
+    activeEngine = t.type;
+    Player._stopEnginesOnly();
+    Player._syncUI(t);
+    Player._openGlobalPlayer(t);
+
+    if(t.type==='youtube'||t.type==='youtube_playlist') Player._playYT(t);
+    else if(t.type==='soundcloud') Player._playSC(t.url);
+    else if(t.type==='local'){
+      const a = audioEl();
+      if(!a) return;
+      a.src = t.blob ? URL.createObjectURL(t.blob) : t.url;
+      a.play().catch(()=>toast('Toque em Play novamente'));
+      isPlaying = true; Player._syncIcons();
+    }
+    renderShortsQueue();
+    Player._startProgressPoll();
+  },
+  _openGlobalPlayer(t){
+    const gp = document.getElementById('global-player');
+    const wrap = document.getElementById('player-frame-wrap');
+    if(!gp || !wrap) return;
+
+    wrap.innerHTML = '';
+    if(t.type==='youtube' || t.type==='youtube_playlist'){
+      wrap.innerHTML = `<div id="yt-container" style="width:100%;height:100%"></div>`;
+    } else if(t.type==='soundcloud'){
+      wrap.innerHTML = `<div id="sc-container" style="width:100%;height:100%"></div>`;
+    } else {
+      wrap.innerHTML = `
+        <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:10px;background:radial-gradient(circle,rgba(124,58,237,.22),#050408)">
+          <div style="width:68px;height:68px;border-radius:18px;background:url('${t.cover}') center/cover;border:1px solid rgba(255,255,255,.2)"></div>
+          <div style="font-size:13px;font-weight:700;text-align:center;max-width:85%">${t.name}</div>
+          <div style="font-size:10px;color:var(--kb-cyan);letter-spacing:.15em;text-transform:uppercase">${t.artist}</div>
+        </div>`;
+    }
+
+    gp.classList.add('active');
+    gp.classList.remove('minimized');
+  },
+  reopenIfActive(){
+    const gp = document.getElementById('global-player');
+    if(!currentTrackId){
+      const first = db.library[0];
+      if(first) Player.loadAndPlay(first.id);
+      return;
+    }
+    if(gp){
+      gp.classList.add('active');
+      gp.classList.remove('minimized');
+    }
+  },
+  toggleMinimize(){
+    const gp = document.getElementById('global-player');
+    if(gp) gp.classList.toggle('minimized');
+  },
+  toggleFullscreen(){
+    const gp = document.getElementById('global-player');
+    if(!gp) return;
+    gp.classList.remove('minimized');
+    gp.classList.toggle('player-fullscreen');
+    const btn = document.getElementById('gp-expand-btn');
+    if(btn) btn.textContent = gp.classList.contains('player-fullscreen') ? '🗗' : '⛶';
+  },
+  toggle(e){
+    if(e) e.stopPropagation();
+    if(!currentTrackId){
+      const first = db.library[0];
+      if(first) Player.loadAndPlay(first.id);
+      return;
+    }
+    if(isPlaying){
+      if((activeEngine==='youtube'||activeEngine==='youtube_playlist')&&ytPlayer&&ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+      else if(activeEngine==='soundcloud'&&scWidget) scWidget.pause();
+      else if(audioEl()) audioEl().pause();
+      isPlaying = false;
+    } else {
+      if((activeEngine==='youtube'||activeEngine==='youtube_playlist')&&ytPlayer&&ytPlayer.playVideo) ytPlayer.playVideo();
+      else if(activeEngine==='soundcloud'&&scWidget) scWidget.play();
+      else if(activeEngine==='local'&&audioEl()) audioEl().play();
+      isPlaying = true;
+    }
+    Player._syncIcons();
+  },
+  next(){
+    if(!db.library.length) return;
+    const i = db.library.findIndex(t=>t.id===currentTrackId);
+    const next = db.library[(i+1)%db.library.length];
+    if(next) Player.loadAndPlay(next.id);
+  },
+  seekRatio(ratio){
+    if((activeEngine==='youtube'||activeEngine==='youtube_playlist') && ytPlayer && ytPlayer.getDuration){
+      const d = ytPlayer.getDuration();
+      if(d) ytPlayer.seekTo(d * ratio, true);
+    } else if(activeEngine==='local' && audioEl() && audioEl().duration){
+      audioEl().currentTime = audioEl().duration * ratio;
+    }
+  },
+  _stopEnginesOnly(){
+    try{ audioEl()?.pause(); }catch(e){}
+    try{ ytPlayer?.destroy?.(); ytPlayer = null; }catch(e){}
+    try{ scWidget = null; }catch(e){}
+    isPlaying = false;
+    clearInterval(progressTimer);
+    Player._syncIcons();
+  },
+  stop(){
+    Player._stopEnginesOnly();
+    const gp = document.getElementById('global-player');
+    if(gp){
+      gp.classList.remove('active', 'minimized', 'player-fullscreen');
+    }
+    const wrap = document.getElementById('player-frame-wrap');
+    if(wrap) wrap.innerHTML = '';
+  },
+  _syncUI(t){
+    const c = document.getElementById('main-cover');
+    const ti = document.getElementById('main-title');
+    const ar = document.getElementById('main-artist');
+    const badge = document.getElementById('dock-mode-label');
+    if(c) c.style.backgroundImage = `url(${t?.cover||'https://picsum.photos/100'})`;
+    if(ti) ti.textContent = t?.name || 'KOBLLUX';
+    if(ar) ar.textContent = t?.artist || 'Infodose';
+    if(badge) badge.textContent = `GLOBAL PLAYER · ${t?.type?.toUpperCase() || 'ATIVO'}`;
+    if(window.syncDockPlayerUI){
+      window.syncDockPlayerUI({ title: t?.name || 'KOBLLUX', playing: isPlaying, current: 0, duration: 100 });
+    }
+  },
+  _syncIcons(){
+    if(window.syncDockPlayerUI) window.syncDockPlayerUI({ playing: isPlaying });
+  },
+  _startProgressPoll(){
+    clearInterval(progressTimer);
+    progressTimer = setInterval(()=>{
+      if(!isPlaying || !window.syncDockPlayerUI) return;
+      if((activeEngine==='youtube'||activeEngine==='youtube_playlist') && ytPlayer && ytPlayer.getCurrentTime){
+        const cur = ytPlayer.getCurrentTime() || 0;
+        const dur = ytPlayer.getDuration() || 0;
+        if(dur > 0) window.syncDockPlayerUI({ current: cur, duration: dur });
+      } else if(activeEngine==='local' && audioEl()){
+        const cur = audioEl().currentTime || 0;
+        const dur = audioEl().duration || 0;
+        if(dur > 0) window.syncDockPlayerUI({ current: cur, duration: dur });
+      }
+    }, 800);
+  },
+  _playYT(t){
+    if(!ytReady || !window.YT || !window.YT.Player){
+      setTimeout(()=>Player._playYT(t), 300);
+      return;
+    }
+    ytPlayer = new window.YT.Player('yt-container', {
+      height:'100%', width:'100%',
+      videoId: t.type==='youtube' ? t.id : '',
+      playerVars:{autoplay:1, playsinline:1, modestbranding:1, rel:0},
+      events:{
+        onReady:(e)=>{
+          if(t.type==='youtube_playlist'&&t.playlistId) e.target.loadPlaylist({list:t.playlistId,index:0});
+          else e.target.loadVideoById(t.id);
+          e.target.playVideo();
+          isPlaying = true; Player._syncIcons();
+        },
+        onStateChange:(e)=>{
+          if(e.data===window.YT.PlayerState.ENDED) Player.next();
+          isPlaying = (e.data===window.YT.PlayerState.PLAYING);
+          Player._syncIcons();
+        }
+      }
+    });
+  },
+  _playSC(url){
+    const c = document.getElementById('sc-container');
+    if(!c) return;
+    c.innerHTML = `<iframe id="sc-frame" allow="autoplay" style="width:100%;height:100%;border:0"
+      src="https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&auto_play=true&hide_related=true&show_comments=false&show_user=false&show_reposts=false&visual=true"></iframe>`;
+    if(window.SC && window.SC.Widget){
+      scWidget = window.SC.Widget('sc-frame');
+      scWidget.bind(window.SC.Widget.Events.READY, ()=>{ scWidget.play(); isPlaying=true; Player._syncIcons(); });
+      scWidget.bind(window.SC.Widget.Events.FINISH, ()=>Player.next());
+      scWidget.bind(window.SC.Widget.Events.PLAY, ()=>{ isPlaying=true; Player._syncIcons(); });
+      scWidget.bind(window.SC.Widget.Events.PAUSE, ()=>{ isPlaying=false; Player._syncIcons(); });
+    }
+  }
+};
+
+(function loadApis(){
+  const yt = document.createElement('script');
+  yt.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(yt);
+  window.onYouTubeIframeAPIReady = ()=>{ ytReady = true; };
+
+  const sc = document.createElement('script');
+  sc.src = 'https://w.soundcloud.com/player/api.js';
+  document.head.appendChild(sc);
+})();
+
+/* ────────────────────────────────────────────────────────────────
+   5. CARROSSEL UNIFICADO (SINCRONIZA HOME E SHORTS AO MESMO TEMPO)
+   ──────────────────────────────────────────────────────────────── */
+const HeroCarousel = (()=>{
+  let current = 0;
+  let timer = null;
+  const INTERVAL = 5500;
+
+  function slides(){
+    return db.library.filter(t => t.type==='youtube'||t.type==='youtube_playlist'||t.type==='soundcloud').slice(0, 12);
+  }
+
+  function renderInstance(slidesId, dotsId, counterId){
+    const trackList = slides();
+    const wrap = document.getElementById(slidesId);
+    const dots = document.getElementById(dotsId);
+    if(!wrap||!dots) return;
+    wrap.innerHTML = '';
+    dots.innerHTML = '';
+    if(!trackList.length){
+      wrap.innerHTML = `<div class="hero-card"><div class="hero-content"><h2 class="hero-title">Sem mídia ainda</h2><p class="hero-subtitle">Importe na aba Criar (+)</p></div></div>`;
+      return;
+    }
+    trackList.forEach((t, i)=>{
+      const slide = document.createElement('article');
+      slide.className = 'hero-slide' + (i===current?' active':'');
+      slide.innerHTML = `
+        <div class="hero-card" style="--hero-img-url:url('${t.cover}')">
+          <div class="hero-bg"></div>
+          <div class="hero-gradient"></div>
+          <div class="hero-content">
+            <div class="hero-tag-row">
+              <span class="hero-tag">${t.type==='youtube_playlist'?'PLAYLIST':t.type.toUpperCase()}</span>
+              <span style="font-size:10px;color:rgba(255,255,255,.75)">${t.artist}</span>
+            </div>
+            <h2 class="hero-title">${t.name}</h2>
+            <p class="hero-subtitle">${t.artist} · Global Player</p>
+            <div class="hero-actions">
+              <button type="button" class="btn-primary" data-play="${t.id}">▶ Assistir</button>
+              <button type="button" class="tts-btn" data-tts="${t.id}" title="Ouvir título">◎</button>
+            </div>
+          </div>
+        </div>`;
+      wrap.appendChild(slide);
+
+      const dot = document.createElement('button');
+      dot.type = 'button';
+      dot.className = i===current?'active':'';
+      dot.addEventListener('click', ()=>{ go(i); start(); });
+      dots.appendChild(dot);
+    });
+
+    wrap.querySelectorAll('[data-play]').forEach(b=>{
+      b.addEventListener('click', e=>{ e.stopPropagation(); Player.loadAndPlay(b.dataset.play); });
+    });
+    wrap.querySelectorAll('[data-tts]').forEach(b=>{
+      b.addEventListener('click', e=>{
+        e.stopPropagation();
+        const t = db.library.find(x=>x.id===b.dataset.tts);
+        if(t && window.KOBSoneto) window.KOBSoneto.speak(t.name + '. ' + t.artist);
+      });
+    });
+
+    const el = document.getElementById(counterId);
+    if(el) el.textContent = `${String(current+1).padStart(2,'0')} / ${String(trackList.length).padStart(2,'0')}`;
+  }
+
+  function render(){
+    renderInstance('heroSlides', 'heroDots', 'heroCounter');
+    renderInstance('shortsHeroSlides', 'shortsHeroDots', 'shortsHeroCounter');
+  }
+
+  function go(i){
+    const list = slides();
+    if(!list.length) return;
+    current = ((i%list.length)+list.length)%list.length;
+    ['heroSlides', 'shortsHeroSlides'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.querySelectorAll('.hero-slide').forEach((s,idx)=>s.classList.toggle('active', idx===current));
+    });
+    ['heroDots', 'shortsHeroDots'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.querySelectorAll('button').forEach((d,idx)=>d.classList.toggle('active', idx===current));
+    });
+    const txt = `${String(current+1).padStart(2,'0')} / ${String(list.length).padStart(2,'0')}`;
+    const c1 = document.getElementById('heroCounter');
+    const c2 = document.getElementById('shortsHeroCounter');
+    if(c1) c1.textContent = txt;
+    if(c2) c2.textContent = txt;
+  }
+
+  function next(){ go(current+1); }
+  function prev(){ go(current-1); }
+  function start(){ stop(); timer = setInterval(next, INTERVAL); }
+  function stop(){ if(timer) clearInterval(timer); timer=null; }
+
+  function attachTouch(elId){
+    const root = document.getElementById(elId);
+    if(!root) return;
+    root.addEventListener('touchstart', e=>{
+      root._tx = e.touches[0].clientX; root._ty = e.touches[0].clientY;
+    }, {passive:true});
+    root.addEventListener('touchend', e=>{
+      const dx = e.changedTouches[0].clientX - root._tx;
+      const dy = e.changedTouches[0].clientY - root._ty;
+      if(Math.abs(dx)>45 && Math.abs(dx)>Math.abs(dy)){ dx<0?next():prev(); start(); }
+    }, {passive:true});
+  }
+
+  function init(){
+    render();
+    document.getElementById('heroNext')?.addEventListener('click', ()=>{ next(); start(); });
+    document.getElementById('heroPrev')?.addEventListener('click', ()=>{ prev(); start(); });
+    document.getElementById('shortsHeroNext')?.addEventListener('click', ()=>{ next(); start(); });
+    document.getElementById('shortsHeroPrev')?.addEventListener('click', ()=>{ prev(); start(); });
+    attachTouch('heroCarousel');
+    attachTouch('shortsHeroCarousel');
+    start();
+  }
+
+  return { init, render, next, prev, go };
+})();
+
+let currentHomeFilter = 'all';
+function renderMediaGrid(filter = currentHomeFilter){
+  currentHomeFilter = filter;
+  const grid = document.getElementById('mediaGrid');
+  const count = document.getElementById('homeCount');
+  if(!grid) return;
+
+  let items = db.library;
+  if(filter === 'youtube') items = items.filter(t=>t.type.startsWith('youtube'));
+  else if(filter === 'soundcloud') items = items.filter(t=>t.type==='soundcloud');
+  else if(filter === 'favorites') items = items.filter(t=>t.favorite);
+
+  if(count) count.textContent = `${items.length} faixas`;
+  if(!items.length){
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="icon">🎧</div><p>Nenhum item neste filtro.</p></div>`;
+    return;
+  }
+  grid.innerHTML = items.slice(0, 24).map(t=>`
+    <div class="media-card" data-play="${t.id}">
+      <div class="media-card-cover" style="background-image:url('${t.cover}')">
+        <div class="media-card-play">▶</div>
+      </div>
+      <div class="media-card-body">
+        <div class="media-card-title">${t.name}</div>
+        <div class="media-card-artist">${t.artist}</div>
+      </div>
+    </div>`).join('');
+  grid.querySelectorAll('[data-play]').forEach(c=>{
+    c.addEventListener('click', ()=>Player.loadAndPlay(c.dataset.play));
+  });
+}
+
+/* ────────────────────────────────────────────────────────────────
+   6. PÁGINA DE SHORTS (FILA SINCRONIZADA COM GLOBAL PLAYER)
+   ──────────────────────────────────────────────────────────────── */
+function renderShortsQueue(){
+  const list = document.getElementById('shortsQueue');
+  const count = document.getElementById('shortsQueueCount');
+  if(!list) return;
+  if(count) count.textContent = `${db.library.length} itens`;
+  list.innerHTML = db.library.map(t=>`
+    <div class="queue-item ${t.id===currentTrackId?'playing':''}" data-play="${t.id}">
+      <div class="queue-thumb" style="background-image:url('${t.cover}')"></div>
+      <div class="queue-meta">
+        <div class="queue-title">${t.name}</div>
+        <div class="queue-sub">${t.artist} · ${t.type.toUpperCase()}</div>
+      </div>
+      <button type="button" class="queue-fav ${t.favorite?'active':''}" data-fav="${t.id}" title="Favoritar">
+        ${t.favorite?'★':'☆'}
+      </button>
+    </div>`).join('');
+
+  list.querySelectorAll('[data-play]').forEach(item=>{
+    item.addEventListener('click', (e)=>{
+      if(e.target.closest('[data-fav]')) return;
+      Player.loadAndPlay(item.dataset.play);
+    });
+  });
+  list.querySelectorAll('[data-fav]').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const t = db.library.find(x=>x.id===btn.dataset.fav);
+      if(t){ t.favorite=!t.favorite; saveDB(); renderShortsQueue(); renderMediaGrid(); Profile.render(); }
+    });
+  });
+}
+
+/* ────────────────────────────────────────────────────────────────
+   7. PÁGINA CRIAR (PILLS / IMPORTAÇÃO)
+   ──────────────────────────────────────────────────────────────── */
+const Pills = (()=>{
+  const chips = [
+    {label:'+ YouTube',     icon:'▶',  type:'youtube'},
+    {label:'+ Playlist YT', icon:'≡',  type:'youtube_playlist'},
+    {label:'+ SoundCloud',  icon:'☁',  type:'soundcloud'},
+    {label:'+ Áudio Local', icon:'⤒',  type:'local'},
+    {label:'+ JSON',        icon:'{}', type:'json'}
+  ];
+
+  function renderChips(){
+    const wrap = document.getElementById('pillChips');
+    if(!wrap) return;
+    wrap.innerHTML = chips.map(c=>`
+      <button type="button" class="pill-chip" data-type="${c.type}">
+        <span class="icon">${c.icon}</span>${c.label}
+      </button>`).join('');
+    wrap.querySelectorAll('[data-type]').forEach(b=>{
+      b.addEventListener('click', ()=>openImportModal(b.dataset.type));
+    });
+  }
+
+  function openImportModal(type){
+    if(type==='local'){
+      const inp = document.createElement('input');
+      inp.type='file'; inp.accept='audio/*'; inp.multiple=true;
+      inp.onchange = ()=>{
+        Array.from(inp.files||[]).forEach(f=>{
+          const track = normalizeTrack({type:'local', url:URL.createObjectURL(f), name:f.name.replace(/\.[^.]+$/,''), artist:'Local', blob:f});
+          db.library.unshift(track);
+        });
+        saveDB(); renderAll(); toast('Áudio importado');
+      };
+      inp.click();
+      return;
+    }
+    if(type==='json'){
+      const inp = document.createElement('input');
+      inp.type='file'; inp.accept='.json,application/json';
+      inp.onchange = async ()=>{
+        try{
+          const text = await inp.files[0].text();
+          const arr = JSON.parse(text);
+          if(Array.isArray(arr)){
+            arr.forEach(t=>db.library.unshift(normalizeTrack(t)));
+            saveDB(); renderAll(); toast(`+${arr.length} faixas`);
+          }
+        }catch(e){ toast('JSON inválido'); }
+      };
+      inp.click();
+      return;
+    }
+    openModal(`
+      <h3>Importar ${type}</h3>
+      <input class="modal-input" id="importUrl" placeholder="Cole o link https://...">
+      <div class="modal-actions">
+        <button type="button" class="mini-btn" onclick="document.getElementById('modal-overlay').classList.remove('open')">Cancelar</button>
+        <button type="button" class="mini-btn active" id="importConfirm">Importar</button>
+      </div>`);
+    document.getElementById('importConfirm').addEventListener('click', async ()=>{
+      const url = document.getElementById('importUrl').value.trim();
+      if(!url) return;
+      document.getElementById('modal-overlay').classList.remove('open');
+      toast('Importando...');
+      try{
+        const track = await buildTrackFromUrl(url);
+        db.library.unshift(track);
+        saveDB(); renderAll(); toast('✓ '+track.name);
+      }catch(e){ toast('Erro: '+e.message); }
+    });
+  }
+
+  async function buildTrackFromUrl(url){
+    const clean = normalizeUrl(url);
+    if(!clean) throw new Error('URL vazia');
+    const t = {id:uid('trk'), type:'local', url:clean, name:'Carregando...', artist:'Web'};
+
+    const ytId = extractYouTubeId(clean);
+    const ytList = extractPlaylistId(clean);
+    const isYT = clean.includes('youtube.com')||clean.includes('youtu.be');
+    const isSC = clean.includes('soundcloud.com');
+
+    if(isYT){
+      if(ytList && !ytId){
+        t.type='youtube_playlist'; t.playlistId=ytList; t.name='YouTube Playlist'; t.artist='YouTube';
+        t.cover='https://picsum.photos/200';
+        return normalizeTrack(t);
+      }
+      if(!ytId) throw new Error('Link YouTube inválido');
+      t.type='youtube'; t.id=ytId;
+      t.cover=`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+      try{
+        const r = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(clean)}`);
+        const d = await r.json();
+        t.name = d.title || 'YouTube'; t.artist = d.author_name || 'YouTube';
+      }catch(e){ t.name='YouTube'; t.artist='YouTube'; }
+    } else if(isSC){
+      t.type='soundcloud'; t.cover='https://i1.sndcdn.com/artworks-default-t500x500.jpg';
+      try{
+        const r = await fetch(`https://soundcloud.com/oembed?url=${encodeURIComponent(clean)}&format=json`);
+        const d = await r.json();
+        t.name = d.title || 'SoundCloud'; t.artist = d.author_name || 'SoundCloud';
+        t.cover = d.thumbnail_url || t.cover;
+      }catch(e){ t.name='SoundCloud'; t.artist='SoundCloud'; }
+    } else {
+      t.name = clean.split('/').pop() || 'Link'; t.artist='Web';
+    }
+    return normalizeTrack(t);
+  }
+
+  function renderPills(){
+    const grid = document.getElementById('pillsGrid');
+    const count = document.getElementById('pillsCount');
+    if(!grid) return;
+    const pills = db.library.filter(t => !PRELOADED.some(p => p.url && p.url===t.url)).slice(0, 40);
+    if(count) count.textContent = `${pills.length} itens`;
+    if(!pills.length){
+      grid.innerHTML = `<div class="empty-state"><div class="icon">✦</div><p>Nenhuma pílula importada ainda. Use os botões acima.</p></div>`;
+      return;
+    }
+    grid.innerHTML = pills.map(t=>`
+      <div class="pill-card" data-id="${t.id}">
+        <div class="pill-card-cover" style="background-image:url('${t.cover}')"></div>
+        <div class="pill-card-info">
+          <div class="pill-card-title">${t.name}</div>
+          <div class="pill-card-artist">${t.artist}</div>
+          <span class="pill-card-tag">${t.type.toUpperCase()}</span>
+        </div>
+        <div class="pill-card-actions">
+          <button type="button" class="pill-action" data-action="play" title="Tocar">▶</button>
+          <button type="button" class="pill-action fav ${t.favorite?'active':''}" data-action="fav" title="Favoritar">${t.favorite?'★':'☆'}</button>
+          <button type="button" class="pill-action" data-action="del" title="Remover">×</button>
+        </div>
+      </div>`).join('');
+    grid.querySelectorAll('.pill-card').forEach(card=>{
+      const id = card.dataset.id;
+      card.querySelectorAll('[data-action]').forEach(btn=>{
+        btn.addEventListener('click', e=>{
+          e.stopPropagation();
+          const a = btn.dataset.action;
+          if(a==='play') Player.loadAndPlay(id);
+          else if(a==='fav'){
+            const t = db.library.find(x=>x.id===id);
+            if(t){ t.favorite=!t.favorite; saveDB(); renderPills(); }
+          } else if(a==='del'){
+            db.library = db.library.filter(x=>x.id!==id);
+            saveDB(); renderAll(); toast('Removido');
+          }
+        });
+      });
+    });
+  }
+
+  return { init(){ renderChips(); renderPills(); }, renderPills, buildTrackFromUrl };
+})();
+
+/* ────────────────────────────────────────────────────────────────
+   8. PÁGINA DO USUÁRIO (VISION OS ORB + V.E.E.B + MATRIZ 17)
+   ──────────────────────────────────────────────────────────────── */
+const Profile = (()=>{
+  let currentApTab = 'i';
+
+  function getActiveArchObj(){
+    const cur = ((window.KOBSoneto && window.KOBSoneto.arch) || 'KOBLLUX').toUpperCase();
+    return VISION_ARCHETYPES.find(a=>a.key===cur) || VISION_ARCHETYPES[0];
+  }
+
+  function render(){
+    const nameInput = document.getElementById('profileName');
+    const savedName = localStorage.getItem('di_userName') || 'PILOTO';
+    if(nameInput){
+      nameInput.value = savedName;
+      nameInput.oninput = ()=>renderVeeb(nameInput.value);
+      nameInput.onchange = ()=>{
+        const clean = nameInput.value.trim() || 'PILOTO';
+        localStorage.setItem('di_userName', clean);
+        updateHomeGreeting();
+        toast('Identidade salva');
+      };
+    }
+    syncOrbWithArch();
+    renderVeeb(savedName);
+    renderArchMatrix();
+    renderStats();
+    renderControls();
+  }
+
+  function syncOrbWithArch(){
+    const a = getActiveArchObj();
+    const sym = document.getElementById('visionOrbSym');
+    const opc = document.getElementById('visionOrbOpc');
+    const drk = document.getElementById('visionDrk');
+    const title = document.getElementById('apSelectedTitle');
+    if(sym) sym.textContent = a.sym;
+    if(opc) opc.textContent = `${a.opcode} · ${a.regra} · ${a.hz}Hz`;
+    if(drk) drk.textContent = `"${a.drk}"`;
+    if(title) title.textContent = `${a.key} · ${a.opcode} · ${a.hz}Hz`;
+    renderArchPromptContent();
+    updateHomeGreeting();
+  }
+
+  function pulseOrb(){
+    const orb = document.getElementById('visionOrb');
+    const a = getActiveArchObj();
+    if(orb){
+      orb.classList.add('pulsing');
+      clearTimeout(orb._pt);
+      orb._pt = setTimeout(()=>orb.classList.remove('pulsing'), 2600);
+    }
+    if(window.KOBSoneto) window.KOBSoneto.speak(`${a.key}. ${a.drk}`);
+    toast(`◎ ${a.key} · ${a.hz}Hz`);
+  }
+
+  function renderVeeb(rawName){
+    const name = String(rawName || 'PILOTO').trim() || 'PILOTO';
+    const up = name.toUpperCase();
+    const cons = stripVowels(name) || 'KBLX';
+    const arty = convertToArtyaski(name);
+    const a = getActiveArchObj();
+
+    const artyEl = document.getElementById('visionArtyaski');
+    const consEl = document.getElementById('veebConsonants');
+    const rowEl  = document.getElementById('veebVowelsRow');
+    const readEl = document.getElementById('veebReadout');
+
+    if(artyEl) artyEl.textContent = `${arty} · ${a.key}`;
+    if(consEl) consEl.textContent = `CONSOANTES: ${cons}`;
+
+    const vowelsMeta = [
+      { v:'A', act:'Atribuir',  col:'#C9A84C' },
+      { v:'E', act:'Escolher',  col:'#F59E0B' },
+      { v:'I', act:'Iterar',    col:'#A259FF' },
+      { v:'O', act:'Organizar', col:'#00F5A0' },
+      { v:'U', act:'Unir',      col:'#22D3EE' }
+    ];
+
+    if(rowEl){
+      rowEl.innerHTML = vowelsMeta.map(m => {
+        const lit = up.includes(m.v);
+        return `<div class="veeb-v ${lit?'lit':''}" style="--v-col:${m.col}">
+          <div class="let">${m.v}</div>
+          <div class="act">${m.act}</div>
+        </div>`;
+      }).join('');
+    }
+
+    if(readEl){
+      readEl.innerHTML =
+        `<span style="color:#22D3EE">[ΛrtyΛski]</span> ${arty}<br>` +
+        `<span style="color:#A259FF">[Ferramentas]</span> ${cons.split('').join(' · ')}<br>` +
+        `<span style="color:#00F5A0">[Ressonância]</span> ${a.key} (${a.opcode} · ${a.hz}Hz)`;
+    }
+  }
+
+  function syncForgeIdentity(){
+    const nameInput = document.getElementById('profileName');
+    const name = (nameInput?.value || 'PILOTO').trim() || 'PILOTO';
+    localStorage.setItem('di_userName', name);
+
+    // Detecta se o nome bate com algum arquétipo
+    const up = name.toUpperCase().replace(/\s/g,'');
+    const matched = VISION_ARCHETYPES.find(x => x.key === up || up.startsWith(x.key));
+    if(matched && window.KOBSoneto){
+      window.KOBSoneto.setArch(matched.key);
+    }
+    renderVeeb(name);
+    updateHomeGreeting();
+    pulseOrb();
+    toast(`✦ ${convertToArtyaski(name)} sincronizado`);
+  }
+
+  function speakIdentity(){
+    const name = (document.getElementById('profileName')?.value || 'PILOTO').trim();
+    const a = getActiveArchObj();
+    if(window.KOBSoneto){
+      window.KOBSoneto.speak(`Identidade ${name}, sintonizada com ${a.key}, frequência ${a.hz} hertz. ${a.drk}`);
+    }
+  }
+
+  function renderArchMatrix(){
+    const grid = document.getElementById('archMatrixGrid');
+    if(!grid) return;
+    const activeKey = getActiveArchObj().key;
+    grid.innerHTML = VISION_ARCHETYPES.map(a => `
+      <div class="arch-tile ${a.key===activeKey?'selected':''}" style="--a-col:${a.color}" data-arch="${a.key}">
+        <div class="arch-tile-sym">${a.sym}</div>
+        <div class="arch-tile-name">${a.key}</div>
+        <div class="arch-tile-hz">${a.opcode} · ${a.hz}Hz</div>
+      </div>`).join('');
+
+    grid.querySelectorAll('[data-arch]').forEach(tile => {
+      tile.addEventListener('click', ()=>{
+        const key = tile.dataset.arch;
+        if(window.KOBSoneto) window.KOBSoneto.setArch(key);
+        renderArchMatrix();
+        syncOrbWithArch();
+        toast(`◐ ${key} ativo`);
+      });
+    });
+  }
+
+  function renderArchPromptContent(){
+    const box = document.getElementById('apContent');
+    if(!box) return;
+    const a = getActiveArchObj();
+    box.className = 'ap-body' + ((currentApTab==='g'||currentApTab==='s') ? ' mono' : '');
+    box.textContent = a[currentApTab] || a.i;
+  }
+
+  function copyArchPrompt(){
+    const box = document.getElementById('apContent');
+    if(!box) return;
+    const text = box.textContent;
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    toast('✓ Prompt copiado');
+  }
+
+  function renderStats(){
+    const grid = document.getElementById('statsGrid');
+    if(!grid) return;
+    const ytCount = db.library.filter(t=>t.type.startsWith('youtube')).length;
+    const favCount = db.library.filter(t=>t.favorite).length;
+    grid.innerHTML = `
+      <div class="stat-card"><div class="stat-value">${db.library.length}</div><div class="stat-label">Sinais</div></div>
+      <div class="stat-card"><div class="stat-value">${ytCount}</div><div class="stat-label">YouTube</div></div>
+      <div class="stat-card"><div class="stat-value">${favCount}</div><div class="stat-label">Favoritos</div></div>
+    `;
+  }
+
+  function renderControls(){
+    const list = document.getElementById('controlList');
+    if(!list) return;
+    const ttsOn = localStorage.getItem('kob:voice:click') !== 'off';
+    const musicOn = window.KOBSonoro && window.KOBSonoro.isPlaying && window.KOBSonoro.isPlaying();
+    const curTheme = document.body.dataset.mode || 'night';
+    list.innerHTML = `
+      <div class="control-row">
+        <div><div class="label">🔊 TTS Global</div><div class="desc">Leitura por voz ao tocar</div></div>
+        <div class="actions"><button type="button" class="mini-btn ${ttsOn?'active':''}" id="toggleTTS">${ttsOn?'ON':'OFF'}</button></div>
+      </div>
+      <div class="control-row">
+        <div><div class="label">🎵 Trilha Sonoro</div><div class="desc">Síntese Tone.js</div></div>
+        <div class="actions"><button type="button" class="mini-btn ${musicOn?'active':''}" id="toggleMusic">${musicOn?'ON':'OFF'}</button></div>
+      </div>
+      <div class="control-row">
+        <div><div class="label">🎨 Atmosfera</div><div class="desc">Tema da interface</div></div>
+        <div class="actions">
+          <button type="button" class="mini-btn ${curTheme==='day'?'active':''}" data-theme="day">DAY</button>
+          <button type="button" class="mini-btn ${curTheme==='night'?'active':''}" data-theme="night">NIGHT</button>
+          <button type="button" class="mini-btn ${curTheme==='sunset'?'active':''}" data-theme="sunset">SUNSET</button>
+        </div>
+      </div>
+      <div class="control-row">
+        <div><div class="label">⤓ Backup DB</div><div class="desc">Exportar biblioteca JSON</div></div>
+        <div class="actions"><button type="button" class="mini-btn" id="exportBtn">EXPORTAR</button></div>
+      </div>
+      <div class="control-row">
+        <div><div class="label">🗑 Reset</div><div class="desc">Restaurar biblioteca padrão</div></div>
+        <div class="actions"><button type="button" class="mini-btn danger" id="resetBtn">RESET</button></div>
+      </div>
+    `;
+
+    document.getElementById('toggleTTS')?.addEventListener('click', e=>{
+      const cur = localStorage.getItem('kob:voice:click')!=='off';
+      localStorage.setItem('kob:voice:click', cur?'off':'auto');
+      e.target.textContent = cur?'OFF':'ON';
+      e.target.classList.toggle('active', !cur);
+    });
+    document.getElementById('toggleMusic')?.addEventListener('click', e=>{
+      if(window.KOBSonoro) window.KOBSonoro.toggle('KOBLLUX Infodose');
+      setTimeout(()=>{
+        const on = window.KOBSonoro?.isPlaying?.();
+        e.target.textContent = on?'ON':'OFF';
+        e.target.classList.toggle('active', !!on);
+      }, 300);
+    });
+    list.querySelectorAll('[data-theme]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        document.body.dataset.mode = b.dataset.theme;
+        list.querySelectorAll('[data-theme]').forEach(x=>x.classList.toggle('active', x===b));
+        localStorage.setItem('kob:theme', b.dataset.theme);
+      });
+    });
+    document.getElementById('exportBtn')?.addEventListener('click', ()=>{
+      const blob = new Blob([JSON.stringify(db, null, 2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `kobllux-backup-${Date.now()}.json`;
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
+      toast('Backup exportado');
+    });
+    document.getElementById('resetBtn')?.addEventListener('click', ()=>{
+      localStorage.removeItem(DB_NAME);
+      localStorage.removeItem(LEGACY_DB);
+      location.reload();
+    });
+  }
+
+  function initSubTabs(){
+    document.querySelectorAll('[data-utab]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const target = btn.dataset.utab;
+        document.querySelectorAll('[data-utab]').forEach(b=>b.classList.toggle('active', b===btn));
+        ['forge', 'matrix', 'system'].forEach(id=>{
+          const el = document.getElementById('upanel-'+id);
+          if(el) el.style.display = (id===target) ? '' : 'none';
+        });
+      });
+    });
+
+    document.querySelectorAll('[data-ap]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        currentApTab = btn.dataset.ap;
+        document.querySelectorAll('[data-ap]').forEach(b=>b.classList.toggle('active', b===btn));
+        renderArchPromptContent();
+      });
+    });
+  }
+
+  return {
+    init(){ initSubTabs(); render(); },
+    render, pulseOrb, syncForgeIdentity, speakIdentity, copyArchPrompt, syncOrbWithArch
+  };
+})();
+
+function updateHomeGreeting(){
+  const name = localStorage.getItem('di_userName') || 'PILOTO';
+  const cur = ((window.KOBSoneto && window.KOBSoneto.arch) || 'KOBLLUX').toUpperCase();
+  const a = VISION_ARCHETYPES.find(x=>x.key===cur) || VISION_ARCHETYPES[0];
+  const g1 = document.getElementById('homeGreeting');
+  const g2 = document.getElementById('homeSubGreeting');
+  if(g1) g1.textContent = `${convertToArtyaski(name)} · ${a.key}`;
+  if(g2) g2.textContent = `${a.opcode} · ${a.regra} · ${a.hz}Hz`;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   9. MODAL & RENDER ALL
+   ──────────────────────────────────────────────────────────────── */
+function openModal(html){
+  const overlay = document.getElementById('modal-overlay');
+  const box = document.getElementById('modalBox');
+  if(!overlay||!box) return;
+  box.innerHTML = html;
+  overlay.classList.add('open');
+  overlay.onclick = (e)=>{ if(e.target===overlay) overlay.classList.remove('open'); };
+}
+window.openModal = openModal;
+
+function renderAll(){
+  HeroCarousel.render();
+  renderMediaGrid();
+  renderShortsQueue();
+  Pills.renderPills();
+  Profile.render();
+}
+
+/* ────────────────────────────────────────────────────────────────
+   10. BOOT
+   ──────────────────────────────────────────────────────────────── */
+function boot(){
+  migrate();
+  HeroCarousel.init();
+  Pills.init();
+  Profile.init();
+  renderMediaGrid();
+  renderShortsQueue();
+  updateHomeGreeting();
+
+  // Filtros rápidos da Home
+  document.querySelectorAll('.q-pill[data-filter]').forEach(pill=>{
+    pill.addEventListener('click', ()=>{
+      document.querySelectorAll('.q-pill[data-filter]').forEach(p=>p.classList.toggle('active', p===pill));
+      renderMediaGrid(pill.dataset.filter);
+    });
+  });
+
+  // Sincroniza visual quando arquétipo muda pelo Soneto Header
+  window.addEventListener('kob:arch', ()=>{
+    Profile.syncOrbWithArch();
+  });
+
+  const savedTheme = localStorage.getItem('kob:theme');
+  if(savedTheme) document.body.dataset.mode = savedTheme;
+
+  if(db.library[0]){
+    Player._syncUI(db.library[0]);
+  }
+
+  if(window.innerWidth < 600 || navigator.hardwareConcurrency <= 4){
+    document.documentElement.classList.add('kob-perf-lite');
+  }
+
+  window.Player = Player;
+  window.HeroCarousel = HeroCarousel;
+  window.Pills = Pills;
+  window.Profile = Profile;
+}
+
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot);
+else boot();
+
+})();
+</script>
+
+</body>
+</html>
