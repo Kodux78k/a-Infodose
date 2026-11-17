@@ -78,8 +78,12 @@ body{
 #snap-zone.active, #snap-zone-bottom.active { opacity: 1; }
 
 /* CONTAINER */
-.container{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center;perspective:1200px;z-index:10}
-
+/*.container{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center;perspective:1200px;
+z-index:10;
+}*/
+.kontainer{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center;perspective:1200px;
+z-index:1000;
+}
 /* FUSION CARD BASE */
 .fusion-card{
   pointer-events:auto;
@@ -95,6 +99,7 @@ backdrop-filter:blur(1px);
   transition: width 0.5s var(--ease-smooth), height 0.5s var(--ease-smooth), border-radius 0.5s var(--ease-smooth), opacity 0.4s, left 0.4s var(--ease-smooth), top 0.4s var(--ease-smooth), box-shadow 0.4s;
   will-change: transform, width, height, border-radius, left, top;
   touch-action: none;
+  z-index:920;
 }
 .fusion-card::-webkit-scrollbar{display:none}
 .fusion-card.active{opacity:1;transform:translateY(0) scale(1)}
@@ -426,7 +431,7 @@ select.btn{ width:100%; padding:8px; background:rgba(0,0,0,0.4); color:#fff; bor
 
   <div class="toaster-wrap" id="toasterWrap" aria-live="polite" aria-atomic="true"></div>
 
-  <main class="container">
+  <main class="kontainer">
     <section class="fusion-card closed" id="mainCard" data-component="fusion-core" data-version="1" data-mode="card">
       <header class="card-header" id="cardHeader">
         <div class="avatar-slot" id="avatarTarget" title="Gerenciar Chaves (Cofre)"></div>
@@ -589,9 +594,8 @@ select.btn{ width:100%; padding:8px; background:rgba(0,0,0,0.4); color:#fff; bor
     </div>
   </div>
 
-<script>
-/* ═══════════════════════════════════════════════════════════════
-   78KARD × KOBLLUX FUSION OS — MONOLITH ENGINE
+<script>/* ═══════════════════════════════════════════════════════════════
+   78KARD × KOBLLUX FUSION OS — MONOLITH ENGINE (DUAL GLOBAL SYNC)
    ═══════════════════════════════════════════════════════════════ */
 'use strict';
 
@@ -624,11 +628,17 @@ const VISION_ARCHETYPES = [
   { key:'BLLUE',    opcode:'0x0B', regra:'RESSONAR',   hz:432, sym:'≈', color:'#3AB6FF', drk:'Flua. A intuição líquida não mente.', i:'Figura fluida emergindo de oceano de dados.', a:'Invoco Bllue [≈], Interface Viva.', g:'BLLUE [≈] · Campo Vetorial Fluido · ∇ · F = 0 · Frequência: 432Hz', s:'    ≈\n╔═ BLLUE ═╗\n  ≈≈≈ Interface Líquida' },
 ];
 
-/* ─── KOBSonoro ENGINE ─── */
+/* ─── KOBSonoro ENGINE (Respeita DualSFX Global) ─── */
 var KOBSonoro = window.KOBSonoro = window.KOBSonoro || {};
 var SND = { started:false, playing:false, part:null, synths:{}, reverb:null, delay:null };
 
+function isSfxAllowed() {
+  if (window.DualSFX && typeof window.DualSFX.get === 'function') return window.DualSFX.get();
+  return document.documentElement.dataset.sfx !== 'off';
+}
+
 async function ensureAudio() {
+  if (!isSfxAllowed()) return false;
   if (SND.started) return true;
   if (typeof Tone === 'undefined') {
     await new Promise(r => { var t = setInterval(() => { if (typeof Tone !== 'undefined' || performance.now() > 6000) { clearInterval(t); r(); } }, 100); });
@@ -650,20 +660,19 @@ async function ensureAudio() {
   } catch(e) { return false; }
 }
 
-/* HSL → frequência base: cada cor vira pitch único */
 function hslToBaseFreq(h1, h2) {
-  /* Mapeia hue 0-360 para intervalo musical 200-900 Hz */
   const f1 = 200 + (h1 / 360) * 700;
   const f2 = 200 + (h2 / 360) * 700;
   return { f1, f2, ratio: f2 / f1 };
 }
 
+const _originalSfx = KOBSonoro.sfx;
 KOBSonoro.sfx = async function(desc, colorCtx) {
+  if (!isSfxAllowed()) return;
   if (!await ensureAudio()) return;
   var d = String(desc || '').toLowerCase();
   var now = Tone.now();
 
-  /* pega cores atuais do root se não forem passadas */
   var root = document.documentElement;
   var h1 = parseInt(root.dataset.hue1 || '180');
   var h2 = parseInt(root.dataset.hue2 || '270');
@@ -672,7 +681,6 @@ KOBSonoro.sfx = async function(desc, colorCtx) {
 
   try {
     if (/bolha|bubble|gota|pingo|click|nav/.test(d)) {
-      /* frequência do click atrelada ao hash do usuário */
       var b = f1 * (0.85 + Math.random() * 0.3);
       SND.synths.bubble.triggerAttackRelease(b, .11, now);
       SND.synths.bubble.triggerAttackRelease(b * 1.48, .09, now + .075);
@@ -684,7 +692,6 @@ KOBSonoro.sfx = async function(desc, colorCtx) {
       SND.synths.impact.triggerAttackRelease('C1', .22, now);
     }
     else if (/sopro|whoosh|swoosh|drag/.test(d)) {
-      /* swoosh orgânico com varredura baseada nas hues */
       var swFilter = new Tone.Filter({ type:'bandpass', frequency: f1 * 0.8, Q:3.9 }).connect(SND.reverb);
       var swNoise  = new Tone.NoiseSynth({ noise:{type:'pink'}, envelope:{attack:.22,decay:.16,sustain:.15,release:.34} }).connect(swFilter);
       swNoise.volume.value = 0;
@@ -803,7 +810,6 @@ function updateInterface(name) {
   const h1 = seed % 360;
   const h2 = (seed * 37) % 360;
 
-  /* Saturação e lightness variam ligeiramente com seed para personalidade */
   const sat1 = 80 + (seed % 20);
   const lit1  = 55 + (seed % 15);
   const sat2 = 75 + ((seed * 3) % 18);
@@ -815,19 +821,16 @@ function updateInterface(name) {
   root.style.setProperty('--kob-L-primary',      `hsl(${h1} ${sat1}% ${lit1}%)`);
   root.style.setProperty('--kob-L-secondary',    `hsl(${h2} ${sat2}% ${lit2}%)`);
   root.dataset.diName = safe;
-  root.dataset.arch   = safe;
   root.dataset.seed   = String(seed);
   root.dataset.hue1   = String(h1);
   root.dataset.hue2   = String(h2);
 
-  /* Atualiza vision orb também */
   const vOrb = document.getElementById('visionOrb');
   if (vOrb) {
     vOrb.style.setProperty('--orb-primary', `hsl(${h1},${sat1}%,${lit1}%)`);
     vOrb.style.setProperty('--orb-secondary', `hsl(${h2},${sat2}%,${lit2}%)`);
   }
 
-  /* Sincroniza nome no profileName se diferir */
   const pn = document.getElementById('profileName');
   if (pn && pn.value !== safe) pn.value = safe;
   updateHomeGreeting(safe);
@@ -901,7 +904,7 @@ function updateSecurityUI() {
 function renderKeysList() {
   const kl = byId('keyList'); if (!kl) return;
   kl.innerHTML = '';
-  if (!FC_STATE.keys.length) { kl.innerHTML = `<div style="color:rgba(255,255,255,.3);text-align:center;padding:20px">Nenhuma chave armazenada.</div>`; return; }
+  if (!FC_STATE.keys.length) { kl.innerHTML = `<div style="color:var(--text-muted, rgba(255,255,255,.3));text-align:center;padding:20px">Nenhuma chave armazenada.</div>`; return; }
   FC_STATE.keys.forEach(k => {
     const d = document.createElement('div');
     d.className = `key-item ${k.active ? 'active-item' : ''}`;
@@ -993,7 +996,6 @@ const HUD_SNAP  = 60, DOCK_SNAP = 60, SWIPE_DN = 80, LP_MS = 350;
 
 function updateModeBtns(mode) {
   ['btnModeCard','btnModeOrb','btnModeHud','btnModeDock'].forEach(id => byId(id)?.classList.remove('active-mode'));
-  ({ card:'btnModeCard', orb:'btnModeOrb', hud:'btnModeHud', 'dock-bottom':'btnModeDock' }[mode] || 'btnModeCard');
   byId({ card:'btnModeCard', orb:'btnModeOrb', hud:'btnModeHud', 'dock-bottom':'btnModeDock' }[mode])?.classList.add('active-mode');
 }
 function revertToCard() {
@@ -1052,7 +1054,6 @@ function transmuteToOrb(e) {
     fcUI.dragOffsetX = e.clientX - r.left; fcUI.dragOffsetY = e.clientY - r.top;
   }
   updateModeBtns('orb');
-  /* swoosh ao transformar em orb */
   try { KOBSonoro.sfx('swoosh'); } catch(_){}
 }
 
@@ -1191,12 +1192,6 @@ function updateClock() { const c = byId('clockTime'); if (c) c.textContent = new
 updateClock(); setInterval(updateClock, 1000);
 
 /* Fusion Card init / restore */
-function saveUIState_() {
-  const mode = fcUI.isOrb ? 'orb' : fcUI.isHud ? 'hud' : fcUI.isDockBottom ? 'dock-bottom' : 'card';
-  localStorage.setItem(UI_STATE_KEY, JSON.stringify({ mode, left:card?.style.left||'', top:card?.style.top||'' }));
-}
-saveUIState = saveUIState_;
-
 (async function initFusion() {
   card?.classList.add('active');
   byId('avatarTarget')?.classList.add('shown');
@@ -1207,20 +1202,20 @@ saveUIState = saveUIState_;
     const r = JSON.parse(localStorage.getItem(UI_STATE_KEY)||'{}');
     savedMode = r.mode || 'card'; sl = r.left || null; st = r.top || null;
   } catch(_){}
-  /* Show small preview first */
-  card.style.left = card.style.top = '';
-  card.style.opacity = '0'; card.style.transition = 'opacity 400ms ease';
-  card.classList.add('closed'); card.classList.remove('content-visible');
-  card.dataset.mode = 'card';
-  requestAnimationFrame(() => { card.style.opacity = '1'; });
-  /* Restore after 5s */
-  setTimeout(() => {
-    card.style.transition = 'all 600ms var(--ease-smooth)';
-    if (savedMode === 'orb') { if (sl) card.style.left = sl; if (st) card.style.top = st; setMode('orb'); }
-    else if (savedMode === 'hud') setMode('hud');
-    else if (savedMode === 'dock-bottom') setMode('dock-bottom');
-    else { setMode('card'); card.classList.remove('closed'); card.classList.add('content-visible'); }
-  }, 5000);
+  if (card) {
+    card.style.left = card.style.top = '';
+    card.style.opacity = '0'; card.style.transition = 'opacity 400ms ease';
+    card.classList.add('closed'); card.classList.remove('content-visible');
+    card.dataset.mode = 'card';
+    requestAnimationFrame(() => { card.style.opacity = '1'; });
+    setTimeout(() => {
+      card.style.transition = 'all 600ms var(--ease-smooth)';
+      if (savedMode === 'orb') { if (sl) card.style.left = sl; if (st) card.style.top = st; setMode('orb'); }
+      else if (savedMode === 'hud') setMode('hud');
+      else if (savedMode === 'dock-bottom') setMode('dock-bottom');
+      else { setMode('card'); card.classList.remove('closed'); card.classList.add('content-visible'); }
+    }, 5000);
+  }
   updateSecurityUI(); renderKeysList();
   document.documentElement.dataset.fusionCore = 'ready';
   console.info('⚡ 78KARD × KOBLLUX Fusion OS ready');
@@ -1229,6 +1224,7 @@ saveUIState = saveUIState_;
 /* ─── DOCK ENGINE ─── */
 document.addEventListener('DOMContentLoaded', () => {
   const dock           = document.getElementById('floating-dock');
+  if (!dock) return;
   const topDrop        = document.getElementById('top-drop-zone');
   const botDrop        = document.getElementById('bottom-drop-zone');
   const dockPosTag     = document.getElementById('dock-pos-tag');
@@ -1279,7 +1275,6 @@ document.addEventListener('DOMContentLoaded', () => {
     try { KOBSonoro.sfx('swoosh'); } catch(_){}
   });
 
-  /* DRAG */
   function dkStart(e) {
     if (e.target.closest('#progress-container') || e.target.closest('#dock-collapse-btn')) return;
     dkDragging = true; dkMoved = false;
@@ -1306,7 +1301,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (dc < mid) { topDrop.classList.add('highlight'); botDrop.classList.remove('highlight'); }
       else { botDrop.classList.add('highlight'); topDrop.classList.remove('highlight'); }
     }
-    /* swoosh durante drag */
   }
   function dkEnd() {
     if (!dkDragging) return;
@@ -1327,7 +1321,6 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('touchmove', dkMove, { passive:false });
   window.addEventListener('touchend', dkEnd);
 
-  /* NAV */
   const navBtns = document.querySelectorAll('.kb-nav-btn');
   const pages   = document.querySelectorAll('.kb-page');
   window.switchTab = function(tabName) {
@@ -1342,7 +1335,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* MINI PLAYER SYNC */
   function fmt(s) { if (!s||isNaN(s)) return '0:00'; const m=Math.floor(s/60),sc=Math.floor(s%60); return `${m}:${sc<10?'0':''}${sc}`; }
   window.syncDockPlayerUI = function({ title, playing, current, duration }) {
     if (title !== undefined && trackNameEl) trackNameEl.textContent = title;
@@ -1360,7 +1352,6 @@ document.addEventListener('DOMContentLoaded', () => {
   nextTrackBtn?.addEventListener('click', () => { if (dkMoved) return; try { KOBSonoro.sfx('cristal'); } catch(_){} window.Player?.next?.(); });
   openGpBtn?.addEventListener('click', () => { if (dkMoved) return; try { KOBSonoro.sfx('swoosh'); } catch(_){} window.Player?.reopenIfActive?.(); });
 
-  /* SCRUB */
   let scrubbing = false;
   function scrubTo(e) {
     if (!progContainer) return;
@@ -1387,9 +1378,9 @@ function updateHomeGreeting(name) {
   const n = name || localStorage.getItem('di_userName') || 'PILOTO';
   const g1 = document.getElementById('homeGreeting');
   const g2 = document.getElementById('homeSubGreeting');
+  const activeArchKey = window.DualArch ? window.DualArch.get() : null;
   const seed = [...n].reduce((a,c) => a + c.charCodeAt(0), 0);
-  const aidx = seed % VISION_ARCHETYPES.length;
-  const a = VISION_ARCHETYPES[aidx];
+  const a = VISION_ARCHETYPES.find(x => x.key === activeArchKey) || VISION_ARCHETYPES[seed % VISION_ARCHETYPES.length];
   if (g1) g1.textContent = `${toArtyaski(n)} · ${a.key}`;
   if (g2) g2.textContent = `${a.opcode} · ${a.regra} · ${a.hz}Hz`;
 }
@@ -1400,16 +1391,15 @@ const Profile = window.Profile = (() => {
 
   function render() {
     const name = localStorage.getItem('di_userName') || 'PILOTO';
+    const activeArchKey = window.DualArch ? window.DualArch.get() : null;
     const seed = [...name].reduce((a,c) => a + c.charCodeAt(0), 0);
-    currentArch = VISION_ARCHETYPES[seed % VISION_ARCHETYPES.length];
+    currentArch = VISION_ARCHETYPES.find(x => x.key === activeArchKey) || VISION_ARCHETYPES[seed % VISION_ARCHETYPES.length];
 
-    /* Orb */
     byId('visionOrbSym') && (byId('visionOrbSym').textContent = currentArch.sym);
     byId('visionOrbOpc') && (byId('visionOrbOpc').textContent = `${currentArch.opcode} · ${currentArch.hz}Hz`);
     byId('visionArtyaski') && (byId('visionArtyaski').textContent = `${toArtyaski(name)} · ${currentArch.key}`);
     byId('visionDrk') && (byId('visionDrk').textContent = `"${currentArch.drk}"`);
 
-    /* V.E.E.B */
     const cons = stripVowels(name);
     byId('veebConsonants') && (byId('veebConsonants').textContent = cons || '--');
     const vowelsRow = byId('veebVowelsRow');
@@ -1421,7 +1411,6 @@ const Profile = window.Profile = (() => {
     const readout = byId('veebReadout');
     if (readout) readout.textContent = `${toArtyaski(name)} | ${currentArch.hz}Hz | ${currentArch.regra}`;
 
-    /* Stats */
     const sg = byId('statsGrid');
     if (sg) {
       sg.innerHTML = [
@@ -1432,7 +1421,6 @@ const Profile = window.Profile = (() => {
       ].map(s => `<div class="stat-card"><div class="stat-label">${s.l}</div><div class="stat-value" style="font-size:12px">${s.v}</div></div>`).join('');
     }
 
-    /* Arch matrix */
     const amg = byId('archMatrixGrid');
     if (amg) {
       amg.innerHTML = VISION_ARCHETYPES.map((a,i) => `<div class="arch-card ${a.key===currentArch.key?'active':''}" data-arch-idx="${i}" onclick="Profile.selectArch(${i})">
@@ -1446,6 +1434,9 @@ const Profile = window.Profile = (() => {
 
   function selectArch(idx) {
     currentArch = VISION_ARCHETYPES[idx] || VISION_ARCHETYPES[0];
+    if (window.DualArch && typeof window.DualArch.set === 'function') {
+      window.DualArch.set(currentArch.key);
+    }
     byId('visionOrbSym') && (byId('visionOrbSym').textContent = currentArch.sym);
     byId('visionOrbOpc') && (byId('visionOrbOpc').textContent = `${currentArch.opcode} · ${currentArch.hz}Hz`);
     byId('apSelectedTitle') && (byId('apSelectedTitle').textContent = `${currentArch.key} · ${currentArch.hz}Hz`);
@@ -1477,7 +1468,11 @@ const Profile = window.Profile = (() => {
   function speakIdentity() {
     const name = localStorage.getItem('di_userName') || 'PILOTO';
     const text = `${name}. Arquétipo ${currentArch.key}. ${currentArch.hz} hertz. ${currentArch.regra}.`;
-    if ('speechSynthesis' in window) { const u = new SpeechSynthesisUtterance(text); u.lang = 'pt-BR'; window.speechSynthesis.speak(u); }
+    if (window.DualTTS && typeof window.DualTTS.speak === 'function') {
+      window.DualTTS.speak(text, { force: true, arch: currentArch.key });
+    } else if ('speechSynthesis' in window) {
+      const u = new SpeechSynthesisUtterance(text); u.lang = 'pt-BR'; window.speechSynthesis.speak(u);
+    }
   }
 
   function copyArchPrompt() {
@@ -1602,7 +1597,6 @@ function playTrack(idx, fromRow) {
 }
 window.playTrack = playTrack;
 
-/* Player stub */
 window.Player = window.Player || { toggle(){}, next(){}, stop(){ const gp=document.getElementById('global-player');if(gp)gp.style.display='none'; }, seekRatio(){}, toggleMinimize(){}, toggleFullscreen(){}, reopenIfActive(){ const gp=document.getElementById('global-player');if(gp)gp.style.display=gp.style.display==='none'?'block':'none'; } };
 
 /* ─── PILL CHIPS ─── */
@@ -1619,26 +1613,34 @@ const Pills = window.Pills = {
   }
 };
 
-/* ─── SYSTEM CONTROLS (profile system tab) ─── */
+/* ─── SYSTEM CONTROLS (Sincronizado com DualArch, DualSFX & DualTTS) ─── */
 function renderControls() {
   const cl = document.getElementById('controlList'); if (!cl) return;
   const name = localStorage.getItem('di_userName') || 'PILOTO';
+  const activeArch = window.DualArch ? window.DualArch.get() : 'KOBLLUX';
+  const sfxOn = isSfxAllowed();
+  const ttsOn = window.DualTTS ? window.DualTTS.get() : true;
+
   cl.innerHTML = `
     <div class="ctrl-row">
       <div><div class="ctrl-label">Nome do Usuário</div><div class="ctrl-sub">${escapeHtml(toArtyaski(name))}</div></div>
-      <button class="mini-btn" onclick="document.getElementById('page-profile').querySelector('.profile-name-input').focus()">Editar</button>
+      <button class="mini-btn" onclick="document.getElementById('page-profile')?.querySelector('.profile-name-input')?.focus()">Editar</button>
     </div>
     <div class="ctrl-row">
       <div><div class="ctrl-label">Fusion Card</div><div class="ctrl-sub">78KARD integrado</div></div>
       <button class="mini-btn active" onclick="setMode('card')">Abrir</button>
     </div>
     <div class="ctrl-row">
-      <div><div class="ctrl-label">Arquétipo Ativo</div><div class="ctrl-sub">Baseado no hash do nome</div></div>
-      <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      <div><div class="ctrl-label">Arquétipo Ativo (${escapeHtml(activeArch)})</div><div class="ctrl-sub">Sincronizado com Header Global</div></div>
+      <button class="mini-btn active" onclick="window.DualArch ? window.DualArch.next() : null">Trocar</button>
     </div>
     <div class="ctrl-row">
-      <div><div class="ctrl-label">Sons do Sistema</div><div class="ctrl-sub">Swoosh · Bubble · Crystal</div></div>
-      <div class="toggle on" id="soundToggle" onclick="this.classList.toggle('on')"></div>
+      <div><div class="ctrl-label">Sons do Sistema (SFX)</div><div class="ctrl-sub">Swoosh · Bubble · Crystal</div></div>
+      <div class="toggle ${sfxOn ? 'on' : ''}" id="soundToggle" onclick="window.DualSFX ? window.DualSFX.toggle() : this.classList.toggle('on')"></div>
+    </div>
+    <div class="ctrl-row">
+      <div><div class="ctrl-label">Click-to-Speech (TTS)</div><div class="ctrl-sub">Leitura vocal por arquétipo</div></div>
+      <div class="toggle ${ttsOn ? 'on' : ''}" id="ttsSysToggle" onclick="window.DualTTS ? window.DualTTS.toggle() : this.classList.toggle('on')"></div>
     </div>
   `;
 }
@@ -1661,14 +1663,17 @@ function boot() {
     scSlider.addEventListener('change', () => { scSlider._dragging = false; try { KOBSonoro.sfx('bubble'); } catch(_){} });
   }
 
-  const savedTheme = localStorage.getItem('kob:theme');
-  if (savedTheme) document.body.dataset.mode = savedTheme;
+  /* Sincroniza tema inicial com DualTheme Global se disponível */
+  const currentTheme = window.DualTheme ? window.DualTheme.get() : (localStorage.getItem('di_themeMode') || localStorage.getItem('kob:theme') || 'night');
+  document.body.dataset.mode = currentTheme;
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
 else boot();
 
-/* Keep avatar in dock nav synced to orb color */
+/* ═══════════════════════════════════════════════════════════════
+   LISTENERS · SINCRONIA TOTAL COM DUAL GLOBAL HEADER
+   ═══════════════════════════════════════════════════════════════ */
 window.addEventListener('di:interface:update', e => {
   const { h1, h2 } = e.detail || {};
   const capsule = document.querySelector('.kb-avatar-capsule');
@@ -1679,7 +1684,48 @@ window.addEventListener('di:interface:update', e => {
   Profile.render();
   renderControls();
 });
-</script>
+
+/* 1. Troca de Arquétipo no Header Global */
+window.addEventListener('dual:arch-change', e => {
+  const { arch, config } = e.detail || {};
+  if (!arch) return;
+  updateHomeGreeting();
+  Profile.render();
+  renderControls();
+  if (config) {
+    toast(`${config.sym} ${arch} · ${config.hz}Hz`, 'success');
+  }
+});
+
+/* 2. Troca de Tema (Night · Day · Sunset) */
+window.addEventListener('dual:theme-change', e => {
+  const theme = e.detail?.theme;
+  if (!theme) return;
+  document.body.dataset.mode = theme;
+  localStorage.setItem('kob:theme', theme);
+});
+
+/* 3. Toggle de SFX no Header Global */
+window.addEventListener('dual:sfx-change', () => {
+  renderControls();
+});
+
+/* 4. Toggle de TTS no Header Global */
+window.addEventListener('dual:tts-change', () => {
+  renderControls();
+});
+
+/* 5. Ponte cross-origin caso rode dentro de iframe */
+window.addEventListener('message', event => {
+  const data = event.data;
+  if (!data || data.type !== 'KOB_SYNC_STATE') return;
+  if (data.theme) document.body.dataset.mode = data.theme;
+  if (data.arch) {
+    updateHomeGreeting();
+    Profile.render();
+    renderControls();
+  }
+});</script>
 
 </body>
 </html>
