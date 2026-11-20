@@ -1,0 +1,4646 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f7fb">
+  <title>Almasliber-OS-Dual-Infodose</title>
+
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+
+  <style>/* =========================================================
+   ALMASLIBER / iFSw — UNIFIED CORE
+   HEADER + SESSION + DOCK + MAXIMIZE/MINIMIZE + TABS
+   ========================================================= */
+
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  --topbar-h: 58px;
+  --header-h: 52px;
+
+  --session-radius: 29px;
+  --session-gap: 20px;
+
+  --collapsed-h: 52px;
+  --peek-h: 178px;
+
+  --resize-hit: 0px;
+  --resize-corner: 54px;
+
+  --dock-bottom-gap: 80px;
+  --dock-offset-x: -12px;
+
+  --z-base: 1;
+  --z-content: 100;
+  --z-header-system: 900;
+  --z-header-main: 910;
+  --z-session: 1000;
+  --z-session-header: 1010;
+  --z-session-controls: 1020;
+  --z-maximized: 94000;
+  --z-maximized-header: 94010;
+  --z-maximized-controls: 94020;
+  --z-resize: 94030;
+  --z-dock: 97000;
+  --z-tab-switcher: 98000;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+html { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+body {
+  min-height: 100dvh;
+  background: radial-gradient(circle at 50% 0%, #2a2a35 0%, #0f0f15 100%);
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+body.ui-safe-vertical {
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+}
+body.ui-immersive { padding: 0; overflow: hidden !important; }
+
+#kxtsk-shell {
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  overflow: visible;
+  z-index: var(--z-base);
+}
+.almasliber, .almasliber .shell, #main-content {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+.almasliber { min-height: 100dvh; }
+
+/* HEADER SYSTEM */
+.topbar {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  height: var(--topbar-h);
+  min-height: var(--topbar-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;
+  z-index: var(--z-header-system);
+  isolation: isolate;
+}
+#system-topbar { z-index: var(--z-header-system); }
+#main-header { z-index: var(--z-header-main); }
+
+#main-header.header-visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+#main-header.header-hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+#main-header { transition: transform .25s ease, opacity .2s ease; }
+
+.brand, .brandX, .os-brand {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  font-weight: 800;
+}
+.brandX { gap: 7px; font-size: 13px; letter-spacing: 1.3px; }
+.badgeX { font-size: 9px; opacity: .55; }
+
+.top-actions {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.icon-btn, .soft-btn, .launcher-btn, .win-go-btn {
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 12px;
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.icon-btn { width: 34px; height: 34px; padding: 0; background: rgba(255,255,255,.08); }
+.soft-btn { padding: 10px 12px; background: rgba(255,255,255,.08); }
+.launcher-btn { padding: 10px 12px; background: rgba(0,242,255,.12); border: 1px solid rgba(0,242,255,.3); }
+.win-go-btn { padding: 10px 12px; background: rgba(0,242,255,.12); }
+.icon-btn:active, .win-controls button:active, .dock-bubble:active { transform: scale(.94); }
+
+.win-navrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  padding: 0 16px 10px;
+}
+.win-urlbar {
+  flex: 1 1 auto;
+  min-width: 139px;
+  padding: 11px 13px;
+  border-radius: 13px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  outline: none;
+  font-size: 10px;
+}
+.win-urlbar::placeholder { color: rgba(255,255,255,.45); }
+.win-urlbar:focus {
+  border-color: rgba(0,242,255,.45);
+  background: rgba(255,255,255,.09);
+  box-shadow: 0 0 0 3px rgba(0,242,255,.08);
+}
+
+main, #main-content { position: relative; z-index: var(--z-content); }
+
+#stackWrap {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  min-height: calc(100dvh - var(--topbar-h));
+  margin: 0 auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--session-gap);
+  overflow: visible;
+  z-index: var(--z-content);
+  isolation: isolate;
+}
+
+/* SESSION WINDOW */
+.session-window {
+  position: relative;
+  width: 100%;
+  height: calc(100dvh - var(--topbar-h));
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: rgba(30,30,35,.40);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--session-radius);
+  z-index: var(--z-session);
+  transition: height .28s cubic-bezier(.16,1,.3,1), width .28s cubic-bezier(.16,1,.3,1), transform .28s ease, opacity .28s ease;
+}
+
+.session-window .win-hdr {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: var(--header-h);
+  min-height: var(--header-h);
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  z-index: var(--z-session-header);
+  background: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+  touch-action: manipulation;
+  isolation: isolate;
+}
+
+.win-controls {
+  position: relative;
+  z-index: var(--z-session-controls);
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  pointer-events: auto;
+}
+.win-controls button {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,.10);
+  color: #fff;
+  cursor: pointer;
+  font-family: "Noto Sans Symbols 2", "Noto Sans Symbols", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 17px;
+  font-weight: 300;
+  line-height: 1;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.win-controls button:hover { background: rgba(255,255,255,.17); }
+
+/* Tab counter button */
+.win-controls .tab-counter {
+  width: auto;
+  min-width: 30px;
+  padding: 0 10px;
+  border-radius: 20px;
+  background: rgba(0,242,255,.15);
+  font-size: 12px;
+  font-weight: 600;
+  color: #7af;
+  letter-spacing: 0.3px;
+}
+
+.session-window .win-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  z-index: 1;
+  display: block;
+}
+
+.session-window.collapsed {
+  height: var(--collapsed-h) !important;
+  min-height: var(--collapsed-h) !important;
+  overflow: hidden !important;
+}
+.session-window.collapsed .win-frame { visibility: hidden; pointer-events: none; }
+
+.session-window.peeked {
+  height: var(--peek-h) !important;
+  min-height: var(--peek-h) !important;
+}
+.session-window.peeked .win-frame { visibility: visible; pointer-events: auto; }
+
+.session-window.minimized {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-width: 1px !important;
+  min-height: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: scale(.90) translateY(50px);
+  overflow: hidden !important;
+}
+
+.session-window.maximized {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  overflow: hidden !important;
+  z-index: var(--z-maximized) !important;
+  transition: none !important;
+}
+.session-window.maximized .win-hdr {
+  position: absolute !important;
+  inset: 0 0 auto 0 !important;
+  width: 100% !important;
+  height: var(--header-h) !important;
+  z-index: var(--z-maximized-header) !important;
+  pointer-events: none !important;
+}
+.session-window.maximized .win-controls { pointer-events: auto !important; z-index: var(--z-maximized-controls) !important; }
+.session-window.maximized .win-frame {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 1 !important;
+}
+
+body.has-maximized { overflow: hidden !important; }
+body.has-maximized .topbar { pointer-events: none; }
+body.has-maximized .session-window.maximized .win-controls,
+body.has-maximized .session-window.maximized .win-hdr { pointer-events: auto; }
+
+/* Resize handles */
+.session-window .resize-handle {
+  position: absolute;
+  z-index: var(--z-resize);
+  background: transparent;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.session-window .resize-y { left: 0; right: 0; bottom: 0; height: var(--resize-hit); cursor: ns-resize; }
+.session-window .resize-x { top: var(--header-h); right: 0; bottom: 0; width: var(--resize-hit); cursor: ew-resize; }
+.session-window .resize-corner { right: 0; bottom: 0; width: var(--resize-corner); height: var(--resize-corner); cursor: nwse-resize; }
+.session-window .resize-corner::before {
+  content: "";
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.18);
+  border: 1px solid rgba(255,255,255,.25);
+  box-shadow: 0 0 14px rgba(0,242,255,.18);
+  pointer-events: none;
+}
+.session-window.maximized .resize-handle { display: none !important; }
+
+.session-window.suspended .win-frame { display: none; }
+.session-window.suspended::after {
+  content: "⏸";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  opacity: .3;
+  pointer-events: none;
+}
+
+/* SESSION LIFECYCLE — indicador visual de estado */
+.session-window.state-idle { filter: saturate(.82); }
+.session-window.state-idle .win-hdr::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 200, 60, .75);
+  pointer-events: none;
+}
+.session-window.state-loading .win-hdr::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(0, 242, 255, .8);
+  animation: session-loading-pulse 1s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes session-loading-pulse {
+  0%, 100% { opacity: .3; }
+  50% { opacity: 1; }
+}
+
+/* DOCK */
+#dock {
+  position: fixed;
+  left: var(--dock-offset-x);
+  bottom: calc(var(--dock-bottom-gap) + var(--safe-bottom));
+  z-index: var(--z-dock);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 10px;
+  border-radius: 24px;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255,255,255,.1);
+}
+#dock:empty { opacity: 0; pointer-events: none; }
+.dock-bubble {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.20);
+  color: #fff;
+  cursor: pointer;
+  font-family: "Noto Sans Symbols 2", "Noto Sans Symbols", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 19px;
+  line-height: 1;
+  touch-action: manipulation;
+}
+
+/* TAB SWITCHER OVERLAY */
+.tab-switcher-overlay{
+  position:fixed;
+  inset:0;
+  z-index:var(--z-tab-switcher,98000);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:
+    calc(16px + var(--safe-top,0px))
+    14px
+    calc(16px + var(--safe-bottom,0px));
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(0,229,255,.10),
+      transparent 42%
+    ),
+    rgba(2,3,8,.78);
+  backdrop-filter:blur(24px) saturate(1.2);
+  -webkit-backdrop-filter:blur(24px) saturate(1.2);
+  opacity:0;
+  transition:opacity .722s ease;
+}
+
+.tab-switcher-overlay.open{
+  display:flex;
+  opacity:1;
+}
+
+.tab-switcher-panel{
+  position:relative;
+  width:min(760px,100%);
+  max-height:min(86dvh,900px);
+  overflow:auto;
+
+  padding:16px;
+
+  border:
+    1px solid rgba(255,255,255,.11);
+
+  border-radius:
+    clamp(22px,5vw,32px);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(22,23,31,.94),
+      rgba(8,9,14,.91)
+    );
+
+  box-shadow:
+    0 30px 90px rgba(0,0,0,.65),
+    inset 0 1px 0 rgba(255,255,255,.06);
+
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+
+.tab-switcher-panel::-webkit-scrollbar{
+  display:none;
+}
+
+/* HEADER */
+
+.tab-switcher-panel .panel-header{
+  position:sticky;
+  top:0;
+  z-index:3;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+
+  margin:-4px -4px 14px;
+  padding:10px 8px 14px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(15,16,22,.98),
+      rgba(15,16,22,.82),
+      transparent
+    );
+
+  backdrop-filter:blur(12px);
+}
+
+.tab-switcher-panel .panel-header h2{
+  margin:0;
+
+  font-size:18px;
+  line-height:1.1;
+  font-weight:750;
+  letter-spacing:-.02em;
+
+  color:var(--text,#f5f5f7);
+}
+
+.tab-switcher-panel .panel-header h2::before{
+  content:"◉";
+  margin-right:8px;
+  color:var(--cyan,#00e5ff);
+  font-size:.72em;
+  vertical-align:2px;
+}
+
+.tab-switcher-panel .panel-actions{
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+
+.tab-switcher-panel .panel-actions button{
+  min-height:34px;
+
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+
+  padding:7px 11px;
+
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:12px;
+
+  background:rgba(255,255,255,.055);
+  color:rgba(255,255,255,.86);
+
+  font-size:12px;
+  font-weight:650;
+
+  cursor:pointer;
+  transition:
+    transform .16s ease,
+    background .16s ease,
+    border-color .16s ease;
+}
+
+.tab-switcher-panel .panel-actions button:hover{
+  background:rgba(255,255,255,.10);
+  border-color:rgba(255,255,255,.16);
+}
+
+.tab-switcher-panel .panel-actions button:active{
+  transform:scale(.96);
+}
+
+/* GRID */
+
+.tab-grid{
+  display:grid;
+  grid-template-columns:
+    repeat(auto-fill,minmax(210px,1fr));
+
+  gap:10px;
+}
+
+/* CARD */
+
+.tab-card{
+  position:relative;
+  min-height:126px;
+
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  gap:7px;
+
+  padding:15px;
+
+  overflow:hidden;
+
+  border:1px solid rgba(255,255,255,.075);
+  border-radius:20px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.065),
+      rgba(255,255,255,.025)
+    );
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.035);
+
+  cursor:pointer;
+
+  transition:
+    transform .18s ease,
+    border-color .18s ease,
+    background .18s ease,
+    box-shadow .18s ease;
+}
+
+.tab-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+
+  background:
+    radial-gradient(
+      circle at 15% 0%,
+      rgba(0,229,255,.11),
+      transparent 48%
+    );
+
+  opacity:0;
+  transition:opacity .18s ease;
+  pointer-events:none;
+}
+
+.tab-card:hover{
+  transform:translateY(-2px);
+  border-color:rgba(0,229,255,.20);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.09),
+      rgba(255,255,255,.035)
+    );
+
+  box-shadow:
+    0 12px 30px rgba(0,0,0,.24);
+}
+
+.tab-card:hover::before{
+  opacity:1;
+}
+
+/* ACTIVE */
+
+.tab-card.active{
+  border-color:rgba(0,229,255,.48);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(0,229,255,.12),
+      rgba(255,255,255,.035)
+    );
+
+  box-shadow:
+    0 0 0 1px rgba(0,229,255,.08),
+    0 12px 35px rgba(0,0,0,.28),
+    inset 0 0 30px rgba(0,229,255,.035);
+}
+
+.tab-card.active::after{
+  content:"ATIVA";
+
+  position:absolute;
+  top:11px;
+  left:12px;
+
+  padding:4px 7px;
+
+  border-radius:999px;
+
+  background:rgba(0,229,255,.10);
+  border:1px solid rgba(0,229,255,.18);
+
+  color:#00e5ff;
+
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:.08em;
+}
+
+/* ICON / ORB */
+
+.tab-card::marker{
+  display:none;
+}
+
+.tab-card .tab-icon{
+  width:38px;
+  height:38px;
+
+  display:grid;
+  place-items:center;
+
+  margin-bottom:auto;
+
+  border-radius:13px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.10),
+      rgba(255,255,255,.035)
+    );
+
+  border:1px solid rgba(255,255,255,.08);
+
+  font-size:18px;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.07);
+}
+
+/* TITLE */
+
+.tab-card .tab-title{
+  position:relative;
+  z-index:1;
+
+  padding-right:28px;
+
+  font-size:13px;
+  line-height:1.2;
+  font-weight:720;
+
+  color:#fff;
+
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* URL */
+
+.tab-card .tab-url{
+  position:relative;
+  z-index:1;
+
+  font-size:9px;
+  line-height:1.25;
+
+  color:rgba(255,255,255,.43);
+
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* STATE */
+
+.tab-card .tab-state{
+  position:absolute;
+  right:12px;
+  bottom:13px;
+
+  display:flex;
+  align-items:center;
+  gap:5px;
+
+  font-size:8px;
+  font-weight:750;
+  letter-spacing:.05em;
+
+  color:rgba(255,255,255,.42);
+}
+
+.tab-card .tab-state-dot{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#777;
+}
+
+.tab-card[data-state="active"] .tab-state-dot{
+  background:#39ffb6;
+  box-shadow:0 0 8px rgba(57,255,182,.6);
+}
+
+.tab-card[data-state="loading"] .tab-state-dot{
+  background:#00e5ff;
+  animation:tabStatePulse 1s infinite;
+}
+
+.tab-card[data-state="idle"] .tab-state-dot{
+  background:#ffd60a;
+}
+
+.tab-card[data-state="suspended"] .tab-state-dot{
+  background:#ff6b6b;
+}
+
+.tab-card[data-keepalive="true"] .tab-state::after{
+  content:" · KEEP";
+  color:#00e5ff;
+}
+
+@keyframes tabStatePulse{
+  50%{opacity:.3;transform:scale(.65)}
+}
+
+/* CLOSE */
+
+.tab-card .tab-close{
+  position:absolute;
+  top:9px;
+  right:9px;
+
+  width:28px;
+  height:28px;
+
+  display:grid;
+  place-items:center;
+
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:10px;
+
+  background:rgba(0,0,0,.18);
+  color:rgba(255,255,255,.45);
+
+  opacity:0;
+
+  cursor:pointer;
+
+  transition:
+    opacity .15s ease,
+    background .15s ease,
+    color .15s ease;
+}
+
+.tab-card:hover .tab-close,
+.tab-card:focus-within .tab-close{
+  opacity:1;
+}
+
+.tab-card .tab-close:hover{
+  background:rgba(255,70,90,.14);
+  color:#ff6b6b;
+}
+
+/* FAVORITE */
+
+.tab-card .tab-fav{
+  position:absolute;
+  top:10px;
+  left:10px;
+
+  width:27px;
+  height:27px;
+
+  display:grid;
+  place-items:center;
+
+  border:0;
+  background:transparent;
+
+  color:rgba(255,255,255,.3);
+
+  opacity:.7;
+}
+
+.tab-card .tab-fav.active{
+  color:#ffd60a;
+  opacity:1;
+}
+
+/* EMPTY */
+
+.tab-empty{
+  grid-column:1/-1;
+
+  padding:42px 20px;
+
+  text-align:center;
+
+  border:
+    1px dashed rgba(255,255,255,.10);
+
+  border-radius:20px;
+
+  background:rgba(255,255,255,.025);
+}
+
+.tab-empty-icon{
+  font-size:34px;
+  margin-bottom:8px;
+  opacity:.5;
+}
+
+.tab-empty-title{
+  font-size:14px;
+  font-weight:700;
+}
+
+.tab-empty-text{
+  margin-top:5px;
+  font-size:11px;
+  color:rgba(255,255,255,.42);
+}
+
+/* MOBILE */
+
+@media(max-width:600px){
+
+  .tab-switcher-overlay{
+    padding:
+      calc(8px + var(--safe-top,0px))
+      8px
+      calc(8px + var(--safe-bottom,0px));
+    align-items:flex-end;
+  }
+
+  .tab-switcher-panel{
+    width:100%;
+    max-height:92dvh;
+    border-radius:25px;
+    padding:12px;
+  }
+
+  .tab-grid{
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+  .tab-card{
+    min-height:118px;
+    padding:12px;
+    border-radius:17px;
+  }
+
+  .tab-card .tab-close{
+    opacity:1;
+  }
+}
+
+@media(max-width:390px){
+  .tab-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+
+/* @import "https://infodose.com.br/oiDual/KODUX/78K/APPS/78header/dual-header-app/css/main.css"; */
+
+/* style  */
+
+/* ═══════════════════════════════════════════════════════
+   DUAL CORE · GLOBAL TOKENS
+═══════════════════════════════════════════════════════ */
+:root {
+    color-scheme: dark;
+    --bg: #050507;
+    --panel:
+        rgba(18, 18, 22, .82);
+    --panel-solid:
+        #121216;
+    --border:
+        rgba(255, 255, 255, .10);
+    --text:
+        #f5f5f7;
+    --muted:
+        rgba(255, 255, 255, .52);
+    --cyan:
+        #00e5ff;
+    --purple:
+        #bf5af2;
+    --gold:
+        #ffd60a;
+    --input-bg:
+        rgba(255, 255, 255, .055);
+    --button-bg:
+        rgba(255, 255, 255, .07);
+    --topbar-bg:
+        rgba(5, 5, 7, .82);
+    --dock-bg:
+        rgba(10, 10, 13, .92);
+    --shadow:
+        0 10px 40px
+        rgba(0, 0, 0, .35);
+    --radius:
+        18px;
+    --transition:
+        .25s ease;
+}
+/* ═══════════════════════════════════════════════════════
+   LIGHT
+═══════════════════════════════════════════════════════ */
+html[data-theme="light"] {
+    color-scheme: light;
+    --bg:
+        #f5f5f7;
+    --panel:
+        rgba(255, 255, 255, .85);
+    --panel-solid:
+        #ffffff;
+    --border:
+        rgba(0, 0, 0, .08);
+    --text:
+        #1a1a1e;
+    --muted:
+        rgba(0, 0, 0, .50);
+    --cyan:
+        #007aff;
+    --purple:
+        #af52de;
+    --gold:
+        #d4a017;
+    --input-bg:
+        rgba(0, 0, 0, .035);
+    --button-bg:
+        rgba(0, 0, 0, .045);
+    --topbar-bg:
+        rgba(255, 255, 255, .82);
+    --dock-bg:
+        rgba(255, 255, 255, .92);
+    --shadow:
+        0 10px 40px
+        rgba(0, 0, 0, .10);
+}
+/* ═══════════════════════════════════════════════════════
+   RESET
+═══════════════════════════════════════════════════════ */
+* {
+    box-sizing:
+        border-box;
+    -webkit-tap-highlight-color:
+        transparent;
+}
+html,
+body {
+    margin:
+        0;
+    padding:
+        0;
+    width:
+        100%;
+    min-height:
+        100%;
+    background:
+        var(--bg);
+    color:
+        var(--text);
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "SF Pro Display",
+        "SF Pro Text",
+        Inter,
+        system-ui,
+        sans-serif;
+    transition:
+        background-color
+        var(--transition),
+        color
+        var(--transition);
+}
+/* ═══════════════════════════════════════════════════════
+   APP
+═══════════════════════════════════════════════════════ */
+.dual-app {
+    min-height:
+        100vh;
+    background:
+        var(--bg);
+    color:
+        var(--text);
+}
+/* ═══════════════════════════════════════════════════════
+   HEADER FLUTUANTE
+═══════════════════════════════════════════════════════ */
+.topbar {
+    position:
+        fixed;
+    top:
+        0;
+    left:
+        0;
+    right:
+        0;
+    z-index:
+        1000;
+    display:
+        flex;
+    align-items:
+        center;
+    justify-content:
+        space-between;
+    min-height:
+        56px;
+    padding:
+        10px 16px;
+    background:
+        var(--topbar-bg);
+    border-bottom:
+        1px solid
+        var(--border);
+    backdrop-filter:
+        blur(24px);
+    -webkit-backdrop-filter:
+        blur(24px);
+    transform:
+        translateY(0);
+    transition:
+        transform
+        .32s
+        cubic-bezier(.22, 1, .36, 1),
+        opacity
+        .25s
+        ease,
+        background
+        var(--transition),
+        border-color
+        var(--transition);
+}
+/* ═══════════════════════════════════════════════════════
+   HEADER ESCONDIDO DURANTE SCROLL DOWN
+═══════════════════════════════════════════════════════ */
+.topbar.header-hidden {
+    transform:
+        translateY(
+            calc(-100% - 12px)
+        );
+    opacity:
+        .15;
+    pointer-events:
+        none;
+}
+/* ═══════════════════════════════════════════════════════
+   HEADER VISÍVEL
+═══════════════════════════════════════════════════════ */
+.topbar.header-visible {
+    transform:
+        translateY(0);
+    opacity:
+        1;
+    pointer-events:
+        auto;
+}
+/* ═══════════════════════════════════════════════════════
+   BRAND
+═══════════════════════════════════════════════════════ */
+.brandX {
+    display:
+        flex;
+    align-items:
+        center;
+    gap:
+        10px;
+    font-weight:
+        700;
+    letter-spacing:
+        .08em;
+}
+.badgeX {
+    padding:
+        5px 9px;
+    border-radius:
+        999px;
+    background:
+        var(--button-bg);
+    color:
+        var(--muted);
+    font-size:
+        10px;
+    letter-spacing:
+        .08em;
+}
+/* ═══════════════════════════════════════════════════════
+   THEME DOT
+   UMA ÚNICA BOLINHA
+═══════════════════════════════════════════════════════ */
+.theme-dot {
+    position:
+        relative;
+    width:
+        30px;
+    height:
+        30px;
+    padding:
+        0;
+    border:
+        1px solid
+        var(--border);
+    border-radius:
+        50%;
+    background:
+        var(--button-bg);
+    color:
+        var(--text);
+    cursor:
+        pointer;
+    display:
+        grid;
+    place-items:
+        center;
+    transition:
+        transform
+        .2s ease,
+        background
+        var(--transition),
+        border-color
+        var(--transition),
+        box-shadow
+        var(--transition);
+}
+.theme-dot::before {
+    content:
+        "";
+    width:
+        10px;
+    height:
+        10px;
+    border-radius:
+        50%;
+    background:
+        var(--cyan);
+    box-shadow:
+        0 0 12px
+        var(--cyan);
+    transition:
+        all
+        var(--transition);
+}
+.theme-dot:hover {
+    transform:
+        scale(1.08);
+    border-color:
+        var(--cyan);
+    box-shadow:
+        0 0 20px
+        color-mix(
+            in srgb,
+            var(--cyan) 20%,
+            transparent
+        );
+}
+/* ═══════════════════════════════════════════════════════
+   CONTENT
+═══════════════════════════════════════════════════════ */
+#main-content {
+    padding-top:
+        56px;
+    opacity:
+        1;
+    visibility:
+        visible;
+    pointer-events:
+        auto;
+    max-height:
+        50000px;
+    overflow:
+        hidden;
+    transition:
+        opacity
+        .35s
+        ease,
+        max-height
+        .35s
+        ease,
+        visibility
+        .35s
+        ease,
+        padding
+        .35s
+        ease;
+}
+/* ═══════════════════════════════════════════════════════
+   HEADER COLLAPSE
+   CLIQUE NO HEADER
+═══════════════════════════════════════════════════════ */
+#main-content.hidden {
+    opacity:
+        0;
+    visibility:
+        hidden;
+    pointer-events:
+        none;
+    max-height:
+        0;
+    padding-top:
+        0;
+    padding-bottom:
+        0;
+}
+/* ═══════════════════════════════════════════════════════
+   CONTENT
+═══════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   PANELS
+═══════════════════════════════════════════════════════ */
+.panel,
+.card,
+.modal,
+.drawer,
+.sidebar,
+.sheet,
+.deck,
+.overlay-panel,
+.fractal-block,
+.preview-card {
+    background:
+        var(--panel);
+    color:
+        var(--text);
+    border:
+        none;
+    border-radius:
+        var(--radius);
+    box-shadow:
+none;
+    backdrop-filter:
+none;
+    -webkit-backdrop-filter:
+        none;
+    transition:
+        background
+        var(--transition),
+
+}
+
+/* ═══════════════════════════════════════════════════════
+   FIELD
+═══════════════════════════════════════════════════════ */
+.field {
+    display:
+        grid;
+    gap:
+        8px;
+    margin-bottom:
+        18px;
+}
+.field label {
+    color:
+        var(--muted);
+    font-size:
+        12px;
+    font-weight:
+        600;
+}
+textarea,
+input,
+select {
+    width:
+        100%;
+    padding:
+        14px;
+    border:
+        1px solid
+        var(--border);
+    border-radius:
+        14px;
+    outline:
+        none;
+    background:
+        var(--input-bg);
+    color:
+        var(--text);
+    font:
+        inherit;
+}
+/* ═══════════════════════════════════════════════════════
+   DEMO
+═══════════════════════════════════════════════════════ */
+.demo {
+    min-height:
+        1200px;
+    padding:
+        0;
+}
+
+    .session-window.suspended .win-frame { display: none; }
+    .session-window.suspended::after {
+      content: '🌐';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      opacity: 0.3;
+      pointer-events: none;
+    }
+    .session-window.minimized { display: none; }
+    .dock-bubble { cursor: pointer; }
+    
+     .interactive-hero,
+#view-vitrine,
+.session-window
+#galleryApp{
+border:none}
+
+/*#galleryApp{width:100%;}*/
+
+.explore-results{background:none; 
+drop-box-shadow:none;}
+
+.section-title{color:var(--text);}
+
+    * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+}
+
+*::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+/* OVERRIDE · STATE BADGE */
+.state-badge {
+    box-shadow: none;
+    border-radius: 50%;
+}</style>
+
+  <script type="module">/* ============================================================
+   KOB BUS
+   Universal Cross-Frame Bridge
+   KOBLLUX / Dual.Infodose
+   ============================================================
+
+   FUNÇÃO:
+
+   SHELL
+      │
+      ├── same-origin
+      │      └── acessa contentDocument diretamente
+      │
+      └── cross-origin
+             └── postMessage()
+
+   RESULTADO:
+
+   Cortex ───────────────┐
+   Nexus ────────────────┤
+   DualTube ─────────────┤
+   iframe same-origin ──┤──> KOB BUS ──> KOB TTS
+   iframe cross-origin ─┘
+
+   ============================================================ */
+
+(function KOB_BUS(global) {
+
+  'use strict';
+
+  const VERSION = 'KOB-BUS.v1.0.0';
+
+  const CONFIG = {
+
+    debug: false,
+
+    maxText: 1200,
+
+    minText: 2,
+
+    debounce: 180,
+
+    iframeSelector: 'iframe',
+
+    /*
+      "*" permite comunicação entre origens.
+
+      Em produção, você pode trocar por uma lista
+      de hosts permitidos.
+    */
+    targetOrigin: '*',
+
+    /*
+      Não captura controles por padrão.
+    */
+    ignoredTags: [
+      'SCRIPT',
+      'STYLE',
+      'NOSCRIPT',
+      'INPUT',
+      'TEXTAREA',
+      'SELECT',
+      'OPTION'
+    ]
+
+  };
+
+
+  /* ==========================================================
+     STATE
+     ========================================================== */
+
+  const STATE = {
+
+    started: false,
+
+    frames: new Map(),
+
+    documents: new WeakSet(),
+
+    lastText: '',
+
+    lastTime: 0,
+
+    observer: null
+
+  };
+
+
+  /* ==========================================================
+     LOG
+     ========================================================== */
+
+  function log(...args) {
+
+    if (!CONFIG.debug) return;
+
+    console.log(
+      '%c[KOB BUS]',
+      'color:#00ffff;font-weight:900',
+      ...args
+    );
+
+  }
+
+
+  /* ==========================================================
+     NORMALIZE
+     ========================================================== */
+
+  function cleanText(text) {
+
+    return String(text || '')
+      .replace(/\u200B/g, '')
+      .replace(/\u00A0/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, CONFIG.maxText);
+
+  }
+
+
+  /* ==========================================================
+     ELEMENT IGNORE
+     ========================================================== */
+
+  function ignored(el) {
+
+    if (!el || el.nodeType !== 1) {
+      return true;
+    }
+
+    if (
+      CONFIG.ignoredTags.includes(
+        el.tagName
+      )
+    ) {
+      return true;
+    }
+
+    if (
+      el.closest?.(
+        '[data-kob-ignore],[data-tts-ignore],.kob-tts-ignore'
+      )
+    ) {
+      return true;
+    }
+
+    return false;
+
+  }
+
+
+  /* ==========================================================
+     EXTRACT TEXT
+     ========================================================== */
+
+  function extractText(target) {
+
+    if (!target) {
+      return '';
+    }
+
+    let el = target;
+
+    /*
+      SVG / path / use
+    */
+
+    if (
+      el.tagName === 'SVG' ||
+      el.tagName === 'PATH' ||
+      el.tagName === 'USE'
+    ) {
+
+      el =
+        el.closest?.(
+          'button,a,[role="button"]'
+        ) ||
+        el.parentElement;
+
+    }
+
+    /*
+      Se clicou num controle,
+      somente fala se explicitamente marcado.
+    */
+
+    const control =
+      el.closest?.(
+        'button,input,textarea,select'
+      );
+
+    if (control) {
+
+      if (
+        !control.hasAttribute(
+          'data-kob-tts'
+        )
+      ) {
+
+        return '';
+
+      }
+
+      el = control;
+
+    }
+
+    if (ignored(el)) {
+      return '';
+    }
+
+
+    /*
+      Primeiro tenta o próprio elemento.
+    */
+
+    let text =
+      cleanText(
+        el.innerText ||
+        el.textContent ||
+        el.getAttribute?.(
+          'aria-label'
+        ) ||
+        el.getAttribute?.(
+          'title'
+        ) ||
+        ''
+      );
+
+
+    /*
+      Se o elemento contém muito texto,
+      procura um bloco menor.
+    */
+
+    if (
+      text.length > CONFIG.maxText
+    ) {
+
+      const candidates = [
+        'article',
+        'section',
+        'p',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        '.card',
+        '.v-glass',
+        '[data-kob-content]'
+      ];
+
+      for (
+        const selector of candidates
+      ) {
+
+        const parent =
+          el.closest?.(
+            selector
+          );
+
+        if (!parent) continue;
+
+        const candidate =
+          cleanText(
+            parent.innerText ||
+            parent.textContent ||
+            ''
+          );
+
+        if (
+          candidate &&
+          candidate.length <
+          text.length
+        ) {
+
+          text = candidate;
+
+        }
+
+      }
+
+    }
+
+    return cleanText(text);
+
+  }
+
+
+  /* ==========================================================
+     FIND TTS
+     ========================================================== */
+
+  function getTTS() {
+
+    /*
+      Seu motor principal.
+    */
+
+    if (
+      global.CobTTS &&
+      typeof global.CobTTS.speak ===
+        'function'
+    ) {
+
+      return text =>
+        global.CobTTS.speak(text);
+
+    }
+
+
+    /*
+      Outras formas que seu ecossistema
+      pode ter exposto.
+    */
+
+    const objects = [
+
+      global.KOB_TTS,
+
+      global.KOBTTS,
+
+      global.COB_TTS,
+
+      global.TTS,
+
+      global.tts
+
+    ];
+
+    for (
+      const obj of objects
+    ) {
+
+      if (!obj) continue;
+
+      if (
+        typeof obj.speak ===
+        'function'
+      ) {
+
+        return text =>
+          obj.speak(text);
+
+      }
+
+      if (
+        typeof obj.say ===
+        'function'
+      ) {
+
+        return text =>
+          obj.say(text);
+
+      }
+
+      if (
+        typeof obj.speakText ===
+        'function'
+      ) {
+
+        return text =>
+          obj.speakText(text);
+
+      }
+
+    }
+
+
+    /*
+      Funções globais.
+    */
+
+    const functions = [
+
+      'kobSpeak',
+
+      'KOBSpeak',
+
+      'speakText',
+
+      'speak',
+
+      'ttsSpeak',
+
+      'speakTTS'
+
+    ];
+
+    for (
+      const name of functions
+    ) {
+
+      if (
+        typeof global[name] ===
+        'function'
+      ) {
+
+        return text =>
+          global[name](text);
+
+      }
+
+    }
+
+
+    /*
+      Último fallback.
+    */
+
+    if (
+      global.speechSynthesis
+    ) {
+
+      return text => {
+
+        try {
+
+          global.speechSynthesis.cancel();
+
+          const u =
+            new SpeechSynthesisUtterance(
+              text
+            );
+
+          u.lang = 'pt-BR';
+
+          global.speechSynthesis.speak(
+            u
+          );
+
+        } catch (err) {
+
+          log(
+            'Speech fallback error',
+            err
+          );
+
+        }
+
+      };
+
+    }
+
+    return null;
+
+  }
+
+
+  /* ==========================================================
+     SPEAK
+     ========================================================== */
+
+  function speak(
+    text,
+    meta = {}
+  ) {
+
+    text =
+      cleanText(text);
+
+    if (
+      text.length <
+      CONFIG.minText
+    ) {
+      return false;
+    }
+
+
+    const now =
+      Date.now();
+
+    if (
+      text === STATE.lastText &&
+      now - STATE.lastTime <
+      CONFIG.debounce
+    ) {
+
+      return false;
+
+    }
+
+    STATE.lastText =
+      text;
+
+    STATE.lastTime =
+      now;
+
+
+    const tts =
+      getTTS();
+
+    if (!tts) {
+
+      console.warn(
+        '[KOB BUS] KOB TTS não encontrado.'
+      );
+
+      return false;
+
+    }
+
+
+    log(
+      'TTS',
+      meta,
+      text
+    );
+
+
+    try {
+
+      tts(text);
+
+      return true;
+
+    } catch (err) {
+
+      console.error(
+        '[KOB BUS] TTS error',
+        err
+      );
+
+      return false;
+
+    }
+
+  }
+
+
+  /* ==========================================================
+     FRAME ID
+     ========================================================== */
+
+  function frameId(iframe) {
+
+    if (
+      iframe.dataset.kobBusId
+    ) {
+
+      return iframe.dataset.kobBusId;
+
+    }
+
+    const id =
+      'kob-frame-' +
+      Math.random()
+        .toString(36)
+        .slice(2, 10);
+
+    iframe.dataset.kobBusId =
+      id;
+
+    return id;
+
+  }
+
+
+  /* ==========================================================
+     FRAME ORIGIN
+     ========================================================== */
+
+  function getFrameOrigin(iframe) {
+
+    try {
+
+      return new URL(
+        iframe.src ||
+        iframe.getAttribute('src') ||
+        location.href,
+        location.href
+      ).origin;
+
+    } catch (_) {
+
+      return location.origin;
+
+    }
+
+  }
+
+
+  /* ==========================================================
+     SAME ORIGIN
+     ========================================================== */
+
+  function isSameOrigin(iframe) {
+
+    try {
+
+      const origin =
+        getFrameOrigin(
+          iframe
+        );
+
+      return (
+        origin ===
+        location.origin
+      );
+
+    } catch (_) {
+
+      return false;
+
+    }
+
+  }
+
+
+  /* ==========================================================
+     SAME-ORIGIN BRIDGE
+     ========================================================== */
+
+  function connectSameOrigin(
+    iframe
+  ) {
+
+    try {
+
+      const doc =
+        iframe.contentDocument ||
+        iframe.contentWindow?.document;
+
+      if (!doc) {
+
+        return false;
+
+      }
+
+
+      /*
+        Instala somente uma vez
+        naquele document.
+      */
+
+      if (
+        STATE.documents.has(doc)
+      ) {
+
+        return true;
+
+      }
+
+      STATE.documents.add(doc);
+
+
+      doc.addEventListener(
+        'click',
+        event => {
+
+          const text =
+            extractText(
+              event.target
+            );
+
+          if (!text) return;
+
+          speak(
+            text,
+            {
+              source:
+                'same-origin',
+              iframe:
+                frameId(iframe),
+              url:
+                iframe.src
+            }
+          );
+
+        },
+        true
+      );
+
+
+      log(
+        'SAME-ORIGIN conectado',
+        iframe.src
+      );
+
+
+      return true;
+
+    } catch (err) {
+
+      log(
+        'Same-origin falhou',
+        err
+      );
+
+      return false;
+
+    }
+
+  }
+
+
+  /* ==========================================================
+     CROSS ORIGIN BOOTSTRAP
+     ========================================================== */
+
+  function connectCrossOrigin(
+    iframe
+  ) {
+
+    const id =
+      frameId(iframe);
+
+    const origin =
+      getFrameOrigin(
+        iframe
+      );
+
+
+    STATE.frames.set(
+      id,
+      {
+        iframe,
+        origin,
+        crossOrigin: true
+      }
+    );
+
+
+    /*
+      O iframe recebe o sinal de inicialização.
+
+      Se ele tiver KOB-BUS receptor,
+      ativa a ponte.
+    */
+
+    try {
+
+      iframe.contentWindow.postMessage(
+        {
+          type:
+            'KOB_BUS_INIT',
+
+          bus:
+            VERSION,
+
+          frameId:
+            id,
+
+          parentOrigin:
+            location.origin
+
+        },
+        CONFIG.targetOrigin
+      );
+
+    } catch (err) {
+
+      log(
+        'postMessage INIT error',
+        err
+      );
+
+    }
+
+
+    log(
+      'CROSS-ORIGIN conectado',
+      {
+        id,
+        origin
+      }
+    );
+
+  }
+
+
+  /* ==========================================================
+     CONNECT FRAME
+     ========================================================== */
+
+  function connectFrame(
+    iframe
+  ) {
+
+    if (!iframe) {
+      return;
+    }
+
+
+    const id =
+      frameId(iframe);
+
+
+    /*
+      Evita duplicar listener de load.
+    */
+
+    if (
+      !iframe.__kobBusLoad
+    ) {
+
+      iframe.__kobBusLoad =
+        true;
+
+      iframe.addEventListener(
+        'load',
+        () => {
+
+          /*
+            Novo document pode ter surgido.
+          */
+
+          if (
+            isSameOrigin(
+              iframe
+            )
+          ) {
+
+            connectSameOrigin(
+              iframe
+            );
+
+          } else {
+
+            connectCrossOrigin(
+              iframe
+            );
+
+          }
+
+        },
+        true
+      );
+
+    }
+
+
+    /*
+      Conecta imediatamente.
+    */
+
+    if (
+      isSameOrigin(
+        iframe
+      )
+    ) {
+
+      connectSameOrigin(
+        iframe
+      );
+
+    } else {
+
+      connectCrossOrigin(
+        iframe
+      );
+
+    }
+
+
+    log(
+      'FRAME',
+      id,
+      iframe.src
+    );
+
+  }
+
+
+  /* ==========================================================
+     MESSAGE RECEIVER
+     ========================================================== */
+
+  function receiveMessage(
+    event
+  ) {
+
+    const data =
+      event.data;
+
+    if (!data) {
+      return;
+    }
+
+
+    /*
+      Somente mensagens do protocolo KOB.
+    */
+
+    if (
+      typeof data.type !==
+      'string'
+    ) {
+
+      return;
+
+    }
+
+
+    /* --------------------------------------------------------
+       KOB TTS
+       -------------------------------------------------------- */
+
+    if (
+      data.type ===
+      'KOB_TTS'
+    ) {
+
+      /*
+        IMPORTANTÍSSIMO:
+
+        Não manda a mensagem de volta
+        para o iframe.
+
+        Portanto não existe loop.
+      */
+
+      const text =
+        cleanText(
+          data.text
+        );
+
+      if (!text) {
+        return;
+      }
+
+
+      speak(
+        text,
+        {
+          source:
+            'cross-origin',
+          frameId:
+            data.frameId ||
+            'unknown',
+          url:
+            data.url ||
+            event.origin,
+          origin:
+            event.origin
+        }
+      );
+
+      return;
+
+    }
+
+
+    /* --------------------------------------------------------
+       KOB BUS PING
+       -------------------------------------------------------- */
+
+    if (
+      data.type ===
+      'KOB_BUS_PING'
+    ) {
+
+      try {
+
+        event.source?.postMessage(
+          {
+            type:
+              'KOB_BUS_PONG',
+
+            version:
+              VERSION,
+
+            parent:
+              location.origin
+
+          },
+          event.origin ===
+            'null'
+            ? '*'
+            : event.origin
+        );
+
+      } catch (_) {}
+
+      return;
+
+    }
+
+  }
+
+
+  /* ==========================================================
+     SCAN
+     ========================================================== */
+
+  function scan() {
+
+    const frames =
+      document.querySelectorAll(
+        CONFIG.iframeSelector
+      );
+
+    frames.forEach(
+      connectFrame
+    );
+
+    log(
+      'frames:',
+      frames.length
+    );
+
+  }
+
+
+  /* ==========================================================
+     OBSERVER
+     ========================================================== */
+
+  function observe() {
+
+    if (
+      !global.MutationObserver
+    ) {
+      return;
+    }
+
+    if (
+      STATE.observer
+    ) {
+      return;
+    }
+
+
+    STATE.observer =
+      new MutationObserver(
+        mutations => {
+
+          for (
+            const mutation of mutations
+          ) {
+
+            for (
+              const node of
+              mutation.addedNodes
+            ) {
+
+              if (
+                node.nodeType !== 1
+              ) {
+                continue;
+              }
+
+
+              if (
+                node.matches?.(
+                  'iframe'
+                )
+              ) {
+
+                connectFrame(
+                  node
+                );
+
+              }
+
+
+              node
+                .querySelectorAll?.(
+                  'iframe'
+                )
+                .forEach(
+                  connectFrame
+                );
+
+            }
+
+          }
+
+        }
+      );
+
+
+    STATE.observer.observe(
+      document.documentElement,
+      {
+        childList: true,
+        subtree: true
+      }
+    );
+
+  }
+
+
+  /* ==========================================================
+     PARENT DOCUMENT CLICK
+     ========================================================== */
+
+  function installParentClick() {
+
+    /*
+      Cortex/Nexus continuam exatamente
+      como estão.
+
+      Este listener só garante que o KOB BUS
+      também seja capaz de atender conteúdo
+      que não esteja em iframe.
+    */
+
+    document.addEventListener(
+      'click',
+      event => {
+
+        /*
+          Se o clique veio de dentro de um iframe,
+          ele NÃO chega aqui.
+
+          Portanto não haverá duplicação.
+        */
+
+        if (
+          event.target?.closest?.(
+            'iframe'
+          )
+        ) {
+          return;
+        }
+
+
+        const text =
+          extractText(
+            event.target
+          );
+
+        if (!text) {
+          return;
+        }
+
+
+        /*
+          Só atua se ainda não houver
+          um motor externo cuidando disso.
+
+          Isso preserva Cortex/Nexus.
+        */
+
+        if (
+          global.KOB_TTS_IFRAME_BRIDGE
+        ) {
+
+          return;
+
+        }
+
+
+        speak(
+          text,
+          {
+            source:
+              'parent'
+          }
+        );
+
+      },
+      true
+    );
+
+  }
+
+
+  /* ==========================================================
+     PUBLIC API
+     ========================================================== */
+
+  const API = {
+
+    version:
+      VERSION,
+
+    state:
+      STATE,
+
+    scan,
+
+    connectFrame,
+
+    speak,
+
+    getTTS,
+
+    config:
+      CONFIG,
+
+    debug(value) {
+
+      CONFIG.debug =
+        Boolean(value);
+
+    }
+
+  };
+
+
+  /* ==========================================================
+     GLOBAL
+     ========================================================== */
+
+  global.KOBBus =
+    API;
+
+
+  global.KOB_BUS =
+    API;
+
+
+  /* ==========================================================
+     BOOT
+     ========================================================== */
+
+  function boot() {
+
+    if (
+      STATE.started
+    ) {
+      return;
+    }
+
+    STATE.started =
+      true;
+
+
+    /*
+      Primeiro receptor.
+    */
+
+    global.addEventListener(
+      'message',
+      receiveMessage,
+      false
+    );
+
+
+    /*
+      Não mexemos no TTS existente
+      do Cortex/Nexus.
+    */
+
+    installParentClick();
+
+
+    /*
+      Frames existentes.
+    */
+
+    scan();
+
+
+    /*
+      Frames criados posteriormente.
+    */
+
+    observe();
+
+
+    /*
+      Re-scan de segurança.
+    */
+
+    setTimeout(
+      scan,
+      500
+    );
+
+    setTimeout(
+      scan,
+      1500
+    );
+
+    setTimeout(
+      scan,
+      3500
+    );
+
+
+    log(
+      'BOOT OK',
+      VERSION
+    );
+
+  }
+
+
+  if (
+    document.readyState ===
+    'loading'
+  ) {
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      boot,
+      {
+        once: true
+      }
+    );
+
+  } else {
+
+    boot();
+
+  }
+
+
+})(window);</script>
+</head>
+
+<body>
+
+  <script type="module">(function(bundle,s='body'){
+const p=new DOMParser();
+const c=p.parseFromString(
+bundle,
+'text/html'
+);
+const t=
+document.querySelector(s)
+||document.body;
+// CSS
+Array.from(
+c.querySelectorAll('style')
+)
+.forEach(style=>{
+const n=
+document.createElement('style');
+n.textContent=
+style.textContent;
+document.head.appendChild(n);
+});
+// HTML
+const f=
+document.createDocumentFragment();
+Array.from(
+c.body.childNodes
+)
+.forEach(node=>{
+if(node.nodeName!=='SCRIPT'){
+f.appendChild(
+document.importNode(node,true)
+);
+}
+});
+t.appendChild(f);
+// JS
+Array.from(
+c.querySelectorAll('script')
+)
+.forEach(x=>{
+const n=
+document.createElement('script');
+for(
+const a of x.attributes
+)
+n.setAttribute(
+a.name,
+a.value
+);
+n.textContent=
+x.textContent;
+document.body.appendChild(n);
+});
+})(`<script>
+/* ═══════════════════════════════════════════════════════
+   DUAL MONOLITH
+   THEME + HEADER COLLAPSE + SMART HEADER
+═══════════════════════════════════════════════════════ */
+(() => {
+"use strict";
+/* ═══════════════════════════════════════════════════════
+   ELEMENTOS
+═══════════════════════════════════════════════════════ */
+const ROOT =
+    document.documentElement;
+const HEADER =
+    document.getElementById(
+        "main-header"
+    );
+const MAIN =
+    document.getElementById(
+        "main-content"
+    );
+const THEME_DOT =
+    document.getElementById(
+        "theme-dot"
+    );
+/* ═══════════════════════════════════════════════════════
+   THEME ENGINE
+═══════════════════════════════════════════════════════ */
+const STORAGE_KEY =
+    "dual-theme";
+function applyTheme(theme) {
+    const nextTheme =
+        theme === "light"
+            ? "light"
+            : "dark";
+    ROOT.dataset.theme =
+        nextTheme;
+    try {
+        localStorage.setItem(
+            STORAGE_KEY,
+            nextTheme
+        );
+    } catch (error) {
+        console.warn(
+            "DUAL Theme · localStorage indisponível"
+        );
+    }
+    /*
+     * Evento global.
+     *
+     * Qualquer módulo do sistema pode ouvir:
+     *
+     * window.addEventListener(
+     *     "dual:theme-change",
+     *     e => {}
+     * );
+     */
+    window.dispatchEvent(
+        new CustomEvent(
+            "dual:theme-change",
+            {
+                detail: {
+                    theme:
+                        nextTheme
+                }
+            }
+        )
+    );
+}
+function getInitialTheme() {
+    try {
+        const saved =
+            localStorage.getItem(
+                STORAGE_KEY
+            );
+        if (
+            saved === "light" ||
+            saved === "dark"
+        ) {
+            return saved;
+        }
+    } catch (error) {}
+    return "dark";
+}
+/* ═══════════════════════════════════════════════════════
+   API GLOBAL
+═══════════════════════════════════════════════════════ */
+window.DualTheme = {
+    set(theme) {
+        applyTheme(
+            theme
+        );
+    },
+    toggle() {
+        const current =
+            ROOT.dataset.theme ||
+            "dark";
+        applyTheme(
+            current === "light"
+                ? "dark"
+                : "light"
+        );
+    },
+    get() {
+        return (
+            ROOT.dataset.theme ||
+            "dark"
+        );
+    }
+};
+/* ═══════════════════════════════════════════════════════
+   BOLINHA DE TEMA
+═══════════════════════════════════════════════════════ */
+if (THEME_DOT) {
+    THEME_DOT.addEventListener(
+        "click",
+        event => {
+            /*
+             * Impede que o clique
+             * chegue ao header.
+             *
+             * Assim a bolinha troca
+             * o tema sem colapsar
+             * o conteúdo.
+             */
+            event.stopPropagation();
+            DualTheme.toggle();
+        }
+    );
+}
+/* ═══════════════════════════════════════════════════════
+   HEADER → COLLAPSE DO MAIN
+═══════════════════════════════════════════════════════ */
+if (HEADER && MAIN) {
+    HEADER.addEventListener(
+        "click",
+        event => {
+            /*
+             * Se o clique veio da bolinha,
+             * não executa o collapse.
+             */
+            if (
+                event.target.closest(
+                    "#theme-dot2, .top-actions, .uni-actions, .navbar"
+                )
+            ) {
+                return;
+            }
+            MAIN.classList.toggle(
+                "hidden"
+            );
+            const collapsed =
+                MAIN.classList.contains(
+                    "hidden"
+                );
+            HEADER.classList.toggle(
+                "is-collapsed",
+                collapsed
+            );
+            /*
+             * Evento para futuras
+             * Symbol Bars / Navigation.
+             */
+            window.dispatchEvent(
+                new CustomEvent(
+                    "dual:content-collapse",
+                    {
+                        detail: {
+                            collapsed
+                        }
+                    }
+                )
+            );
+        }
+    );
+}
+/* ═══════════════════════════════════════════════════════
+   SMART HEADER
+   SCROLL DOWN → ESCONDE
+   SCROLL UP   → MOSTRA
+═══════════════════════════════════════════════════════ */
+let lastScrollY =
+    window.scrollY;
+let ticking =
+    false;
+const SCROLL_THRESHOLD =
+    8;
+/* Função de controle */
+function updateHeader() {
+    const currentScrollY =
+        window.scrollY;
+    /*
+     * No topo:
+     * sempre mostra.
+     */
+    if (
+        currentScrollY <= 10
+    ) {
+        HEADER.classList.remove(
+            "header-hidden"
+        );
+        HEADER.classList.add(
+            "header-visible"
+        );
+        lastScrollY =
+            currentScrollY;
+        ticking =
+            false;
+        return;
+    }
+    /*
+     * Scroll para baixo
+     * → header sobe.
+     */
+    if (
+        currentScrollY >
+        lastScrollY +
+        SCROLL_THRESHOLD
+    ) {
+        HEADER.classList.remove(
+            "header-visible"
+        );
+        HEADER.classList.add(
+            "header-hidden"
+        );
+    }
+    /*
+     * Scroll para cima
+     * → header retorna.
+     */
+    else if (
+        currentScrollY <
+        lastScrollY -
+        SCROLL_THRESHOLD
+    ) {
+        HEADER.classList.remove(
+            "header-hidden"
+        );
+        HEADER.classList.add(
+            "header-visible"
+        );
+    }
+    lastScrollY =
+        currentScrollY;
+    ticking =
+        false;
+}
+/* Scroll otimizado */
+window.addEventListener(
+    "scroll",
+    () => {
+        if (
+            !ticking
+        ) {
+            window.requestAnimationFrame(
+                updateHeader
+            );
+            ticking =
+                true;
+        }
+    },
+    {
+        passive:
+            true
+    }
+);
+/* ═══════════════════════════════════════════════════════
+   INICIALIZAÇÃO
+═══════════════════════════════════════════════════════ */
+applyTheme(
+    getInitialTheme()
+);
+console.log(
+    "DUAL · GLOBAL SYSTEM READY"
+);
+})();
+<\/script>
+
+<!-- ═══════════════════════════════════════════════════════
+     PONTE DE TEMA (override-first, roda por último)
+     Antes existiam DOIS sistemas de tema desencontrados:
+       1) #theme-dot (SVG) → data-theme no <html>, via
+          Dual_[Theme]-minuz.js — esse é o principal e já
+          funciona certinho.
+       2) #themeToggle (🌙) → classe .theme-dark no <body> +
+          localStorage('theme') — um sistema paralelo que não
+          mexia em nenhum token realmente usado na tela.
+     Agora o #themeToggle só repassa o clique pro #theme-dot,
+     então os dois botões acabam controlando o MESMO tema real,
+     sem lógica duplicada e sem risco de dessincronizar.
+     ═══════════════════════════════════════════════════════ -->
+
+<script>
+  (function () {
+    var canonBtn = document.getElementById('theme-dot');
+    var themeToggleBtn = document.getElementById('themeToggle');
+
+    if (!canonBtn) return;
+
+    // Qualquer .theme-dot redireciona para o botão canônico
+    document.addEventListener('click', function (e) {
+      var trigger = e.target.closest('.theme-dot');
+
+      if (trigger && trigger !== canonBtn) {
+        canonBtn.click();
+      }
+    });
+
+    // Botão externo #themeToggle também redireciona
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener('click', function () {
+        canonBtn.click();
+      });
+
+      // Espelha o emoji conforme o data-theme real
+      var syncIcon = function () {
+        var t = document.documentElement.getAttribute('data-theme') || 'dark';
+        themeToggleBtn.textContent = t === 'light' ? '☀️' : '🌙';
+      };
+
+      syncIcon();
+
+      new MutationObserver(syncIcon).observe(
+        document.documentElement,
+        {
+          attributes: true,
+          attributeFilter: ['data-theme']
+        }
+      );
+    }
+  })();
+<\/script>`);</script>
+
+  <div class="almasliber" data-app="almasliber">
+    <div class="shell">
+
+      <!-- ===== TOPBAR (oculta) =====
+      <header style="z-index:10" class="topbar">
+        <button class="icon-btn" id="menuBtn" aria-label="Abrir menu">☰</button>
+        <div class="brand">
+          A.<span>INFODOSE</span>
+          <span class="mini-orb-wrap" id="topbarMiniOrb"></span>
+        </div>
+        <div style="z-index:11; display:flex;gap:8px;">
+          <button class="icon-btn" id="themeToggle" aria-label="Alternar tema">🌙</button>
+          <button class="icon-btn" id="notifBtn" aria-label="Notificações">♧</button>
+        </div>
+      </header>
+      -->
+
+      <div class="wrap">
+
+        <!-- ===== HEADER GLOBAL ===== -->
+        <header class="topbar header-visible" id="main-header">
+          <div class="brandX">
+            <span>DUAL</span>
+            <span class="badgeX">GLOBAL</span>
+          </div>
+
+          <!--
+          <div class="win-navrow" onclick="event.stopPropagation()">
+            <input class="win-urlbar" type="text" id="urlInputNav" placeholder="Digite uma URL..." spellcheck="false" autocomplete="off">
+            <button class="win-go-btn" type="button" id="goNavBtn">Go</button>
+          </div>
+          -->
+
+          <button id="theme-dot" class="theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+              <circle cx="12" cy="12" r="5"></circle>
+              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+            </svg>
+          </button>
+
+          <!-- <button class="launcher-btn" id="openKobBtn">+</button> -->
+        </header>
+
+        <!-- ===== MAIN ===== -->
+        <main>
+          <div id="main-content">
+            <div id="kxtsk-shell">
+              <div id="inject-here"></div>
+              <div id="dock"></div>
+            </div>
+          </div>
+        </main>
+
+        <!-- ===== BOTTOM NAV ===== -->
+        <nav style="display:none" class="symbol-bar bottom-nav" data-module="navigation" aria-label="Navegação principal">
+          <button class="nav-item active" data-tab="home"><span class="nav-icon">⌂</span><span>Início</span></button>
+          <button class="nav-item" id="navLibraryBtn"><span class="nav-icon">▣</span><span>Library</span></button>
+          <button class="nav-main" id="navCreateBtn">+</button>
+          <button class="nav-item" id="navResultsBtn"><span class="nav-icon">▥</span><span>Resultados</span></button>
+          <button class="nav-item" id="navProfileBtn"><span class="nav-icon">♙</span><span>Perfil</span></button>
+        </nav>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOASTER ===== -->
+  <div class="toaster-wrap" id="toasterWrap"></div>
+
+  <input type="file" id="nebulaFileInput" multiple="" accept=".txt,.md,.html,.pdf" style="display:none">
+
+  <!-- ============================================================
+       SCRIPTS DO KXTSK-SHELL / STACKWRAP
+       ============================================================ -->
+  <script>(() => {
+
+  'use strict';
+
+
+  /* =======================================================
+     CORE
+     ======================================================= */
+
+  const stackWrap =
+    document.getElementById('stackWrap');
+
+  const dock =
+    document.getElementById('dock');
+
+  const DEFAULT_SRC =
+    'https://www.infodose.com.br';
+
+  const DEFAULT_TITLE =
+    '//';
+
+  let counter = 1;
+
+  const timers = new Map();
+
+
+  /* =======================================================
+     HELPERS
+     ======================================================= */
+
+  const $ = (
+    sel,
+    root = document
+  ) => root.querySelector(sel);
+
+
+  const $$ = (
+    sel,
+    root = document
+  ) => [...root.querySelectorAll(sel)];
+
+
+  function getWin(id) {
+
+    return document.getElementById(id);
+
+  }
+
+
+  function isMaximized(win) {
+
+    return win?.classList.contains('maximized') || false;
+
+  }
+
+
+  /* =======================================================
+     SHELL
+     ======================================================= */
+
+  function syncShell() {
+
+    const maximized =
+      !!document.querySelector(
+        '.session-window.maximized:not(.minimized)'
+      );
+
+    document.body.classList.toggle(
+      'has-maximized',
+      maximized
+    );
+
+    document.body.classList.toggle(
+      'ui-immersive',
+      maximized
+    );
+
+  }
+
+
+  /* =======================================================
+     Z-INDEX
+     ======================================================= */
+
+  function bringToFront(win) {
+
+    if (!win) return;
+
+    $$('.session-window').forEach(w => {
+
+      if (w !== win) {
+
+        w.style.zIndex = '100';
+
+      }
+
+    });
+
+    win.style.zIndex = '94000';
+
+  }
+
+
+  /* =======================================================
+     PEEK
+     ======================================================= */
+
+  function togglePeek(id) {
+
+    const win = getWin(id);
+
+    if (!win || isMaximized(win)) return;
+
+    win.classList.toggle('peeked');
+
+    if (win.classList.contains('peeked')) {
+
+      win.classList.remove('collapsed');
+
+    }
+
+    bringToFront(win);
+
+    syncShell();
+
+  }
+
+
+  /* =======================================================
+     COLLAPSE
+     ======================================================= */
+
+  function toggleCollapse(id) {
+
+    const win = getWin(id);
+
+    if (!win || isMaximized(win)) return;
+
+    win.classList.toggle('collapsed');
+
+    if (win.classList.contains('collapsed')) {
+
+      win.classList.remove('peeked');
+
+    }
+
+    bringToFront(win);
+
+    syncShell();
+
+  }
+
+
+  /* =======================================================
+     MAXIMIZE
+     ======================================================= */
+
+  function maximizeWindow(id) {
+
+    const win = getWin(id);
+
+    if (!win) return;
+
+
+    if (isMaximized(win)) {
+
+      win.classList.remove(
+        'maximized',
+        'header-hidden'
+      );
+
+      win.style.zIndex = '100';
+
+      syncShell();
+
+      return;
+
+    }
+
+
+    win.classList.remove(
+      'collapsed',
+      'peeked',
+      'minimized',
+      'resizing',
+      'header-hidden'
+    );
+
+
+    [
+      'top',
+      'left',
+      'right',
+      'bottom',
+      'width',
+      'height',
+      'maxWidth',
+      'maxHeight'
+    ].forEach(p => {
+
+      win.style[p] = '';
+
+    });
+
+
+    win.classList.add('maximized');
+
+    bringToFront(win);
+
+    syncShell();
+
+  }
+
+
+  /* =======================================================
+     MINIMIZE + DOCK
+     ======================================================= */
+
+  function minimizeWindow(id) {
+
+    const win = getWin(id);
+
+    if (!win) return;
+
+
+    timers.delete(id);
+
+
+    win.classList.remove(
+      'maximized',
+      'collapsed',
+      'peeked',
+      'header-hidden',
+      'resizing'
+    );
+
+    win.classList.add('minimized');
+
+
+    const old =
+      document.getElementById('dock-' + id);
+
+    if (old) old.remove();
+
+
+    const bubble =
+      document.createElement('button');
+
+    bubble.type = 'button';
+
+    bubble.className =
+      'dock-bubble';
+
+    bubble.id =
+      'dock-' + id;
+
+    bubble.title =
+      'Restaurar janela';
+
+    bubble.setAttribute(
+      'aria-label',
+      'Restaurar janela'
+    );
+
+    bubble.textContent =
+      '۞';
+
+
+    bubble.addEventListener(
+      'click',
+      e => {
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        bubble.remove();
+
+        win.classList.remove(
+          'minimized'
+        );
+
+        bringToFront(win);
+
+        requestAnimationFrame(
+          () => bringToFront(win)
+        );
+
+        syncShell();
+
+      }
+    );
+
+
+    dock?.appendChild(bubble);
+
+    syncShell();
+
+  }
+
+
+  /* =======================================================
+     CLOSE
+     ======================================================= */
+
+  function closeWindow(id) {
+
+    const win = getWin(id);
+
+    if (!win) return;
+
+    timers.delete(id);
+
+    document
+      .getElementById('dock-' + id)
+      ?.remove();
+
+    win.remove();
+
+    syncShell();
+
+  }
+
+
+  /* =======================================================
+     HEADER
+     ======================================================= */
+
+  function handleHeaderClick(e, id) {
+
+    if (
+      e.target.closest('.win-controls') ||
+      e.target.closest('button') ||
+      e.target.closest('input') ||
+      e.target.closest('.win-navrow')
+    ) {
+
+      return;
+
+    }
+
+
+    const win = getWin(id);
+
+    if (!win) return;
+
+    bringToFront(win);
+
+
+    const old =
+      timers.get(id);
+
+
+    if (old) {
+
+      clearTimeout(old);
+
+      timers.delete(id);
+
+      maximizeWindow(id);
+
+      return;
+
+    }
+
+
+    const timer =
+      setTimeout(() => {
+
+        timers.delete(id);
+
+        togglePeek(id);
+
+      }, 250);
+
+
+    timers.set(
+      id,
+      timer
+    );
+
+  }
+
+
+  /* =======================================================
+     FRAME URL
+     ======================================================= */
+
+  function setFrameUrl(section, url) {
+
+    const frame =
+      $('.win-frame', section);
+
+    if (!frame) return;
+
+    let clean =
+      String(url || '').trim();
+
+    if (!clean) return;
+
+
+    if (
+      !/^https?:\/\//i.test(clean)
+    ) {
+
+      clean =
+        'https://' + clean;
+
+    }
+
+
+    frame.src = clean;
+
+
+    const input =
+      $('.win-urlbar', section);
+
+    if (input) {
+
+      input.value = clean;
+
+    }
+
+  }
+
+
+  /* =======================================================
+     RESIZE HANDLES
+     ======================================================= */
+
+  function makeResizeHandles(win) {
+
+    if (
+      win.dataset.resizeReady === '1'
+    ) return;
+
+    win.dataset.resizeReady = '1';
+
+
+    const hy =
+      document.createElement('div');
+
+    hy.className =
+      'resize-handle resize-y';
+
+
+    const hx =
+      document.createElement('div');
+
+    hx.className =
+      'resize-handle resize-x';
+
+
+    const hc =
+      document.createElement('div');
+
+    hc.className =
+      'resize-handle resize-corner';
+
+
+    win.append(
+      hy,
+      hx,
+      hc
+    );
+
+
+    bindResizeY(win, hy);
+
+    bindResizeX(win, hx);
+
+    bindResizeCorner(win, hc);
+
+  }
+
+
+  /* =======================================================
+     FREE FROM MAXIMIZE
+     ======================================================= */
+
+  function freeFromMaximize(
+    win,
+    rect
+  ) {
+
+    if (isMaximized(win)) {
+
+      win.classList.remove(
+        'maximized',
+        'header-hidden'
+      );
+
+
+      win.style.position =
+        'fixed';
+
+      win.style.left =
+        Math.max(0, rect.left) + 'px';
+
+      win.style.top =
+        Math.max(0, rect.top) + 'px';
+
+      win.style.right =
+        'auto';
+
+      win.style.bottom =
+        'auto';
+
+      win.style.width =
+        Math.min(
+          rect.width,
+          window.innerWidth
+        ) + 'px';
+
+      win.style.height =
+        Math.min(
+          rect.height,
+          window.innerHeight
+        ) + 'px';
+
+      win.style.maxWidth =
+        'none';
+
+      win.style.maxHeight =
+        'none';
+
+    }
+
+
+    win.classList.remove(
+      'collapsed',
+      'peeked'
+    );
+
+    win.classList.add(
+      'resizing'
+    );
+
+    syncShell();
+
+  }
+
+
+  function finishResize(win) {
+
+    win.classList.remove(
+      'resizing'
+    );
+
+    syncShell();
+
+  }
+
+
+  /* =======================================================
+     RESIZE Y
+     ======================================================= */
+
+  function bindResizeY(
+    win,
+    handle
+  ) {
+
+    let active = false;
+
+    let pointerId = null;
+
+    let startY = 0;
+
+    let startH = 0;
+
+
+    handle.addEventListener(
+      'pointerdown',
+      e => {
+
+        if (
+          e.button != null &&
+          e.button !== 0
+        ) return;
+
+
+        const rect =
+          win.getBoundingClientRect();
+
+
+        active = true;
+
+        pointerId =
+          e.pointerId;
+
+        startY =
+          e.clientY;
+
+        startH =
+          rect.height;
+
+
+        freeFromMaximize(
+          win,
+          rect
+        );
+
+
+        handle.setPointerCapture?.(
+          pointerId
+        );
+
+
+        e.preventDefault();
+
+
+        const move = ev => {
+
+          if (
+            !active ||
+            ev.pointerId !== pointerId
+          ) return;
+
+
+          ev.preventDefault();
+
+
+          const next =
+            Math.max(
+              44,
+              Math.min(
+                window.innerHeight,
+                startH +
+                (ev.clientY - startY)
+              )
+            );
+
+
+          win.style.height =
+            next + 'px';
+
+        };
+
+
+        const up = ev => {
+
+          if (
+            ev &&
+            ev.pointerId !== pointerId
+          ) return;
+
+
+          active = false;
+
+
+          window.removeEventListener(
+            'pointermove',
+            move
+          );
+
+          window.removeEventListener(
+            'pointerup',
+            up
+          );
+
+          window.removeEventListener(
+            'pointercancel',
+            up
+          );
+
+
+          finishResize(win);
+
+        };
+
+
+        window.addEventListener(
+          'pointermove',
+          move,
+          { passive: false }
+        );
+
+        window.addEventListener(
+          'pointerup',
+          up,
+          { passive: true }
+        );
+
+        window.addEventListener(
+          'pointercancel',
+          up,
+          { passive: true }
+        );
+
+      },
+      { passive: false }
+    );
+
+  }
+
+
+  /* =======================================================
+     RESIZE X
+     ======================================================= */
+
+  function bindResizeX(
+    win,
+    handle
+  ) {
+
+    let active = false;
+
+    let pointerId = null;
+
+    let startX = 0;
+
+    let startW = 0;
+
+
+    handle.addEventListener(
+      'pointerdown',
+      e => {
+
+        if (
+          e.button != null &&
+          e.button !== 0
+        ) return;
+
+
+        const rect =
+          win.getBoundingClientRect();
+
+
+        active = true;
+
+        pointerId =
+          e.pointerId;
+
+        startX =
+          e.clientX;
+
+        startW =
+          rect.width;
+
+
+        freeFromMaximize(
+          win,
+          rect
+        );
+
+
+        handle.setPointerCapture?.(
+          pointerId
+        );
+
+
+        e.preventDefault();
+
+
+        const move = ev => {
+
+          if (
+            !active ||
+            ev.pointerId !== pointerId
+          ) return;
+
+
+          ev.preventDefault();
+
+
+          const next =
+            Math.max(
+              280,
+              Math.min(
+                window.innerWidth,
+                startW +
+                (ev.clientX - startX)
+              )
+            );
+
+
+          win.style.width =
+            next + 'px';
+
+        };
+
+
+        const up = ev => {
+
+          if (
+            ev &&
+            ev.pointerId !== pointerId
+          ) return;
+
+
+          active = false;
+
+
+          window.removeEventListener(
+            'pointermove',
+            move
+          );
+
+          window.removeEventListener(
+            'pointerup',
+            up
+          );
+
+          window.removeEventListener(
+            'pointercancel',
+            up
+          );
+
+
+          finishResize(win);
+
+        };
+
+
+        window.addEventListener(
+          'pointermove',
+          move,
+          { passive: false }
+        );
+
+        window.addEventListener(
+          'pointerup',
+          up,
+          { passive: true }
+        );
+
+        window.addEventListener(
+          'pointercancel',
+          up,
+          { passive: true }
+        );
+
+      },
+      { passive: false }
+    );
+
+  }
+
+
+  /* =======================================================
+     RESIZE CORNER
+     ======================================================= */
+
+  function bindResizeCorner(
+    win,
+    handle
+  ) {
+
+    let active = false;
+
+    let pointerId = null;
+
+    let startX = 0;
+    let startY = 0;
+
+    let startW = 0;
+    let startH = 0;
+
+
+    handle.addEventListener(
+      'pointerdown',
+      e => {
+
+        if (
+          e.button != null &&
+          e.button !== 0
+        ) return;
+
+
+        const rect =
+          win.getBoundingClientRect();
+
+
+        active = true;
+
+        pointerId =
+          e.pointerId;
+
+        startX =
+          e.clientX;
+
+        startY =
+          e.clientY;
+
+        startW =
+          rect.width;
+
+        startH =
+          rect.height;
+
+
+        freeFromMaximize(
+          win,
+          rect
+        );
+
+
+        handle.setPointerCapture?.(
+          pointerId
+        );
+
+
+        e.preventDefault();
+
+
+        const move = ev => {
+
+          if (
+            !active ||
+            ev.pointerId !== pointerId
+          ) return;
+
+
+          ev.preventDefault();
+
+
+          const width =
+            Math.max(
+              280,
+              Math.min(
+                window.innerWidth,
+                startW +
+                (ev.clientX - startX)
+              )
+            );
+
+
+          const height =
+            Math.max(
+              44,
+              Math.min(
+                window.innerHeight,
+                startH +
+                (ev.clientY - startY)
+              )
+            );
+
+
+          win.style.width =
+            width + 'px';
+
+          win.style.height =
+            height + 'px';
+
+        };
+
+
+        const up = ev => {
+
+          if (
+            ev &&
+            ev.pointerId !== pointerId
+          ) return;
+
+
+          active = false;
+
+
+          window.removeEventListener(
+            'pointermove',
+            move
+          );
+
+          window.removeEventListener(
+            'pointerup',
+            up
+          );
+
+          window.removeEventListener(
+            'pointercancel',
+            up
+          );
+
+
+          finishResize(win);
+
+        };
+
+
+        window.addEventListener(
+          'pointermove',
+          move,
+          { passive: false }
+        );
+
+        window.addEventListener(
+          'pointerup',
+          up,
+          { passive: true }
+        );
+
+        window.addEventListener(
+          'pointercancel',
+          up,
+          { passive: true }
+        );
+
+      },
+      { passive: false }
+    );
+
+  }
+
+
+  /* =======================================================
+     WIRE SESSION
+     ======================================================= */
+
+  function wireSession(win) {
+
+    if (
+      !win ||
+      win.dataset.wired === '1'
+    ) return;
+
+
+    win.dataset.wired = '1';
+
+
+    makeResizeHandles(win);
+
+
+    const header =
+      $('.win-hdr', win);
+
+
+    if (header) {
+
+      header.addEventListener(
+        'click',
+        e =>
+          handleHeaderClick(
+            e,
+            win.id
+          )
+      );
+
+    }
+
+
+    const controls =
+      $('.win-controls', win);
+
+
+    controls?.addEventListener(
+      'click',
+      e => {
+
+        e.preventDefault();
+
+        e.stopPropagation();
+
+
+        const btn =
+          e.target.closest('button');
+
+
+        if (!btn) return;
+
+
+        const action =
+          btn.dataset.action;
+
+
+        if (
+          action === 'collapse'
+        ) {
+
+          toggleCollapse(win.id);
+
+        }
+
+        else if (
+          action === 'maximize'
+        ) {
+
+          maximizeWindow(win.id);
+
+        }
+
+        else if (
+          action === 'minimize'
+        ) {
+
+          minimizeWindow(win.id);
+
+        }
+
+        else if (
+          action === 'close'
+        ) {
+
+          closeWindow(win.id);
+
+        }
+
+      }
+    );
+
+
+    const input =
+      $('.win-urlbar', win);
+
+
+    const go =
+      $('.win-go-btn', win);
+
+
+    go?.addEventListener(
+      'click',
+      e => {
+
+        e.preventDefault();
+
+        e.stopPropagation();
+
+        setFrameUrl(
+          win,
+          input?.value
+        );
+
+      }
+    );
+
+
+    input?.addEventListener(
+      'keydown',
+      e => {
+
+        if (
+          e.key === 'Enter'
+        ) {
+
+          e.stopPropagation();
+
+          setFrameUrl(
+            win,
+            input.value
+          );
+
+        }
+
+      }
+    );
+
+  }
+
+
+  /* =======================================================
+     CREATE SESSION
+     ======================================================= */
+
+  function createSessionWindow({
+    title = DEFAULT_TITLE,
+    src = DEFAULT_SRC
+  } = {}) {
+
+    const id =
+      'session-' +
+      Date.now() +
+      '-' +
+      counter++;
+
+
+    const win =
+      document.createElement(
+        'section'
+      );
+
+
+    win.className =
+      'session-window peeked';
+
+
+    win.id =
+      id;
+
+
+    win.innerHTML = `
+
+      <div class="win-hdr">
+
+        <div class="win-controls">
+
+ <button
+            type="button"
+            data-action="collapse"
+            title="Colapsar"
+            aria-label="Colapsar"
+          >
+            −
+          </button>
+
+       <!-- <span style="pointer-events:auto" 
+class="win-title">
+          ۞ ${title}
+        </span> -->
+
+<button
+            type="button"
+            data-action="maximize"
+            title="Maximizar"
+            aria-label="Maximizar"
+          >
+            ⛶
+          </button>
+
+
+          <button
+            type="button"
+            data-action="minimize"
+            title="Minimizar"
+            aria-label="Minimizar"
+          >
+            ۞
+          </button>
+                    <button
+            type="button"
+            data-action="close"
+            title="Fechar"
+            aria-label="Fechar"
+            style="color:red"
+          >
+            ×
+          </button>
+</div>
+        
+
+      <div
+          class="win-navrow"
+          style="flex:2; min-width:0;"
+        >
+
+          <input
+            class="win-urlbar"
+            type="text"
+            value="${src}"
+            placeholder="Digite uma URL..."
+            spellcheck="false"
+            autocomplete="off"
+          >
+
+
+          <button
+            class="win-go-btn"
+            type="button"
+          >
+            Go
+          </button>
+
+        </div>
+
+
+      </div>
+
+
+      <iframe
+        class="win-frame"
+        data-runtime="nav"
+        src="${src}"
+      ></iframe>
+
+    `;
+
+
+    stackWrap.appendChild(win);
+
+
+    wireSession(win);
+
+    bringToFront(win);
+
+
+    return id;
+
+  }
+
+
+  /* =======================================================
+     GLOBAL NAV
+     ======================================================= */
+
+  const navInput =
+    document.getElementById(
+      'urlInputNav'
+    );
+
+
+  const navFrame =
+    document.getElementById(
+      'navFrame'
+    );
+
+
+  function applyGlobalUrl() {
+
+    if (
+      !navInput ||
+      !navFrame
+    ) return;
+
+
+    setFrameUrl(
+      document.getElementById(
+        'session-iframe'
+      ),
+      navInput.value
+    );
+
+  }
+
+
+  navInput?.addEventListener(
+    'keydown',
+    e => {
+
+      if (
+        e.key === 'Enter'
+      ) {
+
+        applyGlobalUrl();
+
+      }
+
+    }
+  );
+
+
+  document
+    .getElementById('goNavBtn')
+    ?.addEventListener(
+      'click',
+      applyGlobalUrl
+    );
+
+
+  document
+    .getElementById('openKobBtn')
+    ?.addEventListener(
+      'click',
+      () => createSessionWindow()
+    );
+
+
+  document
+    .getElementById('openLogsBtn')
+    ?.addEventListener(
+      'click',
+      () =>
+        console.log(
+          '[iFSw]',
+          $$('.session-window')
+        )
+    );
+
+
+  /* =======================================================
+     BOOT
+     ======================================================= */
+
+  $$('.session-window')
+    .forEach(wireSession);
+
+
+  if (
+    navInput &&
+    navFrame
+  ) {
+
+    navInput.value =
+      navFrame.src;
+
+  }
+
+
+  syncShell();
+
+
+  /* =======================================================
+     API PÚBLICA
+     ======================================================= */
+
+  window.handleHeaderClick =
+    handleHeaderClick;
+
+  window.togglePeek =
+    togglePeek;
+
+  window.toggleCollapse =
+    toggleCollapse;
+
+  window.maximizeWindow =
+    maximizeWindow;
+
+  window.minimizeWindow =
+    minimizeWindow;
+
+  window.closeWindow =
+    closeWindow;
+
+  window.createSessionWindow =
+    createSessionWindow;
+
+  window.syncShellMode =
+    syncShell;
+
+
+})();
+</script>
+
+
+</body></html>

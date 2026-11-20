@@ -1,0 +1,1864 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f7fb">
+  <title>dual-global</title>
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+ <style>@import url("https://infodose.com.br/css/iFSw-unified.css");</style>
+
+
+    <script type="module">/* ============================================================
+   KOB BUS
+   Universal Cross-Frame Bridge
+   KOBLLUX / Dual.Infodose
+   ============================================================
+
+   FUNÇÃO:
+
+   SHELL
+      │
+      ├── same-origin
+      │      └── acessa contentDocument diretamente
+      │
+      └── cross-origin
+             └── postMessage()
+
+   RESULTADO:
+
+   Cortex ───────────────┐
+   Nexus ────────────────┤
+   DualTube ─────────────┤
+   iframe same-origin ──┤──> KOB BUS ──> KOB TTS
+   iframe cross-origin ─┘
+
+   ============================================================ */
+
+(function KOB_BUS(global) {
+
+  'use strict';
+
+  const VERSION = 'KOB-BUS.v1.0.0';
+
+  const CONFIG = {
+
+    debug: false,
+
+    maxText: 1200,
+
+    minText: 2,
+
+    debounce: 180,
+
+    iframeSelector: 'iframe',
+
+    /*
+      "*" permite comunicação entre origens.
+
+      Em produção, você pode trocar por uma lista
+      de hosts permitidos.
+    */
+    targetOrigin: '*',
+
+    /*
+      Não captura controles por padrão.
+    */
+    ignoredTags: [
+      'SCRIPT',
+      'STYLE',
+      'NOSCRIPT',
+      'INPUT',
+      'TEXTAREA',
+      'SELECT',
+      'OPTION'
+    ]
+
+  };
+
+
+  /* ==========================================================
+     STATE
+     ========================================================== */
+
+  const STATE = {
+
+    started: false,
+
+    frames: new Map(),
+
+    documents: new WeakSet(),
+
+    lastText: '',
+
+    lastTime: 0,
+
+    observer: null
+
+  };
+
+
+  /* ==========================================================
+     LOG
+     ========================================================== */
+
+  function log(...args) {
+
+    if (!CONFIG.debug) return;
+
+    console.log(
+      '%c[KOB BUS]',
+      'color:#00ffff;font-weight:900',
+      ...args
+    );
+
+  }
+
+
+  /* ==========================================================
+     NORMALIZE
+     ========================================================== */
+
+  function cleanText(text) {
+
+    return String(text || '')
+      .replace(/\u200B/g, '')
+      .replace(/\u00A0/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, CONFIG.maxText);
+
+  }
+
+
+  /* ==========================================================
+     ELEMENT IGNORE
+     ========================================================== */
+
+  function ignored(el) {
+
+    if (!el || el.nodeType !== 1) {
+      return true;
+    }
+
+    if (
+      CONFIG.ignoredTags.includes(
+        el.tagName
+      )
+    ) {
+      return true;
+    }
+
+    if (
+      el.closest?.(
+        '[data-kob-ignore],[data-tts-ignore],.kob-tts-ignore'
+      )
+    ) {
+      return true;
+    }
+
+    return false;
+
+  }
+
+
+  /* ==========================================================
+     EXTRACT TEXT
+     ========================================================== */
+
+  function extractText(target) {
+
+    if (!target) {
+      return '';
+    }
+
+    let el = target;
+
+    /*
+      SVG / path / use
+    */
+
+    if (
+      el.tagName === 'SVG' ||
+      el.tagName === 'PATH' ||
+      el.tagName === 'USE'
+    ) {
+
+      el =
+        el.closest?.(
+          'button,a,[role="button"]'
+        ) ||
+        el.parentElement;
+
+    }
+
+    /*
+      Se clicou num controle,
+      somente fala se explicitamente marcado.
+    */
+
+    const control =
+      el.closest?.(
+        'button,input,textarea,select'
+      );
+
+    if (control) {
+
+      if (
+        !control.hasAttribute(
+          'data-kob-tts'
+        )
+      ) {
+
+        return '';
+
+      }
+
+      el = control;
+
+    }
+
+    if (ignored(el)) {
+      return '';
+    }
+
+
+    /*
+      Primeiro tenta o próprio elemento.
+    */
+
+    let text =
+      cleanText(
+        el.innerText ||
+        el.textContent ||
+        el.getAttribute?.(
+          'aria-label'
+        ) ||
+        el.getAttribute?.(
+          'title'
+        ) ||
+        ''
+      );
+
+
+    /*
+      Se o elemento contém muito texto,
+      procura um bloco menor.
+    */
+
+    if (
+      text.length > CONFIG.maxText
+    ) {
+
+      const candidates = [
+        'article',
+        'section',
+        'p',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        '.card',
+        '.v-glass',
+        '[data-kob-content]'
+      ];
+
+      for (
+        const selector of candidates
+      ) {
+
+        const parent =
+          el.closest?.(
+            selector
+          );
+
+        if (!parent) continue;
+
+        const candidate =
+          cleanText(
+            parent.innerText ||
+            parent.textContent ||
+            ''
+          );
+
+        if (
+          candidate &&
+          candidate.length <
+          text.length
+        ) {
+
+          text = candidate;
+
+        }
+
+      }
+
+    }
+
+    return cleanText(text);
+
+  }
+
+
+  /* ==========================================================
+     FIND TTS
+     ========================================================== */
+
+  function getTTS() {
+
+    /*
+      Seu motor principal.
+    */
+
+    if (
+      global.CobTTS &&
+      typeof global.CobTTS.speak ===
+        'function'
+    ) {
+
+      return text =>
+        global.CobTTS.speak(text);
+
+    }
+
+
+    /*
+      Outras formas que seu ecossistema
+      pode ter exposto.
+    */
+
+    const objects = [
+
+      global.KOB_TTS,
+
+      global.KOBTTS,
+
+      global.COB_TTS,
+
+      global.TTS,
+
+      global.tts
+
+    ];
+
+    for (
+      const obj of objects
+    ) {
+
+      if (!obj) continue;
+
+      if (
+        typeof obj.speak ===
+        'function'
+      ) {
+
+        return text =>
+          obj.speak(text);
+
+      }
+
+      if (
+        typeof obj.say ===
+        'function'
+      ) {
+
+        return text =>
+          obj.say(text);
+
+      }
+
+      if (
+        typeof obj.speakText ===
+        'function'
+      ) {
+
+        return text =>
+          obj.speakText(text);
+
+      }
+
+    }
+
+
+    /*
+      Funções globais.
+    */
+
+    const functions = [
+
+      'kobSpeak',
+
+      'KOBSpeak',
+
+      'speakText',
+
+      'speak',
+
+      'ttsSpeak',
+
+      'speakTTS'
+
+    ];
+
+    for (
+      const name of functions
+    ) {
+
+      if (
+        typeof global[name] ===
+        'function'
+      ) {
+
+        return text =>
+          global[name](text);
+
+      }
+
+    }
+
+
+    /*
+      Último fallback.
+    */
+
+    if (
+      global.speechSynthesis
+    ) {
+
+      return text => {
+
+        try {
+
+          global.speechSynthesis.cancel();
+
+          const u =
+            new SpeechSynthesisUtterance(
+              text
+            );
+
+          u.lang = 'pt-BR';
+
+          global.speechSynthesis.speak(
+            u
+          );
+
+        } catch (err) {
+
+          log(
+            'Speech fallback error',
+            err
+          );
+
+        }
+
+      };
+
+    }
+
+    return null;
+
+  }
+
+
+  /* ==========================================================
+     SPEAK
+     ========================================================== */
+
+  function speak(
+    text,
+    meta = {}
+  ) {
+
+    text =
+      cleanText(text);
+
+    if (
+      text.length <
+      CONFIG.minText
+    ) {
+      return false;
+    }
+
+
+    const now =
+      Date.now();
+
+    if (
+      text === STATE.lastText &&
+      now - STATE.lastTime <
+      CONFIG.debounce
+    ) {
+
+      return false;
+
+    }
+
+    STATE.lastText =
+      text;
+
+    STATE.lastTime =
+      now;
+
+
+    const tts =
+      getTTS();
+
+    if (!tts) {
+
+      console.warn(
+        '[KOB BUS] KOB TTS não encontrado.'
+      );
+
+      return false;
+
+    }
+
+
+    log(
+      'TTS',
+      meta,
+      text
+    );
+
+
+    try {
+
+      tts(text);
+
+      return true;
+
+    } catch (err) {
+
+      console.error(
+        '[KOB BUS] TTS error',
+        err
+      );
+
+      return false;
+
+    }
+
+  }
+
+
+  /* ==========================================================
+     FRAME ID
+     ========================================================== */
+
+  function frameId(iframe) {
+
+    if (
+      iframe.dataset.kobBusId
+    ) {
+
+      return iframe.dataset.kobBusId;
+
+    }
+
+    const id =
+      'kob-frame-' +
+      Math.random()
+        .toString(36)
+        .slice(2, 10);
+
+    iframe.dataset.kobBusId =
+      id;
+
+    return id;
+
+  }
+
+
+  /* ==========================================================
+     FRAME ORIGIN
+     ========================================================== */
+
+  function getFrameOrigin(iframe) {
+
+    try {
+
+      return new URL(
+        iframe.src ||
+        iframe.getAttribute('src') ||
+        location.href,
+        location.href
+      ).origin;
+
+    } catch (_) {
+
+      return location.origin;
+
+    }
+
+  }
+
+
+  /* ==========================================================
+     SAME ORIGIN
+     ========================================================== */
+
+  function isSameOrigin(iframe) {
+
+    try {
+
+      const origin =
+        getFrameOrigin(
+          iframe
+        );
+
+      return (
+        origin ===
+        location.origin
+      );
+
+    } catch (_) {
+
+      return false;
+
+    }
+
+  }
+
+
+  /* ==========================================================
+     SAME-ORIGIN BRIDGE
+     ========================================================== */
+
+  function connectSameOrigin(
+    iframe
+  ) {
+
+    try {
+
+      const doc =
+        iframe.contentDocument ||
+        iframe.contentWindow?.document;
+
+      if (!doc) {
+
+        return false;
+
+      }
+
+
+      /*
+        Instala somente uma vez
+        naquele document.
+      */
+
+      if (
+        STATE.documents.has(doc)
+      ) {
+
+        return true;
+
+      }
+
+      STATE.documents.add(doc);
+
+
+      doc.addEventListener(
+        'click',
+        event => {
+
+          const text =
+            extractText(
+              event.target
+            );
+
+          if (!text) return;
+
+          speak(
+            text,
+            {
+              source:
+                'same-origin',
+              iframe:
+                frameId(iframe),
+              url:
+                iframe.src
+            }
+          );
+
+        },
+        true
+      );
+
+
+      log(
+        'SAME-ORIGIN conectado',
+        iframe.src
+      );
+
+
+      return true;
+
+    } catch (err) {
+
+      log(
+        'Same-origin falhou',
+        err
+      );
+
+      return false;
+
+    }
+
+  }
+
+
+  /* ==========================================================
+     CROSS ORIGIN BOOTSTRAP
+     ========================================================== */
+
+  function connectCrossOrigin(
+    iframe
+  ) {
+
+    const id =
+      frameId(iframe);
+
+    const origin =
+      getFrameOrigin(
+        iframe
+      );
+
+
+    STATE.frames.set(
+      id,
+      {
+        iframe,
+        origin,
+        crossOrigin: true
+      }
+    );
+
+
+    /*
+      O iframe recebe o sinal de inicialização.
+
+      Se ele tiver KOB-BUS receptor,
+      ativa a ponte.
+    */
+
+    try {
+
+      iframe.contentWindow.postMessage(
+        {
+          type:
+            'KOB_BUS_INIT',
+
+          bus:
+            VERSION,
+
+          frameId:
+            id,
+
+          parentOrigin:
+            location.origin
+
+        },
+        CONFIG.targetOrigin
+      );
+
+    } catch (err) {
+
+      log(
+        'postMessage INIT error',
+        err
+      );
+
+    }
+
+
+    log(
+      'CROSS-ORIGIN conectado',
+      {
+        id,
+        origin
+      }
+    );
+
+  }
+
+
+  /* ==========================================================
+     CONNECT FRAME
+     ========================================================== */
+
+  function connectFrame(
+    iframe
+  ) {
+
+    if (!iframe) {
+      return;
+    }
+
+
+    const id =
+      frameId(iframe);
+
+
+    /*
+      Evita duplicar listener de load.
+    */
+
+    if (
+      !iframe.__kobBusLoad
+    ) {
+
+      iframe.__kobBusLoad =
+        true;
+
+      iframe.addEventListener(
+        'load',
+        () => {
+
+          /*
+            Novo document pode ter surgido.
+          */
+
+          if (
+            isSameOrigin(
+              iframe
+            )
+          ) {
+
+            connectSameOrigin(
+              iframe
+            );
+
+          } else {
+
+            connectCrossOrigin(
+              iframe
+            );
+
+          }
+
+        },
+        true
+      );
+
+    }
+
+
+    /*
+      Conecta imediatamente.
+    */
+
+    if (
+      isSameOrigin(
+        iframe
+      )
+    ) {
+
+      connectSameOrigin(
+        iframe
+      );
+
+    } else {
+
+      connectCrossOrigin(
+        iframe
+      );
+
+    }
+
+
+    log(
+      'FRAME',
+      id,
+      iframe.src
+    );
+
+  }
+
+
+  /* ==========================================================
+     MESSAGE RECEIVER
+     ========================================================== */
+
+  function receiveMessage(
+    event
+  ) {
+
+    const data =
+      event.data;
+
+    if (!data) {
+      return;
+    }
+
+
+    /*
+      Somente mensagens do protocolo KOB.
+    */
+
+    if (
+      typeof data.type !==
+      'string'
+    ) {
+
+      return;
+
+    }
+
+
+    /* --------------------------------------------------------
+       KOB TTS
+       -------------------------------------------------------- */
+
+    if (
+      data.type ===
+      'KOB_TTS'
+    ) {
+
+      /*
+        IMPORTANTÍSSIMO:
+
+        Não manda a mensagem de volta
+        para o iframe.
+
+        Portanto não existe loop.
+      */
+
+      const text =
+        cleanText(
+          data.text
+        );
+
+      if (!text) {
+        return;
+      }
+
+
+      speak(
+        text,
+        {
+          source:
+            'cross-origin',
+          frameId:
+            data.frameId ||
+            'unknown',
+          url:
+            data.url ||
+            event.origin,
+          origin:
+            event.origin
+        }
+      );
+
+      return;
+
+    }
+
+
+    /* --------------------------------------------------------
+       KOB BUS PING
+       -------------------------------------------------------- */
+
+    if (
+      data.type ===
+      'KOB_BUS_PING'
+    ) {
+
+      try {
+
+        event.source?.postMessage(
+          {
+            type:
+              'KOB_BUS_PONG',
+
+            version:
+              VERSION,
+
+            parent:
+              location.origin
+
+          },
+          event.origin ===
+            'null'
+            ? '*'
+            : event.origin
+        );
+
+      } catch (_) {}
+
+      return;
+
+    }
+
+  }
+
+
+  /* ==========================================================
+     SCAN
+     ========================================================== */
+
+  function scan() {
+
+    const frames =
+      document.querySelectorAll(
+        CONFIG.iframeSelector
+      );
+
+    frames.forEach(
+      connectFrame
+    );
+
+    log(
+      'frames:',
+      frames.length
+    );
+
+  }
+
+
+  /* ==========================================================
+     OBSERVER
+     ========================================================== */
+
+  function observe() {
+
+    if (
+      !global.MutationObserver
+    ) {
+      return;
+    }
+
+    if (
+      STATE.observer
+    ) {
+      return;
+    }
+
+
+    STATE.observer =
+      new MutationObserver(
+        mutations => {
+
+          for (
+            const mutation of mutations
+          ) {
+
+            for (
+              const node of
+              mutation.addedNodes
+            ) {
+
+              if (
+                node.nodeType !== 1
+              ) {
+                continue;
+              }
+
+
+              if (
+                node.matches?.(
+                  'iframe'
+                )
+              ) {
+
+                connectFrame(
+                  node
+                );
+
+              }
+
+
+              node
+                .querySelectorAll?.(
+                  'iframe'
+                )
+                .forEach(
+                  connectFrame
+                );
+
+            }
+
+          }
+
+        }
+      );
+
+
+    STATE.observer.observe(
+      document.documentElement,
+      {
+        childList: true,
+        subtree: true
+      }
+    );
+
+  }
+
+
+  /* ==========================================================
+     PARENT DOCUMENT CLICK
+     ========================================================== */
+
+  function installParentClick() {
+
+    /*
+      Cortex/Nexus continuam exatamente
+      como estão.
+
+      Este listener só garante que o KOB BUS
+      também seja capaz de atender conteúdo
+      que não esteja em iframe.
+    */
+
+    document.addEventListener(
+      'click',
+      event => {
+
+        /*
+          Se o clique veio de dentro de um iframe,
+          ele NÃO chega aqui.
+
+          Portanto não haverá duplicação.
+        */
+
+        if (
+          event.target?.closest?.(
+            'iframe'
+          )
+        ) {
+          return;
+        }
+
+
+        const text =
+          extractText(
+            event.target
+          );
+
+        if (!text) {
+          return;
+        }
+
+
+        /*
+          Só atua se ainda não houver
+          um motor externo cuidando disso.
+
+          Isso preserva Cortex/Nexus.
+        */
+
+        if (
+          global.KOB_TTS_IFRAME_BRIDGE
+        ) {
+
+          return;
+
+        }
+
+
+        speak(
+          text,
+          {
+            source:
+              'parent'
+          }
+        );
+
+      },
+      true
+    );
+
+  }
+
+
+  /* ==========================================================
+     PUBLIC API
+     ========================================================== */
+
+  const API = {
+
+    version:
+      VERSION,
+
+    state:
+      STATE,
+
+    scan,
+
+    connectFrame,
+
+    speak,
+
+    getTTS,
+
+    config:
+      CONFIG,
+
+    debug(value) {
+
+      CONFIG.debug =
+        Boolean(value);
+
+    }
+
+  };
+
+
+  /* ==========================================================
+     GLOBAL
+     ========================================================== */
+
+  global.KOBBus =
+    API;
+
+
+  global.KOB_BUS =
+    API;
+
+
+  /* ==========================================================
+     BOOT
+     ========================================================== */
+
+  function boot() {
+
+    if (
+      STATE.started
+    ) {
+      return;
+    }
+
+    STATE.started =
+      true;
+
+
+    /*
+      Primeiro receptor.
+    */
+
+    global.addEventListener(
+      'message',
+      receiveMessage,
+      false
+    );
+
+
+    /*
+      Não mexemos no TTS existente
+      do Cortex/Nexus.
+    */
+
+    installParentClick();
+
+
+    /*
+      Frames existentes.
+    */
+
+    scan();
+
+
+    /*
+      Frames criados posteriormente.
+    */
+
+    observe();
+
+
+    /*
+      Re-scan de segurança.
+    */
+
+    setTimeout(
+      scan,
+      500
+    );
+
+    setTimeout(
+      scan,
+      1500
+    );
+
+    setTimeout(
+      scan,
+      3500
+    );
+
+
+    log(
+      'BOOT OK',
+      VERSION
+    );
+
+  }
+
+
+  if (
+    document.readyState ===
+    'loading'
+  ) {
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      boot,
+      {
+        once: true
+      }
+    );
+
+  } else {
+
+    boot();
+
+  }
+
+
+})(window);</script>
+
+
+
+  <!-- CDNs KODUX (opcional, mas mantido para compatibilidade) -->
+
+  
+<!--  
+  <style>@import "https://infodose.com.br/oiDual/KODUX/78K/APPS/78header/dual-header-app/css/main.css";</style>
+<link rel="stylesheet" href="https://kodux78k.github.io/oiDual--Y-/css/kob-glass-.css">
+<link rel="stylesheet" href="https://infodose.com.br/oiDual/KODUX/78K/APPS/78Dual/css/main.css">
+ -->
+
+</head>
+
+<body>
+
+<script type="module">(function(bundle,s='body'){
+const p=new DOMParser();
+const c=p.parseFromString(
+bundle,
+'text/html'
+);
+const t=
+document.querySelector(s)
+||document.body;
+// CSS
+Array.from(
+c.querySelectorAll('style')
+)
+.forEach(style=>{
+const n=
+document.createElement('style');
+n.textContent=
+style.textContent;
+document.head.appendChild(n);
+});
+// HTML
+const f=
+document.createDocumentFragment();
+Array.from(
+c.body.childNodes
+)
+.forEach(node=>{
+if(node.nodeName!=='SCRIPT'){
+f.appendChild(
+document.importNode(node,true)
+);
+}
+});
+t.appendChild(f);
+// JS
+Array.from(
+c.querySelectorAll('script')
+)
+.forEach(x=>{
+const n=
+document.createElement('script');
+for(
+const a of x.attributes
+)
+n.setAttribute(
+a.name,
+a.value
+);
+n.textContent=
+x.textContent;
+document.body.appendChild(n);
+});
+})(`<script>
+/* ═══════════════════════════════════════════════════════
+   DUAL MONOLITH
+   THEME + HEADER COLLAPSE + SMART HEADER
+═══════════════════════════════════════════════════════ */
+(() => {
+"use strict";
+/* ═══════════════════════════════════════════════════════
+   ELEMENTOS
+═══════════════════════════════════════════════════════ */
+const ROOT =
+    document.documentElement;
+const HEADER =
+    document.getElementById(
+        "main-header"
+    );
+const MAIN =
+    document.getElementById(
+        "main-content"
+    );
+const THEME_DOT =
+    document.getElementById(
+        "theme-dot"
+    );
+/* ═══════════════════════════════════════════════════════
+   THEME ENGINE
+═══════════════════════════════════════════════════════ */
+const STORAGE_KEY =
+    "dual-theme";
+function applyTheme(theme) {
+    const nextTheme =
+        theme === "light"
+            ? "light"
+            : "dark";
+    ROOT.dataset.theme =
+        nextTheme;
+    try {
+        localStorage.setItem(
+            STORAGE_KEY,
+            nextTheme
+        );
+    } catch (error) {
+        console.warn(
+            "DUAL Theme · localStorage indisponível"
+        );
+    }
+    /*
+     * Evento global.
+     *
+     * Qualquer módulo do sistema pode ouvir:
+     *
+     * window.addEventListener(
+     *     "dual:theme-change",
+     *     e => {}
+     * );
+     */
+    window.dispatchEvent(
+        new CustomEvent(
+            "dual:theme-change",
+            {
+                detail: {
+                    theme:
+                        nextTheme
+                }
+            }
+        )
+    );
+}
+function getInitialTheme() {
+    try {
+        const saved =
+            localStorage.getItem(
+                STORAGE_KEY
+            );
+        if (
+            saved === "light" ||
+            saved === "dark"
+        ) {
+            return saved;
+        }
+    } catch (error) {}
+    return "dark";
+}
+/* ═══════════════════════════════════════════════════════
+   API GLOBAL
+═══════════════════════════════════════════════════════ */
+window.DualTheme = {
+    set(theme) {
+        applyTheme(
+            theme
+        );
+    },
+    toggle() {
+        const current =
+            ROOT.dataset.theme ||
+            "dark";
+        applyTheme(
+            current === "light"
+                ? "dark"
+                : "light"
+        );
+    },
+    get() {
+        return (
+            ROOT.dataset.theme ||
+            "dark"
+        );
+    }
+};
+/* ═══════════════════════════════════════════════════════
+   BOLINHA DE TEMA
+═══════════════════════════════════════════════════════ */
+if (THEME_DOT) {
+    THEME_DOT.addEventListener(
+        "click",
+        event => {
+            /*
+             * Impede que o clique
+             * chegue ao header.
+             *
+             * Assim a bolinha troca
+             * o tema sem colapsar
+             * o conteúdo.
+             */
+            event.stopPropagation();
+            DualTheme.toggle();
+        }
+    );
+}
+/* ═══════════════════════════════════════════════════════
+   HEADER → COLLAPSE DO MAIN
+═══════════════════════════════════════════════════════ */
+if (HEADER && MAIN) {
+    HEADER.addEventListener(
+        "click",
+        event => {
+            /*
+             * Se o clique veio da bolinha,
+             * não executa o collapse.
+             */
+            if (
+                event.target.closest(
+                    "#theme-dot2, .top-actions, .uni-actions, .navbar"
+                )
+            ) {
+                return;
+            }
+            MAIN.classList.toggle(
+                "hidden"
+            );
+            const collapsed =
+                MAIN.classList.contains(
+                    "hidden"
+                );
+            HEADER.classList.toggle(
+                "is-collapsed",
+                collapsed
+            );
+            /*
+             * Evento para futuras
+             * Symbol Bars / Navigation.
+             */
+            window.dispatchEvent(
+                new CustomEvent(
+                    "dual:content-collapse",
+                    {
+                        detail: {
+                            collapsed
+                        }
+                    }
+                )
+            );
+        }
+    );
+}
+/* ═══════════════════════════════════════════════════════
+   SMART HEADER
+   SCROLL DOWN → ESCONDE
+   SCROLL UP   → MOSTRA
+═══════════════════════════════════════════════════════ */
+let lastScrollY =
+    window.scrollY;
+let ticking =
+    false;
+const SCROLL_THRESHOLD =
+    8;
+/* Função de controle */
+function updateHeader() {
+    const currentScrollY =
+        window.scrollY;
+    /*
+     * No topo:
+     * sempre mostra.
+     */
+    if (
+        currentScrollY <= 10
+    ) {
+        HEADER.classList.remove(
+            "header-hidden"
+        );
+        HEADER.classList.add(
+            "header-visible"
+        );
+        lastScrollY =
+            currentScrollY;
+        ticking =
+            false;
+        return;
+    }
+    /*
+     * Scroll para baixo
+     * → header sobe.
+     */
+    if (
+        currentScrollY >
+        lastScrollY +
+        SCROLL_THRESHOLD
+    ) {
+        HEADER.classList.remove(
+            "header-visible"
+        );
+        HEADER.classList.add(
+            "header-hidden"
+        );
+    }
+    /*
+     * Scroll para cima
+     * → header retorna.
+     */
+    else if (
+        currentScrollY <
+        lastScrollY -
+        SCROLL_THRESHOLD
+    ) {
+        HEADER.classList.remove(
+            "header-hidden"
+        );
+        HEADER.classList.add(
+            "header-visible"
+        );
+    }
+    lastScrollY =
+        currentScrollY;
+    ticking =
+        false;
+}
+/* Scroll otimizado */
+window.addEventListener(
+    "scroll",
+    () => {
+        if (
+            !ticking
+        ) {
+            window.requestAnimationFrame(
+                updateHeader
+            );
+            ticking =
+                true;
+        }
+    },
+    {
+        passive:
+            true
+    }
+);
+/* ═══════════════════════════════════════════════════════
+   INICIALIZAÇÃO
+═══════════════════════════════════════════════════════ */
+applyTheme(
+    getInitialTheme()
+);
+console.log(
+    "DUAL · GLOBAL SYSTEM READY"
+);
+})();
+<\/script>
+
+<!-- ═══════════════════════════════════════════════════════
+     PONTE DE TEMA (override-first, roda por último)
+     Antes existiam DOIS sistemas de tema desencontrados:
+       1) #theme-dot (SVG) → data-theme no <html>, via
+          Dual_[Theme]-minuz.js — esse é o principal e já
+          funciona certinho.
+       2) #themeToggle (🌙) → classe .theme-dark no <body> +
+          localStorage('theme') — um sistema paralelo que não
+          mexia em nenhum token realmente usado na tela.
+     Agora o #themeToggle só repassa o clique pro #theme-dot,
+     então os dois botões acabam controlando o MESMO tema real,
+     sem lógica duplicada e sem risco de dessincronizar.
+     ═══════════════════════════════════════════════════════ -->
+
+<script>
+  (function () {
+    var canonBtn = document.getElementById('theme-dot');
+    var themeToggleBtn = document.getElementById('themeToggle');
+
+    if (!canonBtn) return;
+
+    // Qualquer .theme-dot redireciona para o botão canônico
+    document.addEventListener('click', function (e) {
+      var trigger = e.target.closest('.theme-dot');
+
+      if (trigger && trigger !== canonBtn) {
+        canonBtn.click();
+      }
+    });
+
+    // Botão externo #themeToggle também redireciona
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener('click', function () {
+        canonBtn.click();
+      });
+
+      // Espelha o emoji conforme o data-theme real
+      var syncIcon = function () {
+        var t = document.documentElement.getAttribute('data-theme') || 'dark';
+        themeToggleBtn.textContent = t === 'light' ? '☀️' : '🌙';
+      };
+
+      syncIcon();
+
+      new MutationObserver(syncIcon).observe(
+        document.documentElement,
+        {
+          attributes: true,
+          attributeFilter: ['data-theme']
+        }
+      );
+    }
+  })();
+<\/script>`);</script> 
+
+  <div class="almasliber" data-app="almasliber">
+    <div class="shell">
+
+      <!-- ===== TOPBAR ===== --
+      <header style="z-index:10" class="topbar">
+        <button class="icon-btn" id="menuBtn" aria-label="Abrir menu">☰</button>
+        <div class="brand">
+          A.<span>INFODOSE</span>
+          <span class="mini-orb-wrap" id="topbarMiniOrb"></span>
+        </div>
+        <div style="z-index:11; display:flex;gap:8px;">
+          <button class="icon-btn" id="themeToggle" aria-label="Alternar tema">🌙</button>
+          <button class="icon-btn" id="notifBtn" aria-label="Notificações">♧</button>
+        </div>
+      </header> -->
+
+<!--
+<script type="module" src="https://www.infodose.com.br/Nebula/NEB.js"></script>
+  
+  <script type="module" src="https://www.infodose.com.br/Nebula/di_Jogador.js"></script>
+-->
+  
+
+
+
+     <div class="wrap">
+<!-- ═══════════════════════════════════════════════════════
+     HEADER GLOBAL
+     1. TOCAR NO HEADER
+        → COLAPSA MAIN
+     2. TOCAR NA BOLINHA
+        → MUDA TEMA
+     3. ROLAR PARA BAIXO
+        → HEADER SOBE
+     4. ROLAR PARA CIMA
+        → HEADER VOLTA
+═══════════════════════════════════════════════════════ -->
+<header class="topbar header-visible" id="main-header">
+    <!-- ÁREA DO SISTEMA -->
+    <div class="brandX">
+        <span>
+            DUAL
+        </span>
+        <span class="badgeX">
+            GLOBAL
+        </span>
+    </div>
+   
+<!-- <div class="win-navrow" onclick="event.stopPropagation()">
+          <input class="win-urlbar" type="text" id="urlInputNav" placeholder="Digite uma URL..." spellcheck="false" autocomplete="off">
+          <button class="win-go-btn" type="button" id="goNavBtn">Go</button>
+        </div>
+-->
+ <!-- ÚNICO CONTROLE DE TEMA -->
+
+ <button id="theme-dot" class="theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>
+       </button>  
+
+                <!--    <button class="launcher-btn" id="openKobBtn">+</button> -->
+<!-- 
+-->
+
+</header>
+<!-- ═══════════════════════════════════════════════════════
+     MAIN
+═══════════════════════════════════════════════════════ -->
+
+ 
+    <!-- ═══════════════════════════════════════════════════════
+             MAIN · agora hospeda o #kxtsk-shell (dock + stackWrap)
+             ═══════════════════════════════════════════════════════ -->
+        <main>
+          <div id="main-content">
+
+<div id="kxtsk-shell">
+ <!-- <div id="kxtsk-shell"> -->
+  <div id="inject-here"> </div>
+  <!--  <script src="https://infodose.com.br/oiDual/KODUX/78K/APPS/78PLAYER/Player-[di_jogador]-87-OK-0.js"></script>   --> 
+
+
+            <div id="dock"></div>
+
+           
+          <!-- /#kxtsk-shell -->
+        </div></div></main>
+
+      <!-- ===== BOTTOM NAV ===== -->
+      <nav style="display:none" class="symbol-bar bottom-nav" data-module="navigation" aria-label="Navegação principal">
+        <button class="nav-item active" data-tab="home"><span class="nav-icon">⌂</span><span>Início</span></button>
+        <button class="nav-item" id="navLibraryBtn"><span class="nav-icon">▣</span><span>Library</span></button>
+        <button class="nav-main" id="navCreateBtn">+</button>
+        <button class="nav-item" id="navResultsBtn"><span class="nav-icon">▥</span><span>Resultados</span></button>
+        <button class="nav-item" id="navProfileBtn"><span class="nav-icon">♙</span><span>Perfil</span></button>
+      </nav>
+
+    </div>
+  </div>
+
+  <!-- TOASTER -->
+  <div class="toaster-wrap" id="toasterWrap"></div>
+
+  <input type="file" id="nebulaFileInput" multiple="" accept=".txt,.md,.html,.pdf" style="display:none">
+
+  <!-- ============================================================
+       NÉBULA: input file + reader (elementos HTML)
+       ============================================================ 
+
+  <div class="reader" id="nebulaReader">
+    <div class="reader-head">
+      <div class="reader-title" id="nebulaReaderTitle">Título do Documento</div>
+      <button class="reader-close" id="nebulaReaderClose">✕</button>
+    </div>
+    <div class="reader-body" id="nebulaReaderBody"></div>
+  </div>
+-->
+  <!-- ============================================================
+       SCRIPTS (V10 + Nébula)
+       ============================================================ -->
+  
+
+  <!-- ============================================================
+       NÉBULA UNIFICADO — motor de biblioteca (fundido da V7)
+       ============================================================ -->
+  
+
+  <!-- ============================================================
+       SCRIPTS ADICIONAIS (KODUX / INFODOSE)
+       ============================================================ -->
+  
+
+  
+
+  
+  
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SCRIPTS DO KXTSK-SHELL / STACKWRAP (fundido do iFSw-globalDUAL)
+     ═══════════════════════════════════════════════════════ -->
+<script src="https://kodux78k.github.io/a-Infodose/js/modules/iFSw-base.js"></script>
+
+<!-- <script type="module" src="https://infodose.com.br/oiDual/KODUX/78K/APPS/78Dual/js/main.js"></script> -->
+
+</body></html>
