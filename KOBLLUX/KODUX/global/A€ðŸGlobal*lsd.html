@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="night">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1020" id="metaThemeColor">
+  <title>dual-global</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+
+  <link rel="stylesheet" href="https://infodose.com.br/oiDual/KODUX/78K/APPS/78GLOBAL/dual-global-bundle-m0d/css/bundle.css">
+
+  <script src="https://infodose.com.br/oiDual/KODUX/78K/APPS/78GLOBAL/dual-global-bundle-m0d/js/script-1.js" type="module"></script>
+</head>
+
+<body data-mode="night">
+
+  <script src="https://infodose.com.br/oiDual/KODUX/78K/APPS/78GLOBAL/dual-global-bundle-m0d/js/script-2.js" type="module"></script>
+
+  <div class="almasliber" data-app="almasliber">
+    <div class="shell">
+      <div class="wrap">
+        <!-- HEADER GLOBAL -->
+        <header class="topbar header-visible" id="main-header">
+          <div class="brandX">
+            <span>DUAL</span>
+            <span class="badgeX">GLOBAL</span>
+          </div>
+
+          <!-- ÚNICO CONTROLE DE TEMA -->
+          <button id="theme-dot" class="theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+        </header>
+
+        <!-- MAIN -->
+        <main>
+          <div id="main-content">
+            <div id="kxtsk-shell">
+              <div id="inject-here"></div>
+              <div id="dock"></div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOASTER -->
+  <div class="toaster-wrap" id="toasterWrap"></div>
+  <input type="file" id="nebulaFileInput" multiple accept=".txt,.md,.html,.pdf" style="display:none">
+
+  <script src="https://kodux78k.github.io/a-Infodose/js/modules/iFSw-base.js"></script>
+
+  <!-- ── THEME DOT · script dedicado ── -->
+  <script>
+  (() => {
+    'use strict';
+
+    const ICONS = {
+      night: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg></svg>',
+      day: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>',
+      sunset: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M17 18a5 5 0 0 0-10 0"></path><line x1="12" y1="9" x2="12" y2="2"></line><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"></line><line x1="1" y1="18" x2="3" y2="18"></line><line x1="21" y1="18" x2="23" y2="18"></line><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"></line><line x1="23" y1="22" x2="1" y2="22"></line><polyline points="16 5 12 9 8 5"></polyline></svg>'
+    };
+
+    const LABELS = {
+      night: 'Noite (Night)',
+      day: 'Dia (Day)',
+      sunset: 'Pôr do Sol (Sunset)'
+    };
+
+    const CYCLE = ['night', 'day', 'sunset'];
+
+    // Busca SEMPRE dentro do <body>
+    const byId = (id) => document.body.querySelector('#' + id);
+
+    function applyTheme(t) {
+      // <html data-theme>
+      document.documentElement.setAttribute('data-theme', t);
+      // <body data-mode>
+      document.body.setAttribute('data-mode', t);
+      // meta theme-color
+      const meta = byId('metaThemeColor');
+      if (meta) {
+        const colors = { night: '#0b1020', day: '#f5f7fb', sunset: '#1a0e1f' };
+        meta.setAttribute('content', colors[t] || '#0b1020');
+      }
+      // ícone do botão
+      const dot = byId('theme-dot');
+      if (dot) {
+        dot.innerHTML = ICONS[t] || ICONS.night;
+        dot.setAttribute('title', `Tema: ${LABELS[t] || t} (toque para alternar)`);
+        dot.dataset.theme = t;
+      }
+      // persiste
+      localStorage.setItem('di_themeMode', t);
+      localStorage.setItem('dual-theme', t);
+      // avisa o resto do sistema
+      window.dispatchEvent(new CustomEvent('dual:theme-change', { detail: { theme: t } }));
+    }
+
+    function nextTheme() {
+      const cur = document.documentElement.getAttribute('data-theme') || 'night';
+      const idx = CYCLE.indexOf(cur);
+      return CYCLE[(idx + 1) % CYCLE.length];
+    }
+
+    function boot() {
+      const dot = byId('theme-dot');
+      if (!dot) return;
+
+      dot.addEventListener('click', (e) => {
+        e.stopPropagation();
+        applyTheme(nextTheme());
+      });
+
+      // estado inicial
+      const saved =
+        localStorage.getItem('di_themeMode') ||
+        localStorage.getItem('dual-theme') ||
+        document.documentElement.getAttribute('data-theme') ||
+        'night';
+      applyTheme(saved);
+    }
+
+    // espera body + botão existirem
+    function waitForBody(cb) {
+      if (document.body) return cb();
+      new MutationObserver((_, obs) => {
+        if (document.body) { obs.disconnect(); cb(); }
+      }).observe(document.documentElement, { childList: true });
+    }
+
+    function waitForId(id, timeout = 3000) {
+      return new Promise(res => {
+        const el = byId(id);
+        if (el) return res(el);
+        const obs = new MutationObserver(() => {
+          const f = byId(id);
+          if (f) { obs.disconnect(); res(f); }
+        });
+        obs.observe(document.body, { childList: true, subtree: true });
+        setTimeout(() => { obs.disconnect(); res(byId(id)); }, timeout);
+      });
+    }
+
+    waitForBody(async () => {
+      await waitForId('theme-dot');
+      boot();
+    });
+
+    // expõe API mínima (opcional)
+    window.DualTheme = window.DualTheme || {
+      set: applyTheme,
+      next: () => applyTheme(nextTheme()),
+      toggle: () => applyTheme(nextTheme()),
+      current: () => document.documentElement.getAttribute('data-theme')
+    };
+  })();
+  </script>
+
+</body>
+</html>
