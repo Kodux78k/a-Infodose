@@ -1,4 +1,4 @@
-(function(bundle,s='#inject-here'){
+(function(bundle,s='#A€ðŸNoSolar'){
 const p=new DOMParser();
 const c=p.parseFromString(
 bundle,
@@ -72,8 +72,8 @@ document.body.appendChild(n);
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&amp;display=swap" rel="stylesheet">
 
 
-<link rel="stylesheet" href="https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78NoSolar/css/main.css">
-
+<style> @import "https://www.infodose.com.br/oiDual/KODUX/78K/APPS/78NoSolar/css/main.css";
+</style> 
 </head>
 <body class="mode-day">
   <!-- SplashFake / holar -->
