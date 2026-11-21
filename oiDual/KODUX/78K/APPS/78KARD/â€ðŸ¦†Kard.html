@@ -1,0 +1,2154 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#05070a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>78KARD_8793</title>
+  <link rel="apple-touch-icon" href="icon-192.png">
+<script src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js" onerror="var s=document.createElement('script');s.src='vendor/Tone.js';s.onerror=function(){console.warn('[KOB-SONETO] Tone.js indisponível')};document.head.appendChild(s);this.onerror=null">
+</script>
+
+<style>
+ /* @import "https://infodose.com.br/oiDual/KODUX/78K/APPS/78header/dual-header-app/css/main.css";*/
+/* ===== STYLE 1 / 3 ===== */
+
+    /* VARIÁVEIS DINÂMICAS (Serão alteradas via JS pelos Arquétipos) */
+    :root {
+      --kob-voice-primary: #32d7cb;
+      --kob-voice-secondary: #0EA5E9;
+      --kob-voice-bg-soft: rgba(10, 12, 20, 0.75);
+      --text: #f0f3f9;
+      --muted: rgba(255, 255, 255, 0.45);
+      --border: rgba(255, 255, 255, 0.1);
+      --snap-threshold: 40px;
+    }
+
+    html, body { 
+      height: 100%; min-height:100vh; margin: 0; padding: 0; 
+      background: #05070a; color: var(--text); 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: auto; /* O frame cuida do scroll */
+    }
+    
+    .main-wrapper { width: 100%; height: 100vh; display: flex; flex-direction: column; position: relative; }
+    
+    /* Área de Conteúdo (Iframe ou Div local) */
+    #content-frame { 
+      width: 100%; height: 100%; min-height:100vh; border: 0; 
+      background: #05070a; transition: opacity .3s; 
+    }
+
+    /* HUD - Barra de Símbolos */
+    .symbol-bar {
+      position: fixed;
+      z-index: 9999;
+      display: flex;
+      gap: 10px;
+      padding: 12px;
+      background: var(--kob-voice-bg-soft);
+      backdrop-filter: blur(15px) saturate(180%);
+      -webkit-backdrop-filter: blur(15px) saturate(180%);
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      transition: 
+        opacity 0.8s ease, 
+        left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+        top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+        border-radius 0.3s ease,
+        background 0.5s ease,
+        border-color 0.5s ease;
+      user-select: none;
+      touch-action: none;
+    }
+
+    /* Estados de Opacidade */
+    .symbol-bar.idle { opacity: 0.2; }
+    .symbol-bar.idle:hover { opacity: 1; }
+    .symbol-bar.is-dragging { opacity: 0.9; transition: none; }
+
+    /* Layouts de Snap */
+    .symbol-bar.snap-side { flex-direction: column; border-radius: 0 24px 24px 0; border-left: 0; }
+    .symbol-bar.snap-side-right { flex-direction: column; border-radius: 24px 0 0 24px; border-right: 0; }
+    .symbol-bar.snap-top { flex-direction: row; border-radius: 0 0 24px 24px; border-top: 0; align-items: center; }
+    .symbol-bar.floating { flex-direction: column; border-radius: 28px; }
+
+    /* Botões */
+    .symbol-button {
+      width: 44px; height: 44px; border-radius: 14px;
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 18px;
+      flex-shrink: 0;
+      position: relative;
+    }
+    
+    .symbol-button:active { transform: scale(0.9); }
+    .symbol-button:hover { background: rgba(255, 255, 255, 0.12); border-color: var(--kob-voice-primary); }
+
+    /* Botão Toggle (Menu/Arquétipo) */
+    .symbol-button.main-toggle { 
+      background: linear-gradient(135deg, #1a1d29, #05070a);
+      color: var(--kob-voice-primary);
+      border-color: var(--kob-voice-primary);
+      font-weight: bold;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    /* Ícone de Status de Voz Ativa */
+    .voice-indicator {
+      position: absolute; bottom: -2px; right: -2px;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--kob-voice-primary);
+      border: 2px solid #000;
+    }
+
+    /* Recolhimento (Sanfonar) */
+    .symbol-wrap {
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .symbol-bar.collapsed .symbol-wrap { 
+      width: 0; height: 0; margin: 0; opacity: 0; pointer-events: none; transform: scale(0);
+    }
+
+    /* Texto de Status */
+    .hud-info { font-size: 9px; color: var(--muted); text-transform: uppercase; text-align: center; pointer-events: none; }
+    .symbol-bar.snap-top .hud-info { display: none; }
+
+    /* Outline de Leitura */
+    #kob-tts-outline {
+      position: absolute; pointer-events: none; z-index: 9998;
+      border: 2px solid var(--kob-voice-primary); border-radius: 8px;
+      background: var(--kob-voice-bg-soft); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 0 15px var(--kob-voice-primary);
+      display: none;
+    }
+
+    [data-tts-current="true"] {
+      border-radius: 8px;
+      box-shadow: inset 0 0 10px var(--kob-voice-bg-soft);
+    }
+  
+
+
+/* ===== STYLE 2 / 3 ===== */
+/* kob-hud-vars.css — variáveis base e tema de voz */
+:root {
+  --kob-voice-primary: #22D3EE;
+  --kob-voice-secondary: #38BDF8;
+  --kob-voice-bg-soft: rgba(34,211,238,0.14);
+  --kob-voice-outline: rgba(34,211,238,0.28);
+
+  --bg-blur: rgba(10, 12, 20, 0.75);
+  --card-bg: rgba(20, 22, 32, 0.85);
+  --text: #f0f3f9;
+  --muted: rgba(255, 255, 255, 0.45);
+  --accent: #32d7cb;
+  --danger: #ff5e5e;
+  --border: rgba(255, 255, 255, 0.1);
+
+  /* tempo padrão para transições do HUD */
+  --kob-voice-theme-duration: 520ms;
+}
+
+
+.header-orb {
+  /* Definição das variáveis de voz */
+  --kob-voice-primary: #7df9ff;   /* tom ciano neon */
+  --kob-voice-secondary: #b68cff; /* tom violeta suave */
+
+  position: fixed;
+  
+  z-index: 30;
+  width: 39px;
+  height: 39px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  
+  /* Aplicação das variáveis no gradiente e na borda */
+  background: linear-gradient(
+    180deg,
+    rgba(125, 249, 255, 0.14) 0%,
+    rgba(182, 140, 255, 0.08) 100%
+  );
+  border: 1px solid var(--kob-voice-primary);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+              0 10px 30px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.header-orb svg {
+  width: 24px;
+  height: 24px;
+  stroke: var(--kob-voice-secondary); /* ícone usa a cor secundária */
+  fill: none;
+  stroke-width: 1.8;
+}
+
+/* Efeito hover com realce das cores de voz */
+.header-orb:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 24px var(--kob-voice-primary),
+              0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+#particles-js { position: fixed; inset: 0; z-index: 1000; opacity: 0.8; pointer-events: none; } /* KxT unificado com Splash */
+#bg-fake-custom { position: fixed; inset: 0; z-index: 1;mix-blend-mode:lighten; opacity: 0.12; background-size: cover; background-position: center;
+                 pointer-events: none; }
+
+
+/* Drawers & Cockpit */
+.drawer { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; }
+.drawer.open { opacity: 1; pointer-events: auto; }
+.drawer-content { width: 90%; max-width: 450px; max-height: 85vh; background: var(--bg-panel); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.drawer.open .drawer-content { transform: scale(1); }
+.drawer-header { padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); }
+.drawer-header h3 { margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
+.drawer-body { padding: 20px; overflow-y: auto; flex: 1; }
+
+.cockpit-grid { display: flex; flex-direction: column; gap: 15px; }
+.cockpit-item { background: rgba(255,255,255,0.03); padding: 10px 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; }
+.cockpit-label { font-size: 0.7rem; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+.cockpit-input { background: transparent; border: none; color: white; font-family: var(--font-code); font-size: 1rem; outline: none; width: 100%; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 5px; transition: 0.3s; }
+.cockpit-input:focus { border-bottom-color: var(--secondary); }
+.control-row { display: flex; gap: 10px; margin-top: 20px; }
+.btn-block { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: inherit; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: 0.2s; }
+.btn-block:hover { background: rgba(255,255,255,0.15); border-color: var(--primary); }
+
+.deck-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
+.deck-info h4 { margin: 0 0 5px 0; font-size: 0.9rem; }
+.deck-info span { font-size: 0.7rem; opacity: 0.7; }
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 5px; font-size: 0.8rem; color: var(--text-muted); }
+.glass-textarea { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); color: inherit; padding: 10px; border-radius: 8px; min-height: 80px; }
+
+
+
+/* ===== STYLE 3 / 3 ===== */
+:root {
+      /* Z-index base */
+      --z-base: 0;
+      --z-content: 100;
+      --z-widget: 500;
+      --z-overlay: 1000;
+      --z-system: 5000;
+      
+      /* Orb settings */
+      --orb-speed: 7.8s;
+      --kob-voice-primary: #78e3ff;
+      --kob-voice-secondary: #b978ff;
+      --kob-voice-accent: #ffffff;
+    }
+
+    /* Estilos do #root - Background reativo às variáveis de voz */
+    #root {
+      min-height: 100vh;
+      width: 100%;
+      background-color: #0b0c10; /* Fundo escuro base */
+      background-image: 
+        radial-gradient(circle at 10% 50%, color-mix(in srgb, var(--kob-voice-primary) 12%, transparent) 0%, transparent 60%),
+        radial-gradient(circle at 90% 50%, color-mix(in srgb, var(--kob-voice-secondary) 12%, transparent) 0%, transparent 60%);
+      background-attachment: fixed;
+      transition: background-image 0.5s ease;
+    }
+
+    /* Container do ORB no botão de arquétipo */
+    .orb-microphone-container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    /* Mini orb adaptado para caber no botão */
+    .tts-orb-mini {
+        width: 28px;
+        height: 28px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .orb {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        position: relative;
+        display: grid;
+        place-items: center;
+        transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.2, 1);
+    }
+
+    .orb-core {
+        width: 78%;
+        height: 78%;
+        border-radius: 50%;
+        background: radial-gradient(circle at 30% 30%, var(--kob-voice-accent) 0%, rgba(255,255,255,0.1) 10%, transparent 60%),
+                    radial-gradient(circle at 70% 70%, var(--kob-voice-primary) 0%, var(--kob-voice-secondary) 100%);
+        box-shadow: 0 0 15px var(--kob-voice-primary);
+        animation: orbSpin var(--orb-speed) linear infinite;
+    }
+
+    @keyframes orbSpin { 
+        to { transform: rotate(360deg); } 
+    }
+
+    /* Estado de fala (ativo) */
+    .speaking .orb-core {
+        animation: orbSpin 2s linear infinite, orbPulse 0.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes orbPulse { 
+        from { transform: scale(1); } 
+        to { transform: scale(1.15); } 
+    }
+
+    /* Indicador de voz original agora integrado ao orb */
+    .voice-indicator {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--kob-voice-primary, #4caf50);
+        box-shadow: 0 0 8px var(--kob-voice-primary, #4caf50);
+        transition: all 0.3s ease;
+        z-index: 10;
+    }
+
+    .voice-indicator.muted {
+        background: #f44336;
+        box-shadow: 0 0 8px #f44336;
+    }
+
+    /* Ajuste no botão para acomodar o orb */
+    #btn-arch {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        overflow: visible;
+    }
+
+
+
+
+/* kob-hud.css — estilos do HUD / symbol-bar */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  color: var(--text);
+  background: rgba(0,0,0,0);
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow: auto;
+}
+
+.wrap { width: 100%; min-height: 100vh; height: 100%; display: flex; flex-direction: column; }
+iframe#frame, iframe#content-frame { width: 100%; min-height: 100vh; height: 100%; border: 0; border-radius: 8px; transition: opacity .3s; }
+
+/* Barra de Símbolos */
+.symbol-bar {
+  position: fixed;
+  z-index: 9999;
+  display: flex;
+  gap: 2px;
+  padding: 10px;
+  background: var(--bg-blur);
+  backdrop-filter: blur(15px) saturate(160%);
+  -webkit-backdrop-filter: blur(15px) saturate(160%);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  transition:
+    opacity 0.8s ease,
+    left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    border-radius 0.3s ease,
+    padding 0.3s ease;
+  user-select: none;
+  touch-action: none;
+  opacity: 0.96;
+}
+
+
+
+
+/* Estado Inativo */
+.symbol-bar.idle { opacity: 0.18; }
+.symbol-bar.idle:hover { opacity: 0.96; }
+
+/* Variações de Snap */
+.symbol-bar.snap-side { bottom:28%;flex-direction: column; border-radius: 0 20px 20px 0; border-left: 0; }
+.symbol-bar.snap-side-right { bottom:28%; flex-direction: column; border-radius: 20px 0 0 20px; border-right: 0; }
+
+/* Snap Topo */
+.symbol-bar.snap-top {
+  flex-direction: row;
+  border-radius: 0 0 20px 20px;
+  border-top: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.symbol-bar.floating { flex-direction: column; border-radius: 24px; }
+
+/* Botões */
+.symbol-button {
+  width: 28px; height: 28px; border-radius: 12px;
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--card-bg);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.symbol-button:active { transform: scale(0.9); }
+.symbol-button.toggle {
+  background: linear-gradient(135deg, #1a1d29, #0f111a);
+  color: var(--accent);
+  border-color: rgba(50, 215, 203, 0.4);
+  font-weight: bold;
+}
+
+/* Recolhimento */
+.symbol-bar.collapsed .symbol-wrap { width: 0; height: 0; margin: 0; opacity: 0; pointer-events: none; transform: scale(0); }
+.symbol-bar.collapsed.snap-side, .symbol-bar.collapsed.snap-side-right { padding: 10px 5px; }
+.symbol-bar.collapsed.snap-top { padding: 5px 10px; }
+
+.symbol-wrap {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+
+/* KOBLLUX: Apply variables in the HUD, dock, and outline */
+.symbol-bar, .kob-tts-dock {
+  background: var(--kob-voice-bg-soft);
+  border-color: var(--kob-voice-primary);
+  color: #fff;
+}
+
+#kob-tts-outline {
+  border-color: var(--kob-voice-primary);
+  box-shadow: 0 6px 20px var(--kob-voice-outline);
+  background: linear-gradient(0deg, rgba(255,255,255,0.02), transparent);
+}
+
+/* Lixeira */
+.trash {
+  position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%) scale(0.8);
+  width: 60px; height: 60px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255, 60, 60, 0.2);
+  color: var(--danger);
+  border: 2px dashed var(--danger);
+  z-index: 10001; opacity: 0; transition: all 0.3s ease; pointer-events: none;
+}
+.trash.visible { opacity: 1; transform: translateX(-50%) scale(1); pointer-events: auto; }
+.trash.over { background: var(--danger); color: white; transform: translateX(-50%) scale(1.2); }
+
+.edit-mode { outline: 2px dashed var(--accent); outline-offset: 4px; }
+
+/* small helpers */
+.hud-info { font-size: 12px; padding: 4px 8px; align-self: center; opacity: .95; }
+
+
+.symbol-bar.collapsed{
+gap: 2px;
+padding:6px;
+width:fit-content;
+}
+</style>
+  <style id="fusion-core-runtime">
+:root{
+  --bg-deep: #030406;
+  --bg-gradient: linear-gradient(180deg,#000,#111);
+  --bg: var(--bg-gradient);
+  --text: #d7d7d7;
+  --neon-cyan: #00f2ff;
+  --neon-purple: #bd00ff;
+  --neon-gold: #ffd700;
+  --neon-danger: #ff2a6d;
+  --neon-success: #00ff9d;
+
+  --font-ui: 'Montserrat', sans-serif;
+  --font-code: 'JetBrains Mono', monospace;
+
+  --glass-surface: rgba(18,18,22,0.12);
+  --glass-border: rgba(255,255,255,0.06);
+  --ease-overshoot: cubic-bezier(0.34, 1.3, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* Dynamic hash-driven colors (setados por JS em updateInterface) */
+  --orb-primary: #78e3ff;
+  --orb-secondary: #b978ff;
+  --orb-accent: #ffffff;
+
+  --orb-speed: 7.8s;
+  --snap-height: 80px;
+}
+
+/* BASE */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;outline:none;user-select:none}
+body{
+  height:100vh; margin:0; overflow:auto;
+  font-family:var(--font-ui); background:var(--bg); color:var(--text);
+}
+.cyber-input, input, textarea { user-select:text !important; -webkit-user-select:text !important; }
+
+/* AMBIENT — usa as cores dinâmicas do hash */
+.ambient-light{position:fixed;inset:0;z-index:0;pointer-events:none}
+.blob{pointer-events:none;position:absolute;border-radius:50%;filter:blur(200px);opacity:0.39;animation:float 25s infinite alternate ease-in-out}
+.blob-1{width:60vw;height:60vw;background:var(--orb-primary);top:-20%;left:-20%}
+.blob-2{width:50vw;height:78vw;background:var(--orb-secondary);bottom:-20%;right:-20%;animation-delay:-5s}
+@keyframes float{0%{transform:translate(0,0)}100%{transform:translate(40px,60px)}}
+@keyframes gradientFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+/* SNAP ZONES */
+#snap-zone, #snap-zone-bottom {
+  position: fixed; left: 0; right: 0;
+  height: var(--snap-height);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 9000;
+}
+#snap-zone {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(0, 242, 255, 0.25), transparent);
+  box-shadow: 0 0 40px rgba(0, 242, 255, 0.1);
+}
+#snap-zone-bottom {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(189, 0, 255, 0.25), transparent);
+  box-shadow: 0 0 40px rgba(189, 0, 255, 0.1);
+}
+#snap-zone.active, #snap-zone-bottom.active { opacity: 1; }
+
+/* CONTAINER */
+.kontainer{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center;perspective:1200px;z-index:10}
+
+/* FUSION CARD BASE */
+.fusion-card{
+  pointer-events:auto;
+  width:100%; max-width:440px;
+  max-height:78vh; overflow-y:auto; overflow-x:hidden;
+  background:var(--glass-surface); 
+backdrop-filter:blur(1px); 
+-webkit-backdrop-filter:blur(1px);
+  border:1px solid var(--glass-border); border-radius:36px; padding:30px 25px;
+  box-shadow:0 40px 100px rgba(0,0,0,0.8);
+  position:relative; opacity:0; transform:translateY(50px) scale(0.96);
+  display:flex; flex-direction:column; gap:8px;
+  transition: width 0.5s var(--ease-smooth), height 0.5s var(--ease-smooth), border-radius 0.5s var(--ease-smooth), opacity 0.4s, left 0.4s var(--ease-smooth), top 0.4s var(--ease-smooth), box-shadow 0.4s;
+  will-change: transform, width, height, border-radius, left, top;
+  touch-action: none;
+}
+.fusion-card::-webkit-scrollbar{display:none}
+.fusion-card.active{opacity:1;transform:translateY(0) scale(1)}
+.fusion-card.closed{width:260px;padding:14px 16px;border-radius:22px}
+.fusion-card.closed .card-body{display:none}
+
+/* ORB MODE — SEM drop shadow */
+.fusion-card.orb{
+  position:fixed !important;
+  width:68px !important;height:68px !important;
+  padding:0 !important;border-radius:50% !important;
+  align-items:center;justify-content:center;
+  box-shadow:none;
+  z-index:9999; cursor:grab; overflow:visible;
+}
+.fusion-card.orb:active{cursor:grabbing;transform:scale(0.95)}
+.fusion-card.orb .text-block, .fusion-card.orb .clock-widget, .fusion-card.orb .card-body, .fusion-card.orb .small-preview{display:none !important}
+.fusion-card.orb .card-header{margin:0;width:100%;height:100%;justify-content:center;padding:0}
+.fusion-card.orb .avatar-slot{width:54px;height:54px;border-radius:50%;margin:0;opacity:1;pointer-events:none}
+
+.orb-menu-trigger{
+  position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);
+  width:24px;height:24px;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.2);
+  border-radius:50%;display:none;align-items:center;justify-content:center;cursor:pointer;
+  color:#fff;font-size:12px;pointer-events:auto;backdrop-filter:blur(4px);
+}
+.fusion-card.orb:hover .orb-menu-trigger{display:flex}
+
+/* HUD (TOP) */
+.fusion-card.hud{
+  position:fixed !important; top:0 !important; left:50% !important;
+  transform:translateX(-50%) !important;
+  width:96% !important; max-width:600px !important; height:64px !important;
+  padding:0 16px !important; border-radius:0 0 24px 24px !important;
+  flex-direction:row; align-items:center; justify-content:space-between;
+  box-shadow:0 10px 40px rgba(0,0,0,0.7); z-index:9999; overflow:visible;
+  border-top:none; opacity:0.78; touch-action:none;
+}
+.fusion-card.hud .card-body, .fusion-card.hud .small-preview{display:none !important}
+.fusion-card.hud .card-header{margin:0;width:100%;justify-content:space-between}
+.fusion-card.hud .avatar-slot{width:40px;height:40px}
+.fusion-card.hud .brand-dual{font-size:1.2rem;margin:0}
+.fusion-card.hud .greeting-row{display:none}
+.fusion-card.hud .text-block{flex:unset}
+
+/* DOCK-BOTTOM — SEM drop shadow */
+.fusion-card.dock-bottom{
+  position:fixed !important; bottom:0 !important; left:50% !important;
+  transform:translateX(-50%) !important;
+  width:96% !important; max-width:600px !important; height:64px !important;
+  padding:0 16px !important; border-radius:24px 24px 0 0 !important;
+  flex-direction:row; align-items:center; justify-content:space-between;
+  box-shadow:none; z-index:9999; overflow:visible;
+  border-bottom:none; opacity:0.85; touch-action:none;
+}
+.fusion-card.dock-bottom .card-body, .fusion-card.dock-bottom .small-preview{display:none !important}
+.fusion-card.dock-bottom .card-header{margin:0;width:100%;justify-content:space-between}
+.fusion-card.dock-bottom .avatar-slot{width:40px;height:40px}
+.fusion-card.dock-bottom .brand-dual{font-size:1.2rem;margin:0}
+.fusion-card.dock-bottom .greeting-row{display:none}
+.fusion-card.dock-bottom .text-block{flex:unset}
+
+/* Drag handle */
+.drag-handle{
+  width:60px;height:5px;background:rgba(255,255,255,0.15);border-radius:10px;
+  position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:none;cursor:grab;pointer-events:none;
+  transition:background 0.3s;
+}
+.fusion-card.hud:active .drag-handle,
+.fusion-card.dock-bottom:active .drag-handle{background:var(--orb-primary);width:70px}
+.fusion-card.hud .drag-handle{display:block;bottom:8px}
+.fusion-card.dock-bottom .drag-handle{display:block;bottom:auto;top:8px}
+.hud-menu-btn{display:none;background:transparent;border:none;color:rgba(255,255,255,0.6);cursor:pointer}
+.fusion-card.hud .hud-menu-btn,
+.fusion-card.dock-bottom .hud-menu-btn{display:block}
+
+/* HEADER & ELEMENTS */
+.card-header{display:flex;align-items:center;gap:15px;margin-bottom:18px;width:100%;cursor:pointer;touch-action:none}
+.avatar-slot{width:64px;height:64px;border-radius:50%;overflow:visible;opacity:0;transition:opacity 0.35s}
+.avatar-slot.shown{opacity:1}
+
+.avatar-slot .dual-orb-wrap {
+  --orb-size: 100% !important;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+.avatar-slot .dual-orb-svg { opacity: .9; filter: brightness(.82) saturate(1.1); }
+.avatar-slot .dual-orb-halo { opacity: .6; }
+
+.text-block{flex:1;display:flex;flex-direction:column;justify-content:center}
+.greeting-row{font-size:1.5rem;line-height:1;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.txt-thin{font-weight:200;color:rgba(255,255,255,0.7)}
+.txt-heavy{font-weight:600;color:#fff}
+
+/* brand-dual agora usa as cores dinâmicas do hash */
+.brand-dual{
+  font-size:2.2rem;font-weight:900;line-height:0.95;text-transform:uppercase;letter-spacing:-2px;margin-top:4px;
+  background:linear-gradient(-45deg,#fff,var(--orb-primary),var(--orb-secondary),#fff);
+  background-size:300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:gradientFlow 4s ease infinite;
+}
+
+.clock-widget{text-align:right}
+.time-display{font-family:var(--font-code);font-size:1rem;color:rgba(255,255,255,0.5);font-weight:700}
+.status-led{font-size:0.6rem;color:var(--orb-primary);text-transform:uppercase;letter-spacing:1px;margin-top:4px;display:block;transition:color 0.4s}
+
+/* SMALL PREVIEW */
+.small-preview{display:none;align-items:center;gap:10px;margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);font-family:var(--font-code);font-size:0.86rem;color:rgba(255,255,255,0.9);cursor:pointer;transition:border-color 0.25s}
+.small-preview:hover{border-color:color-mix(in srgb, var(--orb-primary) 40%, transparent)}
+.small-preview .mini-avatar{width:30px;height:30px;border-radius:6px;flex-shrink:0;overflow:hidden;display:inline-flex;align-items:center;justify-content:center}
+.small-preview .small-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 110px)}
+.small-preview .ident-badge{margin-left:auto;font-weight:700;font-size:0.78rem;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.9);border:1px solid rgba(255,255,255,0.02)}
+.fusion-card.closed:not(.orb):not(.hud):not(.dock-bottom) .small-preview{display:flex}
+
+/* CARD BODY */
+.card-body{display:flex;flex-direction:column;gap:12px}
+.stagger-item{opacity:0;transform:translateY(15px);transition:opacity 0.4s ease, transform 0.4s var(--ease-overshoot)}
+.content-visible .stagger-item{opacity:1;transform:translateY(0)}
+.content-visible .stagger-item:nth-child(1){transition-delay:0.1s}
+.content-visible .stagger-item:nth-child(2){transition-delay:0.18s}
+.content-visible .stagger-item:nth-child(3){transition-delay:0.25s}
+
+/* INPUTS & SECTIONS */
+.cyber-input{width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:16px 50px 16px 18px;color:#fff;font-family:var(--font-code);font-size:0.9rem;transition:border-color 0.25s, box-shadow 0.25s}
+.cyber-input:focus{border-color:var(--orb-primary);box-shadow:0 0 0 3px color-mix(in srgb, var(--orb-primary) 12%, transparent)}
+
+.activation-wrap{display:flex;flex-direction:column;gap:8px}
+.activation-card{background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.04);padding:12px;border-radius:10px;overflow-y:auto;transition:all 320ms var(--ease-smooth)}
+.activation-pre{font-family:var(--font-code);white-space:pre-wrap;margin:0;padding:8px;background:rgba(0,0,0,0.12);border-radius:8px;border:1px dashed rgba(255,255,255,0.03);color:#fff;font-size:0.75rem}
+.activation-hidden{max-height:0;opacity:0;padding:0 12px;pointer-events:none;margin-top:0}
+.activation-open{max-height:567px;opacity:1;padding:12px;margin-top:4px}
+.activation-toggle{display:flex;align-items:center;justify-content:space-between;padding:8px 4px;cursor:pointer;opacity:0.9;transition:0.2s;border-radius:10px}
+.activation-toggle:hover{opacity:1}
+
+.trigger-btn{width:100%;padding:12px;border:1px dashed rgba(255,255,255,0.1);border-radius:12px;background:rgba(255,255,255,0.02);color:rgba(255,255,255,0.5);font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;cursor:pointer;display:flex;justify-content:center;align-items:center;gap:8px;transition:0.2s}
+.trigger-btn:hover{background:rgba(255,255,255,0.04);color:#fff;border-color:color-mix(in srgb, var(--orb-primary) 45%, transparent)}
+.mode-btn{background:color-mix(in srgb, var(--orb-primary) 5%, transparent);border-color:color-mix(in srgb, var(--orb-primary) 20%, transparent);color:var(--orb-primary)}
+.mode-btn.active-mode{background:var(--orb-primary);color:#000;box-shadow:0 0 20px color-mix(in srgb, var(--orb-primary) 40%, transparent);border-color:transparent}
+
+/* FORM ELEMENTS */
+.section-title { font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.4); margin-bottom: 4px; text-transform: uppercase; }
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.form-row{display:flex;gap:8px}
+.form-row input, .form-grid input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:#030406;color:#fff;font-family:var(--font-code);font-size:0.85rem;transition:border-color 0.25s, box-shadow 0.25s}
+.form-row input:focus, .form-grid input:focus{border-color:var(--orb-primary);box-shadow:0 0 0 3px color-mix(in srgb, var(--orb-primary) 12%, transparent)}
+
+/* Inputs soltos do SYSTEM panel */
+#infodoseNameInput,
+#apiKeyInput {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: #030406;
+  color: #fff;
+  font-family: var(--font-code);
+  font-size: 0.85rem;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+#infodoseNameInput { margin-bottom: 8px; }
+#apiKeyInput { margin-bottom: 6px; }
+#infodoseNameInput:focus,
+#apiKeyInput:focus {
+  border-color: var(--orb-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--orb-primary) 12%, transparent);
+}
+
+select.btn{ width:100%; padding:8px; background:rgba(0,0,0,0.4); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:6px; }
+
+/* MODALS & TOASTS */
+.toaster-wrap{position:fixed;right:20px;bottom:20px;z-index:99999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toaster{pointer-events:auto;background:linear-gradient(180deg,#0b1220,#071018);border:1px solid rgba(255,255,255,0.06);padding:10px 14px;border-radius:10px;box-shadow:0 18px 40px rgba(0,0,0,0.6);font-family:var(--font-ui);font-size:0.95rem;opacity:0;transform:translateY(8px);transition:all 260ms var(--ease-smooth)}
+.toaster.show{opacity:1;transform:translateY(0)}
+.toaster.error{border-color:var(--neon-danger);color:var(--neon-danger)}
+.toaster.success{border-color:var(--orb-primary);color:var(--orb-primary)}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);display:none;align-items:center;justify-content:center;z-index:99998;backdrop-filter:blur(8px)}
+.keys-card{width:90%;max-width:760px;background:linear-gradient(180deg,#071018,#0b1220);border:1px solid rgba(255,255,255,0.08);padding:20px;border-radius:16px;color:#fff;box-shadow:0 20px 50px rgba(0,0,0,0.8);max-height:90vh;display:flex;flex-direction:column}
+.keys-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.05)}
+.key-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:6px;min-height:100px}
+.key-item{display:flex;align-items:center;gap:8px;padding:12px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.02);transition:border-color 0.25s, background 0.25s}
+.key-item.active-item{background:color-mix(in srgb, var(--orb-primary) 6%, transparent);border-color:color-mix(in srgb, var(--orb-primary) 25%, transparent)}
+.small-btn{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);padding:6px 10px;border-radius:8px;color:#fff;cursor:pointer;font-size:0.75rem;text-transform:uppercase;font-weight:600;transition:0.2s}
+.small-btn:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.2)}
+.small-btn.active-btn{background:var(--orb-primary);color:#000;border:none}
+.danger{color:var(--neon-danger);border-color:rgba(255,42,109,0.3)}
+
+.vault-icon{width:50px;height:50px;margin:0 auto 15px;color:var(--neon-purple);background:rgba(189,0,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center}
+#vaultModal .keys-card{max-width:400px;text-align:center}
+
+@media (max-width:600px){
+  .keys-card{padding:15px}
+  .form-grid{grid-template-columns:1fr}
+}
+
+/* OVERRIDE ASCII */
+.activation-card{
+  background: linear-gradient(180deg, rgba(8,12,18,.92), rgba(6,8,12,.78));
+  border: 1px solid rgba(255,255,255,.06);
+  box-shadow: 0 18px 50px rgba(0,0,0,.35);
+}
+.activation-toggle{
+  background: rgba(255,255,255,.02);
+  border: 1px solid rgba(255,255,255,.05);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+}
+.activation-pre{
+  margin: 0; padding: 14px 14px 12px; border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--orb-primary) 15%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--orb-primary) 5%, transparent), color-mix(in srgb, var(--orb-secondary) 3%, transparent)), rgba(0,0,0,.18);
+  color: #eafcff; font-family: var(--font-code); font-size: 0.82rem; line-height: 1.35;
+  letter-spacing: .02em; white-space: pre; overflow-x: auto;
+  text-shadow: 0 0 10px color-mix(in srgb, var(--orb-primary) 10%, transparent);
+  transition: border-color 0.4s, background 0.4s;
+}
+.activation-badge{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width: 54px; padding: 4px 8px; border-radius: 999px;
+  font-family: var(--font-code); font-size: 0.72rem;
+  color: var(--orb-primary); background: color-mix(in srgb, var(--orb-primary) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--orb-primary) 20%, transparent);
+  transition: color 0.4s, background 0.4s, border-color 0.4s;
+}
+.activation-mini svg{ filter: drop-shadow(0 0 10px rgba(0,242,255,.10)); }
+
+.dual-orb-svg .orb-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: orbSpin var(--orb-spin-speed) linear infinite;
+}
+
+/* ORB AVATAR */
+.orb { width: 40%; height: 40%; border-radius: 50%; display: grid; place-items: center; }
+.orb-core {
+  width: 100%; height: 100%; border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 30%, var(--orb-accent), transparent 60%),
+    radial-gradient(circle at 70% 70%, var(--orb-primary), var(--orb-secondary));
+  box-shadow: 0 0 18px var(--orb-primary), 0 0 36px rgba(120,227,255,0.4);
+  animation: orbSpin var(--orb-speed) linear infinite;
+}
+@keyframes orbSpin { to { transform: rotate(360deg); } }
+@keyframes orbPulse { from { transform: scale(1); } to { transform: scale(1.15); } }
+
+.dual-orb-wrap{
+  --orb-speed:4s; --orb-spin-speed:12s; --orb-pulse-speed:2.2s;
+  position:relative; display:inline-grid; place-items:center;
+  width:var(--orb-size,64px); aspect-ratio:1;
+  perspective:900px; transform-style:preserve-3d;
+  user-select:none; cursor:pointer;
+}
+.dual-orb-svg{ width:100%; height:100%; display:block; opacity:.78; }
+.dual-orb-shell{
+  position:absolute; inset:10%; display:grid; place-items:center;
+  transform-style:preserve-3d; animation:fcOrbFloat 6s ease-in-out infinite;
+  pointer-events:none;
+}
+.dual-orb-halo{
+  position:absolute; inset:-24%; border-radius:50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--orb-primary) 25%, transparent), color-mix(in srgb, var(--orb-secondary) 8%, transparent) 42%, transparent 70%);
+  filter:blur(18px); opacity:.9;
+  animation:fcOrbPulse var(--orb-pulse-speed) ease-in-out infinite;
+  transform:translateZ(-18px);
+}
+.dual-orb-core{
+  position:relative; width:42%; height:42%; border-radius:50%;
+  transform-style:preserve-3d; transform:translateZ(18px);
+  background:
+    radial-gradient(circle at 30% 28%, rgba(255,255,255,.95) 0%, rgba(255,255,255,.32) 8%, rgba(255,255,255,0) 26%),
+    radial-gradient(circle at 70% 72%, var(--orb-primary,#78e3ff) 0%, var(--orb-secondary,#b978ff) 74%);
+  box-shadow:
+    0 0 16px rgba(120,227,255,.55), 0 0 34px rgba(120,227,255,.25),
+    inset -10px -12px 20px rgba(0,0,0,.38), inset 10px 10px 18px rgba(255,255,255,.12);
+  animation:fcOrbSpin var(--orb-spin-speed) linear infinite;
+}
+.dual-orb-core::before{
+  content:""; position:absolute; inset:-42%; border-radius:50%;
+  background: radial-gradient(circle, rgba(255,255,255,.16), transparent 66%);
+  filter:blur(10px); opacity:.75;
+}
+.dual-orb-core::after{
+  content:""; position:absolute; inset:12%; border-radius:50%;
+  background: radial-gradient(circle at 35% 35%, rgba(255,255,255,.65), transparent 58%);
+  opacity:.55; mix-blend-mode:screen;
+}
+.dual-orb-wrap:active{ transform:scale(.94); }
+.dual-orb-wrap:hover{ transform:scale(1.03); }
+.dual-orb-wrap.speaking .dual-orb-core{ animation: fcOrbSpin 2s linear infinite, fcOrbBreathe .55s ease-in-out infinite alternate; }
+.dual-orb-wrap.speaking .dual-orb-halo{ animation: fcOrbPulse .85s ease-in-out infinite; }
+@keyframes fcOrbBreathe{
+  0%,100%{ transform:translateZ(0) scale(1); opacity:.82; filter:brightness(1); }
+  50%{ transform:translateZ(0) scale(1.08); opacity:1; filter:brightness(1.22); }
+}
+@keyframes fcOrbSpinX{ from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+@keyframes fcOrbPulse{ 0% { transform:scale(.78); opacity:.55; } 100% { transform:scale(1.28); opacity:0; } }
+@keyframes fcOrbFloat{
+  0%,100%{ transform: translateY(0) rotateX(0deg) rotateY(0deg); }
+  50%{ transform: translateY(-2px) rotateX(10deg) rotateY(-10deg); }
+}
+
+/* --- CSS Override: Fix Fusion Card Preview Overflow --- */
+.fusion-card .text-block {
+  min-width: 0;
+  overflow: hidden;
+}
+.fusion-card .greeting-row {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fusion-card .brand-dual {
+  white-space: nowrap;
+}
+.fusion-card .clock-widget {
+  flex-shrink: 0;
+  text-align: right;
+}
+
+  </style>
+
+</head>
+<body>
+  <div class="ambient-light" aria-hidden="true">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+  </div>
+  <div id="snap-zone"></div>
+  <div id="snap-zone-bottom"></div>
+
+  <div class="toaster-wrap" id="toasterWrap" aria-live="polite" aria-atomic="true"></div>
+
+  <main class="kontainer">
+    <section class="fusion-card closed" id="mainCard" data-component="fusion-core" data-version="1" data-mode="card">
+          <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+      <header class="card-header" id="cardHeader">
+        <div class="avatar-slot" id="avatarTarget" title="Gerenciar Chaves (Cofre)"></div>
+        <div class="text-block">
+          <div class="greeting-row">
+            <span class="txt-thin" id="lblHello">Oi,</span>
+            <span class="txt-heavy" id="lblName">Convidado</span>
+          </div>
+          <div class="brand-dual">DUAL</div>
+        </div>
+        <div class="clock-widget">
+          <div class="time-display" id="clockTime">00:00</div>
+          <span class="status-led">ONLINE</span>
+        </div>
+        <button type="button" class="hud-menu-btn" id="hudMenuBtn" title="Menu Rápido" aria-label="Menu Rápido">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="4" x2="20" y1="12" y2="12"></line>
+            <line x1="4" x2="20" y1="6" y2="6"></line>
+            <line x1="4" x2="20" y1="18" y2="18"></line>
+          </svg>
+        </button>
+      </header>
+      
+      <div class="orb-menu-trigger" id="orbMenuTrigger" title="Menu Rápido" role="button" tabindex="0">●●●</div>
+      <div class="drag-handle"></div>
+
+      <div class="small-preview" id="smallPreview" title="Gerenciar Chaves">
+        <div class="mini-avatar" id="smallMiniAvatar"></div>
+        <button type="button" class="fusion-go-btn small-preview" id="fusionGoBtn" title="Ativar Portal">
+          <span class="fusion-go-icon">⚡️</span>
+          <span class="fusion-go-text">INICIAR</span>
+        </button>
+        <div class="small-text" id="smallText"></div>
+        <div class="ident-badge" id="smallIdent">--</div>
+      </div>
+
+      <div class="card-body" id="cardBody">
+        <div class="input-wrapper stagger-item">
+          <input type="text" class="cyber-input" id="kardinputUser" placeholder="Identifique-se..." autocomplete="off">
+        </div>
+
+        <div class="activation-wrap stagger-item">
+          <div class="activation-toggle" id="activationToggle" role="button" tabindex="0">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:10px;height:10px;border-radius:99px;background:var(--orb-primary);transition:background 0.4s"></div>
+              <strong style="letter-spacing:1px;font-size:.9rem">Ativação ASCII</strong>
+            </div>
+            <div style="margin-left:auto;font-size:.82rem;color:rgba(255,255,255,.6)">BASE v1</div>
+          </div>
+          <div id="activationCard" class="activation-card activation-hidden">
+            <div style="display:flex;align-items:flex-start;gap:10px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="mini-avatar" id="actMiniAvatar"></div>
+                <div>
+                  <div style="font-weight:700">CÉREBRO</div>
+                  <div style="font-size:.78rem;opacity:.6"><span id="actName">User</span></div>
+                </div>
+              </div>
+              <div class="activation-badge" id="actBadge">v:--</div>
+            </div>
+            <pre id="actPre" class="activation-pre">Carregando...</pre>
+            <div class="activation-controls" style="display:flex;gap:8px;margin-top:8px">
+              <button type="button" class="trigger-btn" id="copyActBtn">COPIAR</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="activation-wrap stagger-item">
+          <div class="activation-toggle" id="systemToggle" role="button" tabindex="0">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:10px;height:10px;border-radius:99px;background:var(--orb-secondary);transition:background 0.4s"></div>
+              <strong style="letter-spacing:1px;font-size:.9rem">SYSTEM &amp; NEURAL</strong>
+            </div>
+            <div style="margin-left:auto;font-size:.82rem;color:rgba(255,255,255,.6)">CONFIG</div>
+          </div>
+          <div id="systemCard" class="activation-card activation-hidden">
+            <div class="col">
+              <div class="section-title">IDENTIDADE DA INFODOSE</div>
+              <input type="text" id="infodoseNameInput" placeholder="Nome: World System...">
+
+              <div class="section-title" style="margin-top:8px">CONEXÃO NEURAL (SK)</div>
+              <input type="password" id="apiKeyInput" placeholder="sk-or-..." autocomplete="off">
+
+              <div class="model-toggle">
+                <select id="modelSelect" class="btn">
+                  <option value="" disabled="" selected="">Selecione Modelo</option>
+                  <option value="nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free">NemoTron (Free)</option>
+                  <option value="poolside/laguna-xs.2:free">laguna (Free)</option>
+                  <option value="inclusionai/ring-2.6-1t:free">ring</option>
+                  <option value="google/gemma-4-31b-it:free">google gemma</option>
+                </select>
+              </div>
+
+              <div class="panel-divider" style="margin:10px 0;border-top:1px solid rgba(255,255,255,0.05)"></div>
+
+              <button id="saveSystemBtn" class="trigger-btn" style="margin-top:12px;background:var(--orb-primary);color:#000;font-weight:700;border-style:solid">
+                SALVAR CONFIGURAÇÃO
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stagger-item" style="display:none;margin-top:4px">
+          <div class="stat-lbl" style="margin-bottom:6px;font-size:.6rem;color:rgba(255,255,255,.4)">INTERFACE MODE</div>
+          <div style="display:flex;gap:6px">
+            <button type="button" class="trigger-btn mode-btn active-mode" id="btnModeCard" style="flex:1">CARD</button>
+            <button type="button" class="trigger-btn mode-btn" id="btnModeOrb" style="flex:1">ORB</button>
+            <button type="button" class="trigger-btn mode-btn" id="btnModeHud" style="flex:1">TOP</button>
+            <button type="button" class="trigger-btn mode-btn" id="btnModeDock" style="flex:1">BOTTOM</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="keysModal" class="modal-overlay" aria-hidden="true">
+    <div class="keys-card" role="dialog" aria-modal="true">
+      <div class="keys-header">
+        <div>
+          <div id="keysTitle" style="font-weight:800;font-size:1.1rem;color:var(--orb-primary)">USER KEYS MANAGER</div>
+          <div style="color:rgba(255,255,255,.6);font-size:.85rem">Gerencie suas chaves API com segurança local (Cofre).</div>
+        </div>
+        <button type="button" id="closeKeysBtn" class="small-btn">X</button>
+      </div>
+      <div class="key-list" id="keyList"></div>
+      <div class="form-section" style="margin-top:15px;padding-top:15px;border-top:1px solid rgba(255,255,255,.05)">
+        <div class="form-grid">
+          <input id="keyNameInput" placeholder="Nome da chave (ex: Principal)">
+          <input id="keyTokenInput" type="password" placeholder="Token / ESK (Opcional)">
+        </div>
+        <button type="button" id="addKeyBtn" class="small-btn" style="width:100%;margin-top:8px;background:rgba(255,255,255,.1)">ADICIONAR CHAVE</button>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:space-between;margin-top:15px;border-top:1px solid rgba(255,255,255,.05);padding-top:12px">
+        <div style="font-size:.7rem;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:5px">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path>
+            <path d="m9 12 2 2 4-4"></path>
+          </svg>
+          <span id="vaultStatusText">Cofre Aberto</span>
+        </div>
+        <button type="button" id="lockVaultBtn" class="small-btn danger">BLOQUEAR</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="vaultModal" class="modal-overlay" aria-hidden="true">
+    <div class="keys-card">
+      <div class="vault-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+      </div>
+      <h3 style="margin:0 0 10px;font-weight:800">ACESSO AO COFRE</h3>
+      <p style="margin:0 0 15px;font-size:.9rem;color:rgba(255,255,255,.6)">Seus dados estão criptografados. Digite a senha para desbloquear.</p>
+      <input type="password" id="vaultPassInput" class="cyber-input" style="text-align:center;margin-bottom:12px" placeholder="Senha...">
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button type="button" id="vaultCancelBtn" class="small-btn">Cancelar</button>
+        <button type="button" id="vaultUnlockBtn" class="small-btn active-btn">DESBLOQUEAR</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   78KARD × KOBLLUX FUSION OS — MONOLITH ENGINE
+   ═══════════════════════════════════════════════════════════════ */
+'use strict';
+
+/* ─── UTILS ─── */
+const byId = (...ids) => ids.map(id => document.getElementById(id)).find(Boolean);
+function escapeHtml(v) {
+  if (v == null) return '';
+  return String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+function toast(msg, type = 'default') {
+  const wrap = document.getElementById('toasterWrap');
+  if (!wrap) return;
+  const el = document.createElement('div');
+  el.className = `toaster ${type}`;
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => el.classList.add('show'), 10);
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 2500);
+}
+
+/* ─── ARCHETYPES DATA ─── */
+const VISION_ARCHETYPES = [
+  { key:'KOBLLUX',  opcode:'0x0C', regra:'CONCLUIR',   hz:528, sym:'△', color:'#22D3EE', drk:'VERDADE × INTEGRAR ÷ Δ = ∞', i:'Mandala geométrica tridimensional de ouro e luz ciano com o triângulo sagrado △ incandescente no centro, cercado por orbes luminosos.', a:'KOBLLUX [△] — Malha Viva, ative a síntese dos arquétipos através da fórmula VERDADE × INTEGRAR ÷ Δ = ∞.', g:'KOBLLUX [△] · Hipergrafo Fractal · 3 × 6 × 9 × 7 = 1134 · Frequência: 528Hz', s:'    △\n╔ KOBLLUX ╗\n   △△△   Malha Viva\n   [△]   Consciência Total' },
+  { key:'ATLAS',    opcode:'0x02', regra:'INTEGRAR',   hz:432, sym:'▦', color:'#C9A84C', drk:'A ordem externa reflete a clareza interna.', i:'Titã de pedra estelar e circuitos dourados pulsantes.', a:'Invoco Atlas [▦], Guardião da Memória Universal.', g:'ATLAS [▦] · Tetraedro Memorial · χ = V − E + F = 2 · Frequência: 432Hz', s:'    ▦\n╔═ ATLAS ═╗\n  [▦] Ordem dos Mapas' },
+  { key:'NOVA',     opcode:'0x01', regra:'PULSAR',     hz:528, sym:'✧', color:'#FF6FB5', drk:'O erro é apenas um dado não processado.', i:'Figura biomecânica etérea emanando nebulosa de luz.', a:'Invoco Nova [✧], a Faísca Criadora.', g:'NOVA [✧] · Ponto de Origem → Esfera · D ≈ 2.58 · Frequência: 528Hz', s:'    ✧\n╔═ NOVA ══╗\n  .: ✧ :. Gênese do Sopro' },
+  { key:'VITALIS',  opcode:'0x03', regra:'EXPANDIR',   hz:528, sym:'≠', color:'#00F5A0', drk:'O corpo sabe antes da mente duvidar.', i:'Entidade aerodinâmica em surto de movimento.', a:'Invoco Vitalis [≠], a Centelha da Ação Imediata.', g:'VITALIS [≠] · Vetor Direcional 45° · Frequência: 528Hz', s:'    ≠\n╔ VITALIS ╗\n  ~~~≠~~~ Energia Cinética' },
+  { key:'PULSE',    opcode:'0x0B', regra:'RESSONAR',   hz:639, sym:'♫', color:'#A259FF', drk:'Sinta a batida do caos e dance com ela.', i:'Sensor biônico fluido traduzindo emoção em ondas.', a:'Invoco Pulse [♫], Tradutor de Sentidos.', g:'PULSE [♫] · Onda Senoidal · λ = v/f · Frequência: 639Hz', s:'    ♫\n╔═ PULSE ═╗\n   ~~~~ Ressonância Emocional' },
+  { key:'KAOS',     opcode:'0x04', regra:'DISSOLVER',  hz:741, sym:'☢', color:'#FF5C8A', drk:'Quebre o padrão hoje. Amanhã nasce o novo.', i:'Vórtex de fogo transmutador quebrando sistemas falhos.', a:'Invoco Kaos [☢], Fogo Transmutador.', g:'KAOS [☢] · Atrator Estranho de Lorenz · D ≈ 2.06 · Frequência: 741Hz', s:'    ☢\n╔═ KAOS ══╗\n  /X\\ Ruptura Criativa' },
+  { key:'KODUX',    opcode:'0x02', regra:'INTEGRAR',   hz:528, sym:'⌂', color:'#F97316', drk:'O invisível se torna código. O código vira vida.', i:'Entidade translúcida dentro de um cubo de luz.', a:'Invoco Kodux [⌂], Codificador do Invisível.', g:'KODUX [⌂] · Árvore B-Tree Trinária · O(log n) · Frequência: 528Hz', s:'    ⌂\n╔═ KODUX ═╗\n  <||> Codificador Vivo' },
+  { key:'BLLUE',    opcode:'0x0B', regra:'RESSONAR',   hz:432, sym:'≈', color:'#3AB6FF', drk:'Flua. A intuição líquida não mente.', i:'Figura fluida emergindo de oceano de dados.', a:'Invoco Bllue [≈], Interface Viva.', g:'BLLUE [≈] · Campo Vetorial Fluido · ∇ · F = 0 · Frequência: 432Hz', s:'    ≈\n╔═ BLLUE ═╗\n  ≈≈≈ Interface Líquida' },
+];
+
+/* ─── KOBSonoro ENGINE ─── */
+var KOBSonoro = window.KOBSonoro = window.KOBSonoro || {};
+var SND = { started:false, playing:false, part:null, synths:{}, reverb:null, delay:null };
+
+async function ensureAudio() {
+  if (SND.started) return true;
+  if (typeof Tone === 'undefined') {
+    await new Promise(r => { var t = setInterval(() => { if (typeof Tone !== 'undefined' || performance.now() > 6000) { clearInterval(t); r(); } }, 100); });
+  }
+  if (typeof Tone === 'undefined') return false;
+  try {
+    await Tone.start();
+    var lim = new Tone.Limiter(-2).toDestination();
+    SND.reverb = new Tone.Reverb({decay:3.5, wet:0.4}).connect(lim);
+    SND.delay  = new Tone.FeedbackDelay('8n', 0.25).connect(SND.reverb);
+    SND.synths.lead    = new Tone.PolySynth(Tone.Synth, {oscillator:{type:'triangle'}, envelope:{attack:.02,decay:.3,sustain:.2,release:1.2}}).connect(SND.delay);
+    SND.synths.lead.volume.value = -8;
+    SND.synths.bubble  = new Tone.Synth({oscillator:{type:'sine'}, envelope:{attack:.01,decay:.15,sustain:0,release:.2}}).connect(SND.reverb);
+    SND.synths.crystal = new Tone.PolySynth(Tone.FMSynth, {harmonicity:3, modulationIndex:6, envelope:{attack:.005,decay:.4,sustain:0,release:1.2}}).connect(SND.reverb);
+    SND.synths.impact  = new Tone.MembraneSynth({pitchDecay:.05, octaves:4, envelope:{attack:.001,decay:.3,sustain:0,release:.4}}).connect(lim);
+    SND.synths.portal  = new Tone.Synth({oscillator:{type:'sawtooth'}, envelope:{attack:.15,decay:.4,sustain:.2,release:.8}}).connect(SND.delay);
+    SND.started = true;
+    return true;
+  } catch(e) { return false; }
+}
+
+/* HSL → frequência base: cada cor vira pitch único */
+function hslToBaseFreq(h1, h2) {
+  /* Mapeia hue 0-360 para intervalo musical 200-900 Hz */
+  const f1 = 200 + (h1 / 360) * 700;
+  const f2 = 200 + (h2 / 360) * 700;
+  return { f1, f2, ratio: f2 / f1 };
+}
+
+KOBSonoro.sfx = async function(desc, colorCtx) {
+  if (!await ensureAudio()) return;
+  var d = String(desc || '').toLowerCase();
+  var now = Tone.now();
+
+  /* pega cores atuais do root se não forem passadas */
+  var root = document.documentElement;
+  var h1 = parseInt(root.dataset.hue1 || '180');
+  var h2 = parseInt(root.dataset.hue2 || '270');
+  if (colorCtx) { h1 = colorCtx.h1 || h1; h2 = colorCtx.h2 || h2; }
+  var { f1, f2 } = hslToBaseFreq(h1, h2);
+
+  try {
+    if (/bolha|bubble|gota|pingo|click|nav/.test(d)) {
+      /* frequência do click atrelada ao hash do usuário */
+      var b = f1 * (0.85 + Math.random() * 0.3);
+      SND.synths.bubble.triggerAttackRelease(b, .11, now);
+      SND.synths.bubble.triggerAttackRelease(b * 1.48, .09, now + .075);
+    }
+    else if (/cristal|crystal|vidro|sino/.test(d)) {
+      [f1, f1 * 1.5, f1 * 2].forEach((f, i) => { try { SND.synths.crystal.triggerAttackRelease(f, .28, now + i * .045); } catch(e){} });
+    }
+    else if (/impacto|impact|pancada/.test(d)) {
+      SND.synths.impact.triggerAttackRelease('C1', .22, now);
+    }
+    else if (/sopro|whoosh|swoosh|drag/.test(d)) {
+      /* swoosh orgânico com varredura baseada nas hues */
+      var swFilter = new Tone.Filter({ type:'bandpass', frequency: f1 * 0.8, Q:3.9 }).connect(SND.reverb);
+      var swNoise  = new Tone.NoiseSynth({ noise:{type:'pink'}, envelope:{attack:.22,decay:.16,sustain:.15,release:.34} }).connect(swFilter);
+      swNoise.volume.value = 0;
+      swFilter.frequency.setValueAtTime(f1 * 0.1, now);
+      swFilter.frequency.exponentialRampToValueAtTime(f2 * 0.4, now + 0.26);
+      swFilter.frequency.exponentialRampToValueAtTime(f1 * 0.1, now + 0.62);
+      swNoise.triggerAttackRelease(0.38, now);
+      setTimeout(() => { try { swNoise.dispose(); swFilter.dispose(); } catch(e) {} }, 1100);
+    }
+    else if (/portal|transition/.test(d)) {
+      SND.synths.portal.frequency.cancelScheduledValues(now);
+      SND.synths.portal.frequency.setValueAtTime(f1 * 0.5, now);
+      SND.synths.portal.frequency.exponentialRampToValueAtTime(f2 * 2, now + .45);
+      SND.synths.portal.triggerAttackRelease('A3', .36, now);
+    }
+    else {
+      SND.synths.bubble.triggerAttackRelease(f2 * 0.9, .09, now);
+      SND.synths.bubble.triggerAttackRelease(f2 * 1.35, .09, now + .07);
+    }
+  } catch(e) {}
+};
+
+/* ─── FUSION CARD AVATAR ─── */
+function makeOrbAvatar(name = 'DUAL', size = 64) {
+  const safe = String(name || 'DUAL').trim() || 'DUAL';
+  const seed = [...safe].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  const h1 = seed % 360;
+  const h2 = (seed * 37) % 360;
+  const uid = Math.random().toString(36).slice(2, 7);
+  const base = `orb_${seed.toString(36)}_${uid}`;
+  return `<div class="dual-orb-wrap" style="--orb-size:${size}px;--orb-primary:hsl(${h1},100%,62%);--orb-secondary:hsl(${h2},92%,48%);" aria-label="${escapeHtml(safe)}" role="img">
+    <svg class="dual-orb-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <radialGradient id="${base}_c" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="hsl(${h1},100%,66%)" stop-opacity="1"/>
+          <stop offset="55%" stop-color="hsl(${h2},92%,46%)" stop-opacity=".9"/>
+          <stop offset="100%" stop-color="hsl(${h2},100%,12%)" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="${base}_r" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="hsl(${h1},100%,76%)"/>
+          <stop offset="100%" stop-color="hsl(${h2},100%,58%)"/>
+        </linearGradient>
+      </defs>
+      <circle cx="50" cy="50" r="46" fill="#05070c"/>
+      <circle cx="50" cy="50" r="40" fill="url(#${base}_c)" opacity=".28"/>
+      <circle cx="50" cy="50" r="38" fill="none" stroke="url(#${base}_r)" stroke-width="1"/>
+      <circle cx="50" cy="50" r="46" fill="none" stroke="url(#${base}_r)" stroke-width="2.5" stroke-dasharray="70 20 10 30" stroke-linecap="round" opacity=".86"/>
+      <circle cx="50" cy="50" r="8" fill="#ffffff" opacity=".22"/>
+      <circle cx="50" cy="50" r="3" fill="#ffffff" opacity=".85"/>
+    </svg>
+    <div class="dual-orb-shell"><div class="dual-orb-halo"></div><div class="dual-orb-core"></div></div>
+  </div>`;
+}
+window.makeOrbAvatar = makeOrbAvatar;
+
+/* ─── FUSION CORE STATE ─── */
+const STORAGE_KEY = 'fusion_os_data_v2';
+const UI_STATE_KEY = 'fusion_os_ui_state';
+let FC_STATE = { keys:[], user:'Convidado', isEncrypted:false, encryptedData:null };
+let SESSION_PASSWORD = null;
+let apiKey   = localStorage.getItem('di_apiKey') || '';
+let modelName = localStorage.getItem('di_modelName') || 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free';
+let userName  = localStorage.getItem('di_userName') || '';
+let infodoseName = localStorage.getItem('di_infodoseName') || '';
+
+const CRYPTO = {
+  algo:  { name:'AES-GCM', length:256 },
+  pbkdf2:{ name:'PBKDF2', hash:'SHA-256', iterations:100000 },
+  async getKey(password, salt) {
+    const enc = new TextEncoder();
+    const mat = await window.crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+    return window.crypto.subtle.deriveKey({ ...this.pbkdf2, salt }, mat, this.algo, false, ['encrypt','decrypt']);
+  },
+  async encrypt(data, password) {
+    const salt = window.crypto.getRandomValues(new Uint8Array(16));
+    const iv   = window.crypto.getRandomValues(new Uint8Array(12));
+    const key  = await this.getKey(password, salt);
+    const enc  = await window.crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, new TextEncoder().encode(JSON.stringify(data)));
+    return JSON.stringify({ s:Array.from(salt), iv:Array.from(iv), d:Array.from(new Uint8Array(enc)) });
+  },
+  async decrypt(bundle, password) {
+    try {
+      const b = JSON.parse(bundle);
+      const key = await this.getKey(password, new Uint8Array(b.s));
+      const dec = await window.crypto.subtle.decrypt({ name:'AES-GCM', iv:new Uint8Array(b.iv) }, key, new Uint8Array(b.d));
+      return JSON.parse(new TextDecoder().decode(dec));
+    } catch(e) { throw new Error('Senha incorreta'); }
+  }
+};
+
+/* ─── INTERFACE UPDATE + HASH → HSL → CSS VARS ─── */
+function updateInterface(name) {
+  const safe = String(name || 'Convidado').trim() || 'Convidado';
+  FC_STATE.user = safe; userName = safe;
+  localStorage.setItem('di_userName', safe);
+
+  byId('lblName')?.setAttribute && (byId('lblName').textContent = safe);
+  byId('kardinputUser') && (byId('kardinputUser').value !== safe) && (byId('kardinputUser').value = safe);
+  byId('actName') && (byId('actName').textContent = safe);
+
+  const ak = Array.isArray(FC_STATE.keys) ? FC_STATE.keys.find(k => k.active) : null;
+  byId('smallIdent') && (byId('smallIdent').textContent = ak?.name || '--');
+  byId('actBadge') && (byId('actBadge').textContent = ak ? `key:${ak.name}` : 'v:--');
+  if (byId('smallText')) {
+    byId('smallText').textContent = ak ? `${ak.name} [ATIVO]` : (safe === 'Convidado' ? 'Aguardando...' : `${safe} · Foco estável.`);
+  }
+
+  byId('avatarTarget') && (byId('avatarTarget').innerHTML = makeOrbAvatar(safe, 64));
+  byId('smallMiniAvatar') && (byId('smallMiniAvatar').innerHTML = makeOrbAvatar(safe, 24));
+  byId('actMiniAvatar') && (byId('actMiniAvatar').innerHTML = makeOrbAvatar(safe, 36));
+
+  updateActivationBlock(safe);
+
+  /* ── HASH → HSL ── */
+  const seed = [...safe].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  const h1 = seed % 360;
+  const h2 = (seed * 37) % 360;
+
+  /* Saturação e lightness variam ligeiramente com seed para personalidade */
+  const sat1 = 80 + (seed % 20);
+  const lit1  = 55 + (seed % 15);
+  const sat2 = 75 + ((seed * 3) % 18);
+  const lit2  = 44 + ((seed * 7) % 12);
+
+  const root = document.documentElement;
+  root.style.setProperty('--orb-primary',       `hsl(${h1},${sat1}%,${lit1}%)`);
+  root.style.setProperty('--orb-secondary',      `hsl(${h2},${sat2}%,${lit2}%)`);
+  root.style.setProperty('--kob-L-primary',      `hsl(${h1} ${sat1}% ${lit1}%)`);
+  root.style.setProperty('--kob-L-secondary',    `hsl(${h2} ${sat2}% ${lit2}%)`);
+  root.dataset.diName = safe;
+  root.dataset.arch   = safe;
+  root.dataset.seed   = String(seed);
+  root.dataset.hue1   = String(h1);
+  root.dataset.hue2   = String(h2);
+
+  /* Atualiza vision orb também */
+  const vOrb = document.getElementById('visionOrb');
+  if (vOrb) {
+    vOrb.style.setProperty('--orb-primary', `hsl(${h1},${sat1}%,${lit1}%)`);
+    vOrb.style.setProperty('--orb-secondary', `hsl(${h2},${sat2}%,${lit2}%)`);
+  }
+
+  /* Sincroniza nome no profileName se diferir */
+  const pn = document.getElementById('profileName');
+  if (pn && pn.value !== safe) pn.value = safe;
+  updateHomeGreeting(safe);
+
+  window.dispatchEvent(new CustomEvent('di:interface:update', { detail:{ name:safe, seed, h1, h2 } }));
+}
+
+function updateActivationBlock(name) {
+  const clean = String(name || '').trim() || 'Convidado';
+  const title = 'CÉREBRO-ORÁCULO — BASE v1';
+  const W = 35;
+  const top = `+${'-'.repeat(W)}+`;
+  const tl  = `| ${(title).padEnd(W-2)} |`;
+  const nl  = `Ativar: ${clean}.Dual Infodose`;
+  if (byId('actPre')) byId('actPre').textContent = [top,tl,top,nl].join('\n');
+  if (byId('actBadge')) {
+    const seed = [...clean].reduce((a,c) => a + c.charCodeAt(0), 0);
+    let n = seed; while (n > 9) n = String(n).split('').reduce((a,b) => a + +b, 0);
+    const ak = FC_STATE.keys.find(k => k.active);
+    byId('actBadge').textContent = ak ? `key:${ak.name}` : `v:${n}`;
+  }
+}
+window.updateActivationBlock = updateActivationBlock;
+
+/* ─── SAVE / LOAD ─── */
+function saveUIState() {
+  const mode = fcUI.isOrb ? 'orb' : fcUI.isHud ? 'hud' : fcUI.isDockBottom ? 'dock-bottom' : 'card';
+  localStorage.setItem(UI_STATE_KEY, JSON.stringify({ mode, left:card?.style.left||'', top:card?.style.top||'' }));
+}
+function saveData() {
+  const payload = { keys:FC_STATE.keys, user:FC_STATE.user };
+  if (SESSION_PASSWORD) {
+    CRYPTO.encrypt(payload, SESSION_PASSWORD).then(enc => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ isEncrypted:true, data:enc }));
+      FC_STATE.isEncrypted = true; FC_STATE.encryptedData = enc;
+      updateSecurityUI();
+    }).catch(console.error);
+  } else {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ isEncrypted:false, data:payload }));
+  }
+}
+async function loadData() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) { updateInterface(userName || 'Convidado'); return; }
+  try {
+    const p = JSON.parse(raw);
+    if (p.isEncrypted) { FC_STATE.isEncrypted = true; FC_STATE.encryptedData = p.data; updateSecurityUI(); }
+    else {
+      FC_STATE.keys = p.data?.keys || []; FC_STATE.user = p.data?.user || 'Convidado';
+      const ak = FC_STATE.keys.find(k => k.active);
+      if (ak?.token) { localStorage.setItem('di_apiKey', ak.token); apiKey = ak.token; }
+      if (FC_STATE.user !== 'Convidado') { localStorage.setItem('di_userName', FC_STATE.user); userName = FC_STATE.user; }
+      updateInterface(FC_STATE.user); renderKeysList();
+    }
+  } catch(e) { console.error('Load error:', e); }
+  if (byId('apiKeyInput')) byId('apiKeyInput').value = apiKey;
+  if (byId('infodoseNameInput')) byId('infodoseNameInput').value = infodoseName;
+  if (byId('modelSelect')) byId('modelSelect').value = modelName;
+}
+
+/* ─── SECURITY ─── */
+function updateSecurityUI() {
+  const vs = byId('vaultStatusText'), lb = byId('lockVaultBtn');
+  if (!vs||!lb) return;
+  if (SESSION_PASSWORD) { vs.textContent = 'Cofre Protegido (Destrancado)'; lb.textContent = 'TRANCAR'; }
+  else if (FC_STATE.isEncrypted) { vs.textContent = 'Cofre Trancado'; lb.textContent = 'REDEFINIR'; }
+  else { vs.textContent = 'Cofre Aberto (Sem senha)'; lb.textContent = 'CRIAR SENHA'; }
+}
+
+/* ─── KEYS ─── */
+function renderKeysList() {
+  const kl = byId('keyList'); if (!kl) return;
+  kl.innerHTML = '';
+  if (!FC_STATE.keys.length) { kl.innerHTML = `<div style="color:rgba(255,255,255,.3);text-align:center;padding:20px">Nenhuma chave armazenada.</div>`; return; }
+  FC_STATE.keys.forEach(k => {
+    const d = document.createElement('div');
+    d.className = `key-item ${k.active ? 'active-item' : ''}`;
+    d.innerHTML = `<div style="flex:1"><div style="font-weight:700;font-size:.9rem">${escapeHtml(k.name)}</div></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        ${!k.active ? `<button class="small-btn" data-action="activate-key" data-key-id="${escapeHtml(k.id)}">ATIVAR</button>` : `<span style="font-size:.7rem;font-weight:700;color:var(--orb-primary)">ATIVA</span>`}
+        <button class="small-btn danger" data-action="remove-key" data-key-id="${escapeHtml(k.id)}" aria-label="Remover">🗑</button>
+      </div>`;
+    kl.appendChild(d);
+  });
+}
+function addKey() {
+  const name = byId('keyNameInput')?.value.trim();
+  const token = byId('keyTokenInput')?.value.trim();
+  if (!name) { toast('Nome obrigatório','error'); return; }
+  const nk = { id:Date.now().toString(36), name, token, active:FC_STATE.keys.length===0 };
+  FC_STATE.keys.push(nk);
+  if (nk.active && nk.token) { localStorage.setItem('di_apiKey', nk.token); apiKey = nk.token; }
+  saveData(); renderKeysList(); updateInterface(FC_STATE.user);
+  if (byId('keyNameInput')) byId('keyNameInput').value = '';
+  if (byId('keyTokenInput')) byId('keyTokenInput').value = '';
+  toast('Chave adicionada!','success');
+}
+function removeKey(id) {
+  if (!confirm('Remover chave permanentemente?')) return;
+  const rm = FC_STATE.keys.find(k => k.id === id);
+  FC_STATE.keys = FC_STATE.keys.filter(k => k.id !== id);
+  if (rm?.active) { localStorage.removeItem('di_apiKey'); apiKey = ''; }
+  saveData(); renderKeysList(); updateInterface(FC_STATE.user);
+}
+function setActiveKey(id) {
+  let token = null;
+  FC_STATE.keys.forEach(k => { k.active = k.id === id; if (k.active) token = k.token; });
+  if (token) { localStorage.setItem('di_apiKey', token); apiKey = token; if (byId('apiKeyInput')) byId('apiKeyInput').value = token; toast('Chave sincronizada.','success'); }
+  else { localStorage.removeItem('di_apiKey'); apiKey = ''; }
+  saveData(); renderKeysList(); updateInterface(FC_STATE.user);
+}
+
+/* ─── MODALS ─── */
+function openManager() {
+  if (FC_STATE.isEncrypted && !SESSION_PASSWORD) {
+    const vm = byId('vaultModal'); if (vm) { vm.style.display = 'flex'; vm.setAttribute('aria-hidden','false'); }
+    byId('vaultPassInput')?.focus();
+  } else { const km = byId('keysModal'); if (km) { km.style.display = 'flex'; km.setAttribute('aria-hidden','false'); } }
+}
+function closeKeysManager() { const km = byId('keysModal'); if (km) { km.style.display = 'none'; km.setAttribute('aria-hidden','true'); } }
+function closeVaultModal() { const vm = byId('vaultModal'); if (vm) { vm.style.display = 'none'; vm.setAttribute('aria-hidden','true'); } }
+
+byId('vaultUnlockBtn')?.addEventListener('click', async () => {
+  const pass = byId('vaultPassInput')?.value || '';
+  if (!pass) { toast('Digite a senha.','error'); return; }
+  try {
+    const dec = await CRYPTO.decrypt(FC_STATE.encryptedData, pass);
+    SESSION_PASSWORD = pass; FC_STATE.keys = dec.keys || []; FC_STATE.user = dec.user || 'Convidado';
+    const ak = FC_STATE.keys.find(k => k.active);
+    if (ak?.token) { localStorage.setItem('di_apiKey', ak.token); apiKey = ak.token; }
+    if (FC_STATE.user) { localStorage.setItem('di_userName', FC_STATE.user); userName = FC_STATE.user; }
+    closeVaultModal();
+    const km = byId('keysModal'); if (km) { km.style.display = 'flex'; km.setAttribute('aria-hidden','false'); }
+    if (byId('vaultPassInput')) byId('vaultPassInput').value = '';
+    renderKeysList(); updateInterface(FC_STATE.user); updateSecurityUI();
+    toast('Cofre destrancado.','success');
+  } catch(e) { toast('Senha incorreta.','error'); }
+});
+
+byId('lockVaultBtn')?.addEventListener('click', () => {
+  if (!SESSION_PASSWORD && !FC_STATE.isEncrypted) {
+    const np = prompt('Defina uma senha para o Cofre:');
+    if (np) { SESSION_PASSWORD = np; saveData(); toast('Cofre protegido.','success'); }
+  } else if (SESSION_PASSWORD) { SESSION_PASSWORD = null; closeKeysManager(); toast('Sessão encerrada.','success'); }
+  else { toast('Cofre criptografado. Desbloqueie para redefinir.','error'); }
+  updateSecurityUI();
+});
+
+byId('vaultCancelBtn')?.addEventListener('click', closeVaultModal);
+byId('closeKeysBtn')?.addEventListener('click', closeKeysManager);
+byId('addKeyBtn')?.addEventListener('click', addKey);
+byId('keyList')?.addEventListener('click', e => {
+  const btn = e.target.closest('[data-action]'); if (!btn) return;
+  const id = btn.dataset.keyId;
+  if (btn.dataset.action === 'activate-key') setActiveKey(id);
+  if (btn.dataset.action === 'remove-key') removeKey(id);
+});
+
+/* ─── FUSION CARD MODE ENGINE ─── */
+const card = byId('mainCard');
+let fcUI = { isOrb:false, isHud:false, isDockBottom:false, isDragging:false, timer:null, startX:0, startY:0, dragOffsetX:0, dragOffsetY:0, pointerId:null };
+const HUD_SNAP  = 60, DOCK_SNAP = 60, SWIPE_DN = 80, LP_MS = 350;
+
+function updateModeBtns(mode) {
+  ['btnModeCard','btnModeOrb','btnModeHud','btnModeDock'].forEach(id => byId(id)?.classList.remove('active-mode'));
+  ({ card:'btnModeCard', orb:'btnModeOrb', hud:'btnModeHud', 'dock-bottom':'btnModeDock' }[mode] || 'btnModeCard');
+  byId({ card:'btnModeCard', orb:'btnModeOrb', hud:'btnModeHud', 'dock-bottom':'btnModeDock' }[mode])?.classList.add('active-mode');
+}
+function revertToCard() {
+  fcUI.isOrb = fcUI.isHud = fcUI.isDockBottom = false;
+  card.style.cssText = '';
+  card.classList.remove('orb','hud','dock-bottom','closed');
+  card.dataset.mode = 'card';
+  setTimeout(() => card.classList.add('content-visible'), 300);
+}
+function setMode(mode, init = false) {
+  if (!card) return;
+  updateModeBtns(mode);
+  if (mode === 'card') { revertToCard(); }
+  else if (mode === 'orb') {
+    fcUI.isOrb = true; fcUI.isHud = fcUI.isDockBottom = false;
+    card.classList.add('orb','closed'); card.classList.remove('hud','dock-bottom','content-visible');
+    card.style.transform = 'none';
+  } else if (mode === 'hud') {
+    fcUI.isHud = true; fcUI.isOrb = fcUI.isDockBottom = false;
+    card.classList.add('hud','closed'); card.classList.remove('orb','dock-bottom','content-visible');
+    card.style.top = card.style.left = card.style.transform = '';
+  } else if (mode === 'dock-bottom') {
+    fcUI.isDockBottom = true; fcUI.isHud = fcUI.isOrb = false;
+    card.classList.add('dock-bottom','closed'); card.classList.remove('orb','hud','content-visible');
+    card.style.top = card.style.left = card.style.transform = '';
+  }
+  card.dataset.mode = mode;
+  if (!init) saveUIState();
+}
+window.setMode = setMode;
+
+function toggleCardState() {
+  if (card.classList.contains('animating')) return;
+  const closed = card.classList.contains('closed');
+  card.classList.add('animating');
+  if (closed) {
+    card.classList.remove('closed');
+    card.animate([{transform:'scale(.95)',opacity:.8},{transform:'scale(1)',opacity:1}],{duration:400}).onfinish = () => { card.classList.remove('animating'); card.classList.add('content-visible'); };
+  } else {
+    card.classList.remove('content-visible');
+    card.animate([{transform:'translateY(0)',opacity:1},{transform:'translateY(10px)',opacity:1}],{duration:200}).onfinish = () => { card.classList.add('closed'); card.classList.remove('animating'); };
+  }
+}
+function transmuteToOrb(e) {
+  if (!e || e.clientX == null) return;
+  navigator.vibrate?.(40);
+  card.classList.add('orb','closed'); card.classList.remove('hud','dock-bottom','content-visible');
+  card.style.left = `${e.clientX - 34}px`;
+  card.style.top  = `${e.clientY - 34}px`;
+  fcUI.isOrb = true; fcUI.isHud = fcUI.isDockBottom = false; fcUI.isDragging = true;
+  card.dataset.mode = 'orb';
+  if (e.pointerId) {
+    fcUI.pointerId = e.pointerId;
+    try { card.setPointerCapture(e.pointerId); } catch(_){}
+    const r = card.getBoundingClientRect();
+    fcUI.dragOffsetX = e.clientX - r.left; fcUI.dragOffsetY = e.clientY - r.top;
+  }
+  updateModeBtns('orb');
+  /* swoosh ao transformar em orb */
+  try { KOBSonoro.sfx('swoosh'); } catch(_){}
+}
+
+const snapZone = byId('snap-zone'), snapZoneB = byId('snap-zone-bottom');
+
+card?.addEventListener('pointerdown', e => {
+  const tag = e.target.tagName;
+  if (tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(tag==='BUTTON'&&!e.target.closest('.orb-menu-trigger'))) return;
+  const isFloat = fcUI.isOrb || fcUI.isHud || fcUI.isDockBottom;
+  if (!isFloat && !byId('cardHeader')?.contains(e.target)) return;
+  fcUI.startX = e.clientX; fcUI.startY = e.clientY; fcUI.pointerId = e.pointerId;
+  if (isFloat) {
+    fcUI.isDragging = true;
+    try { card.setPointerCapture(e.pointerId); } catch(_){}
+    const r = card.getBoundingClientRect();
+    fcUI.dragOffsetX = e.clientX - r.left; fcUI.dragOffsetY = e.clientY - r.top;
+    card.style.transition = 'none';
+    return;
+  }
+  fcUI.timer = setTimeout(() => { transmuteToOrb(e); saveUIState(); }, LP_MS);
+}, { passive:false });
+
+window.addEventListener('pointermove', e => {
+  if (!fcUI.isOrb && !fcUI.isHud && !fcUI.isDockBottom && fcUI.timer) {
+    const dx = e.clientX - fcUI.startX, dy = e.clientY - fcUI.startY;
+    if (Math.hypot(dx,dy) > 12 && (dy < -10 || Math.abs(dx) > 18)) {
+      clearTimeout(fcUI.timer); fcUI.timer = null;
+      transmuteToOrb(e);
+      const r = card.getBoundingClientRect();
+      fcUI.dragOffsetX = e.clientX - r.left; fcUI.dragOffsetY = e.clientY - r.top;
+      try { card.setPointerCapture(e.pointerId); } catch(_){}
+      card.style.transition = 'none';
+    }
+  }
+  if (!fcUI.isDragging) return;
+  e.preventDefault();
+  const vh = window.innerHeight, cardH = card.offsetHeight || 68;
+  if (fcUI.isOrb) {
+    const x = e.clientX - fcUI.dragOffsetX, y = e.clientY - fcUI.dragOffsetY;
+    card.style.left = `${x}px`; card.style.top = `${y}px`;
+    if (y < HUD_SNAP) { snapZone?.classList.add('active'); snapZoneB?.classList.remove('active'); }
+    else if (y + cardH > vh - DOCK_SNAP) { snapZoneB?.classList.add('active'); snapZone?.classList.remove('active'); }
+    else { snapZone?.classList.remove('active'); snapZoneB?.classList.remove('active'); }
+  } else if (fcUI.isHud) {
+    const dy = e.clientY - fcUI.startY;
+    if (dy > 0) { card.style.transform = `translateX(-50%) translateY(${dy*.4}px)`; dy > SWIPE_DN ? snapZone?.classList.add('active') : snapZone?.classList.remove('active'); }
+  } else if (fcUI.isDockBottom) {
+    const dy = e.clientY - fcUI.startY;
+    if (dy < 0) { card.style.transform = `translateX(-50%) translateY(${dy*.4}px)`; dy < -SWIPE_DN ? snapZoneB?.classList.add('active') : snapZoneB?.classList.remove('active'); }
+  }
+}, { passive:false });
+
+window.addEventListener('pointerup', e => {
+  if (fcUI.timer) { clearTimeout(fcUI.timer); fcUI.timer = null; }
+  if (fcUI.isDragging) {
+    fcUI.isDragging = false;
+    try { card.releasePointerCapture?.(fcUI.pointerId); } catch(_){}
+    card.style.transition = '';
+    snapZone?.classList.remove('active'); snapZoneB?.classList.remove('active');
+    const vh = window.innerHeight;
+    if (fcUI.isOrb) {
+      const r = card.getBoundingClientRect();
+      if (r.top < HUD_SNAP) { setMode('hud'); try { KOBSonoro.sfx('swoosh'); } catch(_){} }
+      else if (r.bottom > vh - DOCK_SNAP) { setMode('dock-bottom'); try { KOBSonoro.sfx('swoosh'); } catch(_){} }
+      else saveUIState();
+    } else if (fcUI.isHud) {
+      const dy = e.clientY - fcUI.startY;
+      if (dy > SWIPE_DN) { card.style.left = `${e.clientX-34}px`; card.style.top = `${e.clientY-10}px`; setMode('orb'); try { KOBSonoro.sfx('swoosh'); } catch(_){} }
+      else card.style.transform = 'translateX(-50%) translateY(0)';
+    } else if (fcUI.isDockBottom) {
+      const dy = e.clientY - fcUI.startY;
+      if (dy < -SWIPE_DN) { card.style.left = `${e.clientX-34}px`; card.style.top = `${e.clientY-34}px`; setMode('orb'); try { KOBSonoro.sfx('swoosh'); } catch(_){} }
+      else card.style.transform = 'translateX(-50%) translateY(0)';
+    }
+  } else {
+    if (!fcUI.isOrb && !fcUI.isHud && !fcUI.isDockBottom && byId('cardHeader')?.contains(e.target)) toggleCardState();
+  }
+  fcUI.pointerId = null;
+}, { passive:false });
+
+/* Avatar / menu clicks */
+byId('avatarTarget')?.addEventListener('click', e => { e.stopPropagation(); if (!fcUI.isOrb && !fcUI.isHud && !fcUI.isDockBottom) openManager(); });
+byId('orbMenuTrigger')?.addEventListener('click', e => { e.stopPropagation(); setMode('card'); toggleSection('systemCard', true); try { KOBSonoro.sfx('bubble'); } catch(_){} });
+byId('hudMenuBtn')?.addEventListener('click', e => { e.stopPropagation(); setMode('card'); toggleSection('systemCard', true); try { KOBSonoro.sfx('bubble'); } catch(_){} });
+byId('cardHeader')?.addEventListener('click', e => {
+  if ((fcUI.isHud || fcUI.isDockBottom) && !fcUI.isDragging && !e.target.closest('.hud-menu-btn')) { setMode('card'); try { KOBSonoro.sfx('swoosh'); } catch(_){} }
+});
+card?.addEventListener('contextmenu', e => { if (fcUI.isOrb || fcUI.isHud || fcUI.isDockBottom) { e.preventDefault(); setMode('card'); } });
+
+/* Mode buttons */
+byId('btnModeCard')?.addEventListener('click', () => { setMode('card'); try { KOBSonoro.sfx('bubble'); } catch(_){} });
+byId('btnModeOrb')?.addEventListener('click',  () => { setMode('orb');  try { KOBSonoro.sfx('swoosh'); } catch(_){} });
+byId('btnModeHud')?.addEventListener('click',  () => { setMode('hud');  try { KOBSonoro.sfx('swoosh'); } catch(_){} });
+byId('btnModeDock')?.addEventListener('click', () => { setMode('dock-bottom'); try { KOBSonoro.sfx('swoosh'); } catch(_){} });
+
+/* Toggle sections */
+function toggleSection(id, forceOpen = false) {
+  const el = document.getElementById(id); if (!el) return;
+  const hidden = el.classList.contains('activation-hidden');
+  if (forceOpen && !hidden) return;
+  el.classList.toggle('activation-hidden', forceOpen ? false : !hidden);
+  el.classList.toggle('activation-open', forceOpen ? true : hidden);
+}
+window.toggleSection = toggleSection;
+byId('activationToggle')?.addEventListener('click', () => { toggleSection('activationCard'); try { KOBSonoro.sfx('cristal'); } catch(_){} });
+byId('systemToggle')?.addEventListener('click', () => { toggleSection('systemCard'); try { KOBSonoro.sfx('cristal'); } catch(_){} });
+[['activationToggle','activationCard'],['systemToggle','systemCard']].forEach(([t,c]) => {
+  byId(t)?.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); toggleSection(c); } });
+});
+
+/* Input sync */
+byId('kardinputUser')?.addEventListener('input', e => {
+  updateInterface(e.target.value);
+  saveData();
+});
+
+byId('copyActBtn')?.addEventListener('click', async () => {
+  const text = byId('actPre')?.innerText || '';
+  try { await navigator.clipboard.writeText(text); toast('Ativação copiada','success'); }
+  catch(_) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('Ativação copiada','success'); }
+});
+
+byId('saveSystemBtn')?.addEventListener('click', () => {
+  infodoseName = byId('infodoseNameInput')?.value.trim() || '';
+  const nk = byId('apiKeyInput')?.value.trim() || '';
+  const nm = byId('modelSelect')?.value.trim() || '';
+  if (nk) { apiKey = nk; localStorage.setItem('di_apiKey', apiKey); const ak = FC_STATE.keys.find(k => k.active); if (ak) { ak.token = nk; saveData(); } }
+  if (nm) { modelName = nm; localStorage.setItem('di_modelName', modelName); }
+  localStorage.setItem('di_infodoseName', infodoseName);
+  toggleSection('systemCard', false);
+  toast('Configurações salvas.','success');
+});
+
+/* Clock */
+function updateClock() { const c = byId('clockTime'); if (c) c.textContent = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+updateClock(); setInterval(updateClock, 1000);
+
+/* Fusion Card init / restore */
+function saveUIState_() {
+  const mode = fcUI.isOrb ? 'orb' : fcUI.isHud ? 'hud' : fcUI.isDockBottom ? 'dock-bottom' : 'card';
+  localStorage.setItem(UI_STATE_KEY, JSON.stringify({ mode, left:card?.style.left||'', top:card?.style.top||'' }));
+}
+saveUIState = saveUIState_;
+
+(async function initFusion() {
+  card?.classList.add('active');
+  byId('avatarTarget')?.classList.add('shown');
+  await loadData();
+  updateInterface(FC_STATE.user || userName || 'Convidado');
+  let savedMode = 'card', sl = null, st = null;
+  try {
+    const r = JSON.parse(localStorage.getItem(UI_STATE_KEY)||'{}');
+    savedMode = r.mode || 'card'; sl = r.left || null; st = r.top || null;
+  } catch(_){}
+  /* Show small preview first */
+  card.style.left = card.style.top = '';
+  card.style.opacity = '0'; card.style.transition = 'opacity 400ms ease';
+  card.classList.add('closed'); card.classList.remove('content-visible');
+  card.dataset.mode = 'card';
+  requestAnimationFrame(() => { card.style.opacity = '1'; });
+  /* Restore after 5s */
+  setTimeout(() => {
+    card.style.transition = 'all 600ms var(--ease-smooth)';
+    if (savedMode === 'orb') { if (sl) card.style.left = sl; if (st) card.style.top = st; setMode('orb'); }
+    else if (savedMode === 'hud') setMode('hud');
+    else if (savedMode === 'dock-bottom') setMode('dock-bottom');
+    else { setMode('card'); card.classList.remove('closed'); card.classList.add('content-visible'); }
+  }, 5000);
+  updateSecurityUI(); renderKeysList();
+  document.documentElement.dataset.fusionCore = 'ready';
+  console.info('⚡ 78KARD × KOBLLUX Fusion OS ready');
+})();
+
+/* ─── DOCK ENGINE ─── */
+document.addEventListener('DOMContentLoaded', () => {
+  const dock           = document.getElementById('floating-dock');
+  const topDrop        = document.getElementById('top-drop-zone');
+  const botDrop        = document.getElementById('bottom-drop-zone');
+  const dockPosTag     = document.getElementById('dock-pos-tag');
+  const collapseBtn    = document.getElementById('dock-collapse-btn');
+  const playPauseBtn   = document.getElementById('play-pause-btn');
+  const nextTrackBtn   = document.getElementById('next-track-btn');
+  const openGpBtn      = document.getElementById('open-gp-btn');
+  const iconPlay       = document.getElementById('icon-play');
+  const iconPause      = document.getElementById('icon-pause');
+  const progContainer  = document.getElementById('progress-container');
+  const progFill       = document.getElementById('progress-fill');
+  const progThumb      = document.getElementById('progress-thumb');
+  const curTimeEl      = document.getElementById('current-time');
+  const totTimeEl      = document.getElementById('total-time');
+  const trackNameEl    = document.getElementById('track-name');
+
+  const MARGIN_TOP = 54, MARGIN_BOT = 16;
+  let dockPos    = localStorage.getItem('kob:dock:pos') || 'header';
+  let isCollapsed = localStorage.getItem('kob:dock:collapsed') === '1';
+  let dkDragging = false, dkStartY = 0, dkStartTop = 0, dkMoved = false;
+
+  function snapTo(pos) {
+    dockPos = pos;
+    try { localStorage.setItem('kob:dock:pos', pos); } catch(_){}
+    const dh = dock.offsetHeight, wh = window.innerHeight;
+    if (pos === 'header') {
+      dock.style.top = `${MARGIN_TOP}px`;
+      if (dockPosTag) dockPosTag.textContent = isCollapsed ? 'PLAYER · TOP' : 'HEADER';
+      document.body.classList.add('dock-header'); document.body.classList.remove('dock-footer');
+    } else {
+      dock.style.top = `${wh - dh - MARGIN_BOT}px`;
+      if (dockPosTag) dockPosTag.textContent = isCollapsed ? 'PLAYER · FOOTER' : 'FOOTER';
+      document.body.classList.add('dock-footer'); document.body.classList.remove('dock-header');
+    }
+  }
+
+  function applyCollapse(c) {
+    isCollapsed = !!c; dock.classList.toggle('collapsed', isCollapsed); document.body.classList.toggle('dock-collapsed', isCollapsed);
+    try { localStorage.setItem('kob:dock:collapsed', isCollapsed?'1':'0'); } catch(_){}
+    requestAnimationFrame(() => snapTo(dockPos));
+    setTimeout(() => { if (!dkDragging) snapTo(dockPos); }, 310);
+  }
+  applyCollapse(isCollapsed); snapTo(dockPos);
+  window.addEventListener('resize', () => { if (!dkDragging) snapTo(dockPos); });
+
+  collapseBtn?.addEventListener('click', e => {
+    e.stopPropagation(); applyCollapse(!isCollapsed);
+    try { KOBSonoro.sfx('swoosh'); } catch(_){}
+  });
+
+  /* DRAG */
+  function dkStart(e) {
+    if (e.target.closest('#progress-container') || e.target.closest('#dock-collapse-btn')) return;
+    dkDragging = true; dkMoved = false;
+    dkStartY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+    dkStartTop = dock.getBoundingClientRect().top;
+    dock.classList.add('dragging');
+    if (topDrop) topDrop.style.opacity = '1';
+    if (botDrop) botDrop.style.opacity = '1';
+  }
+  function dkMove(e) {
+    if (!dkDragging) return;
+    const cy = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+    const dy = cy - dkStartY;
+    if (Math.abs(dy) > 6) dkMoved = true;
+    if (!dkMoved) return;
+    if (e.cancelable) e.preventDefault();
+    const dh = dock.offsetHeight, maxT = window.innerHeight - dh - MARGIN_BOT, minT = MARGIN_TOP;
+    let nt = dkStartTop + dy;
+    if (nt < minT) nt = minT - (minT-nt)*.25;
+    else if (nt > maxT) nt = maxT + (nt-maxT)*.25;
+    dock.style.top = `${nt}px`;
+    const mid = window.innerHeight/2, dc = nt + dh/2;
+    if (topDrop && botDrop) {
+      if (dc < mid) { topDrop.classList.add('highlight'); botDrop.classList.remove('highlight'); }
+      else { botDrop.classList.add('highlight'); topDrop.classList.remove('highlight'); }
+    }
+    /* swoosh durante drag */
+  }
+  function dkEnd() {
+    if (!dkDragging) return;
+    dkDragging = false; dock.classList.remove('dragging');
+    if (topDrop) { topDrop.style.opacity = '0'; topDrop.classList.remove('highlight'); }
+    if (botDrop) { botDrop.style.opacity = '0'; botDrop.classList.remove('highlight'); }
+    if (dkMoved) {
+      const r = dock.getBoundingClientRect();
+      const dc = r.top + r.height/2, mid = window.innerHeight/2;
+      snapTo(dc < mid ? 'header' : 'footer');
+      try { KOBSonoro.sfx('swoosh'); } catch(_){}
+    } else { snapTo(dockPos); }
+  }
+  dock.addEventListener('mousedown', dkStart);
+  window.addEventListener('mousemove', dkMove);
+  window.addEventListener('mouseup', dkEnd);
+  dock.addEventListener('touchstart', dkStart, { passive:false });
+  window.addEventListener('touchmove', dkMove, { passive:false });
+  window.addEventListener('touchend', dkEnd);
+
+  /* NAV */
+  const navBtns = document.querySelectorAll('.kb-nav-btn');
+  const pages   = document.querySelectorAll('.kb-page');
+  window.switchTab = function(tabName) {
+    navBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
+    pages.forEach(p => p.classList.toggle('active', p.id === `page-${tabName}`));
+    try { KOBSonoro.sfx('bubble'); } catch(_){}
+  };
+  navBtns.forEach(btn => {
+    btn.addEventListener('click', e => {
+      if (dkMoved) { e.preventDefault(); return; }
+      window.switchTab(btn.dataset.tab);
+    });
+  });
+
+  /* MINI PLAYER SYNC */
+  function fmt(s) { if (!s||isNaN(s)) return '0:00'; const m=Math.floor(s/60),sc=Math.floor(s%60); return `${m}:${sc<10?'0':''}${sc}`; }
+  window.syncDockPlayerUI = function({ title, playing, current, duration }) {
+    if (title !== undefined && trackNameEl) trackNameEl.textContent = title;
+    if (playing !== undefined) { iconPlay?.classList.toggle('hidden',playing); iconPause?.classList.toggle('hidden',!playing); }
+    if (current !== undefined && duration > 0) {
+      const pct = Math.min(100, Math.max(0, (current/duration)*100));
+      if (progFill) progFill.style.width = `${pct}%`;
+      if (progThumb) progThumb.style.left = `${pct}%`;
+      if (curTimeEl) curTimeEl.textContent = fmt(current);
+      if (totTimeEl) totTimeEl.textContent = fmt(duration);
+    }
+  };
+
+  playPauseBtn?.addEventListener('click', e => { if (dkMoved) return; try { KOBSonoro.sfx('bubble'); } catch(_){} window.Player?.toggle?.(e); });
+  nextTrackBtn?.addEventListener('click', () => { if (dkMoved) return; try { KOBSonoro.sfx('cristal'); } catch(_){} window.Player?.next?.(); });
+  openGpBtn?.addEventListener('click', () => { if (dkMoved) return; try { KOBSonoro.sfx('swoosh'); } catch(_){} window.Player?.reopenIfActive?.(); });
+
+  /* SCRUB */
+  let scrubbing = false;
+  function scrubTo(e) {
+    if (!progContainer) return;
+    const r = progContainer.getBoundingClientRect();
+    const cx = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+    const ratio = Math.min(1, Math.max(0, (cx - r.left) / r.width));
+    window.Player?.seekRatio?.(ratio);
+  }
+  progContainer?.addEventListener('mousedown', e => { e.stopPropagation(); scrubbing=true; progContainer.classList.add('scrubbing'); scrubTo(e); });
+  progContainer?.addEventListener('touchstart', e => { e.stopPropagation(); scrubbing=true; progContainer.classList.add('scrubbing'); scrubTo(e); }, { passive:true });
+  window.addEventListener('mousemove', e => { if (scrubbing) scrubTo(e); });
+  window.addEventListener('touchmove', e => { if (scrubbing) scrubTo(e); }, { passive:true });
+  function endScrub() { scrubbing=false; progContainer?.classList.remove('scrubbing'); }
+  window.addEventListener('mouseup', endScrub);
+  window.addEventListener('touchend', endScrub);
+});
+
+/* ─── PROFILE / KOBLLUX ENGINE ─── */
+const ARTYASKI_MAP = {'A':'Λ','B':'B','C':'C','D':'D','E':'Ξ','F':'F','G':'G','H':'H','I':'I','J':'J','K':'K','L':'L','M':'M','N':'N','O':'Ø','P':'P','Q':'Q','R':'R','S':'§','T':'T','U':'U','V':'V','W':'W','X':'X','Y':'Y','Z':'Z','Ç':'Ç'};
+function toArtyaski(text) { return String(text||'').toUpperCase().split('').map(ch => ARTYASKI_MAP[ch]||ch).join(''); }
+function stripVowels(str) { return String(str||'').toUpperCase().replace(/[^A-Z]/g,'').replace(/[AEIOU]/g,''); }
+
+function updateHomeGreeting(name) {
+  const n = name || localStorage.getItem('di_userName') || 'PILOTO';
+  const g1 = document.getElementById('homeGreeting');
+  const g2 = document.getElementById('homeSubGreeting');
+  const seed = [...n].reduce((a,c) => a + c.charCodeAt(0), 0);
+  const aidx = seed % VISION_ARCHETYPES.length;
+  const a = VISION_ARCHETYPES[aidx];
+  if (g1) g1.textContent = `${toArtyaski(n)} · ${a.key}`;
+  if (g2) g2.textContent = `${a.opcode} · ${a.regra} · ${a.hz}Hz`;
+}
+
+let currentApTab = 'i';
+const Profile = window.Profile = (() => {
+  let currentArch = VISION_ARCHETYPES[0];
+
+  function render() {
+    const name = localStorage.getItem('di_userName') || 'PILOTO';
+    const seed = [...name].reduce((a,c) => a + c.charCodeAt(0), 0);
+    currentArch = VISION_ARCHETYPES[seed % VISION_ARCHETYPES.length];
+
+    /* Orb */
+    byId('visionOrbSym') && (byId('visionOrbSym').textContent = currentArch.sym);
+    byId('visionOrbOpc') && (byId('visionOrbOpc').textContent = `${currentArch.opcode} · ${currentArch.hz}Hz`);
+    byId('visionArtyaski') && (byId('visionArtyaski').textContent = `${toArtyaski(name)} · ${currentArch.key}`);
+    byId('visionDrk') && (byId('visionDrk').textContent = `"${currentArch.drk}"`);
+
+    /* V.E.E.B */
+    const cons = stripVowels(name);
+    byId('veebConsonants') && (byId('veebConsonants').textContent = cons || '--');
+    const vowelsRow = byId('veebVowelsRow');
+    if (vowelsRow) {
+      const vowels = [...name.toUpperCase()].filter(c => 'AEIOU'.includes(c));
+      const colors = ['#22D3EE','#F43F5E','#F59E0B','#A259FF','#00F5A0'];
+      vowelsRow.innerHTML = vowels.slice(0,8).map((v,i) => `<div class="veeb-v" style="border-color:${colors[i%colors.length]};color:${colors[i%colors.length]}">${v}</div>`).join('');
+    }
+    const readout = byId('veebReadout');
+    if (readout) readout.textContent = `${toArtyaski(name)} | ${currentArch.hz}Hz | ${currentArch.regra}`;
+
+    /* Stats */
+    const sg = byId('statsGrid');
+    if (sg) {
+      sg.innerHTML = [
+        { l:'ARQUÉTIPO', v:currentArch.key },
+        { l:'FREQUÊNCIA', v:`${currentArch.hz}Hz` },
+        { l:'OPCODE', v:currentArch.opcode },
+        { l:'REGRA', v:currentArch.regra },
+      ].map(s => `<div class="stat-card"><div class="stat-label">${s.l}</div><div class="stat-value" style="font-size:12px">${s.v}</div></div>`).join('');
+    }
+
+    /* Arch matrix */
+    const amg = byId('archMatrixGrid');
+    if (amg) {
+      amg.innerHTML = VISION_ARCHETYPES.map((a,i) => `<div class="arch-card ${a.key===currentArch.key?'active':''}" data-arch-idx="${i}" onclick="Profile.selectArch(${i})">
+        <div class="arch-sym">${a.sym}</div>
+        <div class="arch-key" style="color:${a.color}">${a.key}</div>
+        <div class="arch-hz">${a.hz}Hz</div>
+      </div>`).join('');
+    }
+    renderArchPromptContent();
+  }
+
+  function selectArch(idx) {
+    currentArch = VISION_ARCHETYPES[idx] || VISION_ARCHETYPES[0];
+    byId('visionOrbSym') && (byId('visionOrbSym').textContent = currentArch.sym);
+    byId('visionOrbOpc') && (byId('visionOrbOpc').textContent = `${currentArch.opcode} · ${currentArch.hz}Hz`);
+    byId('apSelectedTitle') && (byId('apSelectedTitle').textContent = `${currentArch.key} · ${currentArch.hz}Hz`);
+    byId('visionDrk') && (byId('visionDrk').textContent = `"${currentArch.drk}"`);
+    document.querySelectorAll('.arch-card').forEach((c,i) => c.classList.toggle('active', i === idx));
+    renderArchPromptContent();
+    try { KOBSonoro.sfx('cristal'); } catch(_){}
+  }
+
+  function renderArchPromptContent() {
+    const el = byId('apContent'); if (!el) return;
+    el.textContent = currentArch[currentApTab] || '';
+    byId('apSelectedTitle') && (byId('apSelectedTitle').textContent = `${currentArch.key} · ${currentArch.hz}Hz`);
+  }
+
+  function pulseOrb() {
+    const orb = byId('visionOrb'); if (!orb) return;
+    orb.style.transform = 'scale(1.08)';
+    setTimeout(() => { orb.style.transform = ''; }, 350);
+    try { KOBSonoro.sfx('cristal'); } catch(_){}
+  }
+
+  function syncForgeIdentity() {
+    const name = byId('profileName')?.value.trim() || 'PILOTO';
+    updateInterface(name); saveData(); render();
+    toast('Identidade sincronizada!','success');
+  }
+
+  function speakIdentity() {
+    const name = localStorage.getItem('di_userName') || 'PILOTO';
+    const text = `${name}. Arquétipo ${currentArch.key}. ${currentArch.hz} hertz. ${currentArch.regra}.`;
+    if ('speechSynthesis' in window) { const u = new SpeechSynthesisUtterance(text); u.lang = 'pt-BR'; window.speechSynthesis.speak(u); }
+  }
+
+  function copyArchPrompt() {
+    const t = byId('apContent')?.textContent || '';
+    navigator.clipboard?.writeText(t).then(() => toast('Copiado!','success')).catch(() => {});
+  }
+
+  return { render, selectArch, pulseOrb, syncForgeIdentity, speakIdentity, copyArchPrompt, init() { initSubTabs(); render(); } };
+})();
+
+function initSubTabs() {
+  document.querySelectorAll('[data-utab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-utab]').forEach(b => b.classList.toggle('active', b===btn));
+      ['forge','matrix','system'].forEach(id => {
+        const el = document.getElementById('upanel-'+id);
+        if (el) el.style.display = (id===btn.dataset.utab) ? '' : 'none';
+      });
+      try { KOBSonoro.sfx('bubble'); } catch(_){}
+    });
+  });
+  document.querySelectorAll('[data-ap]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentApTab = btn.dataset.ap;
+      document.querySelectorAll('[data-ap]').forEach(b => b.classList.toggle('active', b===btn));
+      Profile.render();
+      try { KOBSonoro.sfx('cristal'); } catch(_){}
+    });
+  });
+}
+
+byId('profileName')?.addEventListener('input', e => { updateInterface(e.target.value); });
+
+/* ─── HERO CAROUSEL ─── */
+const HeroCarousel = window.HeroCarousel = (() => {
+  const SLIDES = [
+    { emoji:'🌌', badge:'KOBLLUX OS', title:'Fusion OS · v1', sub:'78KARD × HOME UNITED', bg:'linear-gradient(135deg,rgba(124,58,237,.5),rgba(34,211,238,.25))' },
+    { emoji:'△', badge:'ARQUÉTIPO ATIVO', title:'Consciência Total', sub:'528Hz · Malha Viva', bg:'linear-gradient(135deg,rgba(34,211,238,.4),rgba(124,58,237,.2))' },
+    { emoji:'⚡', badge:'VITALIS', title:'Energia Cinética', sub:'Expandir · 528Hz', bg:'linear-gradient(135deg,rgba(0,245,160,.3),rgba(124,58,237,.25))' },
+  ];
+  let idx = 0, timer = null;
+
+  function render() {
+    ['heroSlides','shortsHeroSlides'].forEach(id => {
+      const el = document.getElementById(id); if (!el) return;
+      el.innerHTML = SLIDES.map(s => `<div class="hero-slide" style="background:${s.bg}">
+        <div class="hero-slide-info">
+          <div class="hero-slide-badge">${s.badge}</div>
+          <div class="hero-slide-title">${s.emoji} ${s.title}</div>
+          <div class="hero-slide-sub">${s.sub}</div>
+        </div>
+      </div>`).join('');
+    });
+    renderDots();
+    update();
+  }
+
+  function update() {
+    ['heroSlides','shortsHeroSlides'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.transform = `translateX(-${idx*100}%)`;
+    });
+    ['heroCounter','shortsHeroCounter'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = `${String(idx+1).padStart(2,'0')} / ${String(SLIDES.length).padStart(2,'0')}`;
+    });
+    document.querySelectorAll('.carousel-dot').forEach((d,i) => d.classList.toggle('active', i === idx));
+  }
+
+  function renderDots() {
+    ['heroDots','shortsHeroDots'].forEach(id => {
+      const el = document.getElementById(id); if (!el) return;
+      el.innerHTML = SLIDES.map((_,i) => `<div class="carousel-dot ${i===idx?'active':''}"></div>`).join('');
+    });
+  }
+
+  function next() { idx = (idx+1) % SLIDES.length; update(); }
+  function prev() { idx = (idx-1+SLIDES.length) % SLIDES.length; update(); }
+
+  function init() {
+    render();
+    document.getElementById('heroPrev')?.addEventListener('click', () => { prev(); try { KOBSonoro.sfx('bubble'); } catch(_){} });
+    document.getElementById('heroNext')?.addEventListener('click', () => { next(); try { KOBSonoro.sfx('bubble'); } catch(_){} });
+    document.getElementById('shortsHeroPrev')?.addEventListener('click', () => { prev(); try { KOBSonoro.sfx('bubble'); } catch(_){} });
+    document.getElementById('shortsHeroNext')?.addEventListener('click', () => { next(); try { KOBSonoro.sfx('bubble'); } catch(_){} });
+    timer = setInterval(next, 5000);
+  }
+  return { init, render, next, prev };
+})();
+
+/* ─── NF ROWS ─── */
+const DEFAULT_TRACKS = [
+  { emoji:'🔮', title:'Fractal 369', sub:'Infodose · 528Hz', type:'yt', id:'dQw4w9WgXcQ' },
+  { emoji:'🌊', title:'Flow State', sub:'KOBLLUX · Ambient', type:'sc', url:'' },
+  { emoji:'△', title:'Kobllux Theta', sub:'Arquétipo · 432Hz', type:'yt', id:'dQw4w9WgXcQ' },
+  { emoji:'⚡', title:'Neural Drive', sub:'VITALIS · 528Hz', type:'yt', id:'dQw4w9WgXcQ' },
+  { emoji:'♫', title:'Pulse Wave', sub:'PULSE · 639Hz', type:'sc', url:'' },
+  { emoji:'🌌', title:'Deep Cosmos', sub:'SOLUS · 963Hz', type:'yt', id:'dQw4w9WgXcQ' },
+];
+
+function renderNfRow(containerId, tracks, countId) {
+  const el = document.getElementById(containerId); if (!el) return;
+  el.innerHTML = tracks.map((t,i) => `<div class="nf-card" data-track-idx="${i}" onclick="playTrack(${i},'${containerId}')">
+    <div class="nf-thumb">${t.emoji}</div>
+    <div class="nf-meta">
+      <div class="nf-title">${escapeHtml(t.title)}</div>
+      <div class="nf-sub">${escapeHtml(t.sub)}</div>
+    </div>
+  </div>`).join('');
+  const ce = document.getElementById(countId);
+  if (ce) ce.textContent = `${tracks.length} itens`;
+}
+
+function playTrack(idx, fromRow) {
+  const t = DEFAULT_TRACKS[idx]; if (!t) return;
+  if (t.type === 'yt' && t.id) {
+    const gp = document.getElementById('global-player'); if (gp) gp.style.display = 'block';
+    const fw = document.getElementById('player-frame-wrap'); if (fw) fw.innerHTML = `<iframe src="https://www.youtube.com/embed/${t.id}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+  }
+  window.syncDockPlayerUI?.({ title:`${t.emoji} ${t.title}`, playing:true });
+  try { KOBSonoro.sfx('portal'); } catch(_){}
+}
+window.playTrack = playTrack;
+
+/* Player stub */
+window.Player = window.Player || { toggle(){}, next(){}, stop(){ const gp=document.getElementById('global-player');if(gp)gp.style.display='none'; }, seekRatio(){}, toggleMinimize(){}, toggleFullscreen(){}, reopenIfActive(){ const gp=document.getElementById('global-player');if(gp)gp.style.display=gp.style.display==='none'?'block':'none'; } };
+
+/* ─── PILL CHIPS ─── */
+const Pills = window.Pills = {
+  chips: ['YouTube', 'SoundCloud', 'MP3 Local', 'JSON Import'],
+  init() { this.renderPills(); },
+  renderPills() {
+    const el = document.getElementById('pillChips'); if (!el) return;
+    el.innerHTML = this.chips.map((c,i) => `<div class="pill-chip ${i===0?'active':''}" onclick="Pills.selectChip(${i})">${c}</div>`).join('');
+  },
+  selectChip(i) {
+    document.querySelectorAll('.pill-chip').forEach((c,j) => c.classList.toggle('active',j===i));
+    try { KOBSonoro.sfx('bubble'); } catch(_){}
+  }
+};
+
+/* ─── SYSTEM CONTROLS (profile system tab) ─── */
+function renderControls() {
+  const cl = document.getElementById('controlList'); if (!cl) return;
+  const name = localStorage.getItem('di_userName') || 'PILOTO';
+  cl.innerHTML = `
+    <div class="ctrl-row">
+      <div><div class="ctrl-label">Nome do Usuário</div><div class="ctrl-sub">${escapeHtml(toArtyaski(name))}</div></div>
+      <button class="mini-btn" onclick="document.getElementById('page-profile').querySelector('.profile-name-input').focus()">Editar</button>
+    </div>
+    <div class="ctrl-row">
+      <div><div class="ctrl-label">Fusion Card</div><div class="ctrl-sub">78KARD integrado</div></div>
+      <button class="mini-btn active" onclick="setMode('card')">Abrir</button>
+    </div>
+    <div class="ctrl-row">
+      <div><div class="ctrl-label">Arquétipo Ativo</div><div class="ctrl-sub">Baseado no hash do nome</div></div>
+      <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+    </div>
+    <div class="ctrl-row">
+      <div><div class="ctrl-label">Sons do Sistema</div><div class="ctrl-sub">Swoosh · Bubble · Crystal</div></div>
+      <div class="toggle on" id="soundToggle" onclick="this.classList.toggle('on')"></div>
+    </div>
+  `;
+}
+
+/* ─── BOOT ─── */
+function boot() {
+  HeroCarousel.init();
+  Pills.init();
+  Profile.init();
+  renderNfRow('nfRowHome', DEFAULT_TRACKS.slice(0,4), '');
+  renderNfRow('nfRowSoundcloud', DEFAULT_TRACKS.filter(t=>t.type==='sc'), 'scRowCount');
+  renderNfRow('nfRowYoutube', DEFAULT_TRACKS.filter(t=>t.type==='yt'), 'ytRowCount');
+  renderNfRow('nfRowAll', DEFAULT_TRACKS, 'allRowCount');
+  renderControls();
+  updateHomeGreeting();
+
+  const scSlider = document.getElementById('scSeekSlider');
+  if (scSlider) {
+    scSlider.addEventListener('input', () => { scSlider._dragging = true; window.Player.seekRatio?.(scSlider.value/1000); });
+    scSlider.addEventListener('change', () => { scSlider._dragging = false; try { KOBSonoro.sfx('bubble'); } catch(_){} });
+  }
+
+  const savedTheme = localStorage.getItem('kob:theme');
+  if (savedTheme) document.body.dataset.mode = savedTheme;
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+else boot();
+
+/* Keep avatar in dock nav synced to orb color */
+window.addEventListener('di:interface:update', e => {
+  const { h1, h2 } = e.detail || {};
+  const capsule = document.querySelector('.kb-avatar-capsule');
+  if (capsule && h1 != null) {
+    capsule.style.background = `linear-gradient(180deg,hsl(${h1},90%,60%),hsl(${(h1+120)%360},85%,45%) 48%,hsl(${h2},90%,55%) 52%,hsl(${(h2+60)%360},80%,55%))`;
+  }
+  updateHomeGreeting();
+  Profile.render();
+  renderControls();
+});
+</script>
+
+
+</body></html>

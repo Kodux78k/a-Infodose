@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="night">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1020" id="metaThemeColor">
+  <title>dual-global</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+
+<!-- Tone.js · engine de SFX (usada pelo DualSFX / KOBSonoro) -->
+<script src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js"></script>
+
+  <style>@import url("https://infodose.com.br/css/iFSw-unified.css");</style>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       DUAL GLOBAL · TOKENS, TEMAS (NIGHT · DAY · SUNSET) & CONTROLES
+  ═══════════════════════════════════════════════════════════ -->
+  <style id="dual-theme-tokens">
+    :root {
+      --bg-deep: #050811;
+      --bg-day: radial-gradient(circle at 30% 20%, #ffffff 0%, #f2f8ff 18%, #d0e9ff 40%, #9ed0ff 65%, #6bb9ff 85%, #59a8ff 100%);
+      --bg-sunset: linear-gradient(180deg, #fbcfe8 0%, #fb923c 22%, #4c1d95 62%, #111827 100%);
+      --bg-night: radial-gradient(circle at 20% 0%, #0b1020 0%, #121c3b 40%, #1a237e 80%, #000000 100%);
+
+      --primary: #00f5ff;
+      --secondary: #ff4bff;
+      --text-main: #e4ecff;
+      --text-muted: #9aa4c8;
+      --glass-surface: rgba(18, 18, 22, .12);
+      --glass-border: rgba(255, 255, 255, .10);
+      --topbar-bg: rgba(10, 14, 24, .18);
+    }
+
+    html, body {
+      min-height: 100vh;
+      transition: background .8s cubic-bezier(.4, 0, .2, 1), color .45s ease;
+    }
+
+    /* ── NIGHT (Padrão) ── */
+    html[data-theme="night"],
+    html[data-theme="night"] body,
+    body[data-mode="night"] {
+      --bg: var(--bg-night);
+      --text: #e4ecff;
+      --text-main: #e4ecff;
+      --text-muted: #9aa4c8;
+      --primary: #00f5ff;
+      --glass-surface: rgba(12, 16, 30, .68);
+      --glass-border: rgba(255, 255, 255, .08);
+      --topbar-bg: rgba(8, 12, 24, .78);
+      background: var(--bg-night) !important;
+      color: var(--text-main) !important;
+    }
+
+    /* ── DAY ── */
+    html[data-theme="day"],
+    html[data-theme="day"] body,
+    body[data-mode="day"] {
+      --bg: var(--bg-day);
+      --text: #141c2b;
+      --text-main: #141c2b;
+      --text-muted: #475569;
+      --primary: #0284c7;
+      --glass-surface: rgba(255, 255, 255, .62);
+      --glass-border: rgba(15, 23, 42, .12);
+      --topbar-bg: rgba(255, 255, 255, .72);
+      background: var(--bg-day) !important;
+      color: var(--text-main) !important;
+    }
+
+    /* ── SUNSET ── */
+    html[data-theme="sunset"],
+    html[data-theme="sunset"] body,
+    body[data-mode="sunset"] {
+      --bg: var(--bg-sunset);
+      --text: #fff7ed;
+      --text-main: #fff7ed;
+      --text-muted: #fed7aa;
+      --primary: #fb923c;
+      --glass-surface: rgba(38, 16, 62, .58);
+      --glass-border: rgba(251, 207, 232, .22);
+      --topbar-bg: rgba(32, 14, 52, .68);
+      background: var(--bg-sunset) !important;
+      color: var(--text-main) !important;
+    }
+
+    /* Topbar & Grupo de Ações */
+    #main-header.topbar {
+      background: var(--topbar-bg);
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
+      border-bottom: 1px solid var(--glass-border);
+      transition: background .5s ease, border-color .5s ease, transform .35s ease;
+    }
+
+    .top-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Botões circulares do Header (#tts-dot e #theme-dot) */
+    .header-dot-btn {
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      display: grid;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      border: 1px solid var(--glass-border);
+      background: var(--glass-surface);
+      color: var(--primary);
+      cursor: pointer;
+      transition: transform .25s cubic-bezier(.34, 1.56, .64, 1), border-color .3s ease, color .3s ease, box-shadow .3s ease, opacity .3s ease;
+    }
+
+    .header-dot-btn:hover {
+      transform: scale(1.08);
+      border-color: var(--primary);
+      box-shadow: 0 0 14px color-mix(in srgb, var(--primary) 45%, transparent);
+    }
+
+    .header-dot-btn:active {
+      transform: scale(.94);
+    }
+
+    /* Estado visual do TTS ON / OFF */
+    #tts-dot[data-tts-active="true"] {
+      border-color: color-mix(in srgb, var(--primary) 65%, transparent);
+      box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 30%, transparent);
+    }
+
+    #tts-dot[data-tts-active="false"] {
+      color: var(--text-muted);
+      opacity: .62;
+      box-shadow: none;
+    }
+  </style>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       KOB BUS · Universal Cross-Frame Bridge + Controle TTS On/Off
+  ═══════════════════════════════════════════════════════════ -->
+  <script type="module">
+  (function KOB_BUS(global) {
+    'use strict';
+
+    const VERSION = 'KOB-BUS.v1.2.0';
+    const CONFIG = {
+      debug: false,
+      enabled: true,
+      maxText: 1200,
+      minText: 2,
+      debounce: 180,
+      iframeSelector: 'iframe',
+      targetOrigin: '*',
+      ignoredTags: ['SCRIPT', 'STYLE', 'NOSCRIPT', 'INPUT', 'TEXTAREA', 'SELECT', 'OPTION']
+    };
+
+    const STATE = {
+      started: false,
+      frames: new Map(),
+      documents: new WeakSet(),
+      lastText: '',
+      lastTime: 0,
+      observer: null
+    };
+
+    function log(...args) {
+      if (!CONFIG.debug) return;
+      console.log('%c[KOB BUS]', 'color:#00ffff;font-weight:900', ...args);
+    }
+
+    function cleanText(text) {
+      return String(text || '')
+        .replace(/\u200B/g, '')
+        .replace(/\u00A0/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, CONFIG.maxText);
+    }
+
+    function ignored(el) {
+      if (!el || el.nodeType !== 1) return true;
+      if (CONFIG.ignoredTags.includes(el.tagName)) return true;
+      if (el.closest?.('[data-kob-ignore],[data-tts-ignore],.kob-tts-ignore,#main-header')) return true;
+      return false;
+    }
+
+    function extractText(target) {
+      if (!target) return '';
+      let el = target;
+      if (el.tagName === 'SVG' || el.tagName === 'PATH' || el.tagName === 'USE' || el.tagName === 'LINE' || el.tagName === 'POLYGON') {
+        el = el.closest?.('button,a,[role="button"]') || el.parentElement;
+      }
+      const control = el.closest?.('button,input,textarea,select');
+      if (control) {
+        if (!control.hasAttribute('data-kob-tts')) return '';
+        el = control;
+      }
+      if (ignored(el)) return '';
+
+      let text = cleanText(
+        el.innerText || el.textContent || el.getAttribute?.('aria-label') || el.getAttribute?.('title') || ''
+      );
+
+      if (text.length > CONFIG.maxText) {
+        const candidates = ['article', 'section', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', '.card', '.v-glass', '[data-kob-content]'];
+        for (const selector of candidates) {
+          const parent = el.closest?.(selector);
+          if (!parent) continue;
+          const candidate = cleanText(parent.innerText || parent.textContent || '');
+          if (candidate && candidate.length < text.length) text = candidate;
+        }
+      }
+      return cleanText(text);
+    }
+
+    function getTTS() {
+      if (global.CobTTS && typeof global.CobTTS.speak === 'function') return text => global.CobTTS.speak(text);
+      const objects = [global.KOB_TTS, global.KOBTTS, global.COB_TTS, global.TTS, global.tts];
+      for (const obj of objects) {
+        if (!obj) continue;
+        if (typeof obj.speak === 'function') return text => obj.speak(text);
+        if (typeof obj.say === 'function') return text => obj.say(text);
+        if (typeof obj.speakText === 'function') return text => obj.speakText(text);
+      }
+      const functions = ['kobSpeak', 'KOBSpeak', 'speakText', 'speak', 'ttsSpeak', 'speakTTS'];
+      for (const name of functions) {
+        if (typeof global[name] === 'function') return text => global[name](text);
+      }
+      if (global.speechSynthesis) {
+        return text => {
+          try {
+            global.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'pt-BR';
+            global.speechSynthesis.speak(u);
+          } catch (err) {
+            log('Speech fallback error', err);
+          }
+        };
+      }
+      return null;
+    }
+
+    function stopAllSpeech() {
+      try { global.speechSynthesis?.cancel(); } catch (_) {}
+      try { global.CobTTS?.stop?.(); } catch (_) {}
+      try { global.KOB_TTS?.stop?.(); } catch (_) {}
+    }
+
+    function speak(text, meta = {}) {
+      if (!CONFIG.enabled) {
+        log('TTS bloqueado (OFF)');
+        return false;
+      }
+
+      text = cleanText(text);
+      if (text.length < CONFIG.minText) return false;
+      const now = Date.now();
+      if (text === STATE.lastText && now - STATE.lastTime < CONFIG.debounce) return false;
+      STATE.lastText = text;
+      STATE.lastTime = now;
+      const tts = getTTS();
+      if (!tts) {
+        console.warn('[KOB BUS] KOB TTS não encontrado.');
+        return false;
+      }
+      log('TTS', meta, text);
+      try {
+        tts(text);
+        return true;
+      } catch (err) {
+        console.error('[KOB BUS] TTS error', err);
+        return false;
+      }
+    }
+
+    function frameId(iframe) {
+      if (iframe.dataset.kobBusId) return iframe.dataset.kobBusId;
+      const id = 'kob-frame-' + Math.random().toString(36).slice(2, 10);
+      iframe.dataset.kobBusId = id;
+      return id;
+    }
+
+    function getFrameOrigin(iframe) {
+      try {
+        return new URL(iframe.src || iframe.getAttribute('src') || location.href, location.href).origin;
+      } catch (_) {
+        return location.origin;
+      }
+    }
+
+    function isSameOrigin(iframe) {
+      try {
+        return getFrameOrigin(iframe) === location.origin;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function syncFrameTheme(iframe, theme) {
+      const currentTheme = theme || document.documentElement.dataset.theme || 'night';
+      if (isSameOrigin(iframe)) {
+        try {
+          const doc = iframe.contentDocument || iframe.contentWindow?.document;
+          if (doc?.documentElement) {
+            doc.documentElement.dataset.theme = currentTheme;
+            if (doc.body) doc.body.dataset.mode = currentTheme;
+          }
+        } catch (_) {}
+      }
+      try {
+        iframe.contentWindow?.postMessage(
+          { type: 'KOB_THEME_CHANGE', theme: currentTheme, mode: currentTheme },
+          CONFIG.targetOrigin
+        );
+      } catch (_) {}
+    }
+
+    function connectSameOrigin(iframe) {
+      try {
+        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (!doc) return false;
+        syncFrameTheme(iframe);
+        if (STATE.documents.has(doc)) return true;
+        STATE.documents.add(doc);
+
+        doc.addEventListener('click', event => {
+          if (!CONFIG.enabled) return;
+          const text = extractText(event.target);
+          if (!text) return;
+          speak(text, { source: 'same-origin', iframe: frameId(iframe), url: iframe.src });
+        }, true);
+
+        log('SAME-ORIGIN conectado', iframe.src);
+        return true;
+      } catch (err) {
+        log('Same-origin falhou', err);
+        return false;
+      }
+    }
+
+    function connectCrossOrigin(iframe) {
+      const id = frameId(iframe);
+      const origin = getFrameOrigin(iframe);
+      const currentTheme = document.documentElement.dataset.theme || 'night';
+
+      STATE.frames.set(id, { iframe, origin, crossOrigin: true });
+
+      try {
+        iframe.contentWindow.postMessage({
+          type: 'KOB_BUS_INIT',
+          bus: VERSION,
+          frameId: id,
+          parentOrigin: location.origin,
+          theme: currentTheme,
+          ttsEnabled: CONFIG.enabled
+        }, CONFIG.targetOrigin);
+      } catch (err) {
+        log('postMessage INIT error', err);
+      }
+      log('CROSS-ORIGIN conectado', { id, origin });
+    }
+
+    function connectFrame(iframe) {
+      if (!iframe) return;
+      const id = frameId(iframe);
+      if (!iframe.__kobBusLoad) {
+        iframe.__kobBusLoad = true;
+        iframe.addEventListener('load', () => {
+          isSameOrigin(iframe) ? connectSameOrigin(iframe) : connectCrossOrigin(iframe);
+        }, true);
+      }
+      isSameOrigin(iframe) ? connectSameOrigin(iframe) : connectCrossOrigin(iframe);
+      log('FRAME', id, iframe.src);
+    }
+
+    function receiveMessage(event) {
+      const data = event.data;
+      if (!data || typeof data.type !== 'string') return;
+
+      if (data.type === 'KOB_TTS') {
+        if (!CONFIG.enabled) return;
+        const text = cleanText(data.text);
+        if (!text) return;
+        speak(text, {
+          source: 'cross-origin',
+          frameId: data.frameId || 'unknown',
+          url: data.url || event.origin,
+          origin: event.origin
+        });
+        return;
+      }
+
+      if (data.type === 'KOB_SET_THEME' && data.theme && global.DualTheme) {
+        global.DualTheme.set(data.theme);
+        return;
+      }
+
+      if (data.type === 'KOB_SET_TTS' && typeof data.enabled === 'boolean' && global.DualTTS) {
+        global.DualTTS.set(data.enabled);
+        return;
+      }
+
+      if (data.type === 'KOB_BUS_PING') {
+        try {
+          event.source?.postMessage({
+            type: 'KOB_BUS_PONG',
+            version: VERSION,
+            parent: location.origin,
+            theme: document.documentElement.dataset.theme || 'night',
+            ttsEnabled: CONFIG.enabled
+          }, event.origin === 'null' ? '*' : event.origin);
+        } catch (_) {}
+      }
+    }
+
+    function scan() {
+      const frames = document.querySelectorAll(CONFIG.iframeSelector);
+      frames.forEach(connectFrame);
+      log('frames:', frames.length);
+    }
+
+    function broadcastTheme(theme) {
+      document.querySelectorAll(CONFIG.iframeSelector).forEach(iframe => {
+        syncFrameTheme(iframe, theme);
+      });
+    }
+
+    function broadcastTTS(enabled) {
+      CONFIG.enabled = Boolean(enabled);
+      if (!CONFIG.enabled) stopAllSpeech();
+      document.querySelectorAll(CONFIG.iframeSelector).forEach(iframe => {
+        try {
+          iframe.contentWindow?.postMessage(
+            { type: 'KOB_TTS_STATE', enabled: CONFIG.enabled },
+            CONFIG.targetOrigin
+          );
+        } catch (_) {}
+      });
+    }
+
+    function observe() {
+      if (!global.MutationObserver || STATE.observer) return;
+      STATE.observer = new MutationObserver(mutations => {
+        for (const mutation of mutations) {
+          for (const node of mutation.addedNodes) {
+            if (node.nodeType !== 1) continue;
+            if (node.matches?.('iframe')) connectFrame(node);
+            node.querySelectorAll?.('iframe').forEach(connectFrame);
+          }
+        }
+      });
+      STATE.observer.observe(document.documentElement, { childList: true, subtree: true });
+    }
+
+    function installParentClick() {
+      document.addEventListener('click', event => {
+        if (!CONFIG.enabled) return;
+        if (event.target?.closest?.('iframe')) return;
+        const text = extractText(event.target);
+        if (!text || global.KOB_TTS_IFRAME_BRIDGE) return;
+        speak(text, { source: 'parent' });
+      }, true);
+    }
+
+    const API = {
+      version: VERSION,
+      state: STATE,
+      scan,
+      connectFrame,
+      broadcastTheme,
+      broadcastTTS,
+      speak,
+      stop: stopAllSpeech,
+      getTTS,
+      config: CONFIG,
+      setEnabled(val) { broadcastTTS(val); },
+      isEnabled() { return CONFIG.enabled; },
+      debug(value) { CONFIG.debug = Boolean(value); }
+    };
+
+    global.KOBBus = API;
+    global.KOB_BUS = API;
+
+    function boot() {
+      if (STATE.started) return;
+      STATE.started = true;
+      global.addEventListener('message', receiveMessage, false);
+      installParentClick();
+      scan();
+      observe();
+      setTimeout(scan, 500);
+      setTimeout(scan, 1500);
+      setTimeout(scan, 3500);
+      log('BOOT OK', VERSION);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot, { once: true });
+    } else {
+      boot();
+    }
+  })(window);
+  </script>
+</head>
+
+<body data-mode="night">
+
+<script type="module">(function(bundle, s='body') {
+  const p = new DOMParser();
+  const c = p.parseFromString(bundle, 'text/html');
+  const t = document.querySelector(s) || document.body;
+
+  Array.from(c.querySelectorAll('style')).forEach(style => {
+    const n = document.createElement('style');
+    n.textContent = style.textContent;
+    document.head.appendChild(n);
+  });
+
+  const f = document.createDocumentFragment();
+  Array.from(c.body.childNodes).forEach(node => {
+    if (node.nodeName !== 'SCRIPT') {
+      f.appendChild(document.importNode(node, true));
+    }
+  });
+  t.appendChild(f);
+
+  Array.from(c.querySelectorAll('script')).forEach(x => {
+    const n = document.createElement('script');
+    for (const a of x.attributes) n.setAttribute(a.name, a.value);
+    n.textContent = x.textContent;
+    document.body.appendChild(n);
+  });
+})(`<script>
+/* ═══════════════════════════════════════════════════════
+   DUAL MONOLITH · THEME (NIGHT/DAY/SUNSET) + TTS + SFX + HEADER
+   — sem arquétipos, sem data-arch —
+═══════════════════════════════════════════════════════ */
+(() => {
+  "use strict";
+
+  const ROOT = document.documentElement;
+  const BODY = document.body;
+  const HEADER = document.getElementById("main-header");
+  const MAIN = document.getElementById("main-content");
+  const THEME_DOT = document.getElementById("theme-dot");
+  const TTS_DOT = document.getElementById("tts-dot");
+  const SFX_DOT = document.getElementById("sfx-dot");
+  const META_COLOR = document.getElementById("metaThemeColor");
+
+  /* ═══════════════════════════════════════════════════════
+     1. CLICK-TO-SPEECH ENGINE (TTS ON / OFF)
+  ═══════════════════════════════════════════════════════ */
+  const TTS_STORAGE_KEY = "di_ttsEnabled";
+
+  const TTS_ICONS = {
+    on: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>',
+    off: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>'
+  };
+
+  function applyTTS(enabled) {
+    const isOn = Boolean(enabled);
+    ROOT.dataset.tts = isOn ? "on" : "off";
+
+    if (TTS_DOT) {
+      TTS_DOT.innerHTML = isOn ? TTS_ICONS.on : TTS_ICONS.off;
+      TTS_DOT.dataset.ttsActive = String(isOn);
+      TTS_DOT.setAttribute("aria-pressed", String(isOn));
+      TTS_DOT.setAttribute("title", isOn ? "Click-to-Speech: ATIVO (toque para silenciar)" : "Click-to-Speech: OFF (toque para ativar)");
+      TTS_DOT.setAttribute("aria-label", isOn ? "Desativar leitura ao clicar" : "Ativar leitura ao clicar");
+    }
+
+    try { localStorage.setItem(TTS_STORAGE_KEY, String(isOn)); } catch (_) {}
+
+    if (window.KOBBus && typeof window.KOBBus.setEnabled === "function") {
+      window.KOBBus.setEnabled(isOn);
+    }
+
+    window.dispatchEvent(new CustomEvent("dual:tts-change", { detail: { enabled: isOn } }));
+  }
+
+  function getInitialTTS() {
+    try {
+      const saved = localStorage.getItem(TTS_STORAGE_KEY);
+      if (saved === "false") return false;
+    } catch (_) {}
+    return true;
+  }
+
+  window.DualTTS = {
+    set(enabled) { applyTTS(enabled); },
+    toggle() { applyTTS(ROOT.dataset.tts !== "on"); },
+    get() { return ROOT.dataset.tts === "on"; }
+  };
+
+  if (TTS_DOT) {
+    TTS_DOT.addEventListener("click", event => {
+      event.stopPropagation();
+      DualTTS.toggle();
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     2. SFX ENGINE (TONE.JS) · ON / OFF
+  ═══════════════════════════════════════════════════════ */
+  const SFX_STORAGE_KEY = "di_sfxEnabled";
+
+  const SFX_ICONS = {
+    on: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>',
+    off: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><line x1="2" y1="2" x2="22" y2="22"></line></svg>'
+  };
+
+  const SND = { enabled: true, started: false, synths: {}, reverb: null, delay: null };
+  const KOBSonoro = window.KOBSonoro = window.KOBSonoro || {};
+
+  async function ensureAudio() {
+    if (!SND.enabled) return false;
+    if (SND.started) return true;
+    if (typeof Tone === "undefined") {
+      await new Promise(r => {
+        const t = setInterval(() => {
+          if (typeof Tone !== "undefined" || performance.now() > 6000) { clearInterval(t); r(); }
+        }, 100);
+      });
+    }
+    if (typeof Tone === "undefined") return false;
+    try {
+      await Tone.start();
+      const lim = new Tone.Limiter(-2).toDestination();
+      SND.reverb = new Tone.Reverb({ decay: 3.2, wet: 0.38 }).connect(lim);
+      SND.delay  = new Tone.FeedbackDelay("8n", 0.24).connect(SND.reverb);
+
+      SND.synths.bubble  = new Tone.Synth({ oscillator: { type: "sine" }, envelope: { attack: .01, decay: .14, sustain: 0, release: .2 } }).connect(SND.reverb);
+      SND.synths.crystal = new Tone.PolySynth(Tone.FMSynth, { harmonicity: 3, modulationIndex: 6, envelope: { attack: .005, decay: .38, sustain: 0, release: 1.1 } }).connect(SND.reverb);
+      SND.synths.impact  = new Tone.MembraneSynth({ pitchDecay: .05, octaves: 4, envelope: { attack: .001, decay: .28, sustain: 0, release: .38 } }).connect(lim);
+      SND.synths.portal  = new Tone.Synth({ oscillator: { type: "sawtooth" }, envelope: { attack: .15, decay: .4, sustain: .2, release: .8 } }).connect(SND.delay);
+
+      SND.started = true;
+      return true;
+    } catch (_) { return false; }
+  }
+
+  function hslToBaseFreq(h1, h2) {
+    return { f1: 200 + (h1 / 360) * 700, f2: 200 + (h2 / 360) * 700 };
+  }
+
+  KOBSonoro.sfx = async function(desc, colorCtx) {
+    if (!SND.enabled) return false;
+    if (!await ensureAudio()) return false;
+    const body = document.body;
+    const d = String(desc || "").toLowerCase();
+    const now = Tone.now();
+    const h1 = parseInt(colorCtx?.h1 || body?.dataset?.hue1 || "188", 10);
+    const h2 = parseInt(colorCtx?.h2 || body?.dataset?.hue2 || "210", 10);
+    const { f1, f2 } = hslToBaseFreq(h1, h2);
+
+    try {
+      if (/bolha|bubble|gota|pingo|click|nav/.test(d)) {
+        const b = f1 * (0.85 + Math.random() * 0.3);
+        SND.synths.bubble.triggerAttackRelease(b, .11, now);
+        SND.synths.bubble.triggerAttackRelease(b * 1.48, .09, now + .075);
+      } else if (/cristal|crystal|vidro|sino/.test(d)) {
+        [f1, f1 * 1.5, f1 * 2].forEach((f, i) => {
+          try { SND.synths.crystal.triggerAttackRelease(f, .28, now + i * .045); } catch (_) {}
+        });
+      } else if (/impacto|impact|pancada/.test(d)) {
+        SND.synths.impact.triggerAttackRelease("C1", .22, now);
+      } else if (/sopro|whoosh|swoosh|drag/.test(d)) {
+        const swFilter = new Tone.Filter({ type: "bandpass", frequency: f1 * 0.8, Q: 3.9 }).connect(SND.reverb);
+        const swNoise  = new Tone.NoiseSynth({ noise: { type: "pink" }, envelope: { attack: .22, decay: .16, sustain: .15, release: .34 } }).connect(swFilter);
+        swFilter.frequency.setValueAtTime(f1 * 0.1, now);
+        swFilter.frequency.exponentialRampToValueAtTime(f2 * 0.4, now + 0.26);
+        swFilter.frequency.exponentialRampToValueAtTime(f1 * 0.1, now + 0.62);
+        swNoise.triggerAttackRelease(0.38, now);
+        setTimeout(() => { try { swNoise.dispose(); swFilter.dispose(); } catch (_) {} }, 1100);
+      } else if (/portal|transition/.test(d)) {
+        SND.synths.portal.frequency.cancelScheduledValues(now);
+        SND.synths.portal.frequency.setValueAtTime(f1 * 0.5, now);
+        SND.synths.portal.frequency.exponentialRampToValueAtTime(f2 * 2, now + .45);
+        SND.synths.portal.triggerAttackRelease("A3", .36, now);
+      } else {
+        SND.synths.bubble.triggerAttackRelease(f2 * 0.9, .09, now);
+        SND.synths.bubble.triggerAttackRelease(f2 * 1.35, .09, now + .07);
+      }
+      return true;
+    } catch (_) { return false; }
+  };
+
+  KOBSonoro.stop = function() {
+    try { Tone.Transport.stop(); Tone.Transport.cancel(0); } catch (_) {}
+    try { Object.keys(SND.synths).forEach(k => SND.synths[k]?.releaseAll?.()); } catch (_) {}
+  };
+
+  function applySFX(enabled) {
+    const isOn = Boolean(enabled);
+    SND.enabled = isOn;
+    ROOT.dataset.sfx = isOn ? "on" : "off";
+
+    if (SFX_DOT) {
+      SFX_DOT.innerHTML = isOn ? SFX_ICONS.on : SFX_ICONS.off;
+      SFX_DOT.dataset.sfxActive = String(isOn);
+      SFX_DOT.setAttribute("aria-pressed", String(isOn));
+      SFX_DOT.setAttribute("title", isOn ? "SFX Sonoro: ATIVO (toque para silenciar)" : "SFX Sonoro: OFF (toque para ativar)");
+      SFX_DOT.setAttribute("aria-label", isOn ? "Desativar efeitos sonoros" : "Ativar efeitos sonoros");
+    }
+
+    if (!isOn) KOBSonoro.stop();
+    else KOBSonoro.sfx("bubble");
+
+    try { localStorage.setItem(SFX_STORAGE_KEY, String(isOn)); } catch (_) {}
+
+    window.dispatchEvent(new CustomEvent("dual:sfx-change", { detail: { enabled: isOn } }));
+  }
+
+  function getInitialSFX() {
+    try {
+      const saved = localStorage.getItem(SFX_STORAGE_KEY);
+      if (saved === "false") return false;
+    } catch (_) {}
+    return true;
+  }
+
+  window.DualSFX = {
+    set(enabled) { applySFX(enabled); },
+    toggle() { applySFX(ROOT.dataset.sfx !== "on"); },
+    get() { return ROOT.dataset.sfx === "on"; },
+    sfx: KOBSonoro.sfx
+  };
+
+  if (SFX_DOT) {
+    SFX_DOT.addEventListener("click", event => {
+      event.stopPropagation();
+      DualSFX.toggle();
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     3. THEME ENGINE · 3 MODOS (night → day → sunset)
+  ═══════════════════════════════════════════════════════ */
+  const STORAGE_KEY = "dual-theme";
+  const DI_STORAGE_KEY = "di_themeMode";
+  const MODES = ["night", "day", "sunset"];
+
+  const THEME_META = {
+    night: {
+      label: "Noite (Night)",
+      metaColor: "#0b1020",
+      svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>'
+    },
+    day: {
+      label: "Dia (Day)",
+      metaColor: "#d0e9ff",
+      svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>'
+    },
+    sunset: {
+      label: "Pôr do Sol (Sunset)",
+      metaColor: "#fb923c",
+      svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M17 18a5 5 0 0 0-10 0"></path><line x1="12" y1="9" x2="12" y2="2"></line><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"></line><line x1="1" y1="18" x2="3" y2="18"></line><line x1="21" y1="18" x2="23" y2="18"></line><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"></line><line x1="23" y1="22" x2="1" y2="22"></line><polyline points="16 5 12 9 8 5"></polyline></svg>'
+    }
+  };
+
+  function normalizeTheme(theme) {
+    if (theme === "light") return "day";
+    if (theme === "dark") return "night";
+    return MODES.includes(theme) ? theme : "night";
+  }
+
+  function applyTheme(theme) {
+    const nextTheme = normalizeTheme(theme);
+    const meta = THEME_META[nextTheme];
+
+    ROOT.dataset.theme = nextTheme;
+    if (BODY) BODY.dataset.mode = nextTheme;
+
+    if (META_COLOR) META_COLOR.setAttribute("content", meta.metaColor);
+
+    if (THEME_DOT) {
+      THEME_DOT.innerHTML = meta.svg;
+      THEME_DOT.setAttribute("title", "Tema: " + meta.label + " (toque para alternar)");
+      THEME_DOT.setAttribute("aria-label", "Tema atual: " + meta.label);
+    }
+
+    try {
+      localStorage.setItem(STORAGE_KEY, nextTheme);
+      localStorage.setItem(DI_STORAGE_KEY, nextTheme);
+    } catch (_) {}
+
+    if (window.KOBBus && typeof window.KOBBus.broadcastTheme === "function") {
+      window.KOBBus.broadcastTheme(nextTheme);
+    }
+
+    window.dispatchEvent(new CustomEvent("dual:theme-change", { detail: { theme: nextTheme, mode: nextTheme, meta } }));
+  }
+
+  function getInitialTheme() {
+    try {
+      const saved = localStorage.getItem(DI_STORAGE_KEY) || localStorage.getItem(STORAGE_KEY);
+      if (saved) return normalizeTheme(saved);
+    } catch (_) {}
+    return "night";
+  }
+
+  window.DualTheme = {
+    modes: MODES,
+    set(theme) { applyTheme(theme); },
+    toggle() {
+      const current = normalizeTheme(ROOT.dataset.theme);
+      const nextIndex = (MODES.indexOf(current) + 1) % MODES.length;
+      applyTheme(MODES[nextIndex]);
+    },
+    get() { return normalizeTheme(ROOT.dataset.theme); }
+  };
+
+  if (THEME_DOT) {
+    THEME_DOT.addEventListener("click", event => {
+      event.stopPropagation();
+      DualTheme.toggle();
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     4. HEADER → COLLAPSE DO MAIN
+  ═══════════════════════════════════════════════════════ */
+  if (HEADER && MAIN) {
+    HEADER.addEventListener("click", event => {
+      if (event.target.closest("#tts-dot, #theme-dot, #sfx-dot, .top-actions")) return;
+      MAIN.classList.toggle("hidden");
+      const collapsed = MAIN.classList.contains("hidden");
+      HEADER.classList.toggle("is-collapsed", collapsed);
+      window.dispatchEvent(new CustomEvent("dual:content-collapse", { detail: { collapsed } }));
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     5. SMART HEADER
+  ═══════════════════════════════════════════════════════ */
+  let lastScrollY = window.scrollY;
+  let ticking = false;
+  const SCROLL_THRESHOLD = 8;
+
+  function updateHeader() {
+    if (!HEADER) return;
+    const currentScrollY = window.scrollY;
+    if (currentScrollY <= 10) {
+      HEADER.classList.remove("header-hidden");
+      HEADER.classList.add("header-visible");
+      lastScrollY = currentScrollY;
+      ticking = false;
+      return;
+    }
+    if (currentScrollY > lastScrollY + SCROLL_THRESHOLD) {
+      HEADER.classList.remove("header-visible");
+      HEADER.classList.add("header-hidden");
+    } else if (currentScrollY < lastScrollY - SCROLL_THRESHOLD) {
+      HEADER.classList.remove("header-hidden");
+      HEADER.classList.add("header-visible");
+    }
+    lastScrollY = currentScrollY;
+    ticking = false;
+  }
+
+  window.addEventListener("scroll", () => {
+    if (!ticking) {
+      window.requestAnimationFrame(updateHeader);
+      ticking = true;
+    }
+  }, { passive: true });
+
+  /* ═══════════════════════════════════════════════════════
+     INICIALIZAÇÃO
+  ═══════════════════════════════════════════════════════ */
+  applyTheme(getInitialTheme());
+  applyTTS(getInitialTTS());
+  applySFX(getInitialSFX());
+  console.log("DUAL · SYSTEM READY [THEME + TTS + SFX] — sem arquétipos");
+})();
+<\/script>`);</script>
+
+  <div class="almasliber" data-app="almasliber">
+    <div class="shell">
+      <div class="wrap">
+        <!-- HEADER GLOBAL -->
+        <header class="topbar header-visible" id="main-header">
+          <div class="brandX">
+            <span>DUAL</span>
+            <span class="badgeX">GLOBAL</span>
+          </div>
+
+          <!-- CONTROLES DO HEADER: TTS (Click-to-Speech) + TEMA -->
+          <div class="top-actions" data-tts-ignore>
+           <button id="sfx-dot" class="header-dot-btn sfx-dot" type="button" data-sfx-active="true" aria-pressed="true" aria-label="Alternar efeitos sonoros" title="SFX Sonoro: ATIVO">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+    <path d="M9 18V5l12-2v13"></path>
+    <circle cx="6" cy="18" r="3"></circle>
+    <circle cx="18" cy="16" r="3"></circle>
+  </svg>
+</button>
+ <button id="tts-dot" class="header-dot-btn tts-dot" type="button" data-tts-active="true" aria-pressed="true" aria-label="Alternar leitura ao clicar" title="Click-to-Speech: ATIVO">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+              </svg>
+            </button>
+
+            <button id="theme-dot" class="header-dot-btn theme-dot" type="button" aria-label="Alternar tema" title="Alternar tema">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <!-- MAIN · hospeda o #kxtsk-shell -->
+        <main>
+          <div id="main-content">
+            <div id="kxtsk-shell">
+              <div id="inject-here"></div>
+              <div id="dock"></div>
+            </div>
+          </div>
+        </main>
+
+        <!-- BOTTOM NAV -->
+        <nav style="display:none" class="symbol-bar bottom-nav" data-module="navigation" aria-label="Navegação principal">
+          <button class="nav-item active" data-tab="home"><span class="nav-icon">⌂</span><span>Início</span></button>
+          <button class="nav-item" id="navLibraryBtn"><span class="nav-icon">▣</span><span>Library</span></button>
+          <button class="nav-main" id="navCreateBtn">+</button>
+          <button class="nav-item" id="navResultsBtn"><span class="nav-icon">▥</span><span>Resultados</span></button>
+          <button class="nav-item" id="navProfileBtn"><span class="nav-icon">♙</span><span>Perfil</span></button>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOASTER -->
+  <div class="toaster-wrap" id="toasterWrap"></div>
+  <input type="file" id="nebulaFileInput" multiple="" accept=".txt,.md,.html,.pdf" style="display:none">
+
+  <!-- SCRIPTS DO KXTSK-SHELL / STACKWRAP -->
+  <script src="https://kodux78k.github.io/a-Infodose/js/modules/iFSw-base.js"></script>
+
+</body>
+</html>
